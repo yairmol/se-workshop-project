@@ -17,9 +17,10 @@ class CommerceSystemFacadeProxy(ICommerceSystemFacade):
             return self.real.exit(session_id)
         return False
 
-    def register(self, session_id: str, username: str, password: str, email: str, **kwargs) -> bool:
+    def register(self, session_id: str, username: str, password: str, email: str, **additional_details) -> bool:
+        # print(session_id, username, password, email, additional_details)
         if self.real:
-            return self.real.register(session_id, username, password, email, **kwargs)
+            return self.real.register(session_id, username, password, email, **additional_details)
         return False
 
     def login(self, session_id: str, username: str, password: str) -> bool:
@@ -67,20 +68,20 @@ class CommerceSystemFacadeProxy(ICommerceSystemFacade):
             return self.real.purchase_product(session_id, shop_id, product_id)
         return False
 
-    def open_shop(self, session_id: str, **shop_details) -> bool:
+    def open_shop(self, session_id: str, **shop_details) -> str:
         if self.real:
             return self.real.open_shop(session_id, **shop_details)
-        return False
+        return ""
 
     def get_personal_purchase_history(self, session_id: str) -> List[dict]:
         if self.real:
             return self.real.get_personal_purchase_history(session_id)
         return []
 
-    def add_product_to_shop(self, session_id: str, shop_id: str, **product_info) -> bool:
+    def add_product_to_shop(self, session_id: str, shop_id: str, **product_info) -> str:
         if self.real:
             return self.real.add_product_to_shop(session_id, shop_id, **product_info)
-        return False
+        return ""
 
     def edit_product_info(self, session_id: str, shop_id: str, **product_info) -> bool:
         if self.real:
@@ -97,7 +98,7 @@ class CommerceSystemFacadeProxy(ICommerceSystemFacade):
             return self.real.appoint_shop_owner(session_id, shop_id, username)
         return False
 
-    def appoint_shop_manager(self, session_id: str, shop_id: str, username: str, permissions: dict) -> bool:
+    def appoint_shop_manager(self, session_id: str, shop_id: str, username: str, permissions: list) -> bool:
         if self.real:
             return self.real.appoint_shop_manager(session_id, shop_id, username, permissions)
         return False

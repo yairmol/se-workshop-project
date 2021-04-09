@@ -1,4 +1,4 @@
-import facade_proxy as fp
+import acceptance_tests.facade_proxy as fp
 
 
 class Driver:
