@@ -1,12 +1,13 @@
 from typing import List
 
-from commerce_system.appointments import Appointment
-from commerce_system.permission import Permission
-from commerce_system.shop import Shop
-from commerce_system.utils import Transaction
+from domain.commerce_system.appointments import Appointment
+from domain.commerce_system.permission import Permission
+from domain.commerce_system.utils import Transaction
+from shop import Shop
+from product import Product
 
 
-class UserState:
+class User:
     def login(self, username: str, password: str) -> bool:
         raise NotImplementedError()
 
@@ -60,15 +61,3 @@ class UserState:
 
     def get_shop_transaction_history(self, shop: Shop) -> List[Transaction]:
         raise NotImplementedError()
-
-
-class Guest(UserState):
-    pass
-
-
-class Subscribed(UserState):
-    pass
-
-
-class AppointmentState:
-    pass
