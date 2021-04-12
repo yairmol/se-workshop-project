@@ -1,13 +1,19 @@
 from typing import List
 
-from domain.commerce_system.appointments import Appointment
-from domain.commerce_system.permission import Permission
-from domain.commerce_system.utils import Transaction
+from appointments import Appointment
+from permission import Permission
+from utils import Transaction
+
 from shop import Shop
 from product import Product
 
 
 class User:
+    # TO ADD ID GENERATOR
+
+    def __init__(self):
+        self.id = 0  # TO CHANGE TO GENERATED ID
+
     def login(self, username: str, password: str) -> bool:
         raise NotImplementedError()
 
