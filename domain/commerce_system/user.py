@@ -10,9 +10,11 @@ from product import Product
 
 class User:
     # TO ADD ID GENERATOR
+    __id_counter = 1
 
-    def __init__(self):
-        self.id = 0  # TO CHANGE TO GENERATED ID
+    def __init__(self):  # TO add relevant fields to the user object
+        self.id = self.__id_counter
+        User.__id_counter = User.__id_counter + 1
 
     def login(self, username: str, password: str) -> bool:
         raise NotImplementedError()
