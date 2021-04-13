@@ -16,7 +16,6 @@ class Authenticator:
         while self.is_token_exists(new_token):
             new_token = ''.join(secrets.choice(self.alphabet) for i in range(8))
         self.tokens_ids[new_token] = user_id
-
-
+        return new_token
 
 

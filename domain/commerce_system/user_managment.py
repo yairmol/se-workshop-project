@@ -9,9 +9,9 @@ class UserManagement:
 
     def add_active_user(self) -> int:
         new_user = User()
-        self.authenticator.generate_token(new_user.id)
+        token = self.authenticator.generate_token(new_user.id)
         self.active_users.append(new_user)
-        return new_user.id
+        return token
 
 
 
