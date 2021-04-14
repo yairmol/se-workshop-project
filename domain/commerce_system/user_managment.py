@@ -18,7 +18,7 @@ class UserManagement:
         self.management_lock.release()
         return token
 
-    def remove_active_user(self, token):
+    def remove_active_user(self, token: str) -> None:
         self.management_lock.acquire()
         user_id: int = self.authenticator.remove_token(token)
         if user_id > 0:
