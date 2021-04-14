@@ -13,3 +13,9 @@ class SystemService:
     def exit(self, token: str):
         self.user_management.remove_active_user(token)
 
+    def register(self, token: str, username: str, password: str):
+        try:
+            self.user_management.register(token, username, password)
+            print("LOG: Registered Successfully")
+        except AssertionError as e:
+            print(e)
