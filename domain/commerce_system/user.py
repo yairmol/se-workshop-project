@@ -1,4 +1,3 @@
-import threading
 from typing import List
 
 from domain.commerce_system.appointments import Appointment
@@ -7,19 +6,8 @@ from domain.commerce_system.product import Product
 from domain.commerce_system.shop import Shop
 from domain.commerce_system.utils import Transaction
 
-user_lock = threading.Lock()
-
 
 class User:
-    # TO ADD ID GENERATOR
-    __id_counter = 1
-
-    def __init__(self):  # TO add relevant fields to the user object
-        user_lock.acquire()
-        self.id = self.__id_counter
-        User.__id_counter = User.__id_counter + 1
-        user_lock.release()
-
     def login(self, username: str, password: str) -> bool:
         raise NotImplementedError()
 
