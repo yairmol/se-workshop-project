@@ -1,6 +1,6 @@
 from typing import List, Union
 
-from commerce_system.facade import ICommerceSystemFacade
+from domain.commerce_system.facade import ICommerceSystemFacade
 
 
 class CommerceSystemFacadeProxy(ICommerceSystemFacade):
@@ -58,15 +58,15 @@ class CommerceSystemFacadeProxy(ICommerceSystemFacade):
             return self.real.search_shops(keywords, filters)
         return []
 
-    def purchase_cart(self, session_id: str) -> bool:
+    def purchase_cart(self, session_id: str) -> dict:
         if self.real:
             return self.real.purchase_cart(session_id)
-        return False
+        return {}
 
-    def purchase_product(self, session_id: str, shop_id: str, product_id: str) -> bool:
+    def purchase_product(self, session_id: str, shop_id: str, product_id: str) -> dict:
         if self.real:
             return self.real.purchase_product(session_id, shop_id, product_id)
-        return False
+        return {}
 
     def open_shop(self, session_id: str, **shop_details) -> str:
         if self.real:
