@@ -35,7 +35,7 @@ class Shop:
             if not product.__dict__[field]:
                 return False
             product.__dict__[field] = new_value
-        return False
+        return True
 
     def get_shop_info(self) -> str:
         raise NotImplementedError()
