@@ -9,3 +9,7 @@ class SystemService:
 
     def enter(self) -> int:  # returns the new user's token
         return self.user_management.add_active_user()
+
+    def exit(self, token: str):
+        self.user_management.remove_active_user(token)
+
