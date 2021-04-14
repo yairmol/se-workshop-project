@@ -3,11 +3,11 @@ from domain.commerce_system.product import Product
 
 class Shop:
     def __init__(self):
-        self.supply_products = {}
+        self.products = {}
 
     """ quantity has to be no more than available product quantity"""
     def sell_product(self, product_id: str, quantity: int, payment_details: dict) -> bool: # add payment
-        available_quantity = self.supply_products[product_id].quantity
+        available_quantity = self.products[product_id].quantity
         if available_quantity < quantity:
             return False
         return True
@@ -16,19 +16,19 @@ class Shop:
     def add_product(self, product: Product) -> int:
         product_id = self.get_free_id()
         try:
-            self.supply_products[product_id] = product
+            self.products[product_id] = product
             return product_id
         except Exception as e:
             return -1
 
     def delete_product(self, product_id: int) -> bool:
-        res = self.supply_products.pop(product_id, 0)
+        res = self.products.pop(product_id, 0)
         return res != 0
 
     """ edit product receives product id and a dict of fields to alter and the new values.
         MAKE SURE THE FIELD NAMES ARE ACCURATE"""
     def edit_product(self, product_id, **to_edit) -> bool:
-        product = self.supply_products[product_id]
+        product = self.products[product_id]
         if not product:
             return False
         for field, new_value in to_edit.items():
@@ -42,7 +42,7 @@ class Shop:
 
     def get_free_id(self) -> int:
         last_id = 1
-        for product_id in sorted(self.supply_products.keys()):
+        for product_id in sorted(self.products.keys()):
             if product_id > last_id + 1:
                 return last_id + 1
             last_id = product_id
@@ -51,14 +51,14 @@ class Shop:
     """ return true if shop has product named product_name"""
     def has_product(self, product_name: str):
         found = False
-        for supply_product in self.supply_products.values():
+        for supply_product in self.products.values():
             found = found or supply_product.name == product_name
         return found
 
     """ returns id of first product named product_name"""
     def get_id(self, product_name: str):
         product_id = -1
-        for p_id, supply_product in self.supply_products.items():
+        for p_id, supply_product in self.products.items():
             if supply_product.name == product_name:
                 product_id = p_id
         return product_id
