@@ -12,13 +12,14 @@ class Shop:
             return False
         return True
 
-    def add_product(self, product: Product, quantity: int) -> bool:
+    """ returns product_id if successful"""
+    def add_product(self, product: Product) -> int:
         product_id = self.get_free_id()
         try:
-            self.supply_products[product_id] = SupplyProduct(product, quantity)
-            return True
+            self.supply_products[product_id] = product
+            return product_id
         except Exception as e:
-            return False
+            return -1
 
     def delete_product(self, product_id: int) -> bool:
         res = self.supply_products.pop(product_id, 0)
@@ -61,11 +62,3 @@ class Shop:
             if supply_product.name == product_name:
                 product_id = p_id
         return product_id
-
-
-class SupplyProduct:
-    def __init__(self, product: Product, quantity: int):
-        self.name = product.name
-        self.price = product.price
-        self.description = product.description
-        self.quantity = quantity

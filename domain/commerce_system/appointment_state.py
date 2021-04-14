@@ -17,7 +17,7 @@ class ShopOwner(AppointmentState):
     def __init__(self):
         pass
 
-    def add_product(self, shop: Shop, product: Product, quantity: int) -> bool:
+    def add_product(self, shop: Shop, product: Product, quantity: int) -> int:
         return shop.add_product(product, quantity)
     
     def edit_product(self, shop: Shop, product_id: int, **to_edit) -> bool:
