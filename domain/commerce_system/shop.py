@@ -4,6 +4,7 @@ from domain.commerce_system.product import Product
 class Shop:
     def __init__(self):
         self.products = {}
+        self.transaction_history = []
 
     """ quantity has to be no more than available product quantity"""
     def sell_product(self, product_id: str, quantity: int, payment_details: dict) -> bool: # add payment
@@ -40,8 +41,8 @@ class Shop:
     def get_shop_info(self) -> str:
         s = ""
         for p_id, p_val in self.products:
-            s += "store product id: ", p_id, ", product id: ", p_val.product_id, ", product name: ",\
-                 p_val.name, ", price: ", p_val.price
+            s += "store product id: ", p_id, "\nproduct id: ", p_val.product_id, "\nproduct name: ",\
+                 p_val.name, "\nprice: ", p_val.price
         return s
 
     def get_free_id(self) -> int:
@@ -66,3 +67,6 @@ class Shop:
             if supply_product.name == product_name:
                 product_id = p_id
         return product_id
+
+    def add_transaction(self, transaction):
+        pass
