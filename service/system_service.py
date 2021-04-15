@@ -1,7 +1,7 @@
 from domain.auth.authenticator import Authenticator
 from domain.commerce_system.commerceSystemFacade import CommerceSystemFacade
 from domain.commerce_system.facade import ICommerceSystemFacade
-from domain.commerce_system.user_managment import UserManagement
+
 
 
 class SystemService:
@@ -28,14 +28,40 @@ class SystemService:
             if user_id > 0:
                 self.commerce_system_facade.remove_active_user(user_id)
 
-    def register(self, token: str, username: str, password: str, **more):
+    def register(self, token: str, username: str, password: str, **more)-> bool:
         user_id = self.authenticator.get_id_by_token(token)
         try:
             if self.authenticator.is_token_expired(token):
-                raise Exception("User: " + str(user_id) + " Token's is not valid")
+                raise TokenNotValidException("User Token's Expired")
             self.commerce_system_facade.register(user_id, username, password, **more)
-            print("LOG: Registered Successfully")
-        except AssertionError as e:
+            print("LOG: User: " + str(user_id) + " Registered Successfully")
+            return True
+        except TokenNotValidException as e:
             print(e)
             if user_id > 0:
                 self.commerce_system_facade.remove_active_user(user_id)
+            return False
+        except AssertionError as e:
+            print(e)
+            return False
+
+    def login(self, token: str, username: str, password: str)-> bool:
+        user_id = self.authenticator.get_id_by_token(token)
+        try:
+            if self.authenticator.is_token_expired(token):
+                raise TokenNotValidException("User Token's Expired")
+            self.commerce_system_facade.login(user_id, username, password)
+            print("LOG: User: " + str(user_id) + " Logged in Successfully")
+            return True
+        except TokenNotValidException as e:
+            print(e)
+            if user_id > 0:
+                self.commerce_system_facade.remove_active_user(user_id)
+            return False
+        except AssertionError as e:
+            print(e)
+            return False
+
+
+class TokenNotValidException(Exception):
+    pass

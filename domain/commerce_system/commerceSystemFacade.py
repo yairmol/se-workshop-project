@@ -26,12 +26,12 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         self.active_users.pop(user_id)
         self.active_users_lock.release()
 
-    def register(self, user_id: int, username: str, password: str, **more) -> bool:
+    def register(self, user_id: int, username: str, password: str, **more):
         assert not self.is_username_exists(username), "Username already exists"
         assert validate.validate_username(username), "Username length needs to be between 0 - 20 characters"
         assert validate.validate_password(password), "Password length needs to be between 0 - 20 characters"
 
-        new_subscribe = Subscribed(username)
+        new_subscribe = Subscribed(username, password)
         # saving registered user's details
         self.registered_users_lock.acquire()
         self.registered_users[username] = new_subscribe
@@ -43,8 +43,12 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         self.registered_users_lock.release()
         return ret_val
 
-    def login(self, session_id: int, username: str, password: str) -> bool:
-        pass
+    def login(self, user_id: int, username: str, password: str):
+        assert self.is_username_exists(username), "Username doesn't exists"
+        sub_user = self.registered_users.get(username)
+        assert sub_user.password == password, "Wrong Password"
+
+        self.active_users.get(user_id).set_user_state(sub_user)
 
     def logout(self, session_id: int) -> bool:
         pass
