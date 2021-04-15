@@ -41,8 +41,8 @@ class User:
     def buy_cart(self, payment_details: dict) -> bool:
         raise NotImplementedError()
 
-    def save_product_to_cart(self, shop: Shop, product: Product) -> bool:
-        return self.cart.add_product(product, shop)
+    def save_product_to_cart(self, shop: Shop, product: Product, quantity: int) -> bool:
+        return self.cart.add_product(product, shop, quantity)
 
     def get_cart_info(self) -> List[dict]:
         raise NotImplementedError()
