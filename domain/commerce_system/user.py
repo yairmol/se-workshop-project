@@ -7,6 +7,7 @@ from domain.commerce_system.permission import Permission
 from domain.commerce_system.product import Product
 from domain.commerce_system.shop import Shop
 from domain.commerce_system.utils import Transaction
+from domain.commerce_system.shopping_cart import ShoppingCart, ShoppingBag
 
 
 class User:
@@ -20,6 +21,7 @@ class User:
         self.id = self.__id_counter
         User.__id_counter = User.__id_counter + 1
         self.counter_lock.release()
+        self.cart = ShoppingCart(self.id)
 
     def login(self, username: str, password: str) -> bool:
         raise NotImplementedError()
@@ -39,8 +41,8 @@ class User:
     def buy_cart(self, payment_details: dict) -> bool:
         raise NotImplementedError()
 
-    def save_product_to_cart(self, shop: Shop, product_id: str) -> bool:
-        raise NotImplementedError()
+    def save_product_to_cart(self, shop: Shop, product: Product) -> bool:
+        return self.cart.add_product(product, shop)
 
     def get_cart_info(self) -> List[dict]:
         raise NotImplementedError()
