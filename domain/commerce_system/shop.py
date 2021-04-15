@@ -38,7 +38,11 @@ class Shop:
         return True
 
     def get_shop_info(self) -> str:
-        raise NotImplementedError()
+        s = ""
+        for p_id, p_val in self.products:
+            s += "store product id: ", p_id, ", product id: ", p_val.product_id, ", product name: ",\
+                 p_val.name, ", price: ", p_val.price
+        return s
 
     def get_free_id(self) -> int:
         last_id = 1
