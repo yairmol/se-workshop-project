@@ -6,45 +6,49 @@ from typing import List
 class ShoppingBag:
     def __init__(self, shop: Shop):
         self.shop = shop
-        self.shopping_bag = {}
+        self.products = {}
         self.shopping_bag_price = 0
 
     def add_product(self, product: Product) -> bool:
-        if product in self.shopping_bag:
-            self.shopping_bag[product] += 1
+        if product in self.products:
+            self.products[product] += 1
         else:
-            self.shopping_bag[product] = 1
+            self.products[product] = 1
         self.shopping_bag_price += product.price
         return True
 
     def remove_product(self, product: Product) -> bool:
-        if product not in self.shopping_bag:
+        if product not in self.products:
             return False
-        if self.shopping_bag[product] == 1:
-            self.shopping_bag.pop(product)
+        if self.products[product] == 1:
+            self.products.pop(product)
         else:
-            self.shopping_bag[product] -= 1
+            self.products[product] -= 1
         self.shopping_bag_price -= product.price
         return True
 
     def remove_all_products(self) -> bool:
-        self.shopping_bag.clear()
+        self.products.clear()
         self.shopping_bag_price = 0
         return True
 
 
 class ShoppingCart:
     def __init__(self):
-        self.shopping_bags: List[ShoppingBag] = []
+        self.shopping_bags = {}
 
     def add_shopping_bag(self, bag: ShoppingBag) -> bool:
-        self.shopping_bags += [bag]
+        if bag.shop in self.shopping_bags:
+            return False
+        self.shopping_bags[bag.shop] = bag
         return True
 
     def remove_shopping_bag(self, bag: ShoppingBag) -> bool:
-        if bag not in self.shopping_bags:
+        if bag.shop not in self.shopping_bags:
             return False
-        self.shopping_bags.remove(bag)
+        if not bag == self.shopping_bags[bag.shop]:
+            return False
+        self.shopping_bags.remove(bag.shop)
         return True
 
     def remove_all_shopping_bags(self) -> bool:
