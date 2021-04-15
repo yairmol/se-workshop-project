@@ -1,4 +1,6 @@
-from typing import List
+from typing import List, Dict
+
+from domain.commerce_system.user import User
 
 
 class ICommerceSystemFacade:
@@ -12,17 +14,18 @@ class ICommerceSystemFacade:
         """exit the system"""
         raise NotImplementedError()
 
-    def register(self, session_id: int, username: str, password: str, email: str, **additional_details) -> bool:
+    def register(self, user_id: int, username: str, password: str, email: str, **additional_details) -> bool:
         """
         register a new user (subscriber) to the system
-        :param session_id:
+        :param user_id:
         :param username:
         :param password:
         :param email:
         :param additional_details: additional user details TBD
         :return: True on success
         """
-        raise NotImplementedError()
+        self.users: Dict[int, User]
+        self.users[user_id].register(username, password, email=email, **additional_details)
 
     def login(self, session_id: int, username: str, password: str) -> bool:
         """
