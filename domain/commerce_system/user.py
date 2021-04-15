@@ -1,3 +1,5 @@
+from __future__ import annotations
+import threading
 from typing import List
 
 from domain.commerce_system.appointments import Appointment
@@ -8,6 +10,17 @@ from domain.commerce_system.utils import Transaction
 
 
 class User:
+    __id_counter = 1
+    counter_lock = threading.Lock()
+
+    def __init__(self):  # TO add relevant fields to the user object
+        self.user_state = Guest()
+
+        self.counter_lock.acquire()
+        self.id = self.__id_counter
+        User.__id_counter = User.__id_counter + 1
+        self.counter_lock.release()
+
     def login(self, username: str, password: str) -> bool:
         raise NotImplementedError()
 
@@ -61,3 +74,24 @@ class User:
 
     def get_shop_transaction_history(self, shop: Shop) -> List[Transaction]:
         raise NotImplementedError()
+
+    def set_user_state(self, user_state: UserState):
+        self.user_state = user_state
+
+
+class UserState:
+    pass
+
+
+class Guest(UserState):
+    pass
+
+
+class Subscribed(UserState):
+
+    def __init__(self, user_name: str):  # TO add relevant fields
+        self.user_name = user_name
+
+
+class AppointmentState:
+    pass
