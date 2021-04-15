@@ -10,36 +10,50 @@ class AppointmentState:
 
 
 class ShopManager(AppointmentState):
-    pass
+    def __init__(self, shop: Shop):
+        self.shop = shop
 
 
 class ShopOwner(AppointmentState):
-    def __init__(self):
-        pass
+    shop = None
 
-    def add_product(self, shop: Shop, product: Product, quantity: int) -> int:
-        return shop.add_product(product, quantity)
-    
-    def edit_product(self, shop: Shop, product_id: int, **to_edit) -> bool:
-        return shop.edit_product(product_id, **to_edit)
+    def __init__(self, shop: Shop):
+        self.shop = shop
 
-    def delete_product(self, shop: Shop, product_id: int) -> bool:
-        return shop.delete_product(product_id)
+    """ adds shop appointment of choice to selected subscribed user"""
+    def add_appointment(self, appointment: AppointmentState, sub):
+        apps = sub.appointments
+        if self.shop in apps.keys():
+            raise Exception("subscriber already has appointment for shop. shop id - ", self.shop.shop_id)
+        apps[self.shop] = appointment
+
+    """ removes shop appointment from selected subscribed user"""
+    def remove_appointment(self, sub):
+        sub.appointments.pop(self.shop)
+
+    def add_product(self, product: Product) -> int:
+        return self.shop.add_product(product)
     
-    def appoint_manager(self, shop: Shop, user: User):
+    def edit_product(self, product_id: int, **to_edit):
+        self.shop.edit_product(product_id, **to_edit)
+
+    def delete_product(self, product_id: int):
+        self.shop.delete_product(product_id)
+    
+    def appoint_manager(self, user: User):
         pass
     
-    def appoint_owner(self, shop: Shop, user: User):
+    def appoint_owner(self, user: User):
         pass
     
-    def edit_manager_perms(self, shop: Shop, user: User, perms: List[str]):
+    def edit_manager_perms(self, user: User, perms: List[str]):
         pass
     
-    def un_appoint_manager(self, shop: Shop, user: User):
+    def un_appoint_manager(self, user: User):
         pass
     
-    def get_shop_staff_info(self, shop: Shop):
+    def get_shop_staff_info(self):
         pass
     
-    def get_purchase_history(self, shop: Shop):
+    def get_purchase_history(self):
         pass

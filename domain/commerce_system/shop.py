@@ -2,7 +2,8 @@ from domain.commerce_system.product import Product
 
 
 class Shop:
-    def __init__(self):
+    def __init__(self, shop_id: int):
+        self.shop_id = shop_id
         self.products = {}
 
     """ quantity has to be no more than available product quantity"""
@@ -15,11 +16,8 @@ class Shop:
     """ returns product_id if successful"""
     def add_product(self, product: Product) -> int:
         product_id = self.get_free_id()
-        try:
-            self.products[product_id] = product
-            return product_id
-        except Exception as e:
-            return -1
+        self.products[product_id] = product
+        return product_id
 
     def delete_product(self, product_id: int) -> bool:
         res = self.products.pop(product_id, 0)
@@ -28,14 +26,13 @@ class Shop:
     """ edit product receives product id and a dict of fields to alter and the new values.
         MAKE SURE THE FIELD NAMES ARE ACCURATE"""
     def edit_product(self, product_id, **to_edit) -> bool:
+        if not self.products.has_key(product_id):
+            raise Exception("no product with id=", product_id)
         product = self.products[product_id]
-        if not product:
-            return False
         for field, new_value in to_edit.items():
-            if not product.__dict__[field]:
-                return False
+            if field not in product.__dict__:
+                raise Exception("product has no field ", field)
             product.__dict__[field] = new_value
-        return True
 
     def get_shop_info(self) -> str:
         raise NotImplementedError()

@@ -9,7 +9,7 @@ from domain.commerce_system.shop import Shop
 class TestShopOwner(unittest.TestCase):
 
     def setUp(self):
-        self.shop = Shop()
+        self.shop = Shop(1)
         self.bamba = Product("bamba", 15, "bamba teima", 3)
         self.bisli = Product("bisli", 25, "bisli taim", 3)
         self.humus = Product("humus", 7, "humus taim", 3)
