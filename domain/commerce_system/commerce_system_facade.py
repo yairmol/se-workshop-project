@@ -1,12 +1,15 @@
 import threading
-from typing import Dict
+from typing import Dict, List
 
-from domain.commerce_system.facade import ICommerceSystemFacade
+from domain.commerce_system.ifacade import ICommerceSystemFacade
+from domain.commerce_system.product import Product
+from domain.commerce_system.search_engine import search, Filter
 from domain.commerce_system.user import User, Subscribed, Guest
 import domain.commerce_system.valdiation as validate
 
 
 class CommerceSystemFacade(ICommerceSystemFacade):
+
     active_users_lock = threading.Lock()
     registered_users_lock = threading.Lock()
 
@@ -55,3 +58,23 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         self.active_users_lock.acquire()
         self.active_users.get(user_id).set_user_state(Guest())
         self.active_users_lock.release()
+
+    def _get_all_products(self) -> List[Product]:
+        # TODO: implement when there will be a list of shops in the facade
+        raise NotImplementedError()
+
+    def search_products(
+            self, product_name: str = None, keywords: List[str] = None,
+            categories: List[str] = None, filters: List[dict] = None
+    ) -> List[dict]:
+        products: List[Product] = self._get_all_products()
+        search_results = search(
+            products, product_name, keywords, categories, list(map(Filter.from_dict, filters))
+        )
+        return list(map(lambda p: {
+            "product_name": p.name,
+            "price": p.price,
+            "description": p.description,
+            "quantity": p.quantity,
+            "categories": p.categories
+        }, search_results))

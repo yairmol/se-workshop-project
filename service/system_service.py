@@ -1,7 +1,7 @@
-from domain.auth.authenticator import Authenticator
-from domain.commerce_system.commerceSystemFacade import CommerceSystemFacade
-from domain.commerce_system.facade import ICommerceSystemFacade
+from typing import List
 
+from domain.auth.authenticator import Authenticator
+from domain.commerce_system.commerce_system_facade import CommerceSystemFacade
 
 
 class SystemService:
@@ -9,7 +9,6 @@ class SystemService:
     def __init__(self, commerce_system_facade: CommerceSystemFacade, authenticator: Authenticator):
         self.commerce_system_facade = commerce_system_facade
         self.authenticator = authenticator
-        # self.user_management = UserManagement(Authenticator())
 
     def enter(self) -> str:  # returns the new user's token
         new_user_id = self.commerce_system_facade.enter()
@@ -78,6 +77,20 @@ class SystemService:
         except AssertionError as e:
             print(e)
             return False
+
+    def search_products(
+            self, product_name: str = None, keywords: List[str] = None,
+            categories: List[str] = None, filters: List[dict] = None
+    ) -> List[dict]:
+        """
+        :param categories:
+        :param product_name: product name (optional)
+        :param keywords:  OR keywords and categories separated by spaces
+        :param filters: a list of filters where a filter is a dictionary containing a key 'type' and additional keys
+        according to type.
+        :return: returns the results as a list of dictionaries
+        """
+        return self.commerce_system_facade.search_products(product_name, keywords, categories, filters)
 
 
 class TokenNotValidException(Exception):
