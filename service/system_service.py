@@ -62,6 +62,23 @@ class SystemService:
             print(e)
             return False
 
+    def logout(self, token: str)-> bool:
+        user_id = self.authenticator.get_id_by_token(token)
+        try:
+            if self.authenticator.is_token_expired(token):
+                raise TokenNotValidException("User Token's Expired")
+            self.commerce_system_facade.logout(user_id)
+            print("LOG: User: " + str(user_id) + " Logged out Successfully")
+            return True
+        except TokenNotValidException as e:
+            print(e)
+            if user_id > 0:
+                self.commerce_system_facade.remove_active_user(user_id)
+            return False
+        except AssertionError as e:
+            print(e)
+            return False
+
 
 class TokenNotValidException(Exception):
     pass

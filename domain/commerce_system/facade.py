@@ -24,8 +24,6 @@ class ICommerceSystemFacade:
         :param additional_details: additional user details TBD
         :return: True on success
         """
-        self.users: Dict[int, User]
-        self.users[user_id].register(username, password, email=email, **additional_details)
 
     def login(self, session_id: int, username: str, password: str) -> bool:
         """

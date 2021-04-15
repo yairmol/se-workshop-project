@@ -2,7 +2,7 @@ import threading
 from typing import Dict
 
 from domain.commerce_system.facade import ICommerceSystemFacade
-from domain.commerce_system.user import User, Subscribed
+from domain.commerce_system.user import User, Subscribed, Guest
 import domain.commerce_system.valdiation as validate
 
 
@@ -47,8 +47,11 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         assert self.is_username_exists(username), "Username doesn't exists"
         sub_user = self.registered_users.get(username)
         assert sub_user.password == password, "Wrong Password"
-
+        self.active_users_lock.acquire()
         self.active_users.get(user_id).set_user_state(sub_user)
+        self.active_users_lock.release()
 
-    def logout(self, session_id: int) -> bool:
-        pass
+    def logout(self, user_id: int):
+        self.active_users_lock.acquire()
+        self.active_users.get(user_id).set_user_state(Guest())
+        self.active_users_lock.release()

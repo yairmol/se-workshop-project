@@ -6,7 +6,7 @@ from domain.commerce_system.commerceSystemFacade import CommerceSystemFacade
 from service.system_service import SystemService
 
 
-class TestAuthenticator(unittest.TestCase):
+class TestService(unittest.TestCase):
 
     def test_register1(self):
         service = SystemService(CommerceSystemFacade(), Authenticator())
@@ -30,3 +30,9 @@ class TestAuthenticator(unittest.TestCase):
         service.register(token, "aviv", "123456")
         assert service.login(token,"aviv", "123456")
 
+    def test_logout1(self):
+        service = SystemService(CommerceSystemFacade(), Authenticator())
+        token = service.enter()
+        service.register(token, "aviv", "123456")
+        service.login(token, "aviv", "123456")
+        assert service.logout(token)
