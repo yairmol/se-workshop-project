@@ -83,7 +83,7 @@ class User:
 
 class UserState:
     def register(self, username: str, password: str, **user_details):
-        raise Exception("Error: Subscribed User cannot register")
+        raise Exception("Error: Logged-in User cannot register")
 
 
 class Guest(UserState):
@@ -94,7 +94,7 @@ class Guest(UserState):
 
 class Subscribed(UserState):
 
-    def __init__(self, user_name: str, password: str):  # TO add relevant fields
+    def __init__(self, user_name: str, password: str, **user_details):  # TO add relevant fields
         self.user_name = user_name
         self.password = password
 

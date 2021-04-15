@@ -1,5 +1,6 @@
-from shop import Shop
-from product import Product
+from domain.commerce_system.product import Product
+from domain.commerce_system.shop import Shop
+
 from typing import List
 
 
