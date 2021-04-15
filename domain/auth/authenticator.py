@@ -56,25 +56,33 @@ class Authenticator:
         self.tokens_ids_lock.release()
         return removed_id
 
+    # checks if the token is valid, if it is, extending its expire time
+    # if not, removing the token
     def is_token_expired(self, token: str) -> bool:
-        print("BBBBBB")
         self.tokens_ids_lock.acquire()
         if self.is_token_exists(token):
             self.tokens_time_lock.acquire()
-            ret_val = self.tokens_expire_time[token] <= datetime.datetime.now()
+            is_expired = self.tokens_expire_time[token] <= datetime.datetime.now()
+            if not is_expired:
+                current_date_and_time = datetime.datetime.now()
+                hours_added = datetime.timedelta(hours=self.session_time)
+                expire_date = current_date_and_time + hours_added
+                self.tokens_expire_time[token] = expire_date
+            else:
+                self.tokens_ids.pop(token)
             self.tokens_time_lock.release()
         else:
-            ret_val = False
+            is_expired = True
         self.tokens_ids_lock.release()
-        return ret_val
+        return is_expired
 
-    def extend_expire_time(self, token: str) -> None:
-        current_date_and_time = datetime.datetime.now()
-        hours_added = datetime.timedelta(hours=self.session_time)
-        expire_date = current_date_and_time + hours_added
-        self.tokens_time_lock.acquire()
-        self.tokens_expire_time[token] = expire_date
-        self.tokens_time_lock.release()
+    # def extend_expire_time(self, token: str) -> None:
+    #     current_date_and_time = datetime.datetime.now()
+    #     hours_added = datetime.timedelta(hours=self.session_time)
+    #     expire_date = current_date_and_time + hours_added
+    #     self.tokens_time_lock.acquire()
+    #     self.tokens_expire_time[token] = expire_date
+    #     self.tokens_time_lock.release()
 
     # returns the user's id if token exists, -1 if not
     def get_id_by_token(self, token: str):

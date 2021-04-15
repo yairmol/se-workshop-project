@@ -24,8 +24,8 @@ class User:
     def login(self, username: str, password: str) -> bool:
         raise NotImplementedError()
 
-    def register(self, username: str, email: str, password: str, **user_details) -> bool:
-        raise NotImplementedError()
+    def register(self, username: str, password: str, **user_details):
+        return self.user_state.register(username, password)
 
     def logout(self):
         raise NotImplementedError()
@@ -80,17 +80,21 @@ class User:
 
 
 class UserState:
-    pass
+    def register(self, username: str, password: str, **user_details):
+        raise Exception("Error: Subscribed User cannot register")
 
 
 class Guest(UserState):
-    pass
+
+    def register(self, username: str, password: str, **user_details):
+        return Subscribed(username, password)
 
 
 class Subscribed(UserState):
 
-    def __init__(self, user_name: str):  # TO add relevant fields
+    def __init__(self, user_name: str, password: str):  # TO add relevant fields
         self.user_name = user_name
+        self.password = password
 
 
 class AppointmentState:
