@@ -1,5 +1,5 @@
 from domain.auth.authenticator import Authenticator
-from domain.commerce_system.commerce_system_facade import CommerceSystemFacade
+from domain.commerce_system.facade import ICommerceSystemFacade
 
 
 class TokenNotValidException(Exception):
@@ -8,7 +8,7 @@ class TokenNotValidException(Exception):
 
 class SystemService:
 
-    def __init__(self, commerce_system_facade: CommerceSystemFacade, authenticator: Authenticator):
+    def __init__(self, commerce_system_facade: ICommerceSystemFacade, authenticator: Authenticator):
         self.commerce_system_facade = commerce_system_facade
         self.authenticator = authenticator
 

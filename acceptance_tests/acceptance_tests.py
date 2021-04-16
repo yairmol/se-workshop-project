@@ -4,13 +4,17 @@ import threading as th
 
 from acceptance_tests.driver import Driver
 from acceptance_tests.test_data import users, shops, products, permissions
-from acceptance_tests.test_utils import enter_register_and_login, add_product, fill_system_with_data
+from acceptance_tests.test_utils import (
+    enter_register_and_login, add_product, make_purchases, register_login_users,
+    open_shops, add_products, appoint_owners_and_managers, shop_to_products,
+    sessions_to_shops, get_shop_not_owned_by_user
+)
 
 
 class GuestTests(TestCase):
 
     def setUp(self) -> None:
-        self.commerce_system = Driver.get_commerce_system_facade()
+        self.commerce_system = Driver.get_system_service()
         self.session_id = self.commerce_system.enter()
         self.assertIsInstance(self.session_id, str)
         self.assertNotEqual(self.session_id, "")
@@ -66,7 +70,7 @@ class GuestTests(TestCase):
 class SubscribedTests(TestCase):
 
     def setUp(self) -> None:
-        self.commerce_system = Driver.get_commerce_system_facade()
+        self.commerce_system = Driver.get_system_service()
         self.session_id = enter_register_and_login(self.commerce_system, users[0])
 
     def tearDown(self) -> None:
@@ -87,7 +91,8 @@ class SubscribedTests(TestCase):
         self.assertNotEqual(shop_id, "")
 
     def test_open_shop_with_existing_name(self):
-        pass
+        self.assertTrue(self.commerce_system.open_shop(self.session_id, **shops[0]))
+        self.assertFalse(self.commerce_system.open_shop(self.session_id, **shops[0]))
 
     def test_register_when_logged_in(self):
         self.assertFalse(self.commerce_system.register(
@@ -98,7 +103,7 @@ class SubscribedTests(TestCase):
 class ShopOwnerOperations(TestCase):
 
     def setUp(self) -> None:
-        self.commerce_system = Driver.get_commerce_system_facade()
+        self.commerce_system = Driver.get_system_service()
         self.session_id = enter_register_and_login(self.commerce_system, users[0])
         self.shop_id = self.commerce_system.open_shop(self.session_id, **shops[0])
 
@@ -183,7 +188,7 @@ class ShopOwnerOperations(TestCase):
         ))
 
     def test_unappoint_shop_manager_by_non_appointer(self):
-        u1_session_id = enter_register_and_login(self.commerce_system, users[1])
+        enter_register_and_login(self.commerce_system, users[1])
         self.assertTrue(self.commerce_system.appoint_shop_manager(
             self.session_id, self.shop_id, users[1]["username"], permissions[0]
         ))
@@ -200,7 +205,7 @@ class ShopOwnerOperations(TestCase):
     def test_unappoint_shop_owner_by_non_owner(self):
         # the user trying to unappoint the worker is not a shop owner/manager
         u_session_id = enter_register_and_login(self.commerce_system, users[1])
-        u2_session_id = enter_register_and_login(self.commerce_system, users[2])
+        enter_register_and_login(self.commerce_system, users[2])
         self.assertFalse(self.commerce_system.unappoint_shop_worker(
             u_session_id, self.shop_id, users[2]["username"]
         ))
@@ -237,7 +242,7 @@ class ShopOwnerOperations(TestCase):
 class ShopManagerOperations(TestCase):
 
     def setUp(self) -> None:
-        self.commerce_system = Driver.get_commerce_system_facade()
+        self.commerce_system = Driver.get_system_service()
         self.owner_session_id = enter_register_and_login(self.commerce_system, users[0])
         self.shop_id = self.commerce_system.open_shop(self.owner_session_id, **shops[0])
         self.session_id = enter_register_and_login(self.commerce_system, users[1])
@@ -307,47 +312,48 @@ class ShopManagerOperations(TestCase):
 
 
 class PurchasesTests(TestCase):
-    USER_I = 0
-    SHOP_I = 0
-    PROD_I = 0
+    NUM_USERS = len(users)
+    NUM_SHOPS = len(shops)
+    NUM_PRODUCTS = len(products)
+    U1 = 0
 
     def setUp(self) -> None:
-        self.commerce_system = Driver.get_commerce_system_facade()
-        (
-            self.sessions_map,  # maps session ids to users info
-            self.shop_id_to_shop,  # maps shop_id to shop info
-            self.shop_to_session,  # maps shop_id to their initial owner session_id
-            self.product_to_shop,  # maps product_id to the shop_id it belongs
-            self.shop_owners,  # maps shop_id to an additional owner session
-            self.shop_managers  # maps shop_id to a shop manager session
-        ) = fill_system_with_data(self.commerce_system, 5, 4, 12)
-        self.sessions = list(self.sessions_map.keys())
-        self.shop_ids = list(self.shop_to_session.keys())
-        self.shop_to_products = {shop: [p for p, s in self.product_to_shop.items() if s == shop]
-                                 for shop in self.shop_ids}
-        self.session_to_shops = {sess: [shop for shop, sess2 in self.shop_to_session.items() if sess == sess2]
-                                       + [shop for shop, sess2 in self.shop_owners.items() if sess == sess2]
-                                       + [shop for shop, sess2 in self.shop_managers.items() if sess == sess2]
-                                 for sess in self.sessions}
+        self.commerce_system = Driver.get_system_service()
+        self.sessions_to_users = register_login_users(self.commerce_system, self.NUM_USERS)
+        self.sessions = list(self.sessions_to_users.keys())
+        self.shop_id_to_shop, self.shop_to_opener = open_shops(self.commerce_system, self.sessions, self.NUM_SHOPS)
+        self.shop_ids = list(self.shop_id_to_shop.keys())
+        self.product_to_shop = add_products(self.commerce_system, self.sessions, self.shop_ids, self.NUM_PRODUCTS)
+        self.shop_to_owners, self.shop_to_managers = appoint_owners_and_managers(
+            self.commerce_system, self.sessions, self.sessions_to_users, self.shop_ids
+        )
+        self.shops_to_products = shop_to_products(self.product_to_shop, self.shop_ids)
+        self.shop_to_staff, self.session_to_shops = sessions_to_shops(
+            self.shop_to_opener, self.shop_to_owners, self.shops_to_products, self.sessions
+        )
 
     def test_save_product_to_cart(self):
-        self.assertTrue(self.commerce_system.save_product_to_cart(
-            self.sessions[self.USER_I], self.shop_ids[self.SHOP_I],
-            self.shop_to_products[self.shop_ids[self.SHOP_I]][self.PROD_I]
-        ))
+        user_session = self.sessions[self.U1]
+        shop_id = get_shop_not_owned_by_user(user_session, self.shop_ids, self.shop_to_staff)
+        product_id = self.shops_to_products[shop_id][0]
+        self.assertTrue(self.commerce_system.save_product_to_cart(user_session, shop_id, product_id))
 
     def test_save_non_existing_product_to_cart(self):
-        pass
+        user = self.sessions[self.U1]
+        shop_id = get_shop_not_owned_by_user(user, self.shop_ids, self.shop_to_staff)
+        self.assertFalse(self.commerce_system.save_product_to_cart(
+            self.sessions[self.U1], shop_id, "some_non_existing_product_id"
+        ))
 
     def test_get_cart_info(self):
         self.test_save_product_to_cart()
-        cart_info = self.commerce_system.get_cart_info(self.sessions[self.USER_I])
+        cart_info = self.commerce_system.get_cart_info(self.sessions[self.U1])
         shop_id = self.shop_ids[self.SHOP_I]
-        assert shop_id in cart_info
-        assert self.shop_to_products[shop_id][self.PROD_I] in cart_info[shop_id]["products"]
+        self.assertTrue(shop_id in cart_info)
+        self.assertTrue(self.shop_to_products[shop_id][self.PROD_I] in cart_info[shop_id]["products"])
 
     def test_purchase_product(self):
-        user_session = self.sessions[self.USER_I]
+        user_session = self.sessions[self.U1]
         user_shops = self.session_to_shops[user_session]
         prod = [
             p for p in self.product_to_shop.keys()
@@ -359,44 +365,68 @@ class PurchasesTests(TestCase):
         assert transaction_status.get("status", False)
 
     def test_purchase_cart(self):
-        user_session = self.sessions[self.USER_I]
+        user_session = self.sessions[self.U1]
         user_shops = self.session_to_shops[user_session]
         prods = [
             p for p in self.product_to_shop.keys()
             if all(map(lambda s: p not in self.shop_to_products[s], user_shops))
         ]
-        assert all(map(lambda p: self.commerce_system.save_product_to_cart(
+        self.assertTrue(all(map(lambda p: self.commerce_system.save_product_to_cart(
             user_session, self.product_to_shop[p], p
-        ), prods))
+        ), prods)))
         transaction_status = self.commerce_system.purchase_cart(user_session)
-        assert transaction_status.get("status", False)
+        self.assertTrue(transaction_status.get("status", False))
 
     def test_get_user_transactions(self):
         self.test_purchase_product()
         self.PROD_I += 1
         self.test_purchase_product()
         self.PROD_I -= 1
-        user = self.sessions[self.USER_I]
+        user = self.sessions[self.U1]
         purchase_history = self.commerce_system.get_personal_purchase_history(user)
-        assert len(purchase_history) == 2
+        self.assertTrue(len(purchase_history) == 2)
 
     def test_get_shop_transactions(self):
-        pass
-
-    def test_shop_manager_action_without_permissions(self):
-        pass
+        NUM_PRODUCTS = 3
+        products_purchased = make_purchases(
+            self.commerce_system, self.sessions[self.U1], self.shop_ids[self.SHOP_I],
+            self.shop_to_products[self.shop_ids[self.SHOP_I]][:NUM_PRODUCTS]
+        )
+        transactions = self.commerce_system.get_shop_transactions(
+            self.sessions[self.U1], self.shop_ids[self.SHOP_I]
+        )
+        self.assertTrue(len(transactions) == NUM_PRODUCTS)
+        self.assertTrue(
+            all(map(lambda pid:
+                any(map(lambda t: t["product_id"] == pid,
+                    transactions)),
+                products_purchased))
+        )
 
     def test_get_system_transactions(self):
-        pass
+        products_purchased = []
+        for i in range(3):
+            products_purchased.extend(make_purchases(
+                self.commerce_system, self.sessions[i], self.shop_ids[i], self.shop_to_products[i]
+            ))
+        transactions = self.commerce_system.get_system_transactions()
+        self.assertTrue(len(transactions) == len(products_purchased))
+        self.assertTrue(
+            all(map(lambda pid:
+                any(map(lambda t: t["product_id"] == pid,
+                    transactions)),
+                products_purchased))
+        )
 
 
 class TestsWithData(TestCase):
 
     def setUp(self) -> None:
-        self.commerce_system = Driver.get_commerce_system_facade()
+        self.commerce_system = Driver.get_system_service()
+
 
     def test_get_shop_info(self):
-        pass
+        shop_info = self.commerce_system.get_shop_info()
 
     def test_get_shop_info_bad_shop_id(self):
         self.assertFalse(self.commerce_system.get_shop_info("non_existing_shop_id"))
@@ -414,8 +444,8 @@ class TestsWithData(TestCase):
 class ParallelismTests(TestCase):
 
     def setUp(self) -> None:
-        self.commerce_system = Driver.get_commerce_system_facade()
-        self.session_id = enter_register_and_login(users[0])
+        self.commerce_system = Driver.get_system_service()
+        self.session_id = enter_register_and_login(self.commerce_system, users[0])
 
     @staticmethod
     def run_parallel_test(f1, f2):
