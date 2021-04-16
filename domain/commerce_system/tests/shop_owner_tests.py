@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import MagicMock
 
-from domain.commerce_system.appointment_state import ShopOwner
+from domain.commerce_system.appointment import ShopOwner
 from domain.commerce_system.product import Product
 from domain.commerce_system.shop import Shop
 
