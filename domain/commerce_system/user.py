@@ -112,14 +112,3 @@ class Guest(UserState):
 
     def register(self, username: str, password: str, **user_details):
         return Subscribed(username, password)
-
-
-class Subscribed(UserState):
-
-    def __init__(self, user_name: str, password: str, **user_details):  # TO add relevant fields
-        self.user_name = user_name
-        self.password = password
-
-
-class AppointmentState:
-    pass

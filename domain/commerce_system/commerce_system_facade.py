@@ -2,6 +2,8 @@ import threading
 from typing import Dict, List
 
 from domain.commerce_system.facade import ICommerceSystemFacade
+from domain.commerce_system.product import Product
+from domain.commerce_system.shop import Shop
 from domain.commerce_system.user import User, Subscribed, Guest
 import domain.commerce_system.valdiation as validate
 
@@ -37,26 +39,54 @@ class CommerceSystemFacade(ICommerceSystemFacade):
     def get_personal_purchase_history(self, session_id: int) -> List[dict]:
         pass
 
-    def add_product_to_shop(self, session_id: int, shop_id: str, **product_info) -> int:
+    """NEEDS TO BE CHANGED - HANDLE TRANSPORTING PRODUCT DATA DIFFERENTLY"""
+    def add_product_to_shop(self, user_id: int, shop_id: str, product: Product) -> int:
+        shop = self.get_shop(shop_id)
+        worker = self.get_user(user_id).user_state
+        return worker.add_product(shop, product)
+
+    def edit_product_info(self, user_id: int, shop_id: str, product_id: int, **product_info):
+        shop = self.get_shop(shop_id)
+        worker = self.get_user(user_id).user_state
+        worker.edit_product_info(shop, product_id, **product_info)
+
+    def delete_product(self, user_id: int, shop_id: str, product_id: str) -> bool:
+        shop = self.get_shop(shop_id)
+        worker = self.get_user(user_id).user_state
+        worker.delete_product(shop, product_id)
+
+    def appoint_shop_owner(self, user_id: int, shop_id: int, username: str):
+        shop = self.get_shop(shop_id)
+        owner = self.get_user(user_id).user_state.get_appointment(shop)
+        new_owner = self.get_subscribed(username)
+        new_owner.appoint_owner(owner, shop)
+
+    def appoint_shop_manager(self, user_id: int, shop_id: int, username: str, permissions: List[str]):
+        shop = self.get_shop(shop_id)
+        owner = self.get_user(user_id).user_state.get_appointment(shop)
+        new_owner = self.get_subscribed(username)
+        new_owner.appoint_manager(owner, shop, permissions)
+
+    def edit_manager_permissions(self, user_id: int, shop_id: int, username: str, permissions: List[str]):
+        shop = self.get_shop(shop_id)
+        owner = self.get_user(user_id).user_state.get_appointment(shop)
+        new_owner = self.get_subscribed(username)
+        new_owner.edit_manager_permissions(owner, shop, permissions)
+
+    def unappoint_shop_worker(self, user_id: int, shop_id: int, username: str):
         pass
 
-    def edit_product_info(self, session_id: int, shop_id: str, **product_info) -> bool:
-        pass
+    def un_appoint_manager(self, user_id: int, shop_id: int, username: str):
+        shop = self.get_shop(shop_id)
+        owner = self.get_user(user_id).user_state.get_appointment(shop)
+        new_owner = self.get_subscribed(username)
+        new_owner.un_appoint_manager(owner, shop)
 
-    def delete_product(self, session_id: int, shop_id: str, product_id: str) -> bool:
-        pass
-
-    def appoint_shop_owner(self, session_id: int, shop_id: str, username: str) -> bool:
-        pass
-
-    def appoint_shop_manager(self, session_id: int, shop_id: str, username: str, permissions: List[str]) -> bool:
-        pass
-
-    def edit_manager_permissions(self, session_id: int, shop_id: str, username: str, permissions: dict) -> bool:
-        pass
-
-    def unappoint_shop_worker(self, session_id: int, shop_id: str, username: str) -> bool:
-        pass
+    def unappoint_shop_owner(self, user_id: int, shop_id: int, username: str):
+        shop = self.get_shop(shop_id)
+        owner = self.get_user(user_id).user_state.get_appointment(shop)
+        new_owner = self.get_subscribed(username)
+        new_owner.un_appoint_owner(owner, shop)
 
     def get_shop_staff_info(self, session_id: int, shop_id: str) -> List[dict]:
         pass
@@ -69,10 +99,12 @@ class CommerceSystemFacade(ICommerceSystemFacade):
 
     active_users_lock = threading.Lock()
     registered_users_lock = threading.Lock()
+    shops_lock = threading.Lock()
 
     def __init__(self):
-        self.active_users: Dict[int, User] = {}  # dictionary {user.id : user object}
-        self.registered_users: Dict[str, Subscribed] = {}  # dictionary {user.username : user object}
+        self.active_users: Dict[int, User] = {}             # dictionary {user.id : user object}
+        self.registered_users: Dict[str, Subscribed] = {}   # dictionary {user.username : user object}
+        self.shops: Dict[int, Shop] = {}                    # dictionary {shop.shop_id : shop}
 
     def enter(self) -> int:
         new_user = User()
@@ -115,3 +147,21 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         self.active_users_lock.acquire()
         self.active_users.get(user_id).set_user_state(Guest())
         self.active_users_lock.release()
+
+    def get_user(self, user_id) -> User:
+        self.active_users_lock.acquire()
+        ret = self.active_users[user_id]
+        self.active_users_lock.release()
+        return ret
+
+    def get_subscribed(self, username) -> Subscribed:
+        self.registered_users_lock.acquire()
+        ret = self.registered_users[username]
+        self.registered_users_lock.release()
+        return ret
+
+    def get_shop(self, shop_id) -> Shop:
+        self.shops_lock.acquire()
+        ret = self.shops[shop_id]
+        self.shops_lock.release()
+        return ret
