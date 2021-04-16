@@ -6,21 +6,24 @@ from domain.commerce_system.shop import Shop
 
 
 class Appointment:
-    pass
+    appointer: ShopOwner = None
+    shop: Shop = None
+
+    def __init__(self, shop: Shop, appointer=None):
+        self.shop = shop
+        self.appointer = appointer
 
 
 class ShopManager(Appointment):
     def __init__(self, shop: Shop, appointer: ShopOwner):
-        self.shop = shop
-        self.appointer = appointer
+        super().__init__(shop, appointer)
 
 
 class ShopOwner(Appointment):
     def __init__(self, shop: Shop, appointer=None):
-        self.appointer = appointer
+        super().__init__(shop, appointer)
         self.owner_appointees = []
         self.manager_appointees = []
-        self.shop = shop
 
     """ adds manager appointment to selected subscribed user"""
     def appoint_manager(self, sub):
@@ -56,22 +59,31 @@ class ShopOwner(Appointment):
     def edit_manager_perms(self, manager_sub, perms: List[str]):
         pass
     
-    def un_appoint_manager(self, manager_sub):
+    def un_appoint_manager(self, manager_sub, cascading=False):
         if self.shop in manager_sub.appointments.keys() and isinstance(manager_sub.appointments[self.shop],
                                                                        ShopManager):
             if manager_sub in self.manager_appointees:
                 self.remove_appointment(manager_sub)
-                self.manager_appointees.remove(manager_sub)
+                if not cascading:
+                    self.manager_appointees.remove(manager_sub)
             else:
                 raise Exception("manager was not assigned by this owner")
         else:
             raise Exception("user is not a manager")
 
-    def un_appoint_owner(self, owner_sub):
+    def un_appoint_appointees(self):
+        for owner in self.owner_appointees:
+            self.un_appoint_owner(owner, cascading=True)
+        for manager in self.manager_appointees:
+            self.un_appoint_manager(manager, cascading=True)
+
+    def un_appoint_owner(self, owner_sub, cascading=False):
         if self.shop in owner_sub.appointments.keys() and isinstance(owner_sub.appointments[self.shop], ShopOwner):
             if owner_sub in self.owner_appointees:
+                owner_sub.appointments[self.shop].un_appoint_appointees()
                 self.remove_appointment(owner_sub)
-                self.owner_appointees.remove(owner_sub)
+                if not cascading:
+                    self.owner_appointees.remove(owner_sub)
             else:
                 raise Exception("owner was not assigned by this owner")
         else:

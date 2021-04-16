@@ -63,9 +63,21 @@ class TestShopOwner(unittest.TestCase):
         new_sub = Subscribed("new sub")
         new_sub2 = Subscribed("new sub")
         app2 = ShopOwner(self.test_shop, self.owner_app)
+        new_sub2.appointments[self.test_shop] = app2
         new_sub.appoint_manager(self.owner_sub, self.test_shop)
         try:
             new_sub.un_appoint_manager(new_sub2, self.test_shop)
             assert False
         except Exception as e:
             pass
+
+    def test_cascade_owner_unappointment(self):
+        print("test")
+        new_sub = Subscribed("new sub")
+        new_sub2 = Subscribed("new sub")
+        new_sub3 = Subscribed("new sub")
+        new_sub.appoint_owner(self.owner_sub, self.test_shop)
+        new_sub2.appoint_owner(new_sub, self.test_shop)
+        new_sub3.appoint_owner(new_sub, self.test_shop)
+        new_sub.un_appoint_owner(self.owner_sub, self.test_shop)
+        assert self.test_shop not in new_sub3.appointments.keys()
