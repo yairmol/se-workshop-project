@@ -3,7 +3,7 @@ import threading
 from datetime import datetime
 from typing import List
 
-from domain.commerce_system.appointments import Appointment
+from domain.commerce_system.appointment import Appointment
 from domain.commerce_system.permission import Permission
 from domain.commerce_system.product import Product
 from domain.commerce_system.productDTO import ProductDTO
