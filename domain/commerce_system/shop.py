@@ -5,6 +5,7 @@ class Shop:
     def __init__(self, shop_id: int):
         self.shop_id = shop_id
         self.products = {}
+        self.transaction_history = []
 
     """ quantity has to be no more than available product quantity"""
     def sell_product(self, product_id: str, quantity: int, payment_details: dict) -> bool: # add payment
@@ -35,7 +36,11 @@ class Shop:
             product.__dict__[field] = new_value
 
     def get_shop_info(self) -> str:
-        raise NotImplementedError()
+        s = ""
+        for p_id, p_val in self.products:
+            s += "store product id: ", p_id, "\nproduct id: ", p_val.product_id, "\nproduct name: ",\
+                 p_val.name, "\nprice: ", p_val.price
+        return s
 
     def get_free_id(self) -> int:
         last_id = 1
@@ -59,3 +64,6 @@ class Shop:
             if supply_product.name == product_name:
                 product_id = p_id
         return product_id
+
+    def add_transaction(self, transaction):
+        pass

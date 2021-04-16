@@ -58,6 +58,19 @@ class TestAuthenticator(unittest.TestCase):
         ret_val = auth.remove_token(other_token)
         assert ret_val == -1
 
+    def test_is_token_expired1(self):
+        auth = Authenticator()
+        user_id = 2
+        dummy_token = '12345678'
+        auth.generate_token = MagicMock(return_value=dummy_token)
+        auth.add_new_user_token(user_id)
+        assert not auth.is_token_expired(dummy_token)
 
-
-
+    def test_is_token_expired2(self):
+        auth = Authenticator()
+        user_id = 2
+        dummy_token = '12345678'
+        auth.generate_token = MagicMock(return_value=dummy_token)
+        auth.add_new_user_token(user_id)
+        other_token = '12345677'
+        assert auth.is_token_expired(other_token)
