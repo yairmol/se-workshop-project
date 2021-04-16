@@ -1,5 +1,5 @@
 import threading
-from typing import Dict
+from typing import Dict, List
 
 from domain.commerce_system.facade import ICommerceSystemFacade
 from domain.commerce_system.user import User, Subscribed, Guest
@@ -7,6 +7,66 @@ import domain.commerce_system.valdiation as validate
 
 
 class CommerceSystemFacade(ICommerceSystemFacade):
+    def exit(self, session_id: int) -> bool:
+        pass
+
+    def get_shop_info(self, shop_id: str) -> dict:
+        pass
+
+    def save_product_to_cart(self, session_id: int, shop_id: str, product_id: str) -> bool:
+        pass
+
+    def get_cart_info(self, session_id: int) -> dict:
+        pass
+
+    def search_products(self, keywords: str, filters: list) -> List[dict]:
+        pass
+
+    def search_shops(self, keywords: str, filters: list) -> List[dict]:
+        pass
+
+    def purchase_cart(self, session_id: int) -> dict:
+        pass
+
+    def purchase_product(self, session_id: int, shop_id: str, product_id: str) -> dict:
+        pass
+
+    def open_shop(self, session_id: int, **shop_details) -> int:
+        pass
+
+    def get_personal_purchase_history(self, session_id: int) -> List[dict]:
+        pass
+
+    def add_product_to_shop(self, session_id: int, shop_id: str, **product_info) -> int:
+        pass
+
+    def edit_product_info(self, session_id: int, shop_id: str, **product_info) -> bool:
+        pass
+
+    def delete_product(self, session_id: int, shop_id: str, product_id: str) -> bool:
+        pass
+
+    def appoint_shop_owner(self, session_id: int, shop_id: str, username: str) -> bool:
+        pass
+
+    def appoint_shop_manager(self, session_id: int, shop_id: str, username: str, permissions: List[str]) -> bool:
+        pass
+
+    def edit_manager_permissions(self, session_id: int, shop_id: str, username: str, permissions: dict) -> bool:
+        pass
+
+    def unappoint_shop_worker(self, session_id: int, shop_id: str, username: str) -> bool:
+        pass
+
+    def get_shop_staff_info(self, session_id: int, shop_id: str) -> List[dict]:
+        pass
+
+    def get_shop_transaction_history(self, session_id: int, shop_id: str) -> List[dict]:
+        pass
+
+    def get_system_transaction_history(self, session_id: int) -> List[dict]:
+        pass
+
     active_users_lock = threading.Lock()
     registered_users_lock = threading.Lock()
 

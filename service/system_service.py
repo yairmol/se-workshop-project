@@ -1,7 +1,9 @@
 from domain.auth.authenticator import Authenticator
-from domain.commerce_system.commerceSystemFacade import CommerceSystemFacade
-from domain.commerce_system.facade import ICommerceSystemFacade
+from domain.commerce_system.commerce_system_facade import CommerceSystemFacade
 
+
+class TokenNotValidException(Exception):
+    pass
 
 
 class SystemService:
@@ -9,7 +11,6 @@ class SystemService:
     def __init__(self, commerce_system_facade: CommerceSystemFacade, authenticator: Authenticator):
         self.commerce_system_facade = commerce_system_facade
         self.authenticator = authenticator
-        # self.user_management = UserManagement(Authenticator())
 
     def enter(self) -> str:  # returns the new user's token
         new_user_id = self.commerce_system_facade.enter()
@@ -78,7 +79,3 @@ class SystemService:
         except AssertionError as e:
             print(e)
             return False
-
-
-class TokenNotValidException(Exception):
-    pass
