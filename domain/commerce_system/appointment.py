@@ -27,19 +27,19 @@ class ShopOwner(Appointment):
 
     """ adds manager appointment to selected subscribed user"""
     def appoint_manager(self, sub):
-        appointment = ShopManager(self.shop, self)
         apps = sub.appointments
         if self.shop in apps.keys():
             raise Exception("subscriber already has appointment for shop. shop id - ", self.shop.shop_id)
+        appointment = ShopManager(self.shop, self)
         apps[self.shop] = appointment
         self.manager_appointees += [sub]
 
     """ adds owner appointment to selected subscribed user"""
     def appoint_owner(self, sub):
-        appointment = ShopOwner(self.shop, self)
         apps = sub.appointments
         if self.shop in apps.keys():
             raise Exception("subscriber already has appointment for shop. shop id - ", self.shop.shop_id)
+        appointment = ShopOwner(self.shop, self)
         apps[self.shop] = appointment
         self.owner_appointees += [sub]
 
