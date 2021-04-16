@@ -1,4 +1,6 @@
-from typing import List
+from typing import List, Dict
+
+from domain.commerce_system.user import User
 
 
 class ICommerceSystemFacade:
@@ -8,23 +10,22 @@ class ICommerceSystemFacade:
         """enter the system. returns a session id for user identification"""
         raise NotImplementedError()
 
-    def exit(self, session_id: str) -> bool:
+    def exit(self, session_id: int) -> bool:
         """exit the system"""
         raise NotImplementedError()
 
-    def register(self, session_id: str, username: str, password: str, email: str, **additional_details) -> bool:
+    def register(self, user_id: int, username: str, password: str, email: str, **additional_details) -> bool:
         """
         register a new user (subscriber) to the system
-        :param session_id:
+        :param user_id:
         :param username:
         :param password:
         :param email:
         :param additional_details: additional user details TBD
         :return: True on success
         """
-        raise NotImplementedError()
 
-    def login(self, session_id: str, username: str, password: str) -> bool:
+    def login(self, session_id: int, username: str, password: str) -> bool:
         """
         associate the user identified by session_id with the profile of
         the subscribed user identified by username iff <username, password>
@@ -33,7 +34,7 @@ class ICommerceSystemFacade:
         """
         raise NotImplementedError()
 
-    def logout(self, session_id: str) -> bool:
+    def logout(self, session_id: int) -> bool:
         """
         perform a logout to the user associated with the given session_id
         :param session_id:
@@ -47,7 +48,7 @@ class ICommerceSystemFacade:
         """
         raise NotImplementedError()
 
-    def save_product_to_cart(self, session_id: str, shop_id: str, product_id: str) -> bool:
+    def save_product_to_cart(self, session_id: int, shop_id: str, product_id: str) -> bool:
         """
         saves a product to a shopping bag in the shopping cart of the user idetified by session_id
         :param session_id: user identifier
@@ -57,7 +58,7 @@ class ICommerceSystemFacade:
         """
         raise NotImplementedError()
 
-    def get_cart_info(self, session_id: str) -> dict:
+    def get_cart_info(self, session_id: int) -> dict:
         """
         returns a dictionary containing the cart information of the user identified by session_id
         in the format of
@@ -92,7 +93,7 @@ class ICommerceSystemFacade:
         """
         raise NotImplementedError()
 
-    def purchase_cart(self, session_id: str) -> dict:
+    def purchase_cart(self, session_id: int) -> dict:
         """
         make a purchase of the entire shopping cart of a user (i.e. all shopping bags)
         :param session_id: identifies the user making the purchase
@@ -101,7 +102,7 @@ class ICommerceSystemFacade:
         """
         raise NotImplementedError()
 
-    def purchase_product(self, session_id: str, shop_id: str, product_id: str) -> dict:
+    def purchase_product(self, session_id: int, shop_id: str, product_id: str) -> dict:
         """
         buy a single product
         :param session_id: session id of the user purchasing the product
@@ -112,14 +113,14 @@ class ICommerceSystemFacade:
         raise NotImplementedError()
 
     # Subscribed actions
-    def open_shop(self, session_id: str, **shop_details) -> str:
+    def open_shop(self, session_id: int, **shop_details) -> int:
         """
         opens a new shop in the system. the user identified by session_id is now the shop founder
         :return the shop id if operation was successful
         """
         raise NotImplementedError()
 
-    def get_personal_purchase_history(self, session_id: str) -> List[dict]:
+    def get_personal_purchase_history(self, session_id: int) -> List[dict]:
         """
         :param session_id: user identifier
         :return: returns a list of all transactions made by the user identified by session_id
@@ -127,7 +128,7 @@ class ICommerceSystemFacade:
         raise NotImplementedError()
 
     # shop owner/manager actions
-    def add_product_to_shop(self, session_id: str, shop_id: str, **product_info) -> str:
+    def add_product_to_shop(self, session_id: int, shop_id: str, **product_info) -> int:
         """
         adds a new product to the shop identified by shop_id.
         this action succeeds iff the user identified by session_id has the proper authorization
@@ -136,7 +137,7 @@ class ICommerceSystemFacade:
         """
         raise NotImplementedError()
 
-    def edit_product_info(self, session_id: str, shop_id: str, **product_info) -> bool:
+    def edit_product_info(self, session_id: int, shop_id: str, **product_info) -> bool:
         """
         edit the product info of a product identified by product_id in shop identified by shop_id.
         this action succeeds iff the user identified by session_id has the proper authorization
@@ -145,7 +146,7 @@ class ICommerceSystemFacade:
         """
         raise NotImplementedError()
 
-    def delete_product(self, session_id: str, shop_id: str, product_id: str) -> bool:
+    def delete_product(self, session_id: int, shop_id: str, product_id: str) -> bool:
         """
         edit the product info of a product identified by product_id in shop identified by shop_id.
         this action succeeds iff the user identified by session_id has the proper authorization
@@ -153,7 +154,7 @@ class ICommerceSystemFacade:
         """
         raise NotImplementedError()
 
-    def appoint_shop_owner(self, session_id: str, shop_id: str, username: str) -> bool:
+    def appoint_shop_owner(self, session_id: int, shop_id: str, username: str) -> bool:
         """
         appoint the user identified by ysername as an owner of the shop identified by shop_id.
         this action succeeds iff the user identified by session_id has the proper authorization - he is a shop owner
@@ -164,7 +165,7 @@ class ICommerceSystemFacade:
         """
         raise NotImplementedError()
 
-    def appoint_shop_manager(self, session_id: str, shop_id: str, username: str, permissions: List[str]) -> bool:
+    def appoint_shop_manager(self, session_id: int, shop_id: str, username: str, permissions: List[str]) -> bool:
         """
         appoint the user identified by ysername as a manager of the shop identified by shop_id with permissions
         given by permissions param.
@@ -178,7 +179,7 @@ class ICommerceSystemFacade:
         """
         raise NotImplementedError()
 
-    def edit_manager_permissions(self, session_id: str, shop_id: str, username: str, permissions: dict) -> bool:
+    def edit_manager_permissions(self, session_id: int, shop_id: str, username: str, permissions: dict) -> bool:
         """
         this action succeeds iff the user identified by session_id has the proper authorization, the user identified
         bu username is a manager of the shop identified by shop_id and the permissions are legal
@@ -191,22 +192,22 @@ class ICommerceSystemFacade:
         """
         raise NotImplementedError()
 
-    def unappoint_shop_worker(self, session_id: str, shop_id: str, username: str) -> bool:
+    def unappoint_shop_worker(self, session_id: int, shop_id: str, username: str) -> bool:
         """
         unappoint the user identified by username from his role in the shop identified by shop_id
         Action succeeds iff the user of session_id has authorization and user of username is a shop worker.
         """
         raise NotImplementedError()
 
-    def get_shop_staff_info(self, session_id: str, shop_id: str) -> List[dict]:
+    def get_shop_staff_info(self, session_id: int, shop_id: str) -> List[dict]:
         """
         Action succeeds iff user of session_id has proper authorization
         """
         raise NotImplementedError()
 
-    def get_shop_transaction_history(self, session_id: str, shop_id: str) -> List[dict]:
+    def get_shop_transaction_history(self, session_id: int, shop_id: str) -> List[dict]:
         raise NotImplementedError()
 
     # system admin actions
-    def get_system_transaction_history(self, session_id: str) -> List[dict]:
+    def get_system_transaction_history(self, session_id: int) -> List[dict]:
         raise NotImplementedError()
