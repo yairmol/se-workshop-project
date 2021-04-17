@@ -2,6 +2,7 @@ from typing import List
 
 from domain.auth.authenticator import Authenticator
 from domain.commerce_system.commerce_system_facade import CommerceSystemFacade
+from domain.logger.log import event_logger, error_logger
 
 
 class TokenNotValidException(Exception):
@@ -24,6 +25,7 @@ class SystemService:
 
     def enter(self) -> str:  # returns the new user's token
         new_user_id = self.commerce_system_facade.enter()
+        event_logger.info("A User entered the system, got id: " + str(new_user_id))
         token = self.authenticator.add_new_user_token(new_user_id)
         return token
 
@@ -33,6 +35,7 @@ class SystemService:
             if self.authenticator.is_token_expired(token):
                 raise Exception("User: " + str(user_id) + " Token's is not valid")
             self.authenticator.remove_token(token)
+            event_logger.info("User " + str(user_id) + " exit the system")
         except Exception as e:
             print(e)
         finally:
@@ -43,8 +46,10 @@ class SystemService:
         if self.is_valid_token(token):
             try:
                 user_id = self.authenticator.get_id_by_token(token)
+                event_logger.info("User: " + str(user_id) +
+                                  " tries to register with username: " + username + "password: " + password)
                 self.commerce_system_facade.register(user_id, username, password, **more)
-                print("LOG: User: " + str(user_id) + " Registered Successfully")
+                event_logger.info("User: " + str(user_id) + " Registered Successfully")
                 return True
             except AssertionError as e:
                 print(e)
@@ -56,8 +61,10 @@ class SystemService:
         if self.is_valid_token(token):
             try:
                 user_id = self.authenticator.get_id_by_token(token)
+                event_logger.info("User: " + str(user_id) +
+                                  " tries to login with username: " + username + "password: " + password)
                 self.commerce_system_facade.login(user_id, username, password)
-                print("LOG: User: " + str(user_id) + " Logged in Successfully")
+                event_logger.info("User: " + str(user_id) + " Logged in Successfully")
                 return True
             except AssertionError as e:
                 print(e)
@@ -69,7 +76,7 @@ class SystemService:
             try:
                 user_id = self.authenticator.get_id_by_token(token)
                 self.commerce_system_facade.logout(user_id)
-                print("LOG: User: " + str(user_id) + " Logged Out Successfully")
+                event_logger.info("LOG: User: " + str(user_id) + " Logged Out Successfully")
                 return True
             except AssertionError as e:
                 print(e)
@@ -85,20 +92,24 @@ class SystemService:
         if self.is_valid_token(token):
             try:
                 user_id = self.authenticator.get_id_by_token(token)
+                event_logger.info("User: " + str(user_id) +
+                                  " tries to edit product info of shop_id: " + shop_id + "product_id: " + str(product_id))
                 self.commerce_system_facade.edit_product_info(user_id, shop_id, product_id, product_info)
-                print("LOG: User: " + str(user_id) + " Edit product info successfully")
+                event_logger.info("User: " + str(user_id) + " Edit product info successfully")
                 return True
             except AssertionError as e:
                 print(e)
                 return False
         return False
 
-    def delete_product(self, token: str, shop_id: str, product_id: str) -> bool:
+    def delete_product(self, token: str, shop_id: str, product_id: int) -> bool:
         if self.is_valid_token(token):
             try:
                 user_id = self.authenticator.get_id_by_token(token)
+                event_logger.info("User: " + str(user_id) +
+                                  " tries to delete product of shop_id: " + shop_id + "product_id: " + str(product_id))
                 self.commerce_system_facade.delete_product(user_id, shop_id, product_id)
-                print("LOG: User: " + str(user_id) + " Delete product info successfully")
+                event_logger.info("User: " + str(user_id) + " Delete product info successfully")
                 return True
             except AssertionError as e:
                 print(e)
@@ -109,8 +120,10 @@ class SystemService:
         if self.is_valid_token(token):
             try:
                 user_id = self.authenticator.get_id_by_token(token)
+                event_logger.info("User: " + str(user_id) +
+                                  " tries to appoint manager: " + username + " to shop_id: " + str(shop_id))
                 self.commerce_system_facade.appoint_shop_manager(user_id, shop_id, username, permissions)
-                print("LOG: User: " + str(user_id) + " Appointed shop manager: " + username + " successfully")
+                event_logger.info("User: " + str(user_id) + " Appointed shop manager: " + username + " successfully")
                 return True
             except AssertionError as e:
                 print(e)
@@ -121,8 +134,10 @@ class SystemService:
         if self.is_valid_token(token):
             try:
                 user_id = self.authenticator.get_id_by_token(token)
+                event_logger.info("User: " + str(user_id) +
+                                  " tries to appoint owner: " + username + " to shop_id: " + str(shop_id))
                 self.commerce_system_facade.appoint_shop_owner(user_id, shop_id, username)
-                print("LOG: User: " + str(user_id) + " Appointed shop owner: " + username + " successfully")
+                event_logger.info("User: " + str(user_id) + " Appointed shop owner: " + username + " successfully")
                 return True
             except AssertionError as e:
                 print(e)
@@ -133,8 +148,10 @@ class SystemService:
         if self.is_valid_token(token):
             try:
                 user_id = self.authenticator.get_id_by_token(token)
+                event_logger.info("User: " + str(user_id) +
+                                  " tries to edit manager permissions of: " + username + " in shop_id: " + str(shop_id))
                 self.commerce_system_facade.edit_manager_permissions(user_id, shop_id, username, permissions)
-                print("LOG: User: " + str(user_id) + " Edited manager: " + username + " permissions successfully")
+                event_logger.info("User: " + str(user_id) + " Edited manager: " + username + " permissions successfully")
                 return True
             except AssertionError as e:
                 print(e)
@@ -145,8 +162,10 @@ class SystemService:
         if self.is_valid_token(token):
             try:
                 user_id = self.authenticator.get_id_by_token(token)
+                event_logger.info("User: " + str(user_id) +
+                                  " tries to un appoint manager: " + username + " of shop_id: " + str(shop_id))
                 self.commerce_system_facade.un_appoint_manager(user_id, shop_id, username)
-                print("LOG: User: " + str(user_id) + " Un appointed manager: " + username + " successfully")
+                event_logger.info("User: " + str(user_id) + " Un appointed manager: " + username + " successfully")
                 return True
             except AssertionError as e:
                 print(e)
@@ -157,8 +176,10 @@ class SystemService:
         if self.is_valid_token(token):
             try:
                 user_id = self.authenticator.get_id_by_token(token)
+                event_logger.info("User: " + str(user_id) +
+                                  " tries to un appoint owner: " + username + " of shop_id: " + str(shop_id))
                 self.commerce_system_facade.unappoint_shop_owner(user_id, shop_id, username)
-                print("LOG: User: " + str(user_id) + " Un appointed owner: " + username + " successfully")
+                event_logger.info("User: " + str(user_id) + " Un appointed owner: " + username + " successfully")
                 return True
             except AssertionError as e:
                 print(e)
