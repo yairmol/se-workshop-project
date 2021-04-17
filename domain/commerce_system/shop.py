@@ -32,7 +32,7 @@ class Shop:
     """ edit product receives product id and a dict of fields to alter and the new values.
         MAKE SURE THE FIELD NAMES ARE ACCURATE"""
     def edit_product(self, product_id, **to_edit) -> bool:
-        if not self.products.has_key(product_id):
+        if product_id not in self.products:
             raise Exception("no product with id=", product_id)
         product = self.products[product_id]
         for field, new_value in to_edit.items():
