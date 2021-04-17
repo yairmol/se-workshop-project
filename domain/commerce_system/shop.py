@@ -1,23 +1,35 @@
 import threading
+from typing import Dict
 
 from domain.commerce_system.product import Product
-from domain.commerce_system.productDTO import ProductDTO
 from domain.commerce_system.transactionDTO import TransactionDTO
 
 
-class Shop:
-    def __init__(self, shop_id: int):
-        self.shop_id = shop_id
-        self.products = {}
-        self.transaction_history = []
-        self.products_lock = threading.lock()
+SHOP_NAME = "shop_name"
+SHOP_DESC = "description"
+SHOP_ID = "shop_id"
+SHOP_PRODS = "products"
 
-    """ quantity has to be no more than available product quantity"""
-    def sell_product(self, product_id: str, quantity: int, payment_details: dict) -> bool: # add payment
-        available_quantity = self.products[product_id].quantity
-        if available_quantity < quantity:
-            return False
-        return True
+
+class Shop:
+    def __init__(self, shop_id: int, **shop_info):
+        self.shop_id = shop_id
+        assert SHOP_NAME in shop_info
+        self.name: str = shop_info[SHOP_NAME]
+        self.description: str = shop_info.get(SHOP_DESC, "")
+        self.products: Dict[int, Product] = {}
+        self.transaction_history = []
+        self.products_lock = threading.Lock()
+
+    def to_dict(self):
+        ret = {
+            SHOP_ID: self.shop_id,
+            SHOP_NAME: self.name,
+            SHOP_PRODS: list(map(lambda p: p.to_dict(), self.products.values()))
+        }
+        if self.description:
+            ret[SHOP_DESC] = self.description
+        return ret
 
     """ returns product_id if successful"""
     def add_product(self, product: Product) -> int:

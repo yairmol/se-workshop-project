@@ -1,5 +1,8 @@
 from typing import List, Dict
 
+from domain.commerce_system.commerce_system_facade import ProductDTO
+from domain.commerce_system.user import User
+
 
 class ICommerceSystemFacade:
 

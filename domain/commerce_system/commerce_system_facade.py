@@ -8,11 +8,13 @@ import domain.commerce_system.valdiation as validate
 
 
 class CommerceSystemFacade(ICommerceSystemFacade):
+
     def exit(self, session_id: int) -> bool:
         pass
 
-    def get_shop_info(self, shop_id: str) -> dict:
-        pass
+    def get_shop_info(self, shop_id: int) -> dict:
+        shop: Shop = self.shops[shop_id]
+        return shop.to_dict()
 
     def save_product_to_cart(self, session_id: int, shop_id: str, product_id: str) -> bool:
         pass
@@ -51,7 +53,7 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         assert "product_id" in product_info
         worker.edit_product(shop, product_info["product_id"], **product_info)
 
-    def delete_product(self, user_id: int, shop_id: str, product_id: int) -> bool:
+    def delete_product(self, user_id: int, shop_id: str, product_id: str) -> bool:
         shop = self.get_shop(shop_id)
         worker = self.get_user(user_id).user_state
         worker.delete_product(shop, product_id)
