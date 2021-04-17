@@ -4,7 +4,6 @@ from datetime import datetime
 from typing import List
 
 from domain.commerce_system.appointment import Appointment
-from domain.commerce_system.permission import Permission
 from domain.commerce_system.product import Product
 from domain.commerce_system.productDTO import ProductDTO
 from domain.commerce_system.shop import Shop
@@ -115,7 +114,7 @@ class User:
     def appoint_shop_owner(self, shop: Shop, user) -> Appointment:
         raise NotImplementedError()
 
-    def appoint_shop_manager(self, shop: Shop, user, permissions: List[Permission]) -> bool:
+    def appoint_shop_manager(self, shop: Shop, user, permissions: List[str]) -> bool:
         raise NotImplementedError()
 
     def unappoint_shop_worker(self, shop: Shop, user) -> bool:
@@ -195,6 +194,10 @@ class Subscribed(UserState):
     def appoint_owner(self, owner_sub: Subscribed, shop: Shop):
         session_app = owner_sub.get_appointment(shop)
         session_app.appoint_owner(self)
+
+    def promote_manager_to_owner(self, owner_sub: Subscribed, shop: Shop):
+        session_app = owner_sub.get_appointment(shop)
+        session_app.promote_manager_to_owner(self)
 
     def get_appointment(self, shop: Shop):
         try:

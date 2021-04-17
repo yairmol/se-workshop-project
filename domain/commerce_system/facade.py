@@ -161,7 +161,17 @@ class ICommerceSystemFacade:
         this action succeeds iff the user identified by session_id has the proper authorization - he is a shop owner
         :param session_id: identifier for user performing the action
         :param shop_id: shop identifier
-        :param username: username of the user to be appointed as shop manager
+        :param username: username of the user to be appointed as shop owner
+        :return: True on success
+        """
+        raise NotImplementedError()
+
+    def promote_shop_owner(self, session_id: int, shop_id: str, username: str) -> bool:
+        """
+        promote a shop manager, to shop owner
+        :param session_id: identifier for user performing the action
+        :param shop_id: shop identifier
+        :param username: username of the manager user to be appointed as shop owner
         :return: True on success
         """
         raise NotImplementedError()
@@ -197,6 +207,18 @@ class ICommerceSystemFacade:
         """
         unappoint the user identified by username from his role in the shop identified by shop_id
         Action succeeds iff the user of session_id has authorization and user of username is a shop worker.
+        """
+        raise NotImplementedError()
+
+    def unappoint_shop_manager(self, session_id: int, shop_id: str, username: str) -> bool:
+        """
+        unappoint, but for a specific role.
+        """
+        raise NotImplementedError()
+
+    def unappoint_shop_owner(self, session_id: int, shop_id: str, username: str) -> bool:
+        """
+        unappoint, but for a specific role.
         """
         raise NotImplementedError()
 

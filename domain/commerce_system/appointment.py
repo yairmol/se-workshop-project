@@ -3,6 +3,7 @@ from typing import List
 
 from domain.commerce_system.product import Product
 from domain.commerce_system.shop import Shop
+from domain.logger.log import error_logger
 
 
 class Appointment:
@@ -17,12 +18,10 @@ class Appointment:
         raise Exception("The Subscribed User doesn't have the permission to appoint manager")
 
     """ adds owner appointment to selected subscribed user"""
-
     def appoint_owner(self, sub):
         raise Exception("The Subscribed User doesn't have the permission to appoint owner")
 
     """ removes shop appointment from selected subscribed user"""
-
     def remove_appointment(self, sub):
         raise Exception("The Subscribed User doesn't have the permission to remove appointment")
 
@@ -84,6 +83,9 @@ class Appointment:
         raise Exception("Subscribed user does not have permission to perform action")
 
     def get_purchase_history(self):
+        raise Exception("Subscribed user does not have permission to perform action")
+
+    def promote_manager_to_owner(self, manager_sub):
         raise Exception("Subscribed user does not have permission to perform action")
 
 
@@ -192,6 +194,10 @@ class ShopOwner(Appointment):
                 raise Exception("owner was not assigned by this owner")
         else:
             raise Exception("user is not an owner")
+        
+    def promote_manager_to_owner(self, manager_sub):
+        self.un_appoint_manager(manager_sub)
+        self.appoint_owner(manager_sub)
 
     def get_shop_staff_info(self):
         pass

@@ -9,7 +9,7 @@ class Shop:
         self.shop_id = shop_id
         self.products = {}
         self.transaction_history = []
-        self.products_lock = threading.lock()
+        self.products_lock = threading.Lock()
 
     """ returns product_id if successful"""
     def add_product(self, product: Product) -> int:

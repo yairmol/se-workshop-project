@@ -27,6 +27,19 @@ class TestShopOwner(unittest.TestCase):
         except Exception as e:
             pass
 
+    def test_promote_appointment(self):
+        new_sub = Subscribed("new sub", "0")
+        new_sub.appoint_manager(self.owner_sub, self.test_shop, [])
+        new_sub.promote_manager_to_owner(self.owner_sub, self.test_shop)
+        assert self.test_shop in new_sub.appointments.keys()
+        assert isinstance(new_sub.appointments[self.test_shop], ShopOwner)
+        try:
+            new_shop = Shop(2)
+            new_sub.appoint_owner(self.owner_sub, new_shop)
+            assert False
+        except Exception as e:
+            pass
+
     def test_remove_manager(self):
         new_sub = Subscribed("new sub", "0")
         new_sub.appoint_manager(self.owner_sub, self.test_shop, [])

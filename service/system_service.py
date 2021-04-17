@@ -172,6 +172,21 @@ class SystemService:
                 return False
         return False
 
+    def promote_manager_to_owner(self, token: str, shop_id: int, username: str) -> bool:
+        if self.is_valid_token(token):
+            try:
+                user_id = self.authenticator.get_id_by_token(token)
+                event_logger.info("User: " + str(user_id) +
+                                  " tries to un promote manager: " + username + " of shop_id: " + str(shop_id))
+                self.commerce_system_facade.promote_shop_owner(user_id, shop_id, username)
+                event_logger.info("User: " + str(user_id) + "promoted manager: " + username + "to shop owner "
+                                                                                              "successfully")
+                return True
+            except AssertionError as e:
+                print(e)
+                return False
+        return False
+
     def un_appoint_shop_owner(self, token: str, shop_id: int, username: str):
         if self.is_valid_token(token):
             try:
