@@ -1,7 +1,4 @@
-from typing import List, Dict
-
-from domain.commerce_system.commerce_system_facade import ProductDTO
-from domain.commerce_system.user import User
+from typing import List
 
 
 class ICommerceSystemFacade:
@@ -162,7 +159,7 @@ class ICommerceSystemFacade:
 
     def appoint_shop_owner(self, user_id: int, shop_id: int, username: str) -> bool:
         """
-        appoint the user identified by ysername as an owner of the shop identified by shop_id.
+        appoint the user identified by username as an owner of the shop identified by shop_id.
         this action succeeds iff the user identified by user_id has the proper authorization - he is a shop owner
         :param user_id: identifier for user performing the action
         :param shop_id: shop identifier
@@ -173,7 +170,7 @@ class ICommerceSystemFacade:
 
     def appoint_shop_manager(self, user_id: int, shop_id: int, username: str, permissions: List[str]) -> bool:
         """
-        appoint the user identified by ysername as a manager of the shop identified by shop_id with permissions
+        appoint the user identified by username as a manager of the shop identified by shop_id with permissions
         given by permissions param.
         this action succeeds iff the user identified by user_id has the proper authorization - he is a shop owner
         :param user_id: identifier for user performing the action

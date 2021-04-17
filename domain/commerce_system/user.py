@@ -1,7 +1,7 @@
 from __future__ import annotations
 import threading
 from datetime import datetime
-from typing import List
+from typing import List, Dict
 
 from domain.commerce_system.appointment import Appointment
 from domain.commerce_system.permission import Permission
@@ -17,16 +17,15 @@ class User:
     counter_lock = threading.Lock()
 
     def __init__(self):
-        self.user_state = Guest()
+        self.user_state: UserState = Guest()
         self.counter_lock.acquire()
         self.id = self.__id_counter
         User.__id_counter = User.__id_counter + 1
         self.counter_lock.release()
         self.cart = ShoppingCart(self.id)
-        self.transactions: List[Transaction] = []
 
-    def login(self, username: str, password: str) -> bool:
-        raise NotImplementedError()
+    def login(self, sub_user: Subscribed):
+        self.user_state = sub_user
 
     def register(self, username: str, password: str, **user_details):
         return self.user_state.register(username, password)
@@ -60,7 +59,7 @@ class User:
             to_be_canceled = []
             check_if_canceled = False
             for shop, bag in self.cart:
-                products_dto = bag
+                products_dto = bag.get_products_dtos()
                 transaction = Transaction(shop, products_dto, payment_details, date, bag.calculate_price)
                 if not shop.add_transaction(bag, transaction):
                     self.cancel_orders(to_be_canceled)
@@ -73,7 +72,7 @@ class User:
                 self.cart.remove_all_shopping_bags()
 
     def add_transaction(self, transaction: Transaction):
-        raise NotImplementedError()
+        self.user_state.add_transaction(transaction)
 
     def remove_transaction(self, transaction: Transaction):
         raise NotImplementedError()
@@ -93,7 +92,7 @@ class User:
         raise NotImplementedError()
 
     def get_personal_transactions_history(self) -> List[Transaction]:
-        return self.transactions
+        return self.user_state.get_personal_transaction_history()
 
     def add_product(self, shop: Shop, **product_details) -> Product:
         raise NotImplementedError()
@@ -119,9 +118,6 @@ class User:
     def get_shop_transaction_history(self, shop: Shop) -> List[Transaction]:
         raise NotImplementedError()
 
-    def set_user_state(self, user_state: UserState):
-        self.user_state = user_state
-
 
 class UserState:
     def register(self, username: str, password: str, **user_details):
@@ -142,7 +138,7 @@ class UserState:
     def edit_product(self, shop: Shop, product_id: int, **to_edit):
         raise Exception("Error: Guest User cannot edit product")
 
-    def delete_product(self, shop: Shop, product_id: int):
+    def delete_product(self, shop: Shop, product_id: int) -> bool:
         raise Exception("Error: Guest User cannot delete product")
 
     def un_appoint_manager(self, owner_sub, shop: Shop):
@@ -157,6 +153,9 @@ class UserState:
     def get_personal_transaction_history(self):
         raise Exception("Error: User cannot perform this action")
 
+    def add_transaction(self, transaction: Transaction):
+        pass
+
 
 class Guest(UserState):
 
@@ -165,10 +164,9 @@ class Guest(UserState):
 
 
 class Subscribed(UserState):
-    appointments = None
 
     def __init__(self, username: str, password: str):
-        self.appointments = {}
+        self.appointments: Dict[Shop, Appointment] = {}
         self.username = username
         self.password = password
         self.transactions: List[Transaction] = []
@@ -196,7 +194,7 @@ class Subscribed(UserState):
             raise Exception("no appointment for shop. shop id - ", shop.shop_id)
 
     def add_product(self, shop: Shop, **product_info) -> int:
-        return self.get_appointment(shop).add_product(product_info)
+        return self.get_appointment(shop).add_product(**product_info)
 
     def edit_product(self, shop: Shop, product_id: int, **to_edit):
         self.get_appointment(shop).edit_product(product_id, **to_edit)
@@ -215,6 +213,9 @@ class Subscribed(UserState):
     def edit_manager_permissions(self, owner_sub: Subscribed, shop: Shop, permissions: List[str]):
         session_app = owner_sub.get_appointment(shop)
         session_app.edit_manager_permissions(self, permissions)
+
+    def add_transaction(self, transaction: Transaction):
+        self.transactions.append(transaction)
 
     def get_personal_transaction_history(self):
         return self.transactions

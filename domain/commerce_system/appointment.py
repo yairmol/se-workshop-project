@@ -6,8 +6,6 @@ from domain.commerce_system.shop import Shop
 
 
 class Appointment:
-    appointer: ShopOwner = None
-    shop: Shop = None
 
     def __init__(self, shop: Shop, appointer=None):
         self.shop = shop
@@ -26,13 +24,13 @@ class Appointment:
     def remove_appointment(self, sub):
         raise Exception("The Subscribed User doesn't have the permission to remove appointment")
 
-    def add_product(self, product: Product) -> int:
+    def add_product(self, **product_info) -> int:
         raise Exception("The Subscribed User doesn't have the permission to add product")
 
     def edit_product(self, product_id: int, **to_edit):
         raise Exception("The Subscribed User doesn't have the permission to edit product")
 
-    def delete_product(self, product_id: int):
+    def delete_product(self, product_id: int) -> bool:
         raise Exception("The Subscribed User doesn't have the permission to delete product")
 
     def un_appoint_manager(self, manager_sub, cascading=False):
@@ -47,37 +45,7 @@ class Appointment:
     def un_appoint_owner(self, owner_sub, cascading=False):
         raise Exception("The Subscribed User doesn't have the permission to un appoint owner")
 
-    def appoint_manager(self, sub, permissions: List[str]):
-        raise Exception("Subscribed user does not have permission to perform action")
-
-    def appoint_owner(self, sub):
-        raise Exception("Subscribed user does not have permission to perform action")
-
-    def remove_appointment(self, sub):
-        raise Exception("Subscribed user does not have permission to perform action")
-
-    def add_product(self, product: Product) -> int:
-        raise Exception("Subscribed user does not have permission to perform action")
-
-    def edit_product(self, product_id: int, **to_edit):
-        raise Exception("Subscribed user does not have permission to perform action")
-
-    def delete_product(self, product_id: int):
-        raise Exception("Subscribed user does not have permission to perform action")
-
     def edit_manager_perms(self, manager_sub, perms: List[str]):
-        raise Exception("Subscribed user does not have permission to perform action")
-
-    def un_appoint_manager(self, manager_sub, cascading=False):
-        raise Exception("Subscribed user does not have permission to perform action")
-
-    def edit_manager_permissions(self, manager_sub, permissions):
-        raise Exception("Subscribed user does not have permission to perform action")
-
-    def un_appoint_appointees(self):
-        raise Exception("Subscribed user does not have permission to perform action")
-
-    def un_appoint_owner(self, owner_sub, cascading=False):
         raise Exception("Subscribed user does not have permission to perform action")
 
     def get_shop_staff_info(self):
@@ -88,9 +56,6 @@ class Appointment:
 
 
 class ShopManager(Appointment):
-    add_product_permission: bool = False
-    edit_product_permission: bool = False
-    delete_product_permission: bool = False
 
     def __init__(self, shop: Shop, appointer: ShopOwner, permissions: List[str]):
         super().__init__(shop, appointer)
@@ -109,7 +74,7 @@ class ShopManager(Appointment):
 
     def delete_product(self, product_id: int):
         assert self.delete_product_permission, "manager does not have permission to delete product"
-        self.shop.delete_product(product_id)
+        return self.shop.delete_product(product_id)
 
     def set_permission(self, permissions: List[str]):
         self.delete_product_permission = "delete_product" in permissions
@@ -153,7 +118,7 @@ class ShopOwner(Appointment):
         self.shop.edit_product(product_id, **to_edit)
 
     def delete_product(self, product_id: int):
-        self.shop.delete_product(product_id)
+        return self.shop.delete_product(product_id)
     
     def un_appoint_manager(self, manager_sub, cascading=False):
         if self.shop in manager_sub.appointments.keys() and isinstance(manager_sub.appointments[self.shop],

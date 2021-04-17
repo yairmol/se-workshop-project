@@ -2,13 +2,16 @@ from domain.commerce_system.product import Product
 from domain.commerce_system.productDTO import ProductDTO
 from domain.commerce_system.shop import Shop
 
-from typing import List, Dict
+from typing import Dict
 
 
 class ShoppingBag:
     def __init__(self, shop: Shop):
         self.shop = shop
         self.products: Dict[Product, int] = {}
+
+    def __setitem__(self, key: Product, value: int):
+        self.products[key] = value
 
     def add_product(self, product: Product, amount_to_buy: int):
         if product in self.products:
@@ -28,10 +31,10 @@ class ShoppingBag:
         self.products.clear()
 
     def calculate_price(self) -> int:
-        sum = 0
+        total = 0
         for product, amount in self.products:
-            sum += amount * product.price
-        return sum
+            total += amount * product.price
+        return total
 
     def get_products_dtos(self):
         PRODUCT = 0
@@ -69,12 +72,12 @@ class ShoppingCart:
     def remove_shopping_bag(self, shop: Shop):
         if shop not in self.shopping_bags:
             raise Exception("no shopping bag to remove")
-        self.shopping_bags.remove(shop)
+        self.shopping_bags.pop(shop)
 
     def remove_all_shopping_bags(self):
         self.shopping_bags.clear()
 
     def calculate_price(self):
-        sum = 0
+        total = 0
         for shop, bag in self.shopping_bags:
-            sum += bag.calculate_price()
+            total += bag.calculate_price()

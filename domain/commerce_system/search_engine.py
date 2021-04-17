@@ -1,4 +1,3 @@
-from functools import reduce
 from typing import List
 
 from domain.commerce_system.product import Product

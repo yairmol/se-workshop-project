@@ -1,6 +1,6 @@
 
 class SystemManager:
-    def _init_(self):
+    def __init__(self):
         raise NotImplementedError()
 
     def get_shop_transactions(self, store_credentials: dict) -> bool:
