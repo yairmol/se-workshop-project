@@ -161,6 +161,9 @@ class UserState:
     def edit_manager_permissions(self, owner_sub: Subscribed, shop: Shop, permissions: List[str]):
         raise Exception("Error: Guest User cannot edit manager permissions")
 
+    def open_shop(self, shop_details):
+        raise Exception("Error: Guest User cannot edit manager permissions")
+
 
 class Guest(UserState):
 
@@ -175,9 +178,6 @@ class Subscribed(UserState):
         self.appointments = {}
         self.username = username
         self.password = password
-
-    def open_store(self, store_credentials: dict) -> bool:
-        raise NotImplementedError()
 
     def get_transaction_history(self):
         raise NotImplementedError()
