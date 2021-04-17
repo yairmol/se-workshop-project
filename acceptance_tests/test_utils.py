@@ -1,6 +1,6 @@
 from typing import Tuple, List, Dict
 
-from acceptance_tests.test_data import users, shops, permissions
+from acceptance_tests.test_data import users, shops, permissions, admin_credentials
 from service.system_service import SystemService
 
 
@@ -26,6 +26,10 @@ def register_login_users(commerce_system, num_users) -> Dict[str, dict]:
     }
 
 
+def enter_guests(commerce_system: SystemService, num_guests) -> List[str]:
+    return [commerce_system.enter() for i in range(num_guests)]
+
+
 def open_shops(commerce_system, sessions, num_shops) -> (Dict[str, dict], Dict[str, str]):
     num_users = len(sessions)
     shop_ids_to_sessions_and_shops = {
@@ -39,11 +43,11 @@ def open_shops(commerce_system, sessions, num_shops) -> (Dict[str, dict], Dict[s
     return shop_id_to_shop, shop_id_to_session
 
 
-def add_products(commerce_system, sessions, shop_ids, num_products):
-    num_users, num_shops = len(sessions), len(shop_ids)
+def add_products(commerce_system, shop_id_to_sess, shop_ids, num_products):
+    num_shops = len(shop_ids)
     product_ids_to_shop_ids = {
         commerce_system.add_product_to_shop(
-            sessions[(i % num_shops) % num_users], shop_ids[i % num_shops]
+            shop_id_to_sess[shop_ids[i % num_shops]], shop_ids[i % num_shops]
         ): shop_ids[i % num_shops]
         for i in range(num_products)
     }
@@ -81,7 +85,7 @@ def shop_to_products(product_to_shop, shop_ids):
 def sessions_to_shops(
         shop_to_openers: Dict[str, str],
         shop_to_owners: Dict[str, str],
-        shop_to_managers: Dict[str, Tuple[str, List[str, str]]],
+        shop_to_managers: Dict[str, Tuple[str, List[str]]],
         sessions: List[str]
 ):
     shops_to_users = shop_to_openers
@@ -93,15 +97,31 @@ def sessions_to_shops(
     }
 
 
-def get_shop_not_owned_by_user(user, shop_ids, shop_to_staff):
-    return [s for s in shop_ids if user not in shop_to_staff[s]][0]
+def get_shops_not_owned_by_user(user, shop_ids, shop_to_staff):
+    return [s for s in shop_ids if user not in shop_to_staff[s]]
 
 
 def make_purchases(
-        commerce_system: SystemService, session: str, shop_id: str, products: List[str]
-) -> List[str]:
-    products_purchased = list()
-    for product_id in products:
-        assert commerce_system.purchase_product(session, shop_id, product_id)
-        products_purchased.append(product_id)
-    return products_purchased
+        commerce_system: SystemService, session: str, product_to_shop, products: List[str]
+):
+    return all(map(lambda p: commerce_system.purchase_product(
+        session, product_to_shop[p], p
+    ).get("status", False), products))
+
+
+def fill_with_data(
+        commerce_system: SystemService, num_guests, num_subs, num_shops, num_products
+):
+    guest_sessions = enter_guests(commerce_system, num_guests)
+    sess_to_users = register_login_users(commerce_system, num_subs)
+    subs_sessions = list(sess_to_users.keys())
+    sid_to_shop, sid_to_sess = open_shops(commerce_system, subs_sessions, num_shops)
+    shop_ids = list(sid_to_shop.keys())
+    pid_to_sid = add_products(commerce_system, subs_sessions, shop_ids, num_products)
+    return guest_sessions, subs_sessions, sid_to_shop, sid_to_sess, pid_to_sid
+
+
+def admin_login(commerce_system: SystemService):
+    admin_session = commerce_system.enter()
+    commerce_system.login(**admin_credentials)
+    return admin_session

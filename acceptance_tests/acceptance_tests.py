@@ -7,7 +7,7 @@ from acceptance_tests.test_data import users, shops, products, permissions
 from acceptance_tests.test_utils import (
     enter_register_and_login, add_product, make_purchases, register_login_users,
     open_shops, add_products, appoint_owners_and_managers, shop_to_products,
-    sessions_to_shops, get_shop_not_owned_by_user
+    sessions_to_shops, get_shops_not_owned_by_user, fill_with_data, admin_login
 )
 
 
@@ -315,7 +315,7 @@ class PurchasesTests(TestCase):
     NUM_USERS = len(users)
     NUM_SHOPS = len(shops)
     NUM_PRODUCTS = len(products)
-    U1 = 0
+    U1, U2 = 0, 1
 
     def setUp(self) -> None:
         self.commerce_system = Driver.get_system_service()
@@ -334,82 +334,97 @@ class PurchasesTests(TestCase):
 
     def test_save_product_to_cart(self):
         user_session = self.sessions[self.U1]
-        shop_id = get_shop_not_owned_by_user(user_session, self.shop_ids, self.shop_to_staff)
+        shop_id = get_shops_not_owned_by_user(user_session, self.shop_ids, self.shop_to_staff)[0]
         product_id = self.shops_to_products[shop_id][0]
         self.assertTrue(self.commerce_system.save_product_to_cart(user_session, shop_id, product_id))
 
     def test_save_non_existing_product_to_cart(self):
         user = self.sessions[self.U1]
-        shop_id = get_shop_not_owned_by_user(user, self.shop_ids, self.shop_to_staff)
+        shop_id = get_shops_not_owned_by_user(user, self.shop_ids, self.shop_to_staff)[0]
         self.assertFalse(self.commerce_system.save_product_to_cart(
             self.sessions[self.U1], shop_id, "some_non_existing_product_id"
         ))
 
     def test_get_cart_info(self):
-        self.test_save_product_to_cart()
-        cart_info = self.commerce_system.get_cart_info(self.sessions[self.U1])
-        shop_id = self.shop_ids[self.SHOP_I]
+        u1 = self.sessions[self.U1]
+        cart_info = self.commerce_system.get_cart_info(u1)
+        shop_id = get_shops_not_owned_by_user(u1, self.shop_ids, self.shop_to_staff)[0]
+        prod_id = self.shops_to_products[shop_id][0]
+        self.assertTrue(self.commerce_system.save_product_to_cart(u1, shop_id, prod_id))
         self.assertTrue(shop_id in cart_info)
-        self.assertTrue(self.shop_to_products[shop_id][self.PROD_I] in cart_info[shop_id]["products"])
+        self.assertTrue(prod_id in cart_info[shop_id]["products"])
 
     def test_purchase_product(self):
-        user_session = self.sessions[self.U1]
-        user_shops = self.session_to_shops[user_session]
-        prod = [
-            p for p in self.product_to_shop.keys()
-            if all(map(lambda s: p not in self.shop_to_products[s], user_shops))
-        ][self.PROD_I]
+        u1 = self.sessions[self.U1]
+        shop_id = get_shops_not_owned_by_user(u1, self.shop_ids, self.shop_to_staff)[0]
+        prod_id = self.shops_to_products[shop_id][0]
         transaction_status = self.commerce_system.purchase_product(
-            user_session, self.product_to_shop[prod], prod
+            u1, shop_id, prod_id
         )
-        assert transaction_status.get("status", False)
+        self.assertTrue(transaction_status.get("status", False))
 
     def test_purchase_cart(self):
-        user_session = self.sessions[self.U1]
-        user_shops = self.session_to_shops[user_session]
-        prods = [
-            p for p in self.product_to_shop.keys()
-            if all(map(lambda s: p not in self.shop_to_products[s], user_shops))
-        ]
+        NUM_PRODS = 4
+        u1 = self.sessions[self.U1]
+        shops = get_shops_not_owned_by_user(u1, self.shop_ids, self.shop_to_staff)
+        prods = []
+        for shop in shops:
+            prods += self.shops_to_products[shop]
         self.assertTrue(all(map(lambda p: self.commerce_system.save_product_to_cart(
-            user_session, self.product_to_shop[p], p
-        ), prods)))
-        transaction_status = self.commerce_system.purchase_cart(user_session)
+            u1, self.product_to_shop[p], p
+        ), prods[:NUM_PRODS])))
+        transaction_status = self.commerce_system.purchase_cart(u1)
         self.assertTrue(transaction_status.get("status", False))
 
     def test_get_user_transactions(self):
-        self.test_purchase_product()
-        self.PROD_I += 1
-        self.test_purchase_product()
-        self.PROD_I -= 1
-        user = self.sessions[self.U1]
-        purchase_history = self.commerce_system.get_personal_purchase_history(user)
-        self.assertTrue(len(purchase_history) == 2)
+        NUM_PRODS = 3
+        u1 = self.sessions[self.U1]
+        shops = get_shops_not_owned_by_user(u1, self.shop_ids, self.shop_to_staff)
+        prods = []
+        for shop in shops:
+            prods += self.shops_to_products[shop]
+        make_purchases(self.commerce_system, u1, self.product_to_shop, prods[:NUM_PRODS])
+        purchase_history = self.commerce_system.get_personal_purchase_history(u1)
+        self.assertTrue(len(purchase_history) == NUM_PRODS)
+        self.assertTrue(
+            all(map(lambda pr:
+                any(map(lambda pu: pr == pu.get("product_id", ""),
+                    purchase_history)),
+                prods[:NUM_PRODS]))
+        )
 
     def test_get_shop_transactions(self):
-        NUM_PRODUCTS = 3
-        products_purchased = make_purchases(
-            self.commerce_system, self.sessions[self.U1], self.shop_ids[self.SHOP_I],
-            self.shop_to_products[self.shop_ids[self.SHOP_I]][:NUM_PRODUCTS]
-        )
+        NUM_PRODS = 3
+        u1 = self.sessions[self.U1]
+        u2 = self.sessions[self.U2]
+        shop_id = list(
+            set(get_shops_not_owned_by_user(u1, self.shop_ids, self.shop_to_staff)) &
+            set(get_shops_not_owned_by_user(u2, self.shop_ids, self.shop_to_staff))
+        )[0]
+        prods = self.shops_to_products[shop_id]
+        self.assertTrue(make_purchases(self.commerce_system, u1, self.product_to_shop, prods[:2]))
+        self.assertTrue(make_purchases(self.commerce_system, u2, self.product_to_shop, prods[2:NUM_PRODS]))
         transactions = self.commerce_system.get_shop_transactions(
-            self.sessions[self.U1], self.shop_ids[self.SHOP_I]
+            self.shop_to_opener[shop_id], shop_id
         )
-        self.assertTrue(len(transactions) == NUM_PRODUCTS)
+        self.assertTrue(len(transactions) == NUM_PRODS)
         self.assertTrue(
             all(map(lambda pid:
                 any(map(lambda t: t["product_id"] == pid,
                     transactions)),
-                products_purchased))
+                prods[:NUM_PRODS]))
         )
 
     def test_get_system_transactions(self):
         products_purchased = []
-        for i in range(3):
-            products_purchased.extend(make_purchases(
-                self.commerce_system, self.sessions[i], self.shop_ids[i], self.shop_to_products[i]
-            ))
-        transactions = self.commerce_system.get_system_transactions()
+        for i in range(self.NUM_USERS):
+            u = self.sessions[i]
+            shop_id = get_shops_not_owned_by_user(u, self.shop_ids, self.shop_to_staff)[0]
+            prods = self.shops_to_products[shop_id][:2]
+            self.assertTrue(make_purchases(self.commerce_system, u, self.product_to_shop, prods))
+            products_purchased.append(prods)
+        admin_session = admin_login(self.commerce_system)
+        transactions = self.commerce_system.get_system_transactions(admin_session)
         self.assertTrue(len(transactions) == len(products_purchased))
         self.assertTrue(
             all(map(lambda pid:
@@ -419,33 +434,92 @@ class PurchasesTests(TestCase):
         )
 
 
-class TestsWithData(TestCase):
+class GuestTestsWithData(TestCase):
 
-    def setUp(self) -> None:
+    NUM_USERS = len(users)
+    NUM_GUESTS = 3
+    NUM_SUBS = NUM_USERS - NUM_GUESTS
+    NUM_SHOPS = len(shops)
+    NUM_PRODUCTS = len(products)
+
+    U1 = 0
+    S1 = 0
+
+    def setUp(self):
         self.commerce_system = Driver.get_system_service()
-
+        self.guest_sess, self.subs_sess, self.sids_to_shop, self.sid_to_sess, self.pid_to_sid = fill_with_data(
+            self.commerce_system, self.NUM_GUESTS, self.NUM_SUBS, self.NUM_SHOPS, self.NUM_PRODUCTS
+        )
+        self.sids = list(self.sids_to_shop.keys())
 
     def test_get_shop_info(self):
-        shop_info = self.commerce_system.get_shop_info()
+        s1 = self.sids[self.S1]
+        shop_info = self.commerce_system.get_shop_info(self.guest_sess[self.U1], s1)
+        self.assertTrue(shop_info is not {})
+        self.assertTrue(set(shop_info.items()).issubset(self.sids_to_shop[s1].items()))
 
     def test_get_shop_info_bad_shop_id(self):
         self.assertFalse(self.commerce_system.get_shop_info("non_existing_shop_id"))
 
-    def test_search_products_by_name(self):
-        pass
+    def test_search_products_by_name_simple(self):
+        results = self.commerce_system.search_products(product_name=products[0]["product_name"])
+        self.assertTrue(len(results) == 1)
+        self.assertTrue(results[0]["product_name"] == products[0]["product_name"])
+
+    def test_search_product_by_name_general(self):
+        results = self.commerce_system.search_products(product_name="p")
+        self.assertTrue(len(results) == self.NUM_PRODUCTS)
+        self.assertTrue(
+            all(map(lambda p:
+                any(map(lambda r: p["product_name"] == r["product_name"],
+                    results)),
+                products))
+        )
 
     def test_search_products_by_filters(self):
-        pass
+        results = self.commerce_system.search_products(filteres=[
+            {"type": "price_range", "from": 0, "to": 100}
+        ])
+        products_in_range_indices = [0, 1, 2, 3, 4, 8, 9, 11]
+        self.assertTrue(len(results) == len(products_in_range_indices))
+        self.assertTrue(
+            all(map(lambda p_i:
+                any(map(lambda r: products[p_i]["product_name"] == r["product_name"],
+                        results)),
+                products))
+        )
 
     def test_search_products_by_name_and_filters(self):
-        pass
+        other_products = [
+            {"product_name": "bamba", "product_description": "peanuts snack", "price": 5, "quantity": 10},
+            {"product_name": "barbi", "product_description": "kids doll", "price": 50, "quantity": 10},
+            {"product_name": "bisly", "product_description": "crunchy snack", "price": 5, "quantity": 10}
+        ]
+        self.assertTrue(all(map(lambda p: add_product(
+            self.sid_to_sess[self.sids[self.S1]], self.commerce_system, self.sids[self.S1], p
+        ), other_products)))
+        results = self.commerce_system.search_products(name="bambaa", filters=[
+            {"type": "price_range", "from": 5, "to": 5}
+        ])
+        self.assertTrue(len(results) == 1)
+        self.assertTrue(results[0]["product_name"] == "bamba")
 
 
 class ParallelismTests(TestCase):
 
+    NUM_USERS = len(users)
+    NUM_SHOPS = len(shops)
+    NUM_PRODUCTS = len(products)
+
+    U1 = 0
+    S1 = 0
+
     def setUp(self) -> None:
         self.commerce_system = Driver.get_system_service()
-        self.session_id = enter_register_and_login(self.commerce_system, users[0])
+        self.sess_to_user = register_login_users(self.commerce_system, self.NUM_USERS)
+        self.sessions = list(self.sess_to_user.keys())
+        self.sid_to_shop, self.sid_to_sess = open_shops(self.commerce_system, self.sessions, 2)
+        self.sids = list(self.sid_to_shop.keys())
 
     @staticmethod
     def run_parallel_test(f1, f2):
@@ -454,10 +528,45 @@ class ParallelismTests(TestCase):
         t1.join(), t2.join()
 
     def test_parallel_purchase_of_last_product(self):
-        pass
+        p = products[0].copy()
+        p["quantity"] = 1
+        sid = self.sids[0]
+        u_opener = self.sid_to_sess[sid]
+        pid = add_product(
+            u_opener, self.commerce_system, sid, p
+        )
+        u_buyer1, u_buyer2 = tuple([u for u in self.sessions if u != u_opener])[:2]
+        results = []
+
+        def buyer1():
+            results.append(self.commerce_system.purchase_product(u_buyer1, sid, pid))
+
+        def buyer2():
+            results.append(self.commerce_system.purchase_product(u_buyer2, sid, pid))
+
+        self.run_parallel_test(buyer1, buyer2)
+        self.assertTrue(any(results))
+        self.assertFalse(all(results))
 
     def test_parallel_purchase_and_delete_of_product(self):
-        pass
+        p = products[0].copy()
+        sid = self.sids[0]
+        u_opener = self.sid_to_sess[sid]
+        pid = add_product(
+            u_opener, self.commerce_system, sid, p
+        )
+        u_buyer = [u for u in self.sessions if u != u_opener][0]
+        results = {}
+
+        def buyer():
+            results[u_buyer] = self.commerce_system.purchase_product(u_buyer, sid, pid)
+
+        def opener():
+            results[u_opener] = self.commerce_system.delete_product(u_opener, sid, pid)
+
+        self.run_parallel_test(buyer, opener)
+        self.assertTrue(results[u_opener])
+        self.assertFalse(results[u_buyer])
 
     def test_parallel_product_purchase_and_price_change(self):
         pass
@@ -471,7 +580,7 @@ class ParallelismTests(TestCase):
         pass
 
     def test_parallel_login_of_same_user(self):
-        pass
+        self.assertTrue(self.commerce_system.register())
 
     def test_parallel_registration_of_users_with_the_same_name(self):
         results = []

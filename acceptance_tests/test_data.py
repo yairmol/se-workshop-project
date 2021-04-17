@@ -29,19 +29,23 @@ shops = [
 ]
 
 products = [
-    {"product_name": "p1", "product_description": "a product", "price": 1},
-    {"product_name": "p2", "product_description": "a product", "price": 2.5},
-    {"product_name": "p3", "product_description": "a product", "price": 1.25},
-    {"product_name": "p4", "product_description": "a product", "price": 10},
-    {"product_name": "p5", "product_description": "a product", "price": 32},
-    {"product_name": "p6", "product_description": "a product", "price": 200},
-    {"product_name": "p7", "product_description": "a product", "price": 250},
-    {"product_name": "p8", "product_description": "a product", "price": 8999.99},
-    {"product_name": "p9", "product_description": "a product", "price": 47},
-    {"product_name": "p10", "product_description": "a product", "price": 96},
-    {"product_name": "p11", "product_description": "a product", "price": 1220},
-    {"product_name": "p12", "product_description": "a product", "price": 3},
+    {"product_name": "p1", "product_description": "a product", "price": 1, "quantity": 10},
+    {"product_name": "p2", "product_description": "a product", "price": 2.5, "quantity": 10},
+    {"product_name": "p3", "product_description": "a product", "price": 1.25, "quantity": 10},
+    {"product_name": "p4", "product_description": "a product", "price": 10, "quantity": 10},
+    {"product_name": "p5", "product_description": "a product", "price": 32, "quantity": 10},
+    {"product_name": "p6", "product_description": "a product", "price": 200, "quantity": 10},
+    {"product_name": "p7", "product_description": "a product", "price": 250, "quantity": 10},
+    {"product_name": "p8", "product_description": "a product", "price": 8999.99, "quantity": 10},
+    {"product_name": "p9", "product_description": "a product", "price": 47, "quantity": 10},
+    {"product_name": "p10", "product_description": "a product", "price": 96, "quantity": 10},
+    {"product_name": "p11", "product_description": "a product", "price": 1220, "quantity": 10},
+    {"product_name": "p12", "product_description": "a product", "price": 3, "quantity": 10},
 ]
+
+admin_credentials = {
+    "username": "admin", "password": "admin"
+}
 
 permissions = [
     ["add_product", "edit_product", "delete_product"],
