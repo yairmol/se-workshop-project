@@ -49,17 +49,17 @@ class ICommerceSystemFacade:
         """
         raise NotImplementedError()
 
-    def save_product_to_cart(self, session_id: int, shop_id: str, product_id: str) -> bool:
+    def save_product_to_cart(self, user_id: int, shop_id: str, product_id: int) -> bool:
         """
         saves a product to a shopping bag in the shopping cart of the user idetified by session_id
-        :param session_id: user identifier
+        :param user_id: user identifier
         :param shop_id: the shop that sells the product
         :param product_id: the product being saved to cart
         :return: True if action was successful
         """
         raise NotImplementedError()
 
-    def get_cart_info(self, session_id: int) -> dict:
+    def get_cart_info(self, user_id: int) -> dict:
         """
         returns a dictionary containing the cart information of the user identified by session_id
         in the format of
@@ -99,19 +99,32 @@ class ICommerceSystemFacade:
         """
         raise NotImplementedError()
 
-    def purchase_cart(self, session_id: int) -> dict:
+    def purchase_cart(self, user_id: int, payment_details: dict, all_or_nothing: bool) -> bool:
         """
         make a purchase of the entire shopping cart of a user (i.e. all shopping bags)
-        :param session_id: identifies the user making the purchase
-        :return: a dictionary containing he transaction info and state.
-        specifically return["state"] is a boolean specifying if the purchase was successful
+        :param all_or_nothing: true if the user wants all the cart or nothing at all
+        :param payment_details: payment details of the user
+        :param user_id: identifies the user making the purchase
+        :return: true if the purchase was a success, false otherwise
         """
         raise NotImplementedError()
 
-    def purchase_product(self, session_id: int, shop_id: str, product_id: str) -> dict:
+    def purchase_shopping_bag(self, user_id: int, shop_id: str, payment_details: dict) -> bool:
+        """
+                make a purchase of the entire shopping bag for the specified store of a user
+                :param shop_id: the shop that identifies the bag
+                :param payment_details: payment details of the user
+                :param user_id: identifies the user making the purchase
+                :return: true if the purchase was a success, false otherwise
+                """
+        raise NotImplementedError()
+
+    def purchase_product(self, user_id: int, shop_id: str, product_id: int, amount_to_buy: int, payment_details: dict):
         """
         buy a single product
-        :param session_id: session id of the user purchasing the product
+        :param payment_details: payment details of the user
+        :param amount_to_buy: amount of the product to buy
+        :param user_id: session id of the user purchasing the product
         :param shop_id: the id of the shop in which the purchased product resides
         :param product_id: the id of the purchased product
         :return: True if action was successful

@@ -19,6 +19,8 @@ class ShoppingBag:
         if product not in self.products:
             raise Exception("product not in the shopping bag")
         if self.products[product] < amount_to_buy:
+            raise Exception("not enough items in the bag")
+        if self.products[product] == amount_to_buy:
             self.products.pop(product)
         else:
             self.products[product] -= amount_to_buy
@@ -47,7 +49,10 @@ class ShoppingCart:
             self.add_to_shopping_bag(shop, product, amount_to_buy)
 
     def add_to_shopping_bag(self, shop: Shop, product: Product, amount_to_buy: int):
-        self.shopping_bags[shop][product] = amount_to_buy
+        self.shopping_bags[shop].add_product(product, amount_to_buy)
+
+    def remove_from_shopping_bag(self, shop: Shop, product: Product, amount: int):
+        self.shopping_bags[shop].remove_product(product, amount)
 
     def add_shopping_bag(self, bag: ShoppingBag):
         if bag.shop in self.shopping_bags:

@@ -11,6 +11,7 @@ from domain.commerce_system.shop import Shop
 from domain.commerce_system.transactionDTO import TransactionDTO
 from domain.commerce_system.utils import Transaction
 from domain.commerce_system.shopping_cart import ShoppingCart, ShoppingBag
+from domain.payment_module.payment_system import pay
 
 
 class User:
@@ -37,19 +38,19 @@ class User:
     def buy_product(self, shop: Shop, product: Product, amount_to_buy: int, payment_details: dict) -> bool:
         product_dto = ProductDTO(product, amount_to_buy)
         bag = {product: amount_to_buy}
-        # shop_product = {shop: product_dto}
         transaction = TransactionDTO(shop, product_dto, payment_details, datetime.now(), product.price)
         shop.add_transaction(bag, transaction)
         self.add_transaction(transaction)
+        pay(self, payment_details)
 
     def buy_shopping_bag(self, shop: Shop, payment_details: dict) -> bool:
         bag = self.cart[shop]
         dto_products = self.products_to_dto(bag)
-        # shop_products = {shop: dto_products}
         transaction = TransactionDTO(shop, dto_products, payment_details, datetime.now(), bag.calculate_price())
         if shop.add_transaction(bag, transaction):
             self.add_transaction(transaction)
             self.cart.remove_shopping_bag(shop)
+            pay(self, payment_details)
             return True
         return False
 
@@ -73,11 +74,14 @@ class User:
                     to_be_canceled += [transaction]
             if not check_if_canceled:
                 self.cart.remove_all_shopping_bags()
+                pay(self, payment_details)
 
     def add_transaction(self, transaction: TransactionDTO):
+        # TODO: for subscribed users
         raise NotImplementedError()
 
     def remove_transaction(self, transaction: TransactionDTO):
+        # TODO: for subscribed users
         raise NotImplementedError()
 
     def cancel_orders(self, to_be_canceled: list[TransactionDTO]):
@@ -91,8 +95,11 @@ class User:
             dto_list += [ProductDTO(product, amount)]
         return dto_list
 
-    def save_product_to_cart(self, shop: Shop, product: Product, quantity: int) -> bool:
-        return self.cart.add_product(product, shop, quantity)
+    def save_product_to_cart(self, shop: Shop, product: Product, amount_to_buy: int) -> bool:
+        return self.cart.add_product(product, shop, amount_to_buy)
+
+    def remove_product_from_cart(self, shop: Shop, product: Product, amount: int) -> bool:
+        return self.cart.remove_from_shopping_bag(shop, product, amount)
 
     def get_cart_info(self) -> List[dict]:
         raise NotImplementedError()
