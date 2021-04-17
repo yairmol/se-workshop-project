@@ -13,6 +13,40 @@ class Appointment:
         self.shop = shop
         self.appointer = appointer
 
+    def appoint_manager(self, sub, permissions: List[str]):
+        raise Exception("The Subscribed User doesn't have the permission to appoint manager")
+
+    """ adds owner appointment to selected subscribed user"""
+
+    def appoint_owner(self, sub):
+        raise Exception("The Subscribed User doesn't have the permission to appoint owner")
+
+    """ removes shop appointment from selected subscribed user"""
+
+    def remove_appointment(self, sub):
+        raise Exception("The Subscribed User doesn't have the permission to remove appointment")
+
+    def add_product(self, product: Product) -> int:
+        raise Exception("The Subscribed User doesn't have the permission to add product")
+
+    def edit_product(self, product_id: int, **to_edit):
+        raise Exception("The Subscribed User doesn't have the permission to edit product")
+
+    def delete_product(self, product_id: int):
+        raise Exception("The Subscribed User doesn't have the permission to delete product")
+
+    def un_appoint_manager(self, manager_sub, cascading=False):
+        raise Exception("The Subscribed User doesn't have the permission to un appoint manager")
+
+    def edit_manager_permissions(self, manager_sub, permissions: List[str]):
+        raise Exception("The Subscribed User doesn't have the permission to edit manager permissions")
+
+    def un_appoint_appointees(self):
+        raise Exception("The Subscribed User doesn't have the permission to un appoint appointees")
+
+    def un_appoint_owner(self, owner_sub, cascading=False):
+        raise Exception("The Subscribed User doesn't have the permission to un appoint owner")
+
 
 class ShopManager(Appointment):
     add_product_permission: bool = False
@@ -80,9 +114,6 @@ class ShopOwner(Appointment):
     def delete_product(self, product_id: int):
         self.shop.delete_product(product_id)
     
-    def edit_manager_perms(self, manager_sub, perms: List[str]):
-        pass
-    
     def un_appoint_manager(self, manager_sub, cascading=False):
         if self.shop in manager_sub.appointments.keys() and isinstance(manager_sub.appointments[self.shop],
                                                                        ShopManager):
@@ -95,7 +126,7 @@ class ShopOwner(Appointment):
         else:
             raise Exception("user is not a manager")
 
-    def edit_manager_permissions(self, manager_sub, permissions):
+    def edit_manager_permissions(self, manager_sub, permissions: List[str]):
         if self.shop in manager_sub.appointments.keys() and isinstance(manager_sub.appointments[self.shop],
                                                                        ShopManager):
             if manager_sub in self.manager_appointees:

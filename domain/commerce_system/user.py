@@ -74,7 +74,6 @@ class User:
             if not check_if_canceled:
                 self.cart.remove_all_shopping_bags()
 
-
     def add_transaction(self, transaction: TransactionDTO):
         raise NotImplementedError()
 
@@ -136,6 +135,33 @@ class UserState:
     def register(self, username: str, password: str, **user_details):
         raise Exception("Error: Logged-in User cannot register")
 
+    def appoint_manager(self, owner_sub: Subscribed, shop: Shop, permissions: List[str]):
+        raise Exception("Error: Guest User cannot appoint manager")
+
+    def appoint_owner(self, owner_sub: Subscribed, shop: Shop):
+        raise Exception("Error: Guest User cannot appoint owner")
+
+    def get_appointment(self, shop: Shop):
+        raise Exception("Error: Guest User cannot get appointment")
+
+    def add_product(self, shop: Shop, product: Product) -> int:
+        raise Exception("Error: Guest User cannot add product")
+
+    def edit_product(self, shop: Shop, product_id: int, **to_edit):
+        raise Exception("Error: Guest User cannot edit product")
+
+    def delete_product(self, shop: Shop, product_id: int):
+        raise Exception("Error: Guest User cannot delete product")
+
+    def un_appoint_manager(self, owner_sub, shop: Shop):
+        raise Exception("Error: Guest User cannot un appoint manager")
+
+    def un_appoint_owner(self, owner_sub, shop: Shop):
+        raise Exception("Error: Guest User cannot un appoint owner")
+
+    def edit_manager_permissions(self, owner_sub: Subscribed, shop: Shop, permissions: List[str]):
+        raise Exception("Error: Guest User cannot edit manager permissions")
+
 
 class Guest(UserState):
 
@@ -161,6 +187,7 @@ class Subscribed(UserState):
         raise NotImplementedError()
 
     """ calls personal appointment for the request. if doesnt have permission raises an exception"""
+
     def appoint_manager(self, owner_sub: Subscribed, shop: Shop, permissions: List[str]):
         session_app = owner_sub.get_appointment(shop)
         session_app.appoint_manager(self, permissions)
