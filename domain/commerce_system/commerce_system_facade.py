@@ -49,25 +49,26 @@ class CommerceSystemFacade(ICommerceSystemFacade):
     def open_shop(self, session_id: int, **shop_details) -> int:
         pass
 
-    def get_personal_purchase_history(self, session_id: int) -> List[dict]:
-        pass
+    def get_personal_purchase_history(self, user_id: int) -> List[dict]:
+        transactions = self.get_user(user_id).get_personal_transactions_history()
+        return list(map(lambda t: t.to_dict(), transactions))
 
     """NEEDS TO BE CHANGED - HANDLE TRANSPORTING PRODUCT DATA DIFFERENTLY"""
-
-    def add_product_to_shop(self, user_id: int, shop_id: str, product: Product) -> int:
+    def add_product_to_shop(self, user_id: int, shop_id: int, **product_info) -> int:
         shop = self.get_shop(shop_id)
         worker = self.get_user(user_id).user_state
-        return worker.add_product(shop, product)
+        return worker.add_product(shop, **product_info)
 
-    def edit_product_info(self, user_id: int, shop_id: str, product_id: int, **product_info):
+    def edit_product_info(self, user_id: int, shop_id: int, **product_info):
         shop = self.get_shop(shop_id)
         worker = self.get_user(user_id).user_state
-        worker.edit_product_info(shop, product_id, **product_info)
+        assert "product_id" in product_info
+        worker.edit_product(shop, product_info["product_id"], **product_info)
 
-    def delete_product(self, user_id: int, shop_id: str, product_id: str) -> bool:
+    def delete_product(self, user_id: int, shop_id: int, product_id: int) -> bool:
         shop = self.get_shop(shop_id)
         worker = self.get_user(user_id).user_state
-        worker.delete_product(shop, product_id)
+        return worker.delete_product(shop, product_id)
 
     def appoint_shop_owner(self, user_id: int, shop_id: int, username: str):
         shop = self.get_shop(shop_id)
@@ -154,7 +155,7 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         sub_user = self.registered_users.get(username)
         assert sub_user.password == password, "Wrong Password"
         self.active_users_lock.acquire()
-        self.active_users.get(user_id).set_user_state(sub_user)
+        self.active_users.get(user_id).login(sub_user)
         self.active_users_lock.release()
 
     def logout(self, user_id: int):

@@ -2,8 +2,7 @@ import threading
 from typing import Dict
 
 from domain.commerce_system.product import Product
-from domain.commerce_system.transactionDTO import TransactionDTO
-
+from domain.commerce_system.transaction import Transaction
 
 SHOP_NAME = "shop_name"
 SHOP_DESC = "description"
@@ -43,7 +42,7 @@ class Shop:
 
     """ edit product receives product id and a dict of fields to alter and the new values.
         MAKE SURE THE FIELD NAMES ARE ACCURATE"""
-    def edit_product(self, product_id, **to_edit) -> bool:
+    def edit_product(self, product_id, **to_edit):
         if product_id not in self.products:
             raise Exception("no product with id=", product_id)
         product = self.products[product_id]
@@ -82,19 +81,21 @@ class Shop:
                 product_id = p_id
         return product_id
 
-    def add_transaction(self, bag: dict, transaction: TransactionDTO) -> bool:
-        self.products_lock.aquire()
+    def add_transaction(self, bag: dict, transaction: Transaction) -> bool:
+        self.products_lock.acquire()
         for product, amount in bag:
             if product.quantity < amount:
                 return False
         for product, amount in bag:
             product.quantity -= amount
-        self.transaction_history += [TransactionDTO(self, transaction.products, transaction.payment_details, transaction.date, transaction.price)]
+        self.transaction_history.append(
+            Transaction(self, transaction.products, transaction.payment_details, transaction.date, transaction.price)
+        )
         self.products_lock.release()
         return True
 
-    def remove_transaction(self, bag: dict, transaction: TransactionDTO):
-        self.products_lock.aquire()
+    def remove_transaction(self, bag: dict, transaction: Transaction):
+        self.products_lock.acquire()
         for product, amount in bag:
             product.quantity += amount
         self.transaction_history.remove(transaction)
