@@ -12,6 +12,7 @@ class Product:
         self.price = price
         self.description = description
         self.quantity = quantity
+        self.base_price = base_price
 
     def to_dict(self):
         return {

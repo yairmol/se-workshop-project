@@ -50,9 +50,9 @@ class CommerceSystemFacade(ICommerceSystemFacade):
     def edit_product_info(self, user_id: int, shop_id: str, product_id: int, **product_info):
         shop = self.get_shop(shop_id)
         worker = self.get_user(user_id).user_state
-        worker.edit_product(shop, product_id, **product_info)
+        worker.edit_product_info(shop, product_id, **product_info)
 
-    def delete_product(self, user_id: int, shop_id: str, product_id: int) -> bool:
+    def delete_product(self, user_id: int, shop_id: str, product_id: str) -> bool:
         shop = self.get_shop(shop_id)
         worker = self.get_user(user_id).user_state
         worker.delete_product(shop, product_id)

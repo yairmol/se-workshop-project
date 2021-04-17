@@ -1,5 +1,6 @@
 from typing import List, Dict
 
+from domain.commerce_system.commerce_system_facade import ProductDTO
 from domain.commerce_system.user import User
 
 
@@ -128,7 +129,7 @@ class ICommerceSystemFacade:
         raise NotImplementedError()
 
     # shop owner/manager actions
-    def add_product_to_shop(self, session_id: int, shop_id: str, **product_info) -> int:
+    def add_product_to_shop(self, user_id: int, shop_id: str, product: ProductDTO) -> int:
         """
         adds a new product to the shop identified by shop_id.
         this action succeeds iff the user identified by session_id has the proper authorization

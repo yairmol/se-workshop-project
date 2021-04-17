@@ -47,6 +47,45 @@ class Appointment:
     def un_appoint_owner(self, owner_sub, cascading=False):
         raise Exception("The Subscribed User doesn't have the permission to un appoint owner")
 
+    def appoint_manager(self, sub, permissions: List[str]):
+        raise Exception("Subscribed user does not have permission to perform action")
+
+    def appoint_owner(self, sub):
+        raise Exception("Subscribed user does not have permission to perform action")
+
+    def remove_appointment(self, sub):
+        raise Exception("Subscribed user does not have permission to perform action")
+
+    def add_product(self, product: Product) -> int:
+        raise Exception("Subscribed user does not have permission to perform action")
+
+    def edit_product(self, product_id: int, **to_edit):
+        raise Exception("Subscribed user does not have permission to perform action")
+
+    def delete_product(self, product_id: int):
+        raise Exception("Subscribed user does not have permission to perform action")
+
+    def edit_manager_perms(self, manager_sub, perms: List[str]):
+        raise Exception("Subscribed user does not have permission to perform action")
+
+    def un_appoint_manager(self, manager_sub, cascading=False):
+        raise Exception("Subscribed user does not have permission to perform action")
+
+    def edit_manager_permissions(self, manager_sub, permissions):
+        raise Exception("Subscribed user does not have permission to perform action")
+
+    def un_appoint_appointees(self):
+        raise Exception("Subscribed user does not have permission to perform action")
+
+    def un_appoint_owner(self, owner_sub, cascading=False):
+        raise Exception("Subscribed user does not have permission to perform action")
+
+    def get_shop_staff_info(self):
+        raise Exception("Subscribed user does not have permission to perform action")
+
+    def get_purchase_history(self):
+        raise Exception("Subscribed user does not have permission to perform action")
+
 
 class ShopManager(Appointment):
     add_product_permission: bool = False
