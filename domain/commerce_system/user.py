@@ -7,7 +7,7 @@ from domain.commerce_system.appointment import Appointment
 from domain.commerce_system.product import Product
 from domain.commerce_system.productDTO import ProductDTO
 from domain.commerce_system.shop import Shop
-from domain.commerce_system.transactionDTO import TransactionDTO, CartTransactionDTO
+from domain.commerce_system.transactionDTO import TransactionDTO
 from domain.commerce_system.utils import Transaction
 from domain.commerce_system.shopping_cart import ShoppingCart, ShoppingBag
 

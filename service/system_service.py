@@ -200,3 +200,15 @@ class SystemService:
                 print(e)
                 return False
         return False
+
+    def get_shop_info(self, token: str, shop_id: int) -> dict:
+        assert self.is_valid_token(token), f"Invalid user token {token}"
+        try:
+            user_id = self.authenticator.get_id_by_token(token)
+            event_logger.info(f"user {user_id} requested for shop {shop_id} information")
+            return self.commerce_system_facade.get_shop_info(shop_id)
+        except AssertionError as e:
+            event_logger.error(e)
+        except Exception as e:
+            error_logger.error(e)
+        return {}

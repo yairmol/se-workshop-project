@@ -9,11 +9,13 @@ import domain.commerce_system.valdiation as validate
 
 
 class CommerceSystemFacade(ICommerceSystemFacade):
+
     def exit(self, session_id: int) -> bool:
         pass
 
-    def get_shop_info(self, shop_id: str) -> dict:
-        pass
+    def get_shop_info(self, shop_id: int) -> dict:
+        shop: Shop = self.shops[shop_id]
+        return shop.to_dict()
 
     def save_product_to_cart(self, session_id: int, shop_id: str, product_id: str) -> bool:
         pass
