@@ -1,10 +1,11 @@
 import threading
 from typing import Dict, List
 
-from domain.commerce_system.facade import ICommerceSystemFacade
+from domain.commerce_system.ifacade import ICommerceSystemFacade
 from domain.commerce_system.product import Product
+from domain.commerce_system.search_engine import search, Filter
 from domain.commerce_system.shop import Shop
-from domain.commerce_system.user import User, Guest, Subscribed
+from domain.commerce_system.user import User, Subscribed, Guest
 import domain.commerce_system.valdiation as validate
 
 
@@ -21,9 +22,6 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         pass
 
     def get_cart_info(self, session_id: int) -> dict:
-        pass
-
-    def search_products(self, keywords: str, filters: list) -> List[dict]:
         pass
 
     def search_shops(self, keywords: str, filters: list) -> List[dict]:
@@ -167,3 +165,19 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         ret = self.shops[shop_id]
         self.shops_lock.release()
         return ret
+
+    def _get_all_products(self) -> List[Product]:
+        products = []
+        for shop in self.shops.values():
+            products.extend(shop.products.values())
+        return products
+
+    def search_products(
+            self, product_name: str = None, keywords: List[str] = None,
+            categories: List[str] = None, filters: List[dict] = None
+    ) -> List[dict]:
+        products: List[Product] = self._get_all_products()
+        search_results = search(
+            products, product_name, keywords, categories, list(map(Filter.from_dict, filters))
+        )
+        return list(map(lambda p: p.to_dict(), search_results))
