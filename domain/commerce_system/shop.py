@@ -1,10 +1,16 @@
+import threading
+
 from domain.commerce_system.product import Product
+from domain.commerce_system.productDTO import ProductDTO
+from domain.commerce_system.transactionDTO import TransactionDTO
 
 
 class Shop:
-    def __init__(self):
+    def __init__(self, shop_id: int):
+        self.shop_id = shop_id
         self.products = {}
         self.transaction_history = []
+        self.products_lock = threading.lock()
 
     """ quantity has to be no more than available product quantity"""
     def sell_product(self, product_id: str, quantity: int, payment_details: dict) -> bool: # add payment
@@ -16,11 +22,8 @@ class Shop:
     """ returns product_id if successful"""
     def add_product(self, product: Product) -> int:
         product_id = self.get_free_id()
-        try:
-            self.products[product_id] = product
-            return product_id
-        except Exception as e:
-            return -1
+        self.products[product_id] = product
+        return product_id
 
     def delete_product(self, product_id: int) -> bool:
         res = self.products.pop(product_id, 0)
@@ -29,14 +32,13 @@ class Shop:
     """ edit product receives product id and a dict of fields to alter and the new values.
         MAKE SURE THE FIELD NAMES ARE ACCURATE"""
     def edit_product(self, product_id, **to_edit) -> bool:
+        if product_id not in self.products:
+            raise Exception("no product with id=", product_id)
         product = self.products[product_id]
-        if not product:
-            return False
         for field, new_value in to_edit.items():
-            if not product.__dict__[field]:
-                return False
+            if field not in product.__dict__:
+                raise Exception("product has no field ", field)
             product.__dict__[field] = new_value
-        return True
 
     def get_shop_info(self) -> str:
         s = ""
@@ -68,5 +70,20 @@ class Shop:
                 product_id = p_id
         return product_id
 
-    def add_transaction(self, transaction):
-        pass
+    def add_transaction(self, bag: dict, transaction: TransactionDTO) -> bool:
+        self.products_lock.aquire()
+        for product, amount in bag:
+            if product.quantity < amount:
+                return False
+        for product, amount in bag:
+            product.quantity -= amount
+        self.transaction_history += [TransactionDTO(self, transaction.products, transaction.payment_details, transaction.date, transaction.price)]
+        self.products_lock.release()
+        return True
+
+    def remove_transaction(self, bag: dict, transaction: TransactionDTO):
+        self.products_lock.aquire()
+        for product, amount in bag:
+            product.quantity += amount
+        self.transaction_history.remove(transaction)
+        self.products_lock.release()

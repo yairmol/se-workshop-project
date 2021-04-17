@@ -8,8 +8,8 @@ class ProductDTO:
         self.description = description
         self.quantity = quantity
 
-    def __init__(self, product: Product):
+    def __init__(self, product: Product, amount_to_buy: int):
         self.name = product.name
         self.price = product.price
         self.description = product.description
-        self.quantity = product.quantity
+        self.amount = amount_to_buy
