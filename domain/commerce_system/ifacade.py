@@ -76,9 +76,14 @@ class ICommerceSystemFacade:
         """
         raise NotImplementedError()
 
-    def search_products(self, keywords: str, filters: list) -> List[dict]:
+    def search_products(
+            self, product_name: str = None, keywords: List[str] = None,
+            categories: List[str] = None, filters: List[dict] = None
+    ) -> List[dict]:
         """
         search items in all shops using keywords and filters
+        :param categories:
+        :param product_name:
         :param keywords: a string containing the search keywords to be matched with products
         :param filters: a list of filters
         :return: a list of products (a product is represented by a dictionary)
