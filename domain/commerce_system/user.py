@@ -75,9 +75,11 @@ class User:
                 self.cart.remove_all_shopping_bags()
 
     def add_transaction(self, transaction: TransactionDTO):
+        # TODO: for subscribed users
         raise NotImplementedError()
 
     def remove_transaction(self, transaction: TransactionDTO):
+        # TODO: for subscribed users
         raise NotImplementedError()
 
     def cancel_orders(self, to_be_canceled: list[TransactionDTO]):
@@ -91,8 +93,11 @@ class User:
             dto_list += [ProductDTO(product, amount)]
         return dto_list
 
-    def save_product_to_cart(self, shop: Shop, product: Product, quantity: int) -> bool:
-        return self.cart.add_product(product, shop, quantity)
+    def save_product_to_cart(self, shop: Shop, product: Product, amount_to_buy: int) -> bool:
+        return self.cart.add_product(product, shop, amount_to_buy)
+
+    def remove_product_from_cart(self, shop: Shop, product: Product, amount: int) -> bool:
+        return self.cart.remove_from_shopping_bag(shop, product, amount)
 
     def get_cart_info(self) -> List[dict]:
         raise NotImplementedError()
