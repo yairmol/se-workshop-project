@@ -18,20 +18,33 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         shop: Shop = self.shops[shop_id]
         return shop.to_dict()
 
-    def save_product_to_cart(self, session_id: int, shop_id: str, product_id: str) -> bool:
-        pass
+    def save_product_to_cart(self, user_id: int, shop_id: str, product_id: int, amount_to_buy: int) -> bool:
+        user = self.get_user(user_id)
+        shop = self.get_shop(shop_id)
+        product = shop.products[product_id]
+        return user.save_product_to_cart(shop, product, amount_to_buy)
 
-    def get_cart_info(self, session_id: int) -> dict:
+    def get_cart_info(self, user_id: int) -> dict:
         pass
 
     def search_shops(self, keywords: str, filters: list) -> List[dict]:
         pass
 
-    def purchase_cart(self, session_id: int) -> dict:
-        pass
+    def purchase_cart(self, user_id: int, payment_details: dict, all_or_nothing: bool) -> bool:
+        user = self.get_user(user_id)
+        return user.buy_cart(payment_details, all_or_nothing)
 
-    def purchase_product(self, session_id: int, shop_id: str, product_id: str) -> dict:
-        pass
+    def purchase_shopping_bag(self, user_id: int, shop_id: str, payment_details: dict) -> bool:
+        user = self.get_user(user_id)
+        shop = self.get_shop(shop_id)
+        return user.buy_shopping_bag(shop, payment_details)
+
+    def purchase_product(self, user_id: int, shop_id: str, product_id: int, amount_to_buy: int,
+                         payment_details: dict) -> bool:
+        user = self.get_user(user_id)
+        shop = self.get_shop(shop_id)
+        product = shop.products[product_id]
+        return user.buy_product(shop, product, amount_to_buy, payment_details)
 
     def open_shop(self, session_id: int, **shop_details) -> int:
         pass
@@ -104,9 +117,9 @@ class CommerceSystemFacade(ICommerceSystemFacade):
     shops_lock = threading.Lock()
 
     def __init__(self):
-        self.active_users: Dict[int, User] = {}             # dictionary {user.id : user object}
-        self.registered_users: Dict[str, Subscribed] = {}   # dictionary {user.username : user object}
-        self.shops: Dict[int, Shop] = {}                    # dictionary {shop.shop_id : shop}
+        self.active_users: Dict[int, User] = {}  # dictionary {user.id : user object}
+        self.registered_users: Dict[str, Subscribed] = {}  # dictionary {user.username : user object}
+        self.shops: Dict[int, Shop] = {}  # dictionary {shop.shop_id : shop}
 
     def enter(self) -> int:
         new_user = User()

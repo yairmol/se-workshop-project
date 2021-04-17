@@ -8,6 +8,8 @@ from domain.commerce_system.permission import Permission
 from domain.commerce_system.product import Product
 from domain.commerce_system.productDTO import ProductDTO
 from domain.commerce_system.shop import Shop
+from domain.commerce_system.shopping_cart import ShoppingCart, ShoppingBag
+from domain.payment_module.payment_system import pay
 from domain.commerce_system.transaction import Transaction
 from domain.commerce_system.shopping_cart import ShoppingCart
 
@@ -39,6 +41,7 @@ class User:
         transaction = Transaction(shop, [product_dto], payment_details, datetime.now(), product.price)
         shop.add_transaction(bag, transaction)
         self.add_transaction(transaction)
+        pay(self, payment_details)
 
     def buy_shopping_bag(self, shop: Shop, payment_details: dict) -> bool:
         bag = self.cart[shop]
@@ -47,6 +50,7 @@ class User:
         if shop.add_transaction(bag, transaction):
             self.add_transaction(transaction)
             self.cart.remove_shopping_bag(shop)
+            pay(self, payment_details)
             return True
         return False
 
@@ -70,11 +74,13 @@ class User:
                     to_be_canceled += [transaction]
             if not check_if_canceled:
                 self.cart.remove_all_shopping_bags()
+                pay(self, payment_details)
 
     def add_transaction(self, transaction: Transaction):
         self.user_state.add_transaction(transaction)
 
     def remove_transaction(self, transaction: Transaction):
+        # TODO: for subscribed users
         raise NotImplementedError()
 
     def cancel_orders(self, to_be_canceled: list[Transaction]):
@@ -82,8 +88,11 @@ class User:
             self.remove_transaction(transaction)
             transaction.shop.remove_transaction(self.cart[transaction.shop], transaction)
 
-    def save_product_to_cart(self, shop: Shop, product: Product, quantity: int) -> bool:
-        return self.cart.add_product(product, shop, quantity)
+    def save_product_to_cart(self, shop: Shop, product: Product, amount_to_buy: int) -> bool:
+        return self.cart.add_product(product, shop, amount_to_buy)
+
+    def remove_product_from_cart(self, shop: Shop, product: Product, amount: int) -> bool:
+        return self.cart.remove_from_shopping_bag(shop, product, amount)
 
     def get_cart_info(self) -> List[dict]:
         raise NotImplementedError()
@@ -188,10 +197,9 @@ class Subscribed(UserState):
         session_app.appoint_owner(self)
 
     def get_appointment(self, shop: Shop):
-        try:
+        if shop in self.appointments:
             return self.appointments[shop]
-        except Exception as e:
-            raise Exception("no appointment for shop. shop id - ", shop.shop_id)
+        raise Exception("no appointment for shop. shop id - ", shop.shop_id)
 
     def add_product(self, shop: Shop, **product_info) -> int:
         return self.get_appointment(shop).add_product(**product_info)
