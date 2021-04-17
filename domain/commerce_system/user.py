@@ -204,10 +204,9 @@ class Subscribed(UserState):
         session_app.appoint_owner(self)
 
     def get_appointment(self, shop: Shop):
-        try:
+        if shop in self.appointments:
             return self.appointments[shop]
-        except Exception as e:
-            raise Exception("no appointment for shop. shop id - ", shop.shop_id)
+        raise Exception("no appointment for shop. shop id - ", shop.shop_id)
 
     def add_product(self, shop: Shop, product: Product) -> int:
         return self.get_appointment(shop).add_product(product)

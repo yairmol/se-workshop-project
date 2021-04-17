@@ -24,10 +24,13 @@ class SystemService:
         return True
 
     def enter(self) -> str:  # returns the new user's token
-        new_user_id = self.commerce_system_facade.enter()
-        event_logger.info("A User entered the system, got id: " + str(new_user_id))
-        token = self.authenticator.add_new_user_token(new_user_id)
-        return token
+        try:
+            new_user_id = self.commerce_system_facade.enter()
+            event_logger.info("A User entered the system, got id: " + str(new_user_id))
+            token = self.authenticator.add_new_user_token(new_user_id)
+            return token
+        except Exception as e:
+            error_logger.error(e)
 
     def exit(self, token: str) -> None:
         user_id = self.authenticator.get_id_by_token(token)
@@ -37,7 +40,7 @@ class SystemService:
             self.authenticator.remove_token(token)
             event_logger.info("User " + str(user_id) + " exit the system")
         except Exception as e:
-            print(e)
+            error_logger.error(e)
         finally:
             if user_id > 0:
                 self.commerce_system_facade.remove_active_user(user_id)
@@ -53,8 +56,11 @@ class SystemService:
                 return True
             except AssertionError as e:
                 print(e)
+                event_logger.warning(e)
                 return False
-        print("User Token's Expired")
+            except Exception as e:
+                error_logger.error(e)
+                return False
         return False
 
     def login(self, token: str, username: str, password: str) -> bool:
@@ -68,6 +74,10 @@ class SystemService:
                 return True
             except AssertionError as e:
                 print(e)
+                event_logger.warning(e)
+                return False
+            except Exception as e:
+                error_logger.error(e)
                 return False
         return False
 
@@ -80,6 +90,10 @@ class SystemService:
                 return True
             except AssertionError as e:
                 print(e)
+                event_logger.warning(e)
+                return False
+            except Exception as e:
+                error_logger.error(e)
                 return False
         return False
 
@@ -99,6 +113,10 @@ class SystemService:
                 return True
             except AssertionError as e:
                 print(e)
+                event_logger.warning(e)
+                return False
+            except Exception as e:
+                error_logger.error(e)
                 return False
         return False
 
@@ -113,6 +131,10 @@ class SystemService:
                 return True
             except AssertionError as e:
                 print(e)
+                event_logger.warning(e)
+                return False
+            except Exception as e:
+                error_logger.error(e)
                 return False
         return False
 
@@ -127,6 +149,10 @@ class SystemService:
                 return True
             except AssertionError as e:
                 print(e)
+                event_logger.warning(e)
+                return False
+            except Exception as e:
+                error_logger.error(e)
                 return False
         return False
 
@@ -141,6 +167,10 @@ class SystemService:
                 return True
             except AssertionError as e:
                 print(e)
+                event_logger.warning(e)
+                return False
+            except Exception as e:
+                error_logger.error(e)
                 return False
         return False
 
@@ -155,6 +185,10 @@ class SystemService:
                 return True
             except AssertionError as e:
                 print(e)
+                event_logger.warning(e)
+                return False
+            except Exception as e:
+                error_logger.error(e)
                 return False
         return False
 
@@ -169,6 +203,10 @@ class SystemService:
                 return True
             except AssertionError as e:
                 print(e)
+                event_logger.warning(e)
+                return False
+            except Exception as e:
+                error_logger.error(e)
                 return False
         return False
 
@@ -183,19 +221,26 @@ class SystemService:
                 return True
             except AssertionError as e:
                 print(e)
+                event_logger.warning(e)
+                return False
+            except Exception as e:
+                error_logger.error(e)
                 return False
         return False
 
     def get_shop_info(self, token: str, shop_id: int) -> dict:
-        assert self.is_valid_token(token), f"Invalid user token {token}"
-        try:
-            user_id = self.authenticator.get_id_by_token(token)
-            event_logger.info(f"user {user_id} requested for shop {shop_id} information")
-            return self.commerce_system_facade.get_shop_info(shop_id)
-        except AssertionError as e:
-            event_logger.error(e)
-        except Exception as e:
-            error_logger.error(e)
+        if self.is_valid_token(token):
+            try:
+                user_id = self.authenticator.get_id_by_token(token)
+                event_logger.info(f"user {user_id} requested for shop {shop_id} information")
+                return self.commerce_system_facade.get_shop_info(shop_id)
+            except AssertionError as e:
+                print(e)
+                event_logger.warning(e)
+                return {}
+            except Exception as e:
+                error_logger.error(e)
+                return {}
         return {}
 
     def search_products(
