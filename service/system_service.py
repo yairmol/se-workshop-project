@@ -256,3 +256,13 @@ class SystemService:
         :return: returns the results as a list of dictionaries
         """
         return self.commerce_system_facade.search_products(product_name, keywords, categories, filters)
+
+    def get_personal_purchase_history(self, token: str) -> List[dict]:
+        try:
+            assert self.is_valid_token(token), f"Invalid user token {token}"
+            user_id = self.authenticator.get_id_by_token(token)
+            return self.commerce_system_facade.get_personal_purchase_history(user_id)
+        except AssertionError as e:
+            event_logger.error(e)
+        except Exception as e:
+            error_logger.error(e)

@@ -5,6 +5,7 @@ PRODUCT_DESC = "description"
 QUANTITY = "quantity"
 CATEGORIES = "categories"
 
+
 class Product:
     def __init__(self, product_id: int, product_name: str, price: float, description: str, quantity: int, categories):
         if categories is None:
