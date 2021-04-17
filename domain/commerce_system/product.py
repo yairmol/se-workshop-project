@@ -4,3 +4,4 @@ class Product:
         self.price = base_price
         self.description = description
         self.quantity = quantity
+        self.base_price = base_price

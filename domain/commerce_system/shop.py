@@ -1,7 +1,6 @@
 import threading
 
 from domain.commerce_system.product import Product
-from domain.commerce_system.productDTO import ProductDTO
 from domain.commerce_system.transactionDTO import TransactionDTO
 
 
@@ -11,13 +10,6 @@ class Shop:
         self.products = {}
         self.transaction_history = []
         self.products_lock = threading.lock()
-
-    """ quantity has to be no more than available product quantity"""
-    def sell_product(self, product_id: str, quantity: int, payment_details: dict) -> bool: # add payment
-        available_quantity = self.products[product_id].quantity
-        if available_quantity < quantity:
-            return False
-        return True
 
     """ returns product_id if successful"""
     def add_product(self, product: Product) -> int:
