@@ -197,3 +197,17 @@ class SystemService:
         except Exception as e:
             error_logger.error(e)
         return {}
+
+    def search_products(
+            self, product_name: str = None, keywords: List[str] = None,
+            categories: List[str] = None, filters: List[dict] = None
+    ) -> List[dict]:
+        """
+        :param categories:
+        :param product_name: product name (optional)
+        :param keywords:  OR keywords and categories separated by spaces
+        :param filters: a list of filters where a filter is a dictionary containing a key 'type' and additional keys
+        according to type.
+        :return: returns the results as a list of dictionaries
+        """
+        return self.commerce_system_facade.search_products(product_name, keywords, categories, filters)
