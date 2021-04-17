@@ -3,7 +3,7 @@ import threading
 from datetime import datetime
 from typing import List
 
-from domain.commerce_system.appointment import Appointment
+from domain.commerce_system.appointment import Appointment, ShopOwner
 from domain.commerce_system.product import Product
 from domain.commerce_system.productDTO import ProductDTO
 from domain.commerce_system.shop import Shop
@@ -79,7 +79,7 @@ class User:
     def remove_transaction(self, transaction: TransactionDTO):
         raise NotImplementedError()
 
-    def cancel_orders(self, to_be_canceled: list[TransactionDTO]):
+    def cancel_orders(self, to_be_canceled: List[TransactionDTO]):
         for transaction in to_be_canceled:
             self.remove_transaction(transaction)
             transaction.shop.remove_transaction(self.cart[transaction.shop], transaction)
@@ -225,3 +225,8 @@ class Subscribed(UserState):
     def edit_manager_permissions(self, owner_sub: Subscribed, shop: Shop, permissions: List[str]):
         session_app = owner_sub.get_appointment(shop)
         session_app.edit_manager_permissions(self, permissions)
+
+    def open_shop(self, shop_details):
+        new_shop = Shop(**shop_details)
+        owner = ShopOwner(new_shop)
+        self.appointments[new_shop] = owner

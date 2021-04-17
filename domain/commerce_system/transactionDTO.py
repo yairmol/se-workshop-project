@@ -3,7 +3,7 @@ from domain.commerce_system.shop import Shop
 
 
 class TransactionDTO:
-    def __init__(self, shop: Shop, products: list[ProductDTO], payment_details, date, price):
+    def __init__(self, shop, products: list[ProductDTO], payment_details, date, price):
         self.shop = shop
         self.products = products
         self.payment_details = payment_details

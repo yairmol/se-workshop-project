@@ -201,6 +201,20 @@ class SystemService:
                 return False
         return False
 
+    def open_shop(self, token: str, **shop_details):
+        if self.is_valid_token(token):
+            try:
+                user_id = self.authenticator.get_id_by_token(token)
+                event_logger.info("User: " + str(user_id) +
+                                  " tries to open a shop")
+                self.commerce_system_facade.open_shop(user_id, **shop_details)
+                event_logger.info("User: " + str(user_id) + " open shop successfully")
+                return True
+            except AssertionError as e:
+                print(e)
+                return False
+        return False
+
     def get_shop_info(self, token: str, shop_id: int) -> dict:
         assert self.is_valid_token(token), f"Invalid user token {token}"
         try:

@@ -94,6 +94,13 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         new_owner = self.get_subscribed(username)
         new_owner.un_appoint_owner(owner, shop)
 
+    def open_shop(self, user_id, **shop_details):
+        new_owner = self.get_user(user_id).user_state
+        shop = new_owner.open_shop(shop_details)
+        self.shops_lock.acquire()
+        self.shops[shop.shop_id] = shop
+        self.shops_lock.release()
+
     def get_shop_staff_info(self, session_id: int, shop_id: str) -> List[dict]:
         pass
 

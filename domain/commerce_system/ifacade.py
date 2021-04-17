@@ -233,6 +233,12 @@ class ICommerceSystemFacade:
         """
         raise NotImplementedError()
 
+    def open_shop(self, user_id, **shop_details):
+        """
+        :param user_id: of user, wishing to open a store
+        :param shop_details: details of shop
+        """
+
     def get_shop_transaction_history(self, session_id: int, shop_id: str) -> List[dict]:
         raise NotImplementedError()
 
