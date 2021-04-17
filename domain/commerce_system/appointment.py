@@ -156,26 +156,18 @@ class ShopOwner(Appointment):
         self.shop.delete_product(product_id)
     
     def un_appoint_manager(self, manager_sub, cascading=False):
-        if self.shop in manager_sub.appointments.keys() and isinstance(manager_sub.appointments[self.shop],
-                                                                       ShopManager):
-            if manager_sub in self.manager_appointees:
-                self.remove_appointment(manager_sub)
-                if not cascading:
-                    self.manager_appointees.remove(manager_sub)
-            else:
-                raise Exception("manager was not assigned by this owner")
-        else:
-            raise Exception("user is not a manager")
+        assert self.shop in manager_sub.appointments.keys() and isinstance(manager_sub.appointments[self.shop],
+                                                                       ShopManager), "user is not a manager"
+        assert manager_sub in self.manager_appointees, "manager was not assigned by this owner"
+        self.remove_appointment(manager_sub)
+        if not cascading:
+            self.manager_appointees.remove(manager_sub)
 
     def edit_manager_permissions(self, manager_sub, permissions: List[str]):
-        if self.shop in manager_sub.appointments.keys() and isinstance(manager_sub.appointments[self.shop],
-                                                                       ShopManager):
-            if manager_sub in self.manager_appointees:
-                manager_sub.appointments[self.shop].set_permissions(permissions)
-            else:
-                raise Exception("manager was not assigned by this owner")
-        else:
-            raise Exception("user is not a manager")
+        assert self.shop in manager_sub.appointments.keys() and isinstance(manager_sub.appointments[self.shop],
+                                                                       ShopManager), "user is not a manager"
+        assert manager_sub in self.manager_appointees, "manager was not assigned by this owner"
+        manager_sub.appointments[self.shop].set_permissions(permissions)
 
     def un_appoint_appointees(self):
         for owner in self.owner_appointees:
@@ -184,16 +176,12 @@ class ShopOwner(Appointment):
             self.un_appoint_manager(manager, cascading=True)
 
     def un_appoint_owner(self, owner_sub, cascading=False):
-        if self.shop in owner_sub.appointments.keys() and isinstance(owner_sub.appointments[self.shop], ShopOwner):
-            if owner_sub in self.owner_appointees:
-                owner_sub.appointments[self.shop].un_appoint_appointees()
-                self.remove_appointment(owner_sub)
-                if not cascading:
-                    self.owner_appointees.remove(owner_sub)
-            else:
-                raise Exception("owner was not assigned by this owner")
-        else:
-            raise Exception("user is not an owner")
+        assert self.shop in owner_sub.appointments.keys() and isinstance(owner_sub.appointments[self.shop], ShopOwner), "user is not an owner"
+        assert owner_sub in self.owner_appointees, "owner was not assigned by this owner"
+        owner_sub.appointments[self.shop].un_appoint_appointees()
+        self.remove_appointment(owner_sub)
+        if not cascading:
+            self.owner_appointees.remove(owner_sub)
         
     def promote_manager_to_owner(self, manager_sub):
         self.un_appoint_manager(manager_sub)
