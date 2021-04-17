@@ -4,7 +4,7 @@ from typing import Dict, List
 from domain.commerce_system.facade import ICommerceSystemFacade
 from domain.commerce_system.product import Product
 from domain.commerce_system.shop import Shop
-from domain.commerce_system.user import User, Subscribed, Guest
+from domain.commerce_system.user import User, Guest, Subscribed
 import domain.commerce_system.valdiation as validate
 
 

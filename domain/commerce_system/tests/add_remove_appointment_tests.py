@@ -4,7 +4,7 @@ from unittest.mock import MagicMock
 from domain.commerce_system.appointment import ShopOwner, ShopManager
 from domain.commerce_system.product import Product
 from domain.commerce_system.shop import Shop
-from domain.commerce_system.subscribed import Subscribed
+from domain.commerce_system.user import Subscribed
 
 
 class TestShopOwner(unittest.TestCase):
