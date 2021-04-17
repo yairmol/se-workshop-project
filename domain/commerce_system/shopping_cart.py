@@ -16,10 +16,8 @@ class ShoppingBag:
             self.products[product] = amount_to_buy
 
     def remove_product(self, product: Product, amount_to_buy: int):
-        if product not in self.products:
-            raise Exception("product not in the shopping bag")
-        if self.products[product] < amount_to_buy:
-            raise Exception("not enough items in the bag")
+        assert product in self.products, "product not in the shopping bag"
+        assert self.products[product] >= amount_to_buy, "not enough items in the bag"
         if self.products[product] == amount_to_buy:
             self.products.pop(product)
         else:
@@ -55,13 +53,11 @@ class ShoppingCart:
         self.shopping_bags[shop].remove_product(product, amount)
 
     def add_shopping_bag(self, bag: ShoppingBag):
-        if bag.shop in self.shopping_bags:
-            raise Exception("bag already exists")
+        assert bag.shop not in self.shopping_bags, "bag already exists"
         self.shopping_bags[bag.shop] = bag
 
     def remove_shopping_bag(self, shop: Shop):
-        if shop not in self.shopping_bags:
-            raise Exception("no shopping bag to remove")
+        assert shop in self.shopping_bags, "no shopping bag to remove"
         self.shopping_bags.remove(shop)
 
     def remove_all_shopping_bags(self):
