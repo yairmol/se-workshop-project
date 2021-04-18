@@ -5,7 +5,7 @@ from domain.commerce_system.ifacade import ICommerceSystemFacade
 from domain.commerce_system.product import Product
 from domain.commerce_system.search_engine import search, Filter
 from domain.commerce_system.shop import Shop
-from domain.commerce_system.user import User, Subscribed, Guest
+from domain.commerce_system.user import User, Subscribed
 import domain.commerce_system.valdiation as validate
 
 
@@ -27,7 +27,7 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         shop: Shop = self.shops[shop_id]
         return shop.to_dict()
 
-    def save_product_to_cart(self, user_id: int, shop_id: str, product_id: int, amount_to_buy: int):
+    def save_product_to_cart(self, user_id: int, shop_id: int, product_id: int, amount_to_buy: int):
         user = self.get_user(user_id)
         shop = self.get_shop(shop_id)
         product = shop.products[product_id]
@@ -78,11 +78,16 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         worker = self.get_user(user_id).user_state
         return worker.add_product(shop, **product_info)
 
-    def edit_product_info(self, user_id: int, shop_id: int, **product_info):
+    def edit_product_info(
+            self, user_id: int, shop_id: int, product_id: int,
+            product_name: str, description: str, price: float, quantity: int
+    ) -> bool:
         shop = self.get_shop(shop_id)
         worker = self.get_user(user_id).user_state
-        assert "product_id" in product_info
-        worker.edit_product(shop, product_info["product_id"], **product_info)
+        to_edit = {key: value for key, value in [
+            ("product_name", product_name), ("description", description), ("price", price), (quantity, "quantity")
+        ] if value is not None}
+        return worker.edit_product(shop, product_id, **to_edit)
 
     def delete_product(self, user_id: int, shop_id: int, product_id: int) -> bool:
         shop = self.get_shop(shop_id)
@@ -128,7 +133,7 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         new_owner = self.get_subscribed(username)
         new_owner.un_appoint_owner(owner, shop)
 
-    def get_shop_staff_info(self, shop_id: str) -> List[dict]:
+    def get_shop_staff_info(self, shop_id: int) -> List[dict]:
         return self.get_shop(shop_id).get_staff_info()
 
     def get_shop_transaction_history(self, session_id: int, shop_id: str) -> List[dict]:

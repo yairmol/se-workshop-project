@@ -11,13 +11,12 @@ WORKER_APPOINTER = "appointer"
 
 
 class Shop:
-    __shop_id = 0
+    __shop_id = 1
 
-    def __init__(self, **shop_info):
+    def __init__(self, shop_name: str, description=""):
         self.founder = None
         self.shop_id = Shop.__shop_id
         Shop.__shop_id += 1
-        self.shop_id = shop_id
         self.name: str = shop_name
         self.description: str = description
         self.products: Dict[int, Product] = {}
@@ -38,17 +37,18 @@ class Shop:
         return ret
 
     """ returns product_id if successful"""
-    def add_product(self, product: Product):
+    def add_product(self, **product_info):
         self.products_lock.acquire()
         try:
-            assert not self.has_product(product.name), f"product name \"{product.name}\" is not unique"
-            product_id = self.get_free_id()
-            self.products[product_id] = product
+            assert (not self.has_product(product_info["product_name"]),
+                    f"product name {product_info['product_name']} is not unique")
+            product = Product(**product_info)
+            self.products[product.product_id] = product
         except Exception as e:
             self.products_lock.release()
             raise e
         self.products_lock.release()
-        return product_id
+        return product.product_id
 
     def delete_product(self, product_id: int):
         self.products_lock.acquire()
@@ -68,20 +68,13 @@ class Shop:
             assert product_id in self.products, f"no product with id={product_id}"
             product = self.products[product_id]
             for field, new_value in to_edit.items():
-                if field not in product.__dict__:
+                if not hasattr(product, field):
                     raise Exception("product has no field ", field)
-                product.__dict__[field] = new_value
+                setattr(product, field, new_value)
         except Exception as e:
             self.products_lock.release()
             raise e
         self.products_lock.release()
-
-    def get_shop_info(self) -> str:
-        s = ""
-        for p_id, p_val in self.products:
-            s += "store product id: ", p_id, "\nproduct id: ", p_val.product_id, "\nproduct name: ",\
-                 p_val.name, "\nprice: ", p_val.price
-        return s
 
     def get_free_id(self) -> int:
         last_id = 1
@@ -95,14 +88,14 @@ class Shop:
     def has_product(self, product_name: str):
         found = False
         for supply_product in self.products.values():
-            found = found or supply_product.name == product_name
+            found = found or supply_product.product_name == product_name
         return found
 
     """ returns id of first product named product_name"""
     def get_id(self, product_name: str):
         product_id = -1
         for p_id, supply_product in self.products.items():
-            if supply_product.name == product_name:
+            if supply_product.product_name == product_name:
                 product_id = p_id
         return product_id
 
