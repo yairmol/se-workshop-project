@@ -4,6 +4,8 @@ from domain.commerce_system.shop import Shop
 
 from typing import Dict
 
+CART_ID = "cart id"
+SHOPPING_BAGS = "shopping bags"
 
 class ShoppingBag:
     def __init__(self, shop: Shop):
@@ -53,6 +55,12 @@ class ShoppingCart:
     def __iter__(self):
         return self.shopping_bags.items()
 
+    def to_dict(self) -> dict:
+        return {
+            CART_ID: self.cart_id,
+            SHOPPING_BAGS: self.shopping_bags
+        }
+
     def add_product(self, product: Product, shop: Shop, amount_to_buy: int):
         if shop not in self.shopping_bags:
             bag = ShoppingBag(shop)
@@ -74,7 +82,6 @@ class ShoppingCart:
     def remove_shopping_bag(self, shop: Shop):
         assert shop in self.shopping_bags, "no shopping bag to remove"
         self.shopping_bags.remove(shop)
-
 
     def remove_all_shopping_bags(self):
         self.shopping_bags.clear()
