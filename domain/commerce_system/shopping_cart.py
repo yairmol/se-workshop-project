@@ -4,8 +4,12 @@ from domain.commerce_system.shop import Shop
 
 from typing import Dict
 
-CART_ID = "cart id"
-SHOPPING_BAGS = "shopping bags"
+CART_ID = "cart_id"
+SHOPPING_BAGS = "shopping_bags"
+PRODUCTS = "products"
+SHOP_NAME = "shop_name"
+TOTAL = "total"
+
 
 class ShoppingBag:
     def __init__(self, shop: Shop):
@@ -14,6 +18,16 @@ class ShoppingBag:
 
     def __setitem__(self, key: Product, value: int):
         self.products[key] = value
+
+    def __iter__(self):
+        return self.products.items().__iter__()
+
+    def to_dict(self):
+        return {
+            SHOP_NAME: self.shop.name,
+            PRODUCTS: [ProductDTO(prod, amount).to_dict() for prod, amount in self.products.items()],
+            TOTAL: self.calculate_price()
+        }
 
     def add_product(self, product: Product, amount_to_buy: int):
         if product in self.products:
@@ -34,7 +48,7 @@ class ShoppingBag:
 
     def calculate_price(self) -> int:
         total = 0
-        for product, amount in self.products:
+        for product, amount in self.products.items():
             total += amount * product.price
         return total
 
@@ -57,8 +71,9 @@ class ShoppingCart:
 
     def to_dict(self) -> dict:
         return {
+            SHOPPING_BAGS: {shop.shop_id: sb.to_dict() for shop, sb in self.shopping_bags.items()},
             CART_ID: self.cart_id,
-            SHOPPING_BAGS: self.shopping_bags
+            TOTAL: self.calculate_price(),
         }
 
     def add_product(self, product: Product, shop: Shop, amount_to_buy: int):
@@ -89,5 +104,6 @@ class ShoppingCart:
 
     def calculate_price(self):
         total = 0
-        for shop, bag in self.shopping_bags:
+        for shop, bag in self.shopping_bags.items():
             total += bag.calculate_price()
+        return total
