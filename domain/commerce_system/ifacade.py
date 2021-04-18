@@ -188,7 +188,17 @@ class ICommerceSystemFacade:
         this action succeeds iff the user identified by user_id has the proper authorization - he is a shop owner
         :param user_id: identifier for user performing the action
         :param shop_id: shop identifier
-        :param username: username of the user to be appointed as shop manager
+        :param username: username of the user to be appointed as shop owner
+        :return: True on success
+        """
+        raise NotImplementedError()
+
+    def promote_shop_owner(self, user_id: int, shop_id: str, username: str) -> bool:
+        """
+        promote a shop manager, to shop owner
+        :param user_id: identifier for user performing the action
+        :param shop_id: shop identifier
+        :param username: username of the manager user to be appointed as shop owner
         :return: True on success
         """
         raise NotImplementedError()
@@ -223,11 +233,23 @@ class ICommerceSystemFacade:
     def unappoint_shop_worker(self, user_id: int, shop_id: int, username: str) -> bool:
         """
         unappoint the user identified by username from his role in the shop identified by shop_id
-        Action succeeds iff the user of user_id has authorization and user of username is a shop worker.
+        Action succeeds iff the user of session_id has authorization and user of username is a shop worker.
         """
         raise NotImplementedError()
 
-    def get_shop_staff_info(self, user_id: int, shop_id: int) -> List[dict]:
+    def unappoint_shop_manager(self, user_id: int, shop_id: str, username: str) -> bool:
+        """
+        unappoint, but for a specific role.
+        """
+        raise NotImplementedError()
+
+    def unappoint_shop_owner(self, user_id: int, shop_id: str, username: str) -> bool:
+        """
+        unappoint, but for a specific role.
+        """
+        raise NotImplementedError()
+
+    def get_shop_staff_info(self, user_id: int, shop_id: str) -> List[dict]:
         """
         Action succeeds iff user of user_id has proper authorization
         """

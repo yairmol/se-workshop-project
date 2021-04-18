@@ -16,7 +16,7 @@ class ShopTests(TestCase):
 
     def test_get_shop_dict(self):
         my_shop_dict = shop_dict.copy()
-        shop = Shop(shop_id=self.SHOP_ID, **shop_dict)
+        shop = Shop(**shop_dict)
         shop.add_product(Product(self.PROD_ID, **product_dict))
         my_product_dict = product_dict.copy()
         my_product_dict["product_id"] = self.PROD_ID
@@ -26,7 +26,7 @@ class ShopTests(TestCase):
 
     def test_get_shop_info(self):
         facade = CommerceSystemFacade()
-        facade.shops[self.SHOP_ID] = Shop(shop_id=self.SHOP_ID, **shop_dict)
+        facade.shops[self.SHOP_ID] = Shop(**shop_dict)
         my_shop_dict = shop_dict.copy()
         my_shop_dict["shop_id"] = self.SHOP_ID
         my_shop_dict["products"] = []
