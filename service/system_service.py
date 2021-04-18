@@ -14,6 +14,7 @@ class SystemService:
     def __init__(self, commerce_system_facade: CommerceSystemFacade, authenticator: Authenticator):
         self.commerce_system_facade = commerce_system_facade
         self.authenticator = authenticator
+        self.commerce_system_facade.create_admin_user()
 
     def is_valid_token(self, token: str):
         if self.authenticator.is_token_expired(token):
@@ -443,6 +444,19 @@ class SystemService:
     # 6. System Administrator Requirements
 
     # 6.4
-    def get_system_transactions(self):
-        # TODO: implement
-        pass
+    def get_system_transactions(self, token: str):
+        if self.is_valid_token(token):
+            try:
+                user_id = self.authenticator.get_id_by_token(token)
+                event_logger.info(f"user {user_id} requested for the system transaction history")
+                return self.commerce_system_facade.get_system_transaction_history(user_id)
+            except AssertionError as e:
+                event_logger.warning(e)
+                return []
+            except Exception as e:
+                error_logger.error(e)
+                return []
+        return []
+
+    def cleanup(self):
+        self.commerce_system_facade.clean_up()

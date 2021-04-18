@@ -23,6 +23,7 @@ class GuestTests(TestCase):
     def tearDown(self) -> None:
         status = self.commerce_system.exit(self.session_id)
         self.assertTrue(status)
+        self.commerce_system.cleanup()
 
     def test_enter_exit(self):
         self.assertTrue(True)
@@ -75,6 +76,7 @@ class SubscribedTests(TestCase):
         self.assertTrue(self.commerce_system.logout(self.session_id))
         status = self.commerce_system.exit(self.session_id)
         self.assertTrue(status)
+        self.commerce_system.cleanup()
 
     def test_logout(self):
         # setUp and tearDown will perform the login and logout
@@ -106,6 +108,9 @@ class ShopOwnerOperations(TestCase):
         self.shop_id = self.commerce_system.open_shop(self.session_id, **shops[0])
         self.assertIsInstance(self.shop_id, int)
         self.assertGreater(self.shop_id, 0)
+
+    def tearDown(self) -> None:
+        self.commerce_system.cleanup()
 
     def test_add_product_to_shop(self):
         self.assertGreater(add_product(
@@ -249,6 +254,9 @@ class ShopManagerOperations(TestCase):
             self.owner_session_id, self.shop_id, users[1][Um.USERNAME], permissions[0]
         )
 
+    def tearDown(self) -> None:
+        self.commerce_system.cleanup()
+
     def edit_manager_permissions(self, m_permissions):
         self.assertTrue(self.commerce_system.edit_manager_permissions(
             self.owner_session_id, self.shop_id, self.manager_username, m_permissions
@@ -328,6 +336,9 @@ class PurchasesTests(TestCase):
         self.shop_to_staff, self.session_to_shops = sessions_to_shops(
             self.shop_to_opener, self.shop_to_owners, self.shops_to_products, self.sessions
         )
+
+    def tearDown(self) -> None:
+        self.commerce_system.cleanup()
 
     def test_save_product_to_cart(self):
         user_session = self.sessions[self.U1]
@@ -421,11 +432,10 @@ class PurchasesTests(TestCase):
             shop_id = get_shops_not_owned_by_user(u, self.shop_ids, self.shop_to_staff)[0]
             prods = self.shops_to_products[shop_id][:2]
             self.assertTrue(make_purchases(self.commerce_system, u, self.product_to_shop, prods))
-            products_purchased.append(prods)
+            products_purchased.extend(prods)
         admin_session = admin_login(self.commerce_system)
         transactions = self.commerce_system.get_system_transactions(admin_session)
-        print(transactions)
-        self.assertTrue(len(transactions) == len(products_purchased))
+        self.assertTrue(len(transactions), len(products_purchased))
         self.assertTrue(
             all(map(lambda pid:
                     any(map(lambda t: t["products"][0]["product_id"] == pid,
@@ -450,6 +460,9 @@ class GuestTestsWithData(TestCase):
             self.commerce_system, self.NUM_GUESTS, self.NUM_SUBS, self.NUM_SHOPS, self.NUM_PRODUCTS
         )
         self.sids = list(self.sids_to_shop.keys())
+
+    def tearDown(self) -> None:
+        self.commerce_system.cleanup()
 
     def test_get_shop_info(self):
         s1 = self.sids[self.S1]
@@ -514,6 +527,9 @@ class ParallelismTests(TestCase):
         self.sessions = list(self.sess_to_user.keys())
         self.sid_to_shop, self.sid_to_sess = open_shops(self.commerce_system, self.sessions, 2)
         self.sids = list(self.sid_to_shop.keys())
+
+    def tearDown(self) -> None:
+        self.commerce_system.cleanup()
 
     @staticmethod
     def run_parallel_test(f1, f2):

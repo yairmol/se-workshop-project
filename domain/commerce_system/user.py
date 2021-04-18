@@ -8,6 +8,7 @@ from domain.commerce_system.product import Product
 from domain.commerce_system.productDTO import ProductDTO
 from domain.commerce_system.shop import Shop
 from domain.commerce_system.shopping_cart import ShoppingCart, ShoppingBag
+from domain.commerce_system.transaction_repo import TransactionRepo
 from domain.payment_module.payment_system import pay
 from domain.commerce_system.transaction import Transaction
 from domain.commerce_system.shopping_cart import ShoppingCart
@@ -36,7 +37,8 @@ class User:
 
     def buy_product(self, shop: Shop, product: Product, amount_to_buy: int, payment_details: dict):
         product_dto = ProductDTO(product, amount_to_buy)
-        bag = {product: amount_to_buy}
+        bag = ShoppingBag(shop)
+        bag.add_product(product, amount_to_buy)
         transaction = Transaction(shop, [product_dto], payment_details, datetime.now(), product.price)
         assert shop.add_transaction(bag, transaction), "transaction failed"
         self.add_transaction(transaction)
@@ -89,6 +91,7 @@ class User:
         return False
 
     def add_transaction(self, transaction: Transaction):
+        TransactionRepo.get_transaction_repo().add_transaction(transaction)
         self.user_state.add_transaction(transaction)
 
     def remove_transaction(self, transaction: Transaction):
@@ -180,13 +183,16 @@ class UserState:
         raise Exception("Error: Guest User cannot edit manager permissions")
 
     def add_transaction(self, transaction: Transaction):
-        raise Exception("Error: User cannot perform add transaction action")
+        pass
 
     def logout(self):
         raise Exception("Error: User cannot logout in current state")
 
     def remove_transaction(self, transaction: Transaction):
         pass
+
+    def get_system_transaction_history(self):
+        raise Exception("only system administrator can see the system transactio history")
 
 
 class Guest(UserState):
@@ -262,3 +268,12 @@ class Subscribed(UserState):
 
     def get_personal_transaction_history(self):
         return self.transactions
+
+
+class SystemManager(Subscribed):
+    def __init__(self, username: str, password: str, system_transactions: TransactionRepo):
+        super().__init__(username, password)
+        self.system_transactions = system_transactions
+
+    def get_system_transaction_history(self):
+        return self.system_transactions.get_transactions()

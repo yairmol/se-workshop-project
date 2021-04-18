@@ -5,7 +5,8 @@ from domain.commerce_system.ifacade import ICommerceSystemFacade
 from domain.commerce_system.product import Product
 from domain.commerce_system.search_engine import search, Filter
 from domain.commerce_system.shop import Shop
-from domain.commerce_system.user import User, Subscribed
+from domain.commerce_system.transaction_repo import TransactionRepo
+from domain.commerce_system.user import User, Subscribed, SystemManager
 import domain.commerce_system.valdiation as validate
 
 
@@ -19,6 +20,7 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         self.active_users: Dict[int, User] = {}  # dictionary {user_sess.id : user_sess object}
         self.registered_users: Dict[str, Subscribed] = {}  # dictionary {user_id.username : user_sess object}
         self.shops: Dict[int, Shop] = {}  # dictionary {shop.shop_id : shop}
+        self.transaction_repo = TransactionRepo.get_transaction_repo()
 
     # 2.1
     def enter(self) -> int:
@@ -221,8 +223,10 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         return user.user_state.get_shop_transaction_history(shop)
 
     # 6.4
-    def get_system_transaction_history(self, session_id: int) -> List[dict]:
-        pass
+    def get_system_transaction_history(self, user_id: int) -> List[dict]:
+        user = self.get_user(user_id)
+        transactions = user.user_state.get_system_transaction_history()
+        return list(map(lambda t: t.to_dict(), transactions))
 
     # utils:
     def remove_active_user(self, user_id: int) -> None:
@@ -264,3 +268,15 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         for shop in self.shops.values():
             products.extend(shop.products.values())
         return products
+
+    def create_admin_user(self):
+        from data_model import UserModel as Um, admin_credentials as ac
+        self.registered_users[ac[Um.USERNAME]] = SystemManager(
+            ac[Um.USERNAME], ac[Um.PASSWORD], self.transaction_repo
+        )
+
+    def clean_up(self):
+        self.transaction_repo = self.transaction_repo.cleanup()
+        self.shops.clear()
+        self.registered_users.clear()
+        self.active_users.clear()

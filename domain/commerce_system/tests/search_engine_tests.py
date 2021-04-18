@@ -5,9 +5,9 @@ from domain.commerce_system.search_engine import levenshtein_distance, search_by
     search_by_product_name
 
 products = [
-    Product(1, "bamba", 5, "bamba by osem", 1, ["snacks"]),
-    Product(2, "my_chair", 50, "chair in your style", 1, ["furniture"]),
-    Product(3, "mountain bike", 1000, "bike, for the mountains", 1, ["vehicle", "toy"]),
+    Product("bamba", 5, "bamba by osem", 1, ["snacks"]),
+    Product("my_chair", 50, "chair in your style", 1, ["furniture"]),
+    Product("mountain bike", 1000, "bike, for the mountains", 1, ["vehicle", "toy"]),
 ]
 
 
@@ -38,6 +38,6 @@ class SearchEngineTests(unittest.TestCase):
         self.assertEquals(search_by_categories(products, ["future"]), [])
 
     def test_search_by_product_name(self):
-        self.assertEquals(search_by_product_name(products, products[0].name), [products[0]])
+        self.assertEquals(search_by_product_name(products, products[0].product_name), [products[0]])
         self.assertEquals(search_by_product_name(products, "noname"), [])
         self.assertEquals(search_by_product_name(products, "mount bike"), [products[2]])

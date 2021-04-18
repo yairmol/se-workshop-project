@@ -32,3 +32,9 @@ class PermissionsModel:
     EDIT_PRODUCT_PERM = "edit_product"
     ADD_PRODUCT_PERM = "add_product"
     DELETE_PRODUCT_PERM = "delete_product"
+
+
+admin_credentials = {
+    UserModel.USERNAME: "admin",
+    UserModel.PASSWORD: "admin",
+}
