@@ -1,9 +1,4 @@
-PRODUCT_ID = "product_id"
-PRODUCT_NAME = "product_name"
-PRICE = "price"
-PRODUCT_DESC = "description"
-QUANTITY = "quantity"
-CATEGORIES = "categories"
+from data_model import ProductModel as Pm
 
 
 class Product:
@@ -19,10 +14,10 @@ class Product:
 
     def to_dict(self):
         return {
-            PRODUCT_ID: self.product_id,
-            PRODUCT_NAME: self.name,
-            PRODUCT_DESC: self.description,
-            PRICE: self.price,
-            QUANTITY: self.quantity,
-            CATEGORIES: self.categories,
+            Pm.PRODUCT_ID: self.product_id,
+            Pm.PRODUCT_NAME: self.name,
+            Pm.PRODUCT_DESC: self.description,
+            Pm.PRICE: self.price,
+            Pm.QUANTITY: self.quantity,
+            Pm.CATEGORIES: self.categories,
         }

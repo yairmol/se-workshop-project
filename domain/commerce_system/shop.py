@@ -1,13 +1,9 @@
 import threading
-from typing import Dict
+from typing import Dict, List
 
 from domain.commerce_system.product import Product
 from domain.commerce_system.transaction import Transaction
-
-SHOP_NAME = "shop_name"
-SHOP_DESC = "description"
-SHOP_ID = "shop_id"
-SHOP_PRODS = "products"
+from data_model import ShopModel as Sm
 
 WORKER_NAME = "name"
 WORKER_TITLE = "title"
@@ -21,11 +17,11 @@ class Shop:
         self.founder = None
         self.shop_id = Shop.__shop_id
         Shop.__shop_id += 1
-        assert SHOP_NAME in shop_info
-        self.name: str = shop_info[SHOP_NAME]
-        self.description: str = shop_info.get(SHOP_DESC, "")
+        self.shop_id = shop_id
+        self.name: str = shop_name
+        self.description: str = description
         self.products: Dict[int, Product] = {}
-        self.transaction_history = []
+        self.transaction_history: List[Transaction] = []
         self.products_lock = threading.Lock()
         self.managers_lock = threading.Lock()
         self.owners_lock = threading.Lock()
@@ -34,12 +30,11 @@ class Shop:
 
     def to_dict(self):
         ret = {
-            SHOP_ID: self.shop_id,
-            SHOP_NAME: self.name,
-            SHOP_PRODS: list(map(lambda p: p.to_dict(), self.products.values()))
+            Sm.SHOP_ID: self.shop_id,
+            Sm.SHOP_NAME: self.name,
+            Sm.SHOP_PRODS: list(map(lambda p: p.to_dict(), self.products.values())),
+            Sm.SHOP_DESC: self.description,
         }
-        if self.description:
-            ret[SHOP_DESC] = self.description
         return ret
 
     """ returns product_id if successful"""
