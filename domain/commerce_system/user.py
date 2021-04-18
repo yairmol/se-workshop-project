@@ -41,7 +41,7 @@ class User:
         transaction = Transaction(shop, [product_dto], payment_details, datetime.now(), product.price)
         shop.add_transaction(bag, transaction)
         self.add_transaction(transaction)
-        pay(self, payment_details)
+        pay(self, self.id, payment_details)
 
     def buy_shopping_bag(self, shop: Shop, payment_details: dict) -> bool:
         bag = self.cart[shop]

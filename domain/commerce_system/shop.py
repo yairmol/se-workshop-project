@@ -40,8 +40,7 @@ class Shop:
     def add_product(self, **product_info):
         self.products_lock.acquire()
         try:
-            assert (not self.has_product(product_info["product_name"]),
-                    f"product name {product_info['product_name']} is not unique")
+            assert not self.has_product(product_info["product_name"]), f"product name {product_info['product_name']} is not unique"
             product = Product(**product_info)
             self.products[product.product_id] = product
         except Exception as e:
