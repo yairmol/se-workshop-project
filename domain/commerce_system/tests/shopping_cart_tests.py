@@ -17,7 +17,7 @@ class ShoppingCartTests(unittest.TestCase):
         self.humus = Product("humus", 7, "humus taim", 3)
 
     # def clear(self):
-    #     self.user.cart.remove_all_shopping_bags()
+    #     self.user_sess.cart.remove_all_shopping_bags()
     #
     def add_product_to_cart1(self):
         # self.clear()

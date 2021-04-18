@@ -53,7 +53,7 @@ class ShoppingCart:
         return self.shopping_bags[item]
 
     def __iter__(self):
-        return self.shopping_bags.items()
+        return self.shopping_bags.items().__iter__()
 
     def to_dict(self) -> dict:
         return {
