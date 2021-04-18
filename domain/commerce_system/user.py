@@ -93,8 +93,8 @@ class User:
     def remove_product_from_cart(self, shop: Shop, product: Product, amount: int) -> bool:
         return self.cart.remove_from_shopping_bag(shop, product, amount)
 
-    def get_cart_info(self) -> dict[Shop, dict[Product, int]]:
-        return self.cart
+    def get_cart_info(self) -> dict:
+        return self.cart.to_dict()
 
     def open_shop(self, **shop_details) -> Shop:
         raise NotImplementedError()
