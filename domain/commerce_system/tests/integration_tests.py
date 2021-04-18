@@ -11,6 +11,8 @@ product2_dict = {"product_name": "Armani Belt", "price": 99.9, "description": "b
 all_permissions = ["delete_product", "edit_product", "add_product"]
 
 
+# payment_details = [foatcredit_card_number: int, expiration_date: int, card_holder_name: str, user_name: str]
+
 class IntegrationTests(unittest.TestCase):
 
     def setUp(self):
@@ -24,14 +26,14 @@ class IntegrationTests(unittest.TestCase):
         self.facade.register(self.user_id1, self.username1, self.password)
         self.facade.register(self.user_id2, self.username2, self.password)
 
-    def test_1(self):
+    def test_login(self):
         try:
             self.facade.login(self.user_id1, self.username1, self.password)
             return True
         except AssertionError as e:
             return False
 
-    def test_2(self):
+    def test_open_shop(self):
         try:
             self.facade.login(self.user_id1, self.username1, self.password)
             self.facade.open_shop(self.user_id1, shop_dict)
@@ -39,18 +41,17 @@ class IntegrationTests(unittest.TestCase):
         except AssertionError as e:
             return False
 
-    def test_3(self):
+    def test_add_product(self):
         try:
             self.facade.login(self.user_id1, self.username1, self.password)
             shop_id = self.facade.open_shop(self.user_id1, shop_dict)
-            self.facade.get_shop_info(shop_id)
             self.facade.add_product_to_shop(self.user_id1, shop_id, product1_dict)
             self.facade.add_product_to_shop(self.user_id1, shop_id, product2_dict)
             return True
         except AssertionError as e:
             return False
 
-    def test_4(self):
+    def test_appoint_manager(self):
         try:
             self.facade.login(self.user_id1, self.username1, self.password)
             shop_id = self.facade.open_shop(self.user_id1, shop_dict)
@@ -62,7 +63,7 @@ class IntegrationTests(unittest.TestCase):
         except AssertionError as e:
             return False
 
-    def test_5(self):
+    def test_add_product2(self):
         try:
             self.facade.login(self.user_id1, self.username1, self.password)
             shop_id = self.facade.open_shop(self.user_id1, shop_dict)
@@ -74,34 +75,122 @@ class IntegrationTests(unittest.TestCase):
         except AssertionError as e:
             return False
 
-    def test_6(self):
+    def test_delete_product(self):
         try:
             self.facade.login(self.user_id1, self.username1, self.password)
             shop_id = self.facade.open_shop(self.user_id1, shop_dict)
             self.facade.get_shop_info(shop_id)
             product_id = self.facade.add_product_to_shop(self.user_id1, shop_id, product1_dict)
-            self.facade.delete_product(self.user_id1,shop_id,product_id)
+            self.facade.delete_product(self.user_id1, shop_id, product_id)
             return True
         except AssertionError as e:
             return False
 
-    # SHOP_ID = 1
-    # PROD_ID = 1
-    #
-    # def test_get_shop_dict(self):
-    #     my_shop_dict = shop_dict.copy()
-    #     shop = Shop(shop_id=self.SHOP_ID, **shop_dict)
-    #     shop.add_product(Product(self.PROD_ID, **product_dict))
-    #     my_product_dict = product_dict.copy()
-    #     my_product_dict["product_id"] = self.PROD_ID
-    #     my_shop_dict["shop_id"] = self.SHOP_ID
-    #     my_shop_dict["products"] = [my_product_dict]
-    #     self.assertEquals(my_shop_dict, shop.to_dict())
-    #
-    # def test_get_shop_info(self):
-    #     facade = CommerceSystemFacade()
-    #     facade.shops[self.SHOP_ID] = Shop(shop_id=self.SHOP_ID, **shop_dict)
-    #     my_shop_dict = shop_dict.copy()
-    #     my_shop_dict["shop_id"] = self.SHOP_ID
-    #     my_shop_dict["products"] = []
-    #     self.assertEquals(facade.get_shop_info(self.SHOP_ID), my_shop_dict)
+    def test_not_valid_register1(self):
+        un_registered_id = self.facade.enter()
+        try:
+            self.facade.register(un_registered_id, self.username1, "123456")
+            return False
+        except AssertionError:
+            return True
+
+    def test_not_valid_register2(self):
+        un_registered_id = self.facade.enter()
+        try:
+            self.facade.register(un_registered_id, "new user1", "1234567890123456789012345")
+            return False
+        except AssertionError:
+            return True
+
+    def test_not_valid_register3(self):
+        un_registered_id = self.facade.enter()
+        try:
+            self.facade.register(un_registered_id, "new user12345678901234567890", "123456")
+            return False
+        except AssertionError:
+            return True
+
+    def test_purchase_product1(self):  # tests purchase with username supplied
+        self.facade.login(self.user_id1, self.username1, self.password)
+        shop_id = self.facade.open_shop(self.user_id1, shop_dict)
+        product_id1 = self.facade.add_product_to_shop(self.user_id1, shop_id, product1_dict)
+
+        self.facade.login(self.user_id2, self.username2, self.password)
+        credit_card_number = 1234
+        expiration_date = 25
+        card_holder_name = "Dudu"
+        self.facade.purchase_product(self.user_id2, shop_id, product_id1, 1, credit_card_number, expiration_date,
+                                     card_holder_name, self.username2)
+
+    def test_purchase_product2(self):  # tests purchase without username supplied
+        self.facade.login(self.user_id1, self.username1, self.password)
+        shop_id = self.facade.open_shop(self.user_id1, shop_dict)
+        product_id1 = self.facade.add_product_to_shop(self.user_id1, shop_id, product1_dict)
+
+        self.facade.login(self.user_id2, self.username2, self.password)
+        credit_card_number = 1234
+        expiration_date = 25
+        card_holder_name = "Dudu"
+        self.facade.purchase_product(self.user_id2, shop_id, product_id1, 1, credit_card_number, expiration_date,
+                                     card_holder_name)
+
+    def test_purchase_product3(self):  # tests purchase more than 1 of the same product
+        self.facade.login(self.user_id1, self.username1, self.password)
+        shop_id = self.facade.open_shop(self.user_id1, shop_dict)
+        product_id1 = self.facade.add_product_to_shop(self.user_id1, shop_id, product1_dict)
+
+        self.facade.login(self.user_id2, self.username2, self.password)
+        credit_card_number = 1234
+        expiration_date = 25
+        card_holder_name = "Dudu"
+        self.facade.purchase_product(self.user_id2, shop_id, product_id1, 2, credit_card_number, expiration_date,
+                                     card_holder_name)
+
+    def test_purchase_product4(self):  # tests purchase 2 different products
+        self.facade.login(self.user_id1, self.username1, self.password)
+        shop_id = self.facade.open_shop(self.user_id1, shop_dict)
+        product_id1 = self.facade.add_product_to_shop(self.user_id1, shop_id, product1_dict)
+        product_id2 = self.facade.add_product_to_shop(self.user_id1, shop_id, product2_dict)
+
+        self.facade.login(self.user_id2, self.username2, self.password)
+        credit_card_number = 1234
+        expiration_date = 25
+        card_holder_name = "Dudu"
+        self.facade.purchase_product(self.user_id2, shop_id, product_id1, 1, credit_card_number, expiration_date,
+                                     card_holder_name)
+        self.facade.purchase_product(self.user_id2, shop_id, product_id2, 1, credit_card_number, expiration_date,
+                                     card_holder_name)
+
+    def test_purchase_product5(self):  # tests purchase the same product few times
+        self.facade.login(self.user_id1, self.username1, self.password)
+        shop_id = self.facade.open_shop(self.user_id1, shop_dict)
+        product_id1 = self.facade.add_product_to_shop(self.user_id1, shop_id, product1_dict)
+        product_id2 = self.facade.add_product_to_shop(self.user_id1, shop_id, product2_dict)
+
+        self.facade.login(self.user_id2, self.username2, self.password)
+        credit_card_number = 1234
+        expiration_date = 25
+        card_holder_name = "Dudu"
+        self.facade.purchase_product(self.user_id2, shop_id, product_id1, 1, credit_card_number, expiration_date,
+                                     card_holder_name)
+        self.facade.purchase_product(self.user_id2, shop_id, product_id1, 1, credit_card_number, expiration_date,
+                                     card_holder_name)
+        self.facade.purchase_product(self.user_id2, shop_id, product_id1, 1, credit_card_number, expiration_date,
+                                     card_holder_name)
+
+    def test_purchase_product6(self):  # tests purchase product with quantity too big
+        self.facade.login(self.user_id1, self.username1, self.password)
+        shop_id = self.facade.open_shop(self.user_id1, shop_dict)
+        product_id1 = self.facade.add_product_to_shop(self.user_id1, shop_id, product1_dict)
+        product_id2 = self.facade.add_product_to_shop(self.user_id1, shop_id, product2_dict)
+
+        self.facade.login(self.user_id2, self.username2, self.password)
+        credit_card_number = 1234
+        expiration_date = 25
+        card_holder_name = "Dudu"
+        try:
+            self.facade.purchase_product(self.user_id2, shop_id, product_id1, 1000, credit_card_number, expiration_date,
+                                         card_holder_name)
+            return False
+        except AssertionError:
+            return True

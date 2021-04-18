@@ -53,7 +53,7 @@ class Appointment:
     def get_shop_staff_info(self):
         raise Exception("Subscribed user does not have permission to perform action")
 
-    def get_purchase_history(self):
+    def get_shop_transaction_history(self):
         raise Exception("Subscribed user does not have permission to perform action")
 
 
@@ -61,26 +61,33 @@ class ShopManager(Appointment):
 
     def __init__(self, shop: Shop, appointer: ShopOwner, permissions: List[str], username: str = "default_username"):
         super().__init__(shop, username, appointer)
-        self.delete_product_permission = "delete_product" in permissions
-        self.edit_product_permission = "edit_product" in permissions
-        self.add_product_permission = "add_product" in permissions
+        self.delete_product_permission = False
+        self.edit_product_permission = False
+        self.add_product_permission = False
+        self.get_trans_history_permission = False
+        self.set_permission(permissions)
 
     def add_product(self, **product_info) -> int:
         assert self.add_product_permission, "manager does not have permission to add product"
         return self.shop.add_product(**product_info)
 
     def edit_product(self, product_id: int, **to_edit):
-        assert self.edit_product_permission, "Subscribed user does not have permission to perform the action"
+        assert self.edit_product_permission, "manager user does not have permission to perform the action"
         self.shop.edit_product(product_id, **to_edit)
 
     def delete_product(self, product_id: int):
-        assert self.edit_product_permission, "Subscribed user does not have permission to perform the action"
+        assert self.edit_product_permission, "manager user does not have permission to perform the action"
         return self.shop.delete_product(product_id)
+
+    def get_shop_transaction_history(self):
+        assert self.get_trans_history_permission, "manager user does not have permission to perform the action"
+        return self.shop.get_shop_transaction_history()
 
     def set_permission(self, permissions: List[str]):
         self.delete_product_permission = "delete_product" in permissions
         self.edit_product_permission = "edit_product" in permissions
         self.add_product_permission = "add_product" in permissions
+        self.get_trans_history_permission = "get_transaction_history" in permissions
 
 
 class ShopOwner(Appointment):
@@ -92,7 +99,6 @@ class ShopOwner(Appointment):
         self.owner_appointees_lock = threading.Lock()
 
     """ adds manager appointment to selected subscribed user"""
-
     def appoint_manager(self, sub, permissions: List[str]):
         apps = sub.appointments
         assert self.shop not in apps.keys(), f"subscriber already has appointment for shop. shop id - {self.shop.shop_id}"
@@ -116,19 +122,18 @@ class ShopOwner(Appointment):
         self.shop.add_owner(new_owner_sub)
 
     """ removes shop appointment from selected subscribed user"""
-
     def remove_appointment(self, sub):
         sub.appointments.pop(self.shop)
 
     def add_product(self, **product_info) -> int:
         return self.shop.add_product(**product_info)
-
+    
     def edit_product(self, product_id: int, **to_edit):
         self.shop.edit_product(product_id, **to_edit)
 
     def delete_product(self, product_id: int):
         return self.shop.delete_product(product_id)
-
+    
     def un_appoint_manager(self, manager_sub, cascading=False):
         assert self.shop in manager_sub.appointments and isinstance(manager_sub.appointments[self.shop], ShopManager), "user is not a manager"
         assert manager_sub in self.manager_appointees, "manager was not assigned by this owner"
@@ -169,8 +174,8 @@ class ShopOwner(Appointment):
         self.un_appoint_manager(manager_sub)
         self.appoint_owner(manager_sub)
 
-    def get_shop_staff_info(self):
-        pass
+    def get_shop_transaction_history(self):
+        return self.shop.get_shop_transaction_history()
 
-    def get_purchase_history(self):
+    def get_shop_staff_info(self):
         pass
