@@ -15,6 +15,9 @@ class ShoppingBag:
     def __setitem__(self, key: Product, value: int):
         self.products[key] = value
 
+    def __iter__(self):
+        return self.products.items().__iter__()
+
     def add_product(self, product: Product, amount_to_buy: int):
         if product in self.products:
             self.products[product] += amount_to_buy

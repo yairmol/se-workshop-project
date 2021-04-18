@@ -98,12 +98,12 @@ class Shop:
                 product_id = p_id
         return product_id
 
-    def add_transaction(self, bag: dict, transaction: Transaction) -> bool:
+    def add_transaction(self, bag, transaction: Transaction) -> bool:
         self.products_lock.acquire()
         for product, amount in bag:
             if product.quantity < amount:
                 return False
-        for product, amount in bag:
+        for product, amount in bag.__iter__():
             product.quantity -= amount
         self.transaction_history.append(
             Transaction(self, transaction.products, transaction.payment_details, transaction.date, transaction.price)

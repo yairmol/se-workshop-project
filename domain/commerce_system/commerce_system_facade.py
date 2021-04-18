@@ -124,6 +124,7 @@ class CommerceSystemFacade(ICommerceSystemFacade):
     # 3.2
     def open_shop(self, user_id: int, **shop_details) -> int:
         worker = self.get_user(user_id).user_state
+        assert len([s for s in self.shops.values() if s.name == shop_details["shop_name"]]) == 0
         new_shop = worker.open_shop(shop_details)
         self.add_shop(new_shop)
         return new_shop.shop_id
