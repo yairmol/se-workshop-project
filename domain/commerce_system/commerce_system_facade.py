@@ -5,7 +5,7 @@ from domain.commerce_system.ifacade import ICommerceSystemFacade
 from domain.commerce_system.product import Product
 from domain.commerce_system.search_engine import search, Filter
 from domain.commerce_system.shop import Shop
-from domain.commerce_system.user import User, Subscribed, Guest
+from domain.commerce_system.user import User, Subscribed
 import domain.commerce_system.valdiation as validate
 
 
@@ -133,7 +133,7 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         new_owner = self.get_subscribed(username)
         new_owner.un_appoint_owner(owner, shop)
 
-    def get_shop_staff_info(self, shop_id: str) -> List[dict]:
+    def get_shop_staff_info(self, shop_id: int) -> List[dict]:
         return self.get_shop(shop_id).get_staff_info()
 
     def get_shop_transaction_history(self, session_id: int, shop_id: str) -> List[dict]:

@@ -18,10 +18,9 @@ def enter_register_and_login(commerce_system: SystemService, user: dict) -> str:
 
 
 def add_product(session_id: str, comm_sys: SystemService, shop: int, product: dict):
-    product_id = comm_sys.add_product_to_shop(
-        session_id, shop, **product
-    )
-    assert isinstance(product_id, int) and product_id > 0
+    product_id = comm_sys.add_product_to_shop(session_id, shop, **product)
+    assert isinstance(product_id, int)
+    assert product_id > 0
     return product_id
 
 

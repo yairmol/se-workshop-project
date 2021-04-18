@@ -58,12 +58,9 @@ class SystemService:
                 event_logger.info(f"User: {user_id} Registered Successfully")
                 return True
             except AssertionError as e:
-                print(e)
                 event_logger.warning(e)
-                return False
             except Exception as e:
                 error_logger.error(e)
-                return False
         return False
 
     def login(self, token: str, username: str, password: str) -> bool:
@@ -75,12 +72,9 @@ class SystemService:
                 event_logger.info(f"User: {user_id} Logged in Successfully")
                 return True
             except AssertionError as e:
-                print(e)
                 event_logger.warning(e)
-                return False
             except Exception as e:
                 error_logger.error(e)
-                return False
         return False
 
     def logout(self, token: str) -> bool:
@@ -93,10 +87,8 @@ class SystemService:
             except AssertionError as e:
                 print(e)
                 event_logger.warning(e)
-                return False
             except Exception as e:
                 error_logger.error(e)
-                return False
         return False
 
     def edit_product_info(
@@ -114,12 +106,9 @@ class SystemService:
                 event_logger.info(f"User: {user_id} Edit product info successfully")
                 return True
             except AssertionError as e:
-                print(e)
                 event_logger.warning(e)
-                return False
             except Exception as e:
                 error_logger.error(e)
-                return False
         return False
 
     def delete_product(self, token: str, shop_id: int, product_id: int) -> bool:
@@ -132,12 +121,9 @@ class SystemService:
                 event_logger.info("User: " + str(user_id) + " Delete product info successfully")
                 return True
             except AssertionError as e:
-                print(e)
                 event_logger.warning(e)
-                return False
             except Exception as e:
                 error_logger.error(e)
-                return False
         return False
 
     def appoint_shop_manager(self, token: str, shop_id: int, username: str, permissions: List[str]) -> bool:
@@ -151,10 +137,8 @@ class SystemService:
             except AssertionError as e:
                 print(e)
                 event_logger.warning(e)
-                return False
             except Exception as e:
                 error_logger.error(e)
-                return False
         return False
 
     def appoint_shop_owner(self, token: str, shop_id: int, username: str) -> bool:
@@ -282,13 +266,12 @@ class SystemService:
                 event_logger.info(f"user {user_id} requested for shop {shop_id} staff information")
                 return self.commerce_system_facade.get_shop_staff_info(shop_id)
             except AssertionError as e:
-                print(e)
                 event_logger.warning(e)
-                return {}
+                return []
             except Exception as e:
                 error_logger.error(e)
-                return {}
-        return {}
+                return []
+        return []
 
     def search_products(
             self, product_name: str = None, keywords: List[str] = None,
@@ -314,7 +297,7 @@ class SystemService:
         except Exception as e:
             error_logger.error(e)
 
-    def save_product_to_cart(self, token: str, shop_id: str, product_id: int, amount_to_buy: int) -> bool:
+    def save_product_to_cart(self, token: str, shop_id: int, product_id: int, amount_to_buy: int) -> bool:
         if self.is_valid_token(token):
             try:
                 user_id = self.authenticator.get_id_by_token(token)
@@ -325,27 +308,23 @@ class SystemService:
                 return True
             except AssertionError as e:
                 event_logger.warning(e)
-                return False
             except Exception as e:
                 error_logger.error(e)
-                return False
         return False
 
-    def remove_product_from_cart(self, token: str, user_id: int, shop_id: int, product_id: int, amount: int) -> bool:
+    def remove_product_from_cart(self, token: str, shop_id: int, product_id: int, amount: int) -> bool:
         if self.is_valid_token(token):
             try:
                 user_id = self.authenticator.get_id_by_token(token)
-                event_logger.info(
-                    f"User: {str(user_id)} tries to remove {str(amount)}  products: {str(product_id)}  of shop_id: {str(shop_id)}")
+                event_logger.info(f"User: {str(user_id)} tries to remove {str(amount)} "
+                                  f"products: {str(product_id)} of shop_id: {str(shop_id)}")
                 self.commerce_system_facade.remove_product_from_cart(user_id, shop_id, product_id, amount)
                 event_logger.info(f"User: {user_id} successfully save the product {product_id}")
                 return True
             except AssertionError as e:
                 event_logger.warning(e)
-                return False
             except Exception as e:
                 error_logger.error(e)
-                return False
         return False
 
     def purchase_product(self, token: str, shop_id: str, product_id: int, amount_to_buy: int, payment_details: dict):
@@ -408,9 +387,21 @@ class SystemService:
                 return True
             except AssertionError as e:
                 event_logger.warning(e)
-                return False
             except Exception as e:
                 error_logger.error(e)
-                return False
         return False
+
+    def add_product_to_shop(self, token: str, shop_id: int, **product_info) -> int:
+        if self.is_valid_token(token):
+            try:
+                user_id = self.authenticator.get_id_by_token(token)
+                event_logger.info(f"User: {user_id} tries to add product to shop {shop_id}")
+                pid = self.commerce_system_facade.add_product_to_shop(user_id, shop_id, **product_info)
+                event_logger.info(f"User: {user_id} added product successfully")
+                return pid
+            except AssertionError as e:
+                event_logger.warning(e)
+            except Exception as e:
+                error_logger.error(e)
+        return -1
 

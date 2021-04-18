@@ -11,13 +11,12 @@ WORKER_APPOINTER = "appointer"
 
 
 class Shop:
-    __shop_id = 0
+    __shop_id = 1
 
-    def __init__(self, shop_id: int, shop_name, description=""):
+    def __init__(self, shop_name: str, description=""):
         self.founder = None
         self.shop_id = Shop.__shop_id
         Shop.__shop_id += 1
-        self.shop_id = shop_id
         self.name: str = shop_name
         self.description: str = description
         self.products: Dict[int, Product] = {}
@@ -38,17 +37,18 @@ class Shop:
         return ret
 
     """ returns product_id if successful"""
-    def add_product(self, product: Product):
+    def add_product(self, **product_info):
         self.products_lock.acquire()
         try:
-            assert not self.has_product(product.name), f"product name \"{product.name}\" is not unique"
-            product_id = self.get_free_id()
-            self.products[product_id] = product
+            assert (not self.has_product(product_info["product_name"]),
+                    f"product name {product_info['product_name']} is not unique")
+            product = Product(**product_info)
+            self.products[product.product_id] = product
         except Exception as e:
             self.products_lock.release()
             raise e
         self.products_lock.release()
-        return product_id
+        return product.product_id
 
     def delete_product(self, product_id: int):
         self.products_lock.acquire()
