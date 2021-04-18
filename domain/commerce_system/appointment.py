@@ -71,8 +71,7 @@ class ShopManager(Appointment):
 
     def add_product(self, **product_info) -> int:
         assert self.add_product_permission, "manager does not have permission to add product"
-        product = Product(**product_info)
-        return self.shop.add_product(product)
+        return self.shop.add_product(**product_info)
 
     def edit_product(self, product_id: int, **to_edit):
         assert self.edit_product_permission, "manager user does not have permission to perform the action"
@@ -128,8 +127,7 @@ class ShopOwner(Appointment):
         sub.appointments.pop(self.shop)
 
     def add_product(self, **product_info) -> int:
-        product = Product(**product_info)
-        return self.shop.add_product(product)
+        return self.shop.add_product(**product_info)
     
     def edit_product(self, product_id: int, **to_edit):
         self.shop.edit_product(product_id, **to_edit)

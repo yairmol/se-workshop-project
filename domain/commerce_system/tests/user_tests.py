@@ -1,4 +1,5 @@
 import unittest
+from datetime import datetime
 from unittest.mock import MagicMock
 from domain.auth.authenticator import Authenticator
 from domain.commerce_system.commerce_system_facade import CommerceSystemFacade
@@ -11,7 +12,8 @@ class TestCommerceSystemFacade(unittest.TestCase):
 
         facade = CommerceSystemFacade()
         facade.enter()
-        assert len(facade.active_users) == 1
+        facade.enter()
+        assert len(facade.active_users) == 2
 
     def test_user_register1(self):
         user = User()

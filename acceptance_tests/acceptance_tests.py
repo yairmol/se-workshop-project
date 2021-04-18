@@ -88,8 +88,8 @@ class SubscribedTests(TestCase):
 
     def test_open_shop(self):
         shop_id = self.commerce_system.open_shop(self.session_id, **shops[0])
-        self.assertIsInstance(shop_id, str)
-        self.assertNotEqual(shop_id, "")
+        self.assertIsInstance(shop_id, int)
+        self.assertGreater(shop_id, 0)
 
     def test_open_shop_with_existing_name(self):
         self.assertTrue(self.commerce_system.open_shop(self.session_id, **shops[0]))
@@ -107,11 +107,13 @@ class ShopOwnerOperations(TestCase):
         self.commerce_system = Driver.get_system_service()
         self.session_id = enter_register_and_login(self.commerce_system, users[0])
         self.shop_id = self.commerce_system.open_shop(self.session_id, **shops[0])
+        self.assertIsInstance(self.shop_id, int)
+        self.assertGreater(self.shop_id, 0)
 
     def test_add_product_to_shop(self):
-        self.assertNotEqual(add_product(
+        self.assertGreater(add_product(
             self.session_id, self.commerce_system, self.shop_id, products[0]
-        ), "")
+        ), 0)
 
     def test_edit_product_in_shop(self):
         prod_id = add_product(
