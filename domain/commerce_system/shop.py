@@ -11,14 +11,21 @@ SHOP_PRODS = "products"
 
 
 class Shop:
-    def __init__(self, shop_id: int, **shop_info):
-        self.shop_id = shop_id
+    __shop_id = 0
+
+    def __init__(self, **shop_info):
+        self.shop_id = Shop.__shop_id
+        Shop.__shop_id += 1
         assert SHOP_NAME in shop_info
         self.name: str = shop_info[SHOP_NAME]
         self.description: str = shop_info.get(SHOP_DESC, "")
         self.products: Dict[int, Product] = {}
         self.transaction_history = []
         self.products_lock = threading.Lock()
+        self.managers_lock = threading.Lock()
+        self.owners_lock = threading.Lock()
+        self.shop_managers = {}
+        self.shop_owners = {}
 
     def to_dict(self):
         ret = {
@@ -100,3 +107,17 @@ class Shop:
             product.quantity += amount
         self.transaction_history.remove(transaction)
         self.products_lock.release()
+
+    def add_manager(self, manager_sub):
+        self.managers_lock.acquire()
+        self.shop_managers[manager_sub.username] = manager_sub
+        self.managers_lock.release()
+
+    def add_owner(self, owner_sub):
+        self.owners_lock.acquire()
+        self.shop_managers[owner_sub.username] = owner_sub
+        self.owners_lock.release()
+
+    def display_managers_info(self):
+
+    def display_owners_info(self):

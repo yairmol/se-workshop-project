@@ -4,11 +4,13 @@ from domain.commerce_system.product import Product
 from domain.commerce_system.shop import Shop
 from domain.commerce_system.user import User
 
+shop_dict = {"shop_name": "s1", "description": "desc"}
+
 
 class ShoppingCartTests(unittest.TestCase):
     def setUp(self) -> None:
-        self.shop1 = Shop()
-        self.shop2 = Shop()
+        self.shop1 = Shop(shop_dict)
+        self.shop2 = Shop(shop_dict)
         self.user = User()
         self.bamba = Product("bamba", 15, "bamba teima", 3)
         self.bisli = Product("bisli", 25, "bisli taim", 3)

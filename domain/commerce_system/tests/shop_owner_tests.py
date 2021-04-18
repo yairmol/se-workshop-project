@@ -5,12 +5,14 @@ from domain.commerce_system.appointment import ShopOwner
 from domain.commerce_system.product import Product
 from domain.commerce_system.shop import Shop
 
+shop_dict = {"shop_name": "s1", "description": "desc"}
+
 
 class TestShopOwner(unittest.TestCase):
 
     def setUp(self):
-        self.shop = Shop(1)
-        self.bamba = Product("bamba", 15, "bamba teima", 3)
+        self.shop = Shop(shop_dict)
+        self.bamba = Product(15, "eeee", "bamba teima", 12, [])
         self.bisli = Product("bisli", 25, "bisli taim", 3)
         self.humus = Product("humus", 7, "humus taim", 3)
         self.shop.add_product(self.bamba)

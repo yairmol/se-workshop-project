@@ -7,11 +7,14 @@ from domain.commerce_system.shop import Shop
 from domain.commerce_system.user import Subscribed
 
 
+shop_dict = {"shop_name": "s1", "description": "desc"}
+
+
 class TestShopOwner(unittest.TestCase):
 
     def setUp(self):
         self.owner_sub = Subscribed("test sub", "0")
-        self.test_shop = Shop(1)
+        self.test_shop = Shop(shop_dict)
         self.owner_app = ShopOwner(self.test_shop)
         self.owner_sub.appointments[self.test_shop] = self.owner_app
 
@@ -21,7 +24,20 @@ class TestShopOwner(unittest.TestCase):
         assert self.test_shop in new_sub.appointments.keys()
         assert isinstance(new_sub.appointments[self.test_shop], ShopOwner)
         try:
-            new_shop = Shop(2)
+            new_shop = Shop(shop_dict)
+            new_sub.appoint_owner(self.owner_sub, new_shop)
+            assert False
+        except Exception as e:
+            pass
+
+    def test_promote_appointment(self):
+        new_sub = Subscribed("new sub", "0")
+        new_sub.appoint_manager(self.owner_sub, self.test_shop, [])
+        new_sub.promote_manager_to_owner(self.owner_sub, self.test_shop)
+        assert self.test_shop in new_sub.appointments.keys()
+        assert isinstance(new_sub.appointments[self.test_shop], ShopOwner)
+        try:
+            new_shop = Shop(shop_dict)
             new_sub.appoint_owner(self.owner_sub, new_shop)
             assert False
         except Exception as e:
@@ -33,7 +49,7 @@ class TestShopOwner(unittest.TestCase):
         new_sub.un_appoint_manager(self.owner_sub, self.test_shop)
         assert self.test_shop not in new_sub.appointments.keys()
         try:
-            new_shop = Shop(2)
+            new_shop = Shop(shop_dict)
             test_owner_2 = ShopOwner(new_shop)
             new_sub_2 = Subscribed("new sub 2", "0")
             new_sub_2.appointments[new_shop] = test_owner_2
@@ -49,7 +65,7 @@ class TestShopOwner(unittest.TestCase):
         new_sub.un_appoint_owner(self.owner_sub, self.test_shop)
         assert self.test_shop not in new_sub.appointments.keys()
         try:
-            new_shop = Shop(2)
+            new_shop = Shop(shop_dict)
             test_owner_2 = ShopOwner(new_shop)
             new_sub_2 = Subscribed("new sub 2", "0")
             new_sub_2.appointments[new_shop] = test_owner_2
@@ -66,7 +82,7 @@ class TestShopOwner(unittest.TestCase):
         new_sub2.appointments[self.test_shop] = app2
         new_sub.appoint_manager(self.owner_sub, self.test_shop, [])
         try:
-            new_sub.un_appoint_manager(new_sub2, self.test_shop, [])
+            new_sub.un_appoint_manager(new_sub2, self.test_shop)
             assert False
         except Exception as e:
             pass
