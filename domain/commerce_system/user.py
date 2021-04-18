@@ -243,4 +243,4 @@ class Subscribed(UserState):
 
     def get_shop_transaction_history(self, shop: Shop):
         app = self.get_appointment(shop)
-        app.
+        app.get_shop_transaction_history()
