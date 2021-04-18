@@ -94,66 +94,54 @@ class IntegrationTests(unittest.TestCase):
         product_id1 = product_id = self.facade.add_product_to_shop(self.user_id1, shop_id, **product1_dict)
 
         self.facade.login(self.user_id2, self.username2, self.password)
-        credit_card_number = 1234
-        expiration_date = 25
-        card_holder_name = "Dudu"
-        self.facade.purchase_product(self.user_id2, shop_id, product_id1, 1, credit_card_number, expiration_date,
-                                     card_holder_name)
+        payment_dict = {"credit_card_number": 1234, "expiration_date": 25, "car_holder_name": "Dudu"}
+        self.facade.purchase_product(self.user_id2, shop_id, product_id1, 1, payment_dict)
 
     def test_purchase_product3(self):  # tests purchase more than 1 of the same product
         self.facade.login(self.user_id1, self.username1, self.password)
         shop_id = self.facade.open_shop(self.user_id1, **shop_dict)
-        product_id1 = product_id = self.facade.add_product_to_shop(self.user_id1, shop_id,)
+        product_id1 = product_id = self.facade.add_product_to_shop(self.user_id1, shop_id, **product1_dict)
 
         self.facade.login(self.user_id2, self.username2, self.password)
-        credit_card_number = 1234
-        expiration_date = 25
-        card_holder_name = "Dudu"
-        self.facade.purchase_product(self.user_id2, shop_id, product_id1, 2, credit_card_number, expiration_date,
-                                     card_holder_name)
+        # credit_card_number = 1234
+        # expiration_date = 25
+        # card_holder_name = "Dudu"
+        payment_dict = {"credit_card_number": 1234, "expiration_date": 25, "car_holder_name": "Dudu"}
+        self.facade.purchase_product(self.user_id2, shop_id, product_id1, 2, payment_dict)
 
     def test_purchase_product4(self):  # tests purchase 2 different products
         self.facade.login(self.user_id1, self.username1, self.password)
         shop_id = self.facade.open_shop(self.user_id1, **shop_dict)
         product_id1 = self.facade.add_product_to_shop(self.user_id1, shop_id, **product1_dict)
-        product_id2 = self.facade.add_product_to_shop(self.user_id2, shop_id, **product2_dict)
+        product_id2 = self.facade.add_product_to_shop(self.user_id1, shop_id, **product2_dict)
 
         self.facade.login(self.user_id2, self.username2, self.password)
-        credit_card_number = 1234
-        expiration_date = 25
-        card_holder_name = "Dudu"
-        self.facade.purchase_product(self.user_id2, shop_id, product_id1, 1, credit_card_number, expiration_date,
-                                     card_holder_name)
-        self.facade.purchase_product(self.user_id2, shop_id, product_id2, 1, credit_card_number, expiration_date,
-                                     card_holder_name)
+
+        payment_dict = {"credit_card_number": 1234, "expiration_date": 25, "car_holder_name": "Dudu"}
+        self.facade.purchase_product(self.user_id2, shop_id, product_id1, 1, payment_dict)
+        self.facade.purchase_product(self.user_id2, shop_id, product_id2, 1, payment_dict)
 
     def test_purchase_product5(self):  # tests purchase the same product few times
         self.facade.login(self.user_id1, self.username1, self.password)
         shop_id = self.facade.open_shop(self.user_id1, **shop_dict)
-        product_id1 = self.facade.add_product_to_shop(self.user_id1, shop_id, product1_dict)
-        product_id2 = self.facade.add_product_to_shop(self.user_id2, shop_id, **product2_dict)
-
+        product_id1 = self.facade.add_product_to_shop(self.user_id1, shop_id, **product1_dict)
+        product_id2 = self.facade.add_product_to_shop(self.user_id1, shop_id, **product2_dict)
         self.facade.login(self.user_id2, self.username2, self.password)
-        credit_card_number = 1234
-        expiration_date = 25
-        card_holder_name = "Dudu"
-        self.facade.purchase_product(self.user_id2, shop_id, product_id1, 1, credit_card_number, expiration_date,
-                                     card_holder_name)
-        self.facade.purchase_product(self.user_id2, shop_id, product_id1, 1, credit_card_number, expiration_date,
-                                     card_holder_name)
-        self.facade.purchase_product(self.user_id2, shop_id, product_id1, 1, credit_card_number, expiration_date,
-                                     card_holder_name)
+
+        # self.facade.login(self.user_id2, self.username2, self.password)
+        payment_dict = {"credit_card_number": 1234, "expiration_date": 25, "car_holder_name": "Dudu"}
+        self.facade.purchase_product(self.user_id2, shop_id, product_id1, 1, payment_dict)
+        self.facade.purchase_product(self.user_id2, shop_id, product_id1, 1, payment_dict)
+        self.facade.purchase_product(self.user_id2, shop_id, product_id1, 1, payment_dict)
 
     def test_purchase_product6(self):  # tests purchase product with quantity too big
         self.facade.login(self.user_id1, self.username1, self.password)
         shop_id = self.facade.open_shop(self.user_id1, **shop_dict)
         product_id1 = self.facade.add_product_to_shop(self.user_id1, shop_id, **product1_dict)
-        product_id2 = self.facade.add_product_to_shop(self.user_id2, shop_id,
+        product_id2 = self.facade.add_product_to_shop(self.user_id1, shop_id,
                                                       **product2_dict)
 
         self.facade.login(self.user_id2, self.username2, self.password)
-        credit_card_number = 1234
-        expiration_date = 25
-        card_holder_name = "Dudu"
+        payment_dict = {"credit_card_number": 1234, "expiration_date": 25, "car_holder_name": "Dudu"}
         self.assertRaises(AssertionError, self.facade.purchase_product, self.user_id2, shop_id, product_id1, 1000,
-                          credit_card_number, expiration_date, card_holder_name)
+                          payment_dict)

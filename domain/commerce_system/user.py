@@ -39,20 +39,19 @@ class User:
         product_dto = ProductDTO(product, amount_to_buy)
         bag = {product: amount_to_buy}
         transaction = Transaction(shop, [product_dto], payment_details, datetime.now(), product.price)
-        shop.add_transaction(bag, transaction)
+        assert shop.add_transaction(bag, transaction), "transaction failed"
         self.add_transaction(transaction)
         pay(self.id, **payment_details)
 
-    def buy_shopping_bag(self, shop: Shop, payment_details: dict) -> bool:
+    def buy_shopping_bag(self, shop: Shop, payment_details: dict):
         bag = self.cart[shop]
         products_dtos = bag.get_products_dtos()
         transaction = Transaction(shop, products_dtos, payment_details, datetime.now(), bag.calculate_price())
-        if shop.add_transaction(bag, transaction):
-            self.add_transaction(transaction)
-            self.cart.remove_shopping_bag(shop)
-            pay(self, payment_details)
-            return True
-        return False
+        assert shop.add_transaction(bag, transaction), "bag purchasing failed"
+        self.add_transaction(transaction)
+        self.cart.remove_shopping_bag(shop)
+        pay(self.id, **payment_details)
+
 
     def buy_cart(self, payment_details: dict, all_or_nothing: bool):
         if not all_or_nothing:

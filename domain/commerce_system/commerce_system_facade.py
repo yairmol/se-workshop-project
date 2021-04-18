@@ -109,7 +109,7 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         user = self.get_user(user_id)
         shop = self.get_shop(shop_id)
         product = shop.products[product_id]
-        assert user.buy_product(shop, product, amount_to_buy, payment_details), "purchase product failed"
+        user.buy_product(shop, product, amount_to_buy, payment_details)
 
     # 3.1
     def logout(self, user_id: int):

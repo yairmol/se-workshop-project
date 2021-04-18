@@ -100,10 +100,10 @@ class Shop:
 
     def add_transaction(self, bag, transaction: Transaction) -> bool:
         self.products_lock.acquire()
-        for product, amount in bag:
+        for product, amount in bag.items():
             if product.quantity < amount:
                 return False
-        for product, amount in bag.__iter__():
+        for product, amount in bag.items():
             product.quantity -= amount
         self.transaction_history.append(
             Transaction(self, transaction.products, transaction.payment_details, transaction.date, transaction.price)
@@ -113,7 +113,7 @@ class Shop:
 
     def remove_transaction(self, bag: dict, transaction: Transaction):
         self.products_lock.acquire()
-        for product, amount in bag:
+        for product, amount in bag.items():
             product.quantity += amount
         self.transaction_history.remove(transaction)
         self.products_lock.release()
