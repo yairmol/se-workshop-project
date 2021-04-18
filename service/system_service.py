@@ -107,7 +107,8 @@ class SystemService:
             try:
                 user_id = self.authenticator.get_id_by_token(token)
                 event_logger.info("User: " + str(user_id) +
-                                  " tries to edit product info of shop_id: " + shop_id + "product_id: " + str(product_id))
+                                  " tries to edit product info of shop_id: " + shop_id + "product_id: " + str(
+                    product_id))
                 self.commerce_system_facade.edit_product_info(user_id, shop_id, product_id, product_info)
                 event_logger.info("User: " + str(user_id) + " Edit product info successfully")
                 return True
@@ -181,7 +182,8 @@ class SystemService:
                 event_logger.info("User: " + str(user_id) +
                                   " tries to edit manager permissions of: " + username + " in shop_id: " + str(shop_id))
                 self.commerce_system_facade.edit_manager_permissions(user_id, shop_id, username, permissions)
-                event_logger.info("User: " + str(user_id) + " Edited manager: " + username + " permissions successfully")
+                event_logger.info(
+                    "User: " + str(user_id) + " Edited manager: " + username + " permissions successfully")
                 return True
             except AssertionError as e:
                 print(e)
@@ -266,3 +268,110 @@ class SystemService:
             event_logger.error(e)
         except Exception as e:
             error_logger.error(e)
+
+    def save_product_to_cart(self, token: str, shop_id: str, product_id: int, amount_to_buy: int) -> bool:
+        if self.is_valid_token(token):
+            try:
+                user_id = self.authenticator.get_id_by_token(token)
+                event_logger.info(
+                    f"User: {str(user_id)} tries to save {amount_to_buy} products: {str(product_id)}  of shop_id: {str(shop_id)}")
+                self.commerce_system_facade.save_product_to_cart(user_id, shop_id, product_id, amount_to_buy)
+                event_logger.info(f"User: {user_id} successfully save the product {product_id}")
+                return True
+            except AssertionError as e:
+                print(e)
+                event_logger.warning(e)
+                return False
+            except Exception as e:
+                error_logger.error(e)
+                return False
+        return False
+
+    def remove_product_from_cart(self, token: str, user_id: int, shop_id: int, product_id: int, amount: int) -> bool:
+        if self.is_valid_token(token):
+            try:
+                user_id = self.authenticator.get_id_by_token(token)
+                event_logger.info(
+                    f"User: {str(user_id)} tries to remove {str(amount)}  products: {str(product_id)}  of shop_id: {str(shop_id)}")
+                self.commerce_system_facade.remove_product_from_cart(user_id, shop_id, product_id, amount)
+                event_logger.info(f"User: {user_id} successfully save the product {product_id}")
+                return True
+            except AssertionError as e:
+                print(e)
+                event_logger.warning(e)
+                return False
+            except Exception as e:
+                error_logger.error(e)
+                return False
+        return False
+
+    def purchase_product(self, token: str, shop_id: str, product_id: int, amount_to_buy: int, payment_details: dict):
+        if self.is_valid_token(token):
+            try:
+                user_id = self.authenticator.get_id_by_token(token)
+                event_logger.info(
+                    f"User: {str(user_id)} tries to purchase {str(amount_to_buy)}  products: {str(product_id)}  of "
+                    f"shop_id: {str(shop_id)}")
+                self.commerce_system_facade.purchase_product(user_id, shop_id, product_id, amount_to_buy, payment_details)
+                event_logger.info(f"User: {str(user_id)} successfully purchased the product {str(product_id)}")
+                return True
+            except AssertionError as e:
+                print(e)
+                event_logger.warning(e)
+                return False
+            except Exception as e:
+                error_logger.error(e)
+                return False
+        return False
+
+    def purchase_shopping_bag(self, token: str, shop_id: str, payment_details: dict):
+        if self.is_valid_token(token):
+            try:
+                user_id = self.authenticator.get_id_by_token(token)
+                event_logger.info(f"User: {str(user_id)} tries to purchase {str(shop_id)}  bag")
+                self.commerce_system_facade.purchase_shopping_bag(user_id, shop_id, payment_details)
+                event_logger.info(f"User: {user_id} successfully purchased the bag of the shop {str(shop_id)}")
+                return True
+            except AssertionError as e:
+                print(e)
+                event_logger.warning(e)
+                return False
+            except Exception as e:
+                error_logger.error(e)
+                return False
+        return False
+
+    def purchase_cart(self, token: str, shop_id: str, payment_details: dict, all_or_nothing: bool):
+        if self.is_valid_token(token):
+            try:
+                user_id = self.authenticator.get_id_by_token(token)
+                event_logger.info(f"User: {str(user_id)} tries to purchase his cart")
+                self.commerce_system_facade.purchase_cart(user_id, payment_details, all_or_nothing)
+                event_logger.info(f"User: {user_id} successfully purchased his cart")
+                return True
+            except AssertionError as e:
+                print(e)
+                event_logger.warning(e)
+                return False
+            except Exception as e:
+                error_logger.error(e)
+                return False
+        return False
+
+    def get_cart_info(self, token: str):
+        if self.is_valid_token(token):
+            try:
+                user_id = self.authenticator.get_id_by_token(token)
+                event_logger.info(f"User: {str(user_id)} tries to get his cart info")
+                self.commerce_system_facade.get_cart_info(user_id)
+                event_logger.info(f"User: {user_id} successfully got his cart")
+                return True
+            except AssertionError as e:
+                print(e)
+                event_logger.warning(e)
+                return False
+            except Exception as e:
+                error_logger.error(e)
+                return False
+        return False
+

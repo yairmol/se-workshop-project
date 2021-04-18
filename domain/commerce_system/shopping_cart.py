@@ -75,7 +75,6 @@ class ShoppingCart:
         assert shop in self.shopping_bags, "no shopping bag to remove"
         self.shopping_bags.remove(shop)
 
-
     def remove_all_shopping_bags(self):
         self.shopping_bags.clear()
 
