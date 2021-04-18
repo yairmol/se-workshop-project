@@ -40,7 +40,7 @@ class Authenticator:
         self.tokens_ids_lock.release()
         return new_token
 
-    # returns the user's id if token exists, -1 if not
+    # returns the user_sess's id if token exists, -1 if not
     def remove_token(self, token: str) -> int:
         self.tokens_ids_lock.acquire()
         if self.is_token_exists(token):
@@ -84,7 +84,7 @@ class Authenticator:
     #     self.tokens_expire_time[token] = expire_date
     #     self.tokens_time_lock.release()
 
-    # returns the user's id if token exists, -1 if not
+    # returns the user_sess's id if token exists, -1 if not
     def get_id_by_token(self, token: str):
         self.tokens_ids_lock.acquire()
         if self.is_token_exists(token):
