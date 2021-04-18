@@ -1,6 +1,6 @@
 from typing import Tuple, List, Dict
 
-from acceptance_tests.test_data import users, shops, permissions, admin_credentials
+from acceptance_tests.test_data import users, shops, permissions, admin_credentials, products
 from service.system_service import SystemService
 from data_model import UserModel as Um, ShopModel as Sm, ProductModel as Pm
 
@@ -50,12 +50,11 @@ def open_shops(commerce_system: SystemService, sessions, num_shops) -> (Dict[int
 def add_products(commerce_system: SystemService, shop_id_to_sess, shop_ids, num_products):
     num_shops = len(shop_ids)
     product_ids_to_shop_ids = {
-        commerce_system.add_product_to_shop(
-            shop_id_to_sess[shop_ids[i % num_shops]], shop_ids[i % num_shops]
+        add_product(
+            shop_id_to_sess[shop_ids[i % num_shops]], commerce_system, shop_ids[i % num_shops], products[i]
         ): shop_ids[i % num_shops]
         for i in range(num_products)
     }
-    assert all(map(lambda pid: isinstance(pid, int) and pid > 0, product_ids_to_shop_ids.keys()))
     return product_ids_to_shop_ids
 
 

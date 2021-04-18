@@ -260,9 +260,9 @@ class ShopManagerOperations(TestCase):
 
     def test_add_product_to_shop_no_permissions(self):
         self.edit_manager_permissions([])
-        self.assertLess(
-            add_product(self.manager_session_id, self.commerce_system, self.shop_id, products[0]),
-            1
+        self.assertRaises(
+            AssertionError, add_product,
+            self.manager_session_id, self.commerce_system, self.shop_id, products[0]
         )
 
     def test_edit_product_in_shop(self):
@@ -284,7 +284,7 @@ class ShopManagerOperations(TestCase):
         p = products[0].copy()
         p[Pm.PRODUCT_ID] = prod_id
         self.edit_manager_permissions([])
-        self.assertTrue(self.commerce_system.edit_product_info(
+        self.assertFalse(self.commerce_system.edit_product_info(
             self.manager_session_id, self.shop_id, **p
         ))
 
@@ -318,7 +318,7 @@ class PurchasesTests(TestCase):
         self.sessions = list(self.sessions_to_users.keys())
         self.shop_id_to_shop, self.shop_to_opener = open_shops(self.commerce_system, self.sessions, self.NUM_SHOPS)
         self.shop_ids = list(self.shop_id_to_shop.keys())
-        self.product_to_shop = add_products(self.commerce_system, self.sessions, self.shop_ids, self.NUM_PRODUCTS)
+        self.product_to_shop = add_products(self.commerce_system, self.shop_to_opener, self.shop_ids, self.NUM_PRODUCTS)
         self.shop_to_owners, self.shop_to_managers = appoint_owners_and_managers(
             self.commerce_system, self.sessions, self.sessions_to_users, self.shop_ids
         )
@@ -331,13 +331,13 @@ class PurchasesTests(TestCase):
         user_session = self.sessions[self.U1]
         shop_id = get_shops_not_owned_by_user(user_session, self.shop_ids, self.shop_to_staff)[0]
         product_id = self.shops_to_products[shop_id][0]
-        self.assertTrue(self.commerce_system.save_product_to_cart(user_session, shop_id, product_id))
+        self.assertTrue(self.commerce_system.save_product_to_cart(user_session, shop_id, product_id, 1))
 
     def test_save_non_existing_product_to_cart(self):
         user = self.sessions[self.U1]
         shop_id = get_shops_not_owned_by_user(user, self.shop_ids, self.shop_to_staff)[0]
         self.assertFalse(self.commerce_system.save_product_to_cart(
-            self.sessions[self.U1], shop_id, "some_non_existing_product_id"
+            self.sessions[self.U1], shop_id, "some_non_existing_product_id", 1
         ))
 
     def test_get_cart_info(self):
@@ -345,7 +345,7 @@ class PurchasesTests(TestCase):
         cart_info = self.commerce_system.get_cart_info(u1)
         shop_id = get_shops_not_owned_by_user(u1, self.shop_ids, self.shop_to_staff)[0]
         prod_id = self.shops_to_products[shop_id][0]
-        self.assertTrue(self.commerce_system.save_product_to_cart(u1, shop_id, prod_id))
+        self.assertTrue(self.commerce_system.save_product_to_cart(u1, shop_id, prod_id, 1))
         self.assertTrue(shop_id in cart_info)
         self.assertTrue(prod_id in cart_info[shop_id]["products"])
 
@@ -366,7 +366,7 @@ class PurchasesTests(TestCase):
         for shop in shops:
             prods += self.shops_to_products[shop]
         self.assertTrue(all(map(lambda p: self.commerce_system.save_product_to_cart(
-            u1, self.product_to_shop[p], p
+            u1, self.product_to_shop[p], p, 1
         ), prods[:NUM_PRODS])))
         transaction_status = self.commerce_system.purchase_cart(u1)
         self.assertTrue(transaction_status.get("status", False))
@@ -383,9 +383,9 @@ class PurchasesTests(TestCase):
         self.assertTrue(len(purchase_history) == NUM_PRODS)
         self.assertTrue(
             all(map(lambda pr:
-                any(map(lambda pu: pr == pu.get("product_id", ""),
-                    purchase_history)),
-                prods[:NUM_PRODS]))
+                    any(map(lambda pu: pr == pu.get("product_id", ""),
+                            purchase_history)),
+                    prods[:NUM_PRODS]))
         )
 
     def test_get_shop_transactions(self):
@@ -405,9 +405,9 @@ class PurchasesTests(TestCase):
         self.assertTrue(len(transactions) == NUM_PRODS)
         self.assertTrue(
             all(map(lambda pid:
-                any(map(lambda t: t["product_id"] == pid,
-                    transactions)),
-                prods[:NUM_PRODS]))
+                    any(map(lambda t: t["product_id"] == pid,
+                            transactions)),
+                    prods[:NUM_PRODS]))
         )
 
     def test_get_system_transactions(self):
@@ -423,14 +423,13 @@ class PurchasesTests(TestCase):
         self.assertTrue(len(transactions) == len(products_purchased))
         self.assertTrue(
             all(map(lambda pid:
-                any(map(lambda t: t["product_id"] == pid,
-                    transactions)),
-                products_purchased))
+                    any(map(lambda t: t["product_id"] == pid,
+                            transactions)),
+                    products_purchased))
         )
 
 
 class GuestTestsWithData(TestCase):
-
     NUM_USERS = len(users)
     NUM_GUESTS = 3
     NUM_SUBS = NUM_USERS - NUM_GUESTS
@@ -466,9 +465,9 @@ class GuestTestsWithData(TestCase):
         self.assertTrue(len(results) == self.NUM_PRODUCTS)
         self.assertTrue(
             all(map(lambda p:
-                any(map(lambda r: p["product_name"] == r["product_name"],
-                    results)),
-                products))
+                    any(map(lambda r: p["product_name"] == r["product_name"],
+                            results)),
+                    products))
         )
 
     def test_search_products_by_filters(self):
@@ -479,9 +478,9 @@ class GuestTestsWithData(TestCase):
         self.assertTrue(len(results) == len(products_in_range_indices))
         self.assertTrue(
             all(map(lambda p_i:
-                any(map(lambda r: products[p_i]["product_name"] == r["product_name"],
-                        results)),
-                products))
+                    any(map(lambda r: products[p_i]["product_name"] == r["product_name"],
+                            results)),
+                    products))
         )
 
     def test_search_products_by_name_and_filters(self):
@@ -501,7 +500,6 @@ class GuestTestsWithData(TestCase):
 
 
 class ParallelismTests(TestCase):
-
     NUM_USERS = len(users)
     NUM_SHOPS = len(shops)
     NUM_PRODUCTS = len(products)

@@ -149,7 +149,7 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         worker = self.get_user(user_id).user_state
         to_edit = {key: value for key, value in [
             ("product_name", product_name), ("description", description),
-            ("price", price), (quantity, "quantity"), ("categories", categories),
+            ("price", price), ("quantity", quantity), ("categories", categories),
         ] if value is not None}
         return worker.edit_product(shop, product_id, **to_edit)
 
