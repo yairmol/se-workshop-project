@@ -9,8 +9,8 @@ class Product:
     __id_lock = threading.Lock()
 
     def __init__(
-            self, product_name: str, price: float, description: str = "",
-            quantity: int = 0, categories: List[str] = None
+            self, product_name: str, description: str,
+            price: float, quantity: int, categories: List[str]
     ):
         if categories is None:
             categories = []

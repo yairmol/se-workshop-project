@@ -1,5 +1,3 @@
-from datetime import datetime
-
 from data_model import UserModel as Um, ShopModel as Sm, ProductModel as Pm
 
 users = [
@@ -33,28 +31,17 @@ categories = [
 
 products = [
     {Pm.PRODUCT_NAME: "p1", Pm.PRODUCT_DESC: "a product", Pm.PRICE: 1, Pm.QUANTITY: 10, Pm.CATEGORIES: categories[0:1]},
-    {Pm.PRODUCT_NAME: "p2", Pm.PRODUCT_DESC: "a product", Pm.PRICE: 2.5, Pm.QUANTITY: 10,
-     Pm.CATEGORIES: categories[0:1]},
-    {Pm.PRODUCT_NAME: "p3", Pm.PRODUCT_DESC: "a product", Pm.PRICE: 1.25, Pm.QUANTITY: 10,
-     Pm.CATEGORIES: categories[0:1]},
-    {Pm.PRODUCT_NAME: "p4", Pm.PRODUCT_DESC: "a product", Pm.PRICE: 10, Pm.QUANTITY: 10,
-     Pm.CATEGORIES: categories[0:1]},
-    {Pm.PRODUCT_NAME: "p5", Pm.PRODUCT_DESC: "a product", Pm.PRICE: 32, Pm.QUANTITY: 10,
-     Pm.CATEGORIES: categories[0:1]},
-    {Pm.PRODUCT_NAME: "p6", Pm.PRODUCT_DESC: "a product", Pm.PRICE: 200, Pm.QUANTITY: 10,
-     Pm.CATEGORIES: categories[0:1]},
-    {Pm.PRODUCT_NAME: "p7", Pm.PRODUCT_DESC: "a product", Pm.PRICE: 250, Pm.QUANTITY: 10,
-     Pm.CATEGORIES: categories[0:1]},
-    {Pm.PRODUCT_NAME: "p8", Pm.PRODUCT_DESC: "a product", Pm.PRICE: 8999.99, Pm.QUANTITY: 10,
-     Pm.CATEGORIES: categories[0:1]},
-    {Pm.PRODUCT_NAME: "p9", Pm.PRODUCT_DESC: "a product", Pm.PRICE: 47, Pm.QUANTITY: 10,
-     Pm.CATEGORIES: categories[0:1]},
-    {Pm.PRODUCT_NAME: "p10", Pm.PRODUCT_DESC: "a product", Pm.PRICE: 96, Pm.QUANTITY: 10,
-     Pm.CATEGORIES: categories[0:1]},
-    {Pm.PRODUCT_NAME: "p11", Pm.PRODUCT_DESC: "a product", Pm.PRICE: 1220, Pm.QUANTITY: 10,
-     Pm.CATEGORIES: categories[0:1]},
-    {Pm.PRODUCT_NAME: "p12", Pm.PRODUCT_DESC: "a product", Pm.PRICE: 3, Pm.QUANTITY: 10,
-     Pm.CATEGORIES: categories[0:1]},
+    {Pm.PRODUCT_NAME: "p2", Pm.PRODUCT_DESC: "a product", Pm.PRICE: 2.5, Pm.QUANTITY: 10, Pm.CATEGORIES: categories[0:1]},
+    {Pm.PRODUCT_NAME: "p3", Pm.PRODUCT_DESC: "a product", Pm.PRICE: 1.25, Pm.QUANTITY: 10, Pm.CATEGORIES: categories[0:1]},
+    {Pm.PRODUCT_NAME: "p4", Pm.PRODUCT_DESC: "a product", Pm.PRICE: 10, Pm.QUANTITY: 10, Pm.CATEGORIES: categories[0:1]},
+    {Pm.PRODUCT_NAME: "p5", Pm.PRODUCT_DESC: "a product", Pm.PRICE: 32, Pm.QUANTITY: 10, Pm.CATEGORIES: categories[0:1]},
+    {Pm.PRODUCT_NAME: "p6", Pm.PRODUCT_DESC: "a product", Pm.PRICE: 200, Pm.QUANTITY: 10, Pm.CATEGORIES: categories[0:1]},
+    {Pm.PRODUCT_NAME: "p7", Pm.PRODUCT_DESC: "a product", Pm.PRICE: 250, Pm.QUANTITY: 10, Pm.CATEGORIES: categories[0:1]},
+    {Pm.PRODUCT_NAME: "p8", Pm.PRODUCT_DESC: "a product", Pm.PRICE: 8999.99, Pm.QUANTITY: 10, Pm.CATEGORIES: categories[0:1]},
+    {Pm.PRODUCT_NAME: "p9", Pm.PRODUCT_DESC: "a product", Pm.PRICE: 47, Pm.QUANTITY: 10, Pm.CATEGORIES: categories[0:1]},
+    {Pm.PRODUCT_NAME: "p10", Pm.PRODUCT_DESC: "a product", Pm.PRICE: 96, Pm.QUANTITY: 10, Pm.CATEGORIES: categories[0:1]},
+    {Pm.PRODUCT_NAME: "p11", Pm.PRODUCT_DESC: "a product", Pm.PRICE: 1220, Pm.QUANTITY: 10, Pm.CATEGORIES: categories[0:1]},
+    {Pm.PRODUCT_NAME: "p12", Pm.PRODUCT_DESC: "a product", Pm.PRICE: 3, Pm.QUANTITY: 10, Pm.CATEGORIES: categories[0:1]},
 ]
 
 admin_credentials = {
@@ -65,12 +52,4 @@ permissions = [
     ["add_product", "edit_product", "delete_product"],
     ["add_product", "edit_product"],
     ["delete_product"]
-]
-
-payment_details = [
-    {
-        "credit_card_number": "4580-1111-1111-1111",
-        "expiration_date": int(datetime(year=2024, month=6, day=1).timestamp()),
-        "card_holder_name": "Ligma"
-    }
 ]

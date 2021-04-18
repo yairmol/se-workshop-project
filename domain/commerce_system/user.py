@@ -4,11 +4,11 @@ from datetime import datetime
 from typing import List, Dict
 
 from domain.commerce_system.appointment import Appointment, ShopOwner
+from domain.commerce_system.permission import Permission
 from domain.commerce_system.product import Product
 from domain.commerce_system.productDTO import ProductDTO
 from domain.commerce_system.shop import Shop
 from domain.commerce_system.shopping_cart import ShoppingCart, ShoppingBag
-from domain.commerce_system.transaction_repo import TransactionRepo
 from domain.payment_module.payment_system import pay
 from domain.commerce_system.transaction import Transaction
 from domain.commerce_system.shopping_cart import ShoppingCart
@@ -37,39 +37,27 @@ class User:
 
     def buy_product(self, shop: Shop, product: Product, amount_to_buy: int, payment_details: dict):
         product_dto = ProductDTO(product, amount_to_buy)
-        bag = ShoppingBag(shop)
-        bag.add_product(product, amount_to_buy)
+        bag = {product: amount_to_buy}
         transaction = Transaction(shop, [product_dto], payment_details, datetime.now(), product.price)
-        assert shop.add_transaction(bag, transaction), "transaction failed"
+        shop.add_transaction(bag, transaction)
         self.add_transaction(transaction)
-        pay(self.id, **payment_details)
+        pay(self, payment_details)
 
-    def buy_shopping_bag(self, shop: Shop, payment_details: dict):
+    def buy_shopping_bag(self, shop: Shop, payment_details: dict) -> bool:
         bag = self.cart[shop]
         products_dtos = bag.get_products_dtos()
         transaction = Transaction(shop, products_dtos, payment_details, datetime.now(), bag.calculate_price())
-        assert shop.add_transaction(bag, transaction), "bag purchasing failed"
-        self.add_transaction(transaction)
-        pay(self.id, **payment_details)
-
-    def clear_cart(self, shops):
-        for shop in shops:
+        if shop.add_transaction(bag, transaction):
+            self.add_transaction(transaction)
             self.cart.remove_shopping_bag(shop)
+            pay(self, payment_details)
+            return True
+        return False
 
     def buy_cart(self, payment_details: dict, all_or_nothing: bool):
         if not all_or_nothing:
-            handled_shops = []
-            for shop, bag in self.cart:
-                try:
-                    self.buy_shopping_bag(shop, payment_details)
-                    handled_shops.append(shop)
-                except AssertionError as e:
-                    continue
-                except Exception as e:
-                    self.clear_cart(handled_shops)
-                    raise e
-            self.clear_cart(handled_shops)
-            return True
+            for shop in self.cart:
+                self.buy_shopping_bag(shop, payment_details)
         else:
             date = datetime.now()
             to_be_canceled = []
@@ -86,12 +74,9 @@ class User:
                     to_be_canceled += [transaction]
             if not check_if_canceled:
                 self.cart.remove_all_shopping_bags()
-                pay(self.id, **payment_details)
-                return True
-        return False
+                pay(self, payment_details)
 
     def add_transaction(self, transaction: Transaction):
-        TransactionRepo.get_transaction_repo().add_transaction(transaction)
         self.user_state.add_transaction(transaction)
 
     def remove_transaction(self, transaction: Transaction):
@@ -191,9 +176,6 @@ class UserState:
     def remove_transaction(self, transaction: Transaction):
         pass
 
-    def get_system_transaction_history(self):
-        raise Exception("only system administrator can see the system transactio history")
-
 
 class Guest(UserState):
 
@@ -214,17 +196,17 @@ class Subscribed(UserState):
 
     """ calls personal appointment for the request. if doesnt have permission raises an exception"""
 
-    def appoint_manager(self, sub: Subscribed, shop: Shop, permissions: List[str]):
-        session_app = self.get_appointment(shop)
-        session_app.appoint_manager(sub, permissions)
+    def appoint_manager(self, owner_sub: Subscribed, shop: Shop, permissions: List[str]):
+        session_app = owner_sub.get_appointment(shop)
+        session_app.appoint_manager(self, permissions)
 
-    def appoint_owner(self, new_owner_sub: Subscribed, shop: Shop):
-        owner_app = self.get_appointment(shop)
-        owner_app.appoint_owner(new_owner_sub)
+    def appoint_owner(self, owner_sub: Subscribed, shop: Shop):
+        session_app = owner_sub.get_appointment(shop)
+        session_app.appoint_owner(self)
 
-    def promote_manager_to_owner(self, manager_sub: Subscribed, shop: Shop):
-        session_app = self.get_appointment(shop)
-        session_app.promote_manager_to_owner(manager_sub)
+    def promote_manager_to_owner(self, owner_sub: Subscribed, shop: Shop):
+        session_app = owner_sub.get_appointment(shop)
+        session_app.promote_manager_to_owner(self)
 
     def get_appointment(self, shop: Shop):
         if shop in self.appointments:
@@ -240,17 +222,17 @@ class Subscribed(UserState):
     def delete_product(self, shop: Shop, product_id: int):
         self.get_appointment(shop).delete_product(product_id)
 
-    def un_appoint_manager(self, unappointed_manager, shop: Shop):
-        unappointing_owner_app = self.get_appointment(shop)
-        unappointing_owner_app.un_appoint_manager(unappointed_manager)
+    def un_appoint_manager(self, owner_sub, shop: Shop):
+        session_app = owner_sub.get_appointment(shop)
+        session_app.un_appoint_manager(self)
 
     def un_appoint_owner(self, owner_sub, shop: Shop):
         session_app = owner_sub.get_appointment(shop)
         session_app.un_appoint_owner(self)
 
-    def edit_manager_permissions(self, manager_sub: Subscribed, shop: Shop, permissions: List[str]):
-        owner_app = self.get_appointment(shop)
-        owner_app.edit_manager_permissions(manager_sub, permissions)
+    def edit_manager_permissions(self, owner_sub: Subscribed, shop: Shop, permissions: List[str]):
+        session_app = owner_sub.get_appointment(shop)
+        session_app.edit_manager_permissions(self, permissions)
 
     def open_shop(self, shop_details):
         new_shop = Shop(**shop_details)
@@ -261,19 +243,4 @@ class Subscribed(UserState):
 
     def get_shop_transaction_history(self, shop: Shop):
         app = self.get_appointment(shop)
-        return app.get_shop_transaction_history()
-
-    def add_transaction(self, transaction: Transaction):
-        self.transactions.append(transaction)
-
-    def get_personal_transaction_history(self):
-        return self.transactions
-
-
-class SystemManager(Subscribed):
-    def __init__(self, username: str, password: str, system_transactions: TransactionRepo):
-        super().__init__(username, password)
-        self.system_transactions = system_transactions
-
-    def get_system_transaction_history(self):
-        return self.system_transactions.get_transactions()
+        app.get_shop_transaction_history()

@@ -49,7 +49,7 @@ def search_by_filters(products, filters):
 
 
 def search_by_product_name(products: List[Product], product_name):
-    return list(filter(lambda p: is_similar_words(p.product_name, product_name), products))
+    return list(filter(lambda p: is_similar_words(p.name, product_name), products))
 
 
 def search_by_keywords(products: List[Product], keywords: List[str]):

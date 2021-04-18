@@ -1,8 +1,8 @@
 from typing import Tuple, List, Dict
 
-from acceptance_tests.test_data import users, shops, permissions, products, payment_details
+from acceptance_tests.test_data import users, shops, permissions, admin_credentials
 from service.system_service import SystemService
-from data_model import UserModel as Um, ShopModel as Sm, ProductModel as Pm, admin_credentials
+from data_model import UserModel as Um, ShopModel as Sm, ProductModel as Pm
 
 
 def get_credentials(user: dict):
@@ -50,11 +50,12 @@ def open_shops(commerce_system: SystemService, sessions, num_shops) -> (Dict[int
 def add_products(commerce_system: SystemService, shop_id_to_sess, shop_ids, num_products):
     num_shops = len(shop_ids)
     product_ids_to_shop_ids = {
-        add_product(
-            shop_id_to_sess[shop_ids[i % num_shops]], commerce_system, shop_ids[i % num_shops], products[i]
+        commerce_system.add_product_to_shop(
+            shop_id_to_sess[shop_ids[i % num_shops]], shop_ids[i % num_shops]
         ): shop_ids[i % num_shops]
         for i in range(num_products)
     }
+    assert all(map(lambda pid: isinstance(pid, int) and pid > 0, product_ids_to_shop_ids.keys()))
     return product_ids_to_shop_ids
 
 
@@ -111,8 +112,8 @@ def make_purchases(
         product_to_shop: Dict[int, int], products: List[int]
 ):
     return all(map(lambda p: commerce_system.purchase_product(
-        session, product_to_shop[p], p, 1, payment_details[0]
-    ), products))
+        session, product_to_shop[p], p
+    ).get("status", False), products))
 
 
 def fill_with_data(
@@ -123,11 +124,11 @@ def fill_with_data(
     subs_sessions = list(sess_to_users.keys())
     sid_to_shop, sid_to_sess = open_shops(commerce_system, subs_sessions, num_shops)
     shop_ids = list(sid_to_shop.keys())
-    pid_to_sid = add_products(commerce_system, sid_to_sess, shop_ids, num_products)
+    pid_to_sid = add_products(commerce_system, subs_sessions, shop_ids, num_products)
     return guest_sessions, subs_sessions, sid_to_shop, sid_to_sess, pid_to_sid
 
 
 def admin_login(commerce_system: SystemService):
     admin_session = commerce_system.enter()
-    commerce_system.login(admin_session, **admin_credentials)
+    commerce_system.login(**admin_credentials)
     return admin_session
