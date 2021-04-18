@@ -279,7 +279,6 @@ class SystemService:
                 event_logger.info(f"User: {user_id} successfully save the product {product_id}")
                 return True
             except AssertionError as e:
-                print(e)
                 event_logger.warning(e)
                 return False
             except Exception as e:
@@ -297,7 +296,6 @@ class SystemService:
                 event_logger.info(f"User: {user_id} successfully save the product {product_id}")
                 return True
             except AssertionError as e:
-                print(e)
                 event_logger.warning(e)
                 return False
             except Exception as e:
@@ -316,7 +314,6 @@ class SystemService:
                 event_logger.info(f"User: {str(user_id)} successfully purchased the product {str(product_id)}")
                 return True
             except AssertionError as e:
-                print(e)
                 event_logger.warning(e)
                 return False
             except Exception as e:
@@ -333,7 +330,6 @@ class SystemService:
                 event_logger.info(f"User: {user_id} successfully purchased the bag of the shop {str(shop_id)}")
                 return True
             except AssertionError as e:
-                print(e)
                 event_logger.warning(e)
                 return False
             except Exception as e:
@@ -350,7 +346,6 @@ class SystemService:
                 event_logger.info(f"User: {user_id} successfully purchased his cart")
                 return True
             except AssertionError as e:
-                print(e)
                 event_logger.warning(e)
                 return False
             except Exception as e:
@@ -367,7 +362,6 @@ class SystemService:
                 event_logger.info(f"User: {user_id} successfully got his cart")
                 return True
             except AssertionError as e:
-                print(e)
                 event_logger.warning(e)
                 return False
             except Exception as e:
