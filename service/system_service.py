@@ -174,6 +174,23 @@ class SystemService:
                 return False
         return False
 
+    def promote_shop_owner(self, token: str, shop_id: int, username: str) -> bool:
+        if self.is_valid_token(token):
+            try:
+                user_id = self.authenticator.get_id_by_token(token)
+                event_logger.info(f"User: {user_id} tries to promote owner: {username} of shop_id: {shop_id}")
+                self.commerce_system_facade.promote_shop_owner(user_id, shop_id, username)
+                event_logger.info(f"User: {user_id} promoted shop owner: {username} successfully")
+                return True
+            except AssertionError as e:
+                print(e)
+                event_logger.warning(e)
+                return False
+            except Exception as e:
+                error_logger.error(e)
+                return False
+        return False
+
     def edit_manager_permissions(self, token: str, shop_id: int, username: str, permissions: List[str]) -> bool:
         if self.is_valid_token(token):
             try:
@@ -200,6 +217,23 @@ class SystemService:
                 self.commerce_system_facade.un_appoint_manager(user_id, shop_id, username)
                 event_logger.info(f"User: {user_id} Un appointed manager: {username} successfully")
                 return True
+            except AssertionError as e:
+                print(e)
+                event_logger.warning(e)
+                return False
+            except Exception as e:
+                error_logger.error(e)
+                return False
+        return False
+
+    def open_shop(self, token: str, **shop_details) -> int:
+        if self.is_valid_token(token):
+            try:
+                user_id = self.authenticator.get_id_by_token(token)
+                event_logger.info(f"User: {user_id} tries to open shop: {shop_details['shop_name']}")
+                shop_id = self.commerce_system_facade.open_shop(user_id, **shop_details)
+                event_logger.info(f"User: {user_id} opened shop: {shop_id} successfully")
+                return shop_id
             except AssertionError as e:
                 print(e)
                 event_logger.warning(e)
@@ -241,6 +275,21 @@ class SystemService:
                 return {}
         return {}
 
+    def get_shop_staff_info(self, token: str, shop_id: int) -> List[dict]:
+        if self.is_valid_token(token):
+            try:
+                user_id = self.authenticator.get_id_by_token(token)
+                event_logger.info(f"user {user_id} requested for shop {shop_id} staff information")
+                return self.commerce_system_facade.get_shop_staff_info(shop_id)
+            except AssertionError as e:
+                print(e)
+                event_logger.warning(e)
+                return {}
+            except Exception as e:
+                error_logger.error(e)
+                return {}
+        return {}
+
     def search_products(
             self, product_name: str = None, keywords: List[str] = None,
             categories: List[str] = None, filters: List[dict] = None
@@ -264,3 +313,104 @@ class SystemService:
             event_logger.error(e)
         except Exception as e:
             error_logger.error(e)
+
+    def save_product_to_cart(self, token: str, shop_id: str, product_id: int, amount_to_buy: int) -> bool:
+        if self.is_valid_token(token):
+            try:
+                user_id = self.authenticator.get_id_by_token(token)
+                event_logger.info(
+                    f"User: {str(user_id)} tries to save {amount_to_buy} products: {str(product_id)}  of shop_id: {str(shop_id)}")
+                self.commerce_system_facade.save_product_to_cart(user_id, shop_id, product_id, amount_to_buy)
+                event_logger.info(f"User: {user_id} successfully save the product {product_id}")
+                return True
+            except AssertionError as e:
+                event_logger.warning(e)
+                return False
+            except Exception as e:
+                error_logger.error(e)
+                return False
+        return False
+
+    def remove_product_from_cart(self, token: str, user_id: int, shop_id: int, product_id: int, amount: int) -> bool:
+        if self.is_valid_token(token):
+            try:
+                user_id = self.authenticator.get_id_by_token(token)
+                event_logger.info(
+                    f"User: {str(user_id)} tries to remove {str(amount)}  products: {str(product_id)}  of shop_id: {str(shop_id)}")
+                self.commerce_system_facade.remove_product_from_cart(user_id, shop_id, product_id, amount)
+                event_logger.info(f"User: {user_id} successfully save the product {product_id}")
+                return True
+            except AssertionError as e:
+                event_logger.warning(e)
+                return False
+            except Exception as e:
+                error_logger.error(e)
+                return False
+        return False
+
+    def purchase_product(self, token: str, shop_id: str, product_id: int, amount_to_buy: int, payment_details: dict):
+        if self.is_valid_token(token):
+            try:
+                user_id = self.authenticator.get_id_by_token(token)
+                event_logger.info(
+                    f"User: {str(user_id)} tries to purchase {str(amount_to_buy)}  products: {str(product_id)}  of "
+                    f"shop_id: {str(shop_id)}")
+                self.commerce_system_facade.purchase_product(user_id, shop_id, product_id, amount_to_buy, payment_details)
+                event_logger.info(f"User: {str(user_id)} successfully purchased the product {str(product_id)}")
+                return True
+            except AssertionError as e:
+                event_logger.warning(e)
+                return False
+            except Exception as e:
+                error_logger.error(e)
+                return False
+        return False
+
+    def purchase_shopping_bag(self, token: str, shop_id: str, payment_details: dict):
+        if self.is_valid_token(token):
+            try:
+                user_id = self.authenticator.get_id_by_token(token)
+                event_logger.info(f"User: {str(user_id)} tries to purchase {str(shop_id)}  bag")
+                self.commerce_system_facade.purchase_shopping_bag(user_id, shop_id, payment_details)
+                event_logger.info(f"User: {user_id} successfully purchased the bag of the shop {str(shop_id)}")
+                return True
+            except AssertionError as e:
+                event_logger.warning(e)
+                return False
+            except Exception as e:
+                error_logger.error(e)
+                return False
+        return False
+
+    def purchase_cart(self, token: str, shop_id: str, payment_details: dict, all_or_nothing: bool):
+        if self.is_valid_token(token):
+            try:
+                user_id = self.authenticator.get_id_by_token(token)
+                event_logger.info(f"User: {str(user_id)} tries to purchase his cart")
+                self.commerce_system_facade.purchase_cart(user_id, payment_details, all_or_nothing)
+                event_logger.info(f"User: {user_id} successfully purchased his cart")
+                return True
+            except AssertionError as e:
+                event_logger.warning(e)
+                return False
+            except Exception as e:
+                error_logger.error(e)
+                return False
+        return False
+
+    def get_cart_info(self, token: str):
+        if self.is_valid_token(token):
+            try:
+                user_id = self.authenticator.get_id_by_token(token)
+                event_logger.info(f"User: {str(user_id)} tries to get his cart info")
+                self.commerce_system_facade.get_cart_info(user_id)
+                event_logger.info(f"User: {user_id} successfully got his cart")
+                return True
+            except AssertionError as e:
+                event_logger.warning(e)
+                return False
+            except Exception as e:
+                error_logger.error(e)
+                return False
+        return False
+
