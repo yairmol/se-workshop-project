@@ -163,3 +163,6 @@ class Shop:
 
     def get_staff_info(self):
         return self.get_managers_info() + self.get_owners_info()
+
+    def get_transaction_history(self):
+        return list(map(lambda x: x.to_dict(), self.transaction_history))

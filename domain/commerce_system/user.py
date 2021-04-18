@@ -193,17 +193,17 @@ class Subscribed(UserState):
 
     """ calls personal appointment for the request. if doesnt have permission raises an exception"""
 
-    def appoint_manager(self, owner_sub: Subscribed, shop: Shop, permissions: List[str]):
-        session_app = owner_sub.get_appointment(shop)
-        session_app.appoint_manager(self, permissions)
+    def appoint_manager(self, sub: Subscribed, shop: Shop, permissions: List[str]):
+        session_app = self.get_appointment(shop)
+        session_app.appoint_manager(sub, permissions)
 
-    def appoint_owner(self, owner_sub: Subscribed, shop: Shop):
-        session_app = owner_sub.get_appointment(shop)
-        session_app.appoint_owner(self)
+    def appoint_owner(self, new_owner_sub: Subscribed, shop: Shop):
+        owner_app = self.get_appointment(shop)
+        owner_app.appoint_owner(new_owner_sub)
 
-    def promote_manager_to_owner(self, owner_sub: Subscribed, shop: Shop):
-        session_app = owner_sub.get_appointment(shop)
-        session_app.promote_manager_to_owner(self)
+    def promote_manager_to_owner(self, manager_sub: Subscribed, shop: Shop):
+        session_app = self.get_appointment(shop)
+        session_app.promote_manager_to_owner(manager_sub)
 
     def get_appointment(self, shop: Shop):
         if shop in self.appointments:
