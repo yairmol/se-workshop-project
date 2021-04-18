@@ -9,11 +9,16 @@ SHOP_DESC = "description"
 SHOP_ID = "shop_id"
 SHOP_PRODS = "products"
 
+WORKER_NAME = "name"
+WORKER_TITLE = "title"
+WORKER_APPOINTER = "appointer"
+
 
 class Shop:
     __shop_id = 0
 
     def __init__(self, **shop_info):
+        self.founder = None
         self.shop_id = Shop.__shop_id
         Shop.__shop_id += 1
         assert SHOP_NAME in shop_info
@@ -38,25 +43,43 @@ class Shop:
         return ret
 
     """ returns product_id if successful"""
-    def add_product(self, product: Product) -> int:
-        product_id = self.get_free_id()
-        self.products[product_id] = product
+    def add_product(self, product: Product):
+        self.products_lock.acquire()
+        try:
+            assert not self.has_product(product.name), f"product name \"{product.name}\" is not unique"
+            product_id = self.get_free_id()
+            self.products[product_id] = product
+        except Exception as e:
+            self.products_lock.release()
+            raise e
+        self.products_lock.release()
         return product_id
 
-    def delete_product(self, product_id: int) -> bool:
-        res = self.products.pop(product_id, 0)
-        return res != 0
+    def delete_product(self, product_id: int):
+        self.products_lock.acquire()
+        try:
+            assert product_id in self.products.keys(), f"shop does not hold product with id - {product_id}"
+            self.products.pop(product_id)
+        except Exception as e:
+            self.products_lock.release()
+            raise e
+        self.products_lock.release()
 
     """ edit product receives product id and a dict of fields to alter and the new values.
         MAKE SURE THE FIELD NAMES ARE ACCURATE"""
     def edit_product(self, product_id, **to_edit):
-        if product_id not in self.products:
-            raise Exception("no product with id=", product_id)
-        product = self.products[product_id]
-        for field, new_value in to_edit.items():
-            if field not in product.__dict__:
-                raise Exception("product has no field ", field)
-            product.__dict__[field] = new_value
+        self.products_lock.acquire()
+        try:
+            assert product_id in self.products, f"no product with id={product_id}"
+            product = self.products[product_id]
+            for field, new_value in to_edit.items():
+                if field not in product.__dict__:
+                    raise Exception("product has no field ", field)
+                product.__dict__[field] = new_value
+        except Exception as e:
+            self.products_lock.release()
+            raise e
+        self.products_lock.release()
 
     def get_shop_info(self) -> str:
         s = ""
@@ -115,9 +138,40 @@ class Shop:
 
     def add_owner(self, owner_sub):
         self.owners_lock.acquire()
-        self.shop_managers[owner_sub.username] = owner_sub
+        self.shop_owners[owner_sub.username] = owner_sub
         self.owners_lock.release()
 
-    def display_managers_info(self):
+    def remove_manager(self, manager_sub):
+        self.managers_lock.acquire()
+        self.shop_managers.pop(manager_sub.username)
+        self.managers_lock.release()
 
-    def display_owners_info(self):
+    def remove_owner(self, owner_sub):
+        self.owners_lock.acquire()
+        self.shop_owners.pop(owner_sub.username)
+        self.owners_lock.release()
+
+    def get_manager_info(self, sub):
+        return {WORKER_NAME: sub.username, WORKER_TITLE: "manager", WORKER_APPOINTER: sub.get_appointment(self).appointer.username}
+
+    def get_owner_info(self, sub):
+        return {WORKER_NAME: sub.username, WORKER_TITLE: "manager" if sub != self.founder else "founder", WORKER_APPOINTER: sub.get_appointment(self).appointer.username}
+
+    def get_managers_info(self):
+        info_dicts = []
+        self.managers_lock.acquire()
+        for manager_sub in self.shop_managers.values():
+            info_dicts += [self.get_manager_info(manager_sub)]
+        self.managers_lock.release()
+        return info_dicts
+
+    def get_owners_info(self):
+        info_dicts = []
+        self.owners_lock.acquire()
+        for owner_sub in self.shop_owners.values():
+            info_dicts += [self.get_owner_info(owner_sub)]
+        self.owners_lock.release()
+        return info_dicts
+
+    def get_staff_info(self):
+        return self.get_managers_info() + self.get_owners_info()

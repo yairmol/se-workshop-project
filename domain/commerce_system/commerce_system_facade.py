@@ -46,8 +46,11 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         product = shop.products[product_id]
         return user.buy_product(shop, product, amount_to_buy, payment_details)
 
-    def open_shop(self, session_id: int, **shop_details) -> int:
-        pass
+    def open_shop(self, user_id: int, **shop_details) -> int:
+        worker = self.get_user(user_id).user_state
+        new_shop = worker.open_shop(shop_details)
+        self.add_shop(new_shop)
+        return new_shop.shop_id
 
     def get_personal_purchase_history(self, user_id: int) -> List[dict]:
         transactions = self.get_user(user_id).get_personal_transactions_history()
@@ -109,8 +112,8 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         new_owner = self.get_subscribed(username)
         new_owner.un_appoint_owner(owner, shop)
 
-    def get_shop_staff_info(self, session_id: int, shop_id: str) -> List[dict]:
-        pass
+    def get_shop_staff_info(self, shop_id: str) -> List[dict]:
+        return self.get_shop(shop_id).get_staff_info()
 
     def get_shop_transaction_history(self, session_id: int, shop_id: str) -> List[dict]:
         pass
@@ -186,6 +189,11 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         ret = self.shops[shop_id]
         self.shops_lock.release()
         return ret
+
+    def add_shop(self, shop) -> Shop:
+        self.shops_lock.acquire()
+        self.shops[shop.shop_id] = shop
+        self.shops_lock.release()
 
     def _get_all_products(self) -> List[Product]:
         products = []

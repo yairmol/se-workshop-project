@@ -210,6 +210,24 @@ class SystemService:
                 return False
         return False
 
+    def open_shop(self, token: str, **shop_details) -> int:
+        if self.is_valid_token(token):
+            try:
+                user_id = self.authenticator.get_id_by_token(token)
+                event_logger.info("User: " + str(user_id) +
+                                  " tries to open shop: " + str(shop_details["shop_name"]))
+                shop_id = self.commerce_system_facade.open_shop(user_id, **shop_details)
+                event_logger.info("User: " + str(user_id) + " opend shop: " + str(shop_id) + " successfully")
+                return shop_id
+            except AssertionError as e:
+                print(e)
+                event_logger.warning(e)
+                return False
+            except Exception as e:
+                error_logger.error(e)
+                return False
+        return False
+
     def un_appoint_shop_owner(self, token: str, shop_id: int, username: str):
         if self.is_valid_token(token):
             try:
@@ -234,6 +252,21 @@ class SystemService:
                 user_id = self.authenticator.get_id_by_token(token)
                 event_logger.info(f"user {user_id} requested for shop {shop_id} information")
                 return self.commerce_system_facade.get_shop_info(shop_id)
+            except AssertionError as e:
+                print(e)
+                event_logger.warning(e)
+                return {}
+            except Exception as e:
+                error_logger.error(e)
+                return {}
+        return {}
+
+    def get_shop_staff_info(self, token: str, shop_id: int) -> List[dict]:
+        if self.is_valid_token(token):
+            try:
+                user_id = self.authenticator.get_id_by_token(token)
+                event_logger.info(f"user {user_id} requested for shop {shop_id} staff information")
+                return self.commerce_system_facade.get_shop_staff_info(shop_id)
             except AssertionError as e:
                 print(e)
                 event_logger.warning(e)

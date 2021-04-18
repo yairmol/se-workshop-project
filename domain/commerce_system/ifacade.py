@@ -237,7 +237,7 @@ class ICommerceSystemFacade:
         """
         raise NotImplementedError()
 
-    def get_shop_staff_info(self, user_id: int, shop_id: str) -> List[dict]:
+    def get_shop_staff_info(self, shop_id: str) -> List[dict]:
         """
         Action succeeds iff user of user_id has proper authorization
         """

@@ -229,4 +229,6 @@ class Subscribed(UserState):
     def open_shop(self, shop_details):
         new_shop = Shop(**shop_details)
         owner = ShopOwner(new_shop)
+        new_shop.founder = owner
         self.appointments[new_shop] = owner
+        return new_shop
