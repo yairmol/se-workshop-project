@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import List
 
 from domain.commerce_system.productDTO import ProductDTO
 
@@ -10,7 +11,7 @@ PRICE = "price"
 
 
 class Transaction:
-    def __init__(self, shop, products: list[ProductDTO], payment_details, date: datetime, price: float):
+    def __init__(self, shop, products: List[ProductDTO], payment_details, date: datetime, price: float):
         self.shop = shop
         self.products = products
         self.payment_details = payment_details

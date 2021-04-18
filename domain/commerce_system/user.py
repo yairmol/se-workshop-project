@@ -80,8 +80,7 @@ class User:
         self.user_state.add_transaction(transaction)
 
     def remove_transaction(self, transaction: Transaction):
-        # TODO: for subscribed users
-        raise NotImplementedError()
+        self.user_state.remove_transaction(transaction)
 
     def cancel_orders(self, to_be_canceled: list[Transaction]):
         for transaction in to_be_canceled:
@@ -94,8 +93,8 @@ class User:
     def remove_product_from_cart(self, shop: Shop, product: Product, amount: int) -> bool:
         return self.cart.remove_from_shopping_bag(shop, product, amount)
 
-    def get_cart_info(self) -> List[dict]:
-        raise NotImplementedError()
+    def get_cart_info(self) -> dict:
+        return self.cart.to_dict()
 
     def open_shop(self, **shop_details) -> Shop:
         raise NotImplementedError()
@@ -170,6 +169,9 @@ class UserState:
 
     def logout(self):
         raise Exception("Error: User cannot logout in current state")
+
+    def remove_transaction(self, transaction: Transaction):
+        pass
 
 
 class Guest(UserState):
