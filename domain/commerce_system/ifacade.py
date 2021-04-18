@@ -46,12 +46,24 @@ class ICommerceSystemFacade:
         """
         raise NotImplementedError()
 
-    def save_product_to_cart(self, user_id: int, shop_id: int, product_id: int) -> bool:
+    def save_product_to_cart(self, user_id: int, shop_id: int, product_id: int, amount_to_buy: int):
         """
         saves a product to a shopping bag in the shopping cart of the user identified by user_id
+        :param amount_to_buy: the amount of the product the user wants to save
         :param user_id: user identifier
         :param shop_id: the shop that sells the product
         :param product_id: the product being saved to cart
+        :return: True if action was successful
+        """
+        raise NotImplementedError()
+
+    def remove_product_from_cart(self, user_id: int, shop_id: int, product_id: int, amount: int):
+        """
+        removes a product from a shopping bag in the shopping cart of the user identified by user_id
+        :param user_id: user identifier
+        :param shop_id: the shop that sells the product
+        :param product_id: the product being saved to cart
+        :param amount: the amount of the product the user wants to remove
         :return: True if action was successful
         """
         raise NotImplementedError()
@@ -96,7 +108,7 @@ class ICommerceSystemFacade:
         """
         raise NotImplementedError()
 
-    def purchase_cart(self, user_id: int, payment_details: dict, all_or_nothing: bool) -> bool:
+    def purchase_cart(self, user_id: int, payment_details: dict, all_or_nothing: bool):
         """
         make a purchase of the entire shopping cart of a user (i.e. all shopping bags)
         :param all_or_nothing: true if the user wants all the cart or nothing at all
@@ -106,7 +118,7 @@ class ICommerceSystemFacade:
         """
         raise NotImplementedError()
 
-    def purchase_shopping_bag(self, user_id: int, shop_id: str, payment_details: dict) -> bool:
+    def purchase_shopping_bag(self, user_id: int, shop_id: str, payment_details: dict):
         """
                 make a purchase of the entire shopping bag for the specified store of a user
                 :param shop_id: the shop that identifies the bag

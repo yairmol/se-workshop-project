@@ -18,33 +18,40 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         shop: Shop = self.shops[shop_id]
         return shop.to_dict()
 
-    def save_product_to_cart(self, user_id: int, shop_id: str, product_id: int, amount_to_buy: int) -> bool:
+    def save_product_to_cart(self, user_id: int, shop_id: str, product_id: int, amount_to_buy: int):
         user = self.get_user(user_id)
         shop = self.get_shop(shop_id)
         product = shop.products[product_id]
-        return user.save_product_to_cart(shop, product, amount_to_buy)
+        assert user.save_product_to_cart(shop, product, amount_to_buy), "save product to cart failed"
+
+    def remove_product_from_cart(self, user_id: int, shop_id: int, product_id: int, amount: int):
+        user = self.get_user(user_id)
+        shop = self.get_shop(shop_id)
+        product = shop.products[product_id]
+        assert user.remove_product_from_cart(shop, product, amount), "remove product from cart failed"
 
     def get_cart_info(self, user_id: int) -> dict:
-        pass
+        user = self.get_user(user_id)
+        return user.get_cart_info()
 
     def search_shops(self, keywords: str, filters: list) -> List[dict]:
         pass
 
-    def purchase_cart(self, user_id: int, payment_details: dict, all_or_nothing: bool) -> bool:
+    def purchase_cart(self, user_id: int, payment_details: dict, all_or_nothing: bool):
         user = self.get_user(user_id)
-        return user.buy_cart(payment_details, all_or_nothing)
+        assert user.buy_cart(payment_details, all_or_nothing), "purchase cart failed"
 
-    def purchase_shopping_bag(self, user_id: int, shop_id: str, payment_details: dict) -> bool:
+    def purchase_shopping_bag(self, user_id: int, shop_id: str, payment_details: dict):
         user = self.get_user(user_id)
         shop = self.get_shop(shop_id)
-        return user.buy_shopping_bag(shop, payment_details)
+        assert user.buy_shopping_bag(shop, payment_details), "purchase bag failed"
 
     def purchase_product(self, user_id: int, shop_id: str, product_id: int, amount_to_buy: int,
-                         payment_details: dict) -> bool:
+                         payment_details: dict):
         user = self.get_user(user_id)
         shop = self.get_shop(shop_id)
         product = shop.products[product_id]
-        return user.buy_product(shop, product, amount_to_buy, payment_details)
+        assert user.buy_product(shop, product, amount_to_buy, payment_details), "purchase product failed"
 
     def open_shop(self, user_id: int, **shop_details) -> int:
         worker = self.get_user(user_id).user_state
