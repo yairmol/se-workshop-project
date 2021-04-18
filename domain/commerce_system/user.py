@@ -3,7 +3,7 @@ import threading
 from datetime import datetime
 from typing import List, Dict
 
-from domain.commerce_system.appointment import Appointment
+from domain.commerce_system.appointment import Appointment, ShopOwner
 from domain.commerce_system.permission import Permission
 from domain.commerce_system.product import Product
 from domain.commerce_system.productDTO import ProductDTO
@@ -115,7 +115,7 @@ class User:
     def appoint_shop_owner(self, shop: Shop, user) -> Appointment:
         raise NotImplementedError()
 
-    def appoint_shop_manager(self, shop: Shop, user, permissions: List[Permission]) -> bool:
+    def appoint_shop_manager(self, shop: Shop, user, permissions: List[str]) -> bool:
         raise NotImplementedError()
 
     def unappoint_shop_worker(self, shop: Shop, user) -> bool:
@@ -162,6 +162,9 @@ class UserState:
     def get_personal_transaction_history(self):
         raise Exception("Error: User cannot perform this action")
 
+    def open_shop(self, shop_details):
+        raise Exception("Error: Guest User cannot edit manager permissions")
+
     def add_transaction(self, transaction: Transaction):
         pass
 
@@ -183,9 +186,6 @@ class Subscribed(UserState):
         self.password = password
         self.transactions: List[Transaction] = []
 
-    def open_store(self, store_credentials: dict) -> bool:
-        raise NotImplementedError()
-
     def logout(self):
         pass
 
@@ -198,6 +198,10 @@ class Subscribed(UserState):
     def appoint_owner(self, owner_sub: Subscribed, shop: Shop):
         session_app = owner_sub.get_appointment(shop)
         session_app.appoint_owner(self)
+
+    def promote_manager_to_owner(self, owner_sub: Subscribed, shop: Shop):
+        session_app = owner_sub.get_appointment(shop)
+        session_app.promote_manager_to_owner(self)
 
     def get_appointment(self, shop: Shop):
         if shop in self.appointments:
@@ -225,8 +229,7 @@ class Subscribed(UserState):
         session_app = owner_sub.get_appointment(shop)
         session_app.edit_manager_permissions(self, permissions)
 
-    def add_transaction(self, transaction: Transaction):
-        self.transactions.append(transaction)
-
-    def get_personal_transaction_history(self):
-        return self.transactions
+    def open_shop(self, shop_details):
+        new_shop = Shop(**shop_details)
+        owner = ShopOwner(new_shop)
+        self.appointments[new_shop] = owner
