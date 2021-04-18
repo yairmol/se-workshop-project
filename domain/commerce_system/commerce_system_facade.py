@@ -37,8 +37,8 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         assert not self.is_username_exists(username), "Username already exists"
         assert validate.validate_username(username), "Username length needs to be between 0 - 20 characters"
         assert validate.validate_password(password), "Password length needs to be between 0 - 20 characters"
-
-        new_subscribe = Subscribed(username, password)
+        user = self.get_user(user_id)
+        new_subscribe = user.register(username, password)
         # saving registered user_sess's details
         self.registered_users_lock.acquire()
         self.registered_users[username] = new_subscribe

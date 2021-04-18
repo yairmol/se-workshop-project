@@ -41,7 +41,7 @@ class User:
         transaction = Transaction(shop, [product_dto], payment_details, datetime.now(), product.price)
         shop.add_transaction(bag, transaction)
         self.add_transaction(transaction)
-        pay(self, self.id, payment_details)
+        pay(self.id, **payment_details)
 
     def buy_shopping_bag(self, shop: Shop, payment_details: dict) -> bool:
         bag = self.cart[shop]
@@ -222,9 +222,9 @@ class Subscribed(UserState):
     def delete_product(self, shop: Shop, product_id: int):
         self.get_appointment(shop).delete_product(product_id)
 
-    def un_appoint_manager(self, owner_sub, shop: Shop):
-        session_app = owner_sub.get_appointment(shop)
-        session_app.un_appoint_manager(self)
+    def un_appoint_manager(self, unappointed_manager, shop: Shop):
+        unappointing_owner_app = self.get_appointment(shop)
+        unappointing_owner_app.un_appoint_manager(unappointed_manager)
 
     def un_appoint_owner(self, owner_sub, shop: Shop):
         session_app = owner_sub.get_appointment(shop)

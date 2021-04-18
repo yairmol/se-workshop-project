@@ -18,6 +18,7 @@ class ProductModel:
     PRODUCT_DESC = "description"
     QUANTITY = "quantity"
     CATEGORIES = "categories"
+    AMOUNT = "amount"  # for ShoppingBag
 
 
 class TransactionModel:

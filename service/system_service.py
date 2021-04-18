@@ -120,14 +120,14 @@ class SystemService:
         return False
 
     # 2.8
-    def get_cart_info(self, token: str):
+    def get_cart_info(self, token: str) -> dict:
         if self.is_valid_token(token):
             try:
                 user_id = self.authenticator.get_id_by_token(token)
                 event_logger.info(f"User: {str(user_id)} tries to get his cart info")
-                self.commerce_system_facade.get_cart_info(user_id)
+                ret = self.commerce_system_facade.get_cart_info(user_id)
                 event_logger.info(f"User: {user_id} successfully got his cart")
-                return True
+                return ret
             except AssertionError as e:
                 event_logger.warning(e)
             except Exception as e:
@@ -189,7 +189,7 @@ class SystemService:
         return False
 
     # 2.9
-    def purchase_cart(self, token: str, shop_id: str, payment_details: dict, all_or_nothing: bool) -> bool:
+    def purchase_cart(self, token: str, payment_details: dict, all_or_nothing: bool = False) -> bool:
         if self.is_valid_token(token):
             try:
                 user_id = self.authenticator.get_id_by_token(token)
@@ -222,21 +222,21 @@ class SystemService:
         return False
 
     # 3.2
-    def open_shop(self, token: str, **shop_details) -> bool:
+    def open_shop(self, token: str, **shop_details) -> int:
         if self.is_valid_token(token):
             try:
                 user_id = self.authenticator.get_id_by_token(token)
                 event_logger.info(f"User: {user_id} tries to open shop: {shop_details['shop_name']}")
                 shop_id = self.commerce_system_facade.open_shop(user_id, **shop_details)
                 event_logger.info(f"User: {user_id} opened shop: {shop_id} successfully")
-                return True
+                return shop_id
             except AssertionError as e:
                 event_logger.warning(e)
-                return False
+                return -1
             except Exception as e:
                 error_logger.error(e)
-                return False
-        return False
+                return -1
+        return -1
 
     # 3.7
     def get_personal_purchase_history(self, token: str) -> List[dict]:
@@ -262,14 +262,14 @@ class SystemService:
             try:
                 user_id = self.authenticator.get_id_by_token(token)
                 event_logger.info(f"User: {user_id} tries to add product to shop {shop_id}")
-                self.commerce_system_facade.add_product_to_shop(user_id, shop_id, **product_info)
+                pid = self.commerce_system_facade.add_product_to_shop(user_id, shop_id, **product_info)
                 event_logger.info(f"User: {user_id} added product successfully")
-                return True
+                return pid
             except AssertionError as e:
                 event_logger.warning(e)
             except Exception as e:
                 error_logger.error(e)
-        return False
+        return -1
 
     # 4.1
     def edit_product_info(
