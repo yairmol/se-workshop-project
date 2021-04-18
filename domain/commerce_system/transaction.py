@@ -20,7 +20,7 @@ class Transaction:
 
     def to_dict(self):
         return {
-            SHOP: self.shop.to_dict(),
+            SHOP: self.shop.to_dict(include_products=False),
             PRODUCTS: list(map(lambda p: p.to_dict(), self.products)),
             DATE: self.date.timestamp(),
             PRICE: self.price,

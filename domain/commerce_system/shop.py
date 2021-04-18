@@ -27,21 +27,21 @@ class Shop:
         self.shop_managers = {}
         self.shop_owners = {}
 
-    def to_dict(self):
+    def to_dict(self, include_products=True):
         ret = {
             Sm.SHOP_ID: self.shop_id,
             Sm.SHOP_NAME: self.name,
-            Sm.SHOP_PRODS: list(map(lambda p: p.to_dict(), self.products.values())),
             Sm.SHOP_DESC: self.description,
         }
+        if include_products:
+            ret[Sm.SHOP_PRODS] = list(map(lambda p: p.to_dict(), self.products.values()))
         return ret
 
     """ returns product_id if successful"""
     def add_product(self, **product_info):
         self.products_lock.acquire()
         try:
-            assert (not self.has_product(product_info["product_name"]),
-                    f"product name {product_info['product_name']} is not unique")
+            assert not self.has_product(product_info["product_name"]), f"product name {product_info['product_name']} is not unique"
             product = Product(**product_info)
             self.products[product.product_id] = product
         except Exception as e:
@@ -99,16 +99,19 @@ class Shop:
                 product_id = p_id
         return product_id
 
-    def add_transaction(self, bag: dict, transaction: Transaction) -> bool:
+    def add_transaction(self, bag, transaction: Transaction) -> bool:
         self.products_lock.acquire()
-        for product, amount in bag:
-            if product.quantity < amount:
-                return False
-        for product, amount in bag:
-            product.quantity -= amount
-        self.transaction_history.append(
-            Transaction(self, transaction.products, transaction.payment_details, transaction.date, transaction.price)
-        )
+        try:
+            for product, amount in bag:
+                if product.quantity < amount:
+                    return False
+            for product, amount in bag:
+                product.quantity -= amount
+            self.transaction_history.append(
+                Transaction(self, transaction.products, transaction.payment_details, transaction.date, transaction.price)
+            )
+        except AssertionError as e:
+            return False
         self.products_lock.release()
         return True
 
@@ -163,3 +166,6 @@ class Shop:
 
     def get_staff_info(self):
         return self.get_managers_info() + self.get_owners_info()
+
+    def get_shop_transaction_history(self):
+        return list(map(lambda x: x.to_dict(), self.transaction_history))
