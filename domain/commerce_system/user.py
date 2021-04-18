@@ -230,9 +230,9 @@ class Subscribed(UserState):
         session_app = owner_sub.get_appointment(shop)
         session_app.un_appoint_owner(self)
 
-    def edit_manager_permissions(self, owner_sub: Subscribed, shop: Shop, permissions: List[str]):
-        session_app = owner_sub.get_appointment(shop)
-        session_app.edit_manager_permissions(self, permissions)
+    def edit_manager_permissions(self, manager_sub: Subscribed, shop: Shop, permissions: List[str]):
+        owner_app = self.get_appointment(shop)
+        owner_app.edit_manager_permissions(manager_sub, permissions)
 
     def open_shop(self, shop_details):
         new_shop = Shop(**shop_details)

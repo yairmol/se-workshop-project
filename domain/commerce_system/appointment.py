@@ -65,7 +65,7 @@ class ShopManager(Appointment):
         self.edit_product_permission = False
         self.add_product_permission = False
         self.get_trans_history_permission = False
-        self.set_permission(permissions)
+        self.set_permissions(permissions)
 
     def add_product(self, **product_info) -> int:
         assert self.add_product_permission, "manager does not have permission to add product"
@@ -83,7 +83,7 @@ class ShopManager(Appointment):
         assert self.get_trans_history_permission, "manager user does not have permission to perform the action"
         return self.shop.get_shop_transaction_history()
 
-    def set_permission(self, permissions: List[str]):
+    def set_permissions(self, permissions: List[str]):
         self.delete_product_permission = "delete_product" in permissions
         self.edit_product_permission = "edit_product" in permissions
         self.add_product_permission = "add_product" in permissions
