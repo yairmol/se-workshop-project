@@ -111,7 +111,26 @@ class SystemService:
                 error_logger.error(e)
         return False
 
-    def delete_product(self, token: str, shop_id: int, product_id: int) -> bool:
+    def add_product_to_shop(self, token: str, shop_id: int, product_id: int, **product_info) -> bool:
+        if self.is_valid_token(token):
+            try:
+                user_id = self.authenticator.get_id_by_token(token)
+                event_logger.info("User: " + str(user_id) +
+                                  " tries to edit product info of shop_id: " + shop_id + "product_id: " + str(
+                    product_id))
+                self.commerce_system_facade.add_product_to_shop(user_id, shop_id, **product_info)
+                event_logger.info("User: " + str(user_id) + " Edit product info successfully")
+                return True
+            except AssertionError as e:
+                print(e)
+                event_logger.warning(e)
+                return False
+            except Exception as e:
+                error_logger.error(e)
+                return False
+        return False
+
+    def delete_product(self, token: str, shop_id: str, product_id: int) -> bool:
         if self.is_valid_token(token):
             try:
                 user_id = self.authenticator.get_id_by_token(token)

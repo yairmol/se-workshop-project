@@ -161,6 +161,9 @@ class UserState:
     def get_personal_transaction_history(self):
         raise Exception("Error: User cannot perform this action")
 
+    def get_shop_transaction_history(self, shop: Shop):
+        raise Exception("Error: User cannot perform this action")
+
     def open_shop(self, shop_details):
         raise Exception("Error: Guest User cannot edit manager permissions")
 
@@ -237,3 +240,7 @@ class Subscribed(UserState):
         new_shop.founder = owner
         self.appointments[new_shop] = owner
         return new_shop
+
+    def get_shop_transaction_history(self, shop: Shop):
+        app = self.get_appointment(shop)
+        app.get_shop_transaction_history()
