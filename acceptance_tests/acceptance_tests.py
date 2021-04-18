@@ -7,8 +7,9 @@ from acceptance_tests.test_data import users, shops, products, permissions
 from acceptance_tests.test_utils import (
     enter_register_and_login, add_product, make_purchases, register_login_users,
     open_shops, add_products, appoint_owners_and_managers, shop_to_products,
-    sessions_to_shops, get_shops_not_owned_by_user, fill_with_data, admin_login
+    sessions_to_shops, get_shops_not_owned_by_user, fill_with_data, admin_login, get_credentials
 )
+from data_model import UserModel as Um, ShopModel as Sm, ProductModel as Pm
 
 
 class GuestTests(TestCase):
@@ -30,31 +31,31 @@ class GuestTests(TestCase):
         self.assertTrue(self.commerce_system.register(self.session_id, **users[0]))
 
     def test_registration_with_empty_credentials(self):
-        u = {"username": "", "email": "", "password": "password24tgf"}
+        u = {Um.USERNAME: "", Um.EMAIL: "", Um.PASSWORD: "password24tgf"}
         self.assertFalse(self.commerce_system.register(self.session_id, **u))
 
     def test_registration_with_existing_email_or_username(self):
         self.assertTrue(self.commerce_system.register(self.session_id, **users[0]))
         user2 = users[0].copy()
-        user2["username"] = "username2"
+        user2[Um.USERNAME] = "username2"
         self.assertFalse(self.commerce_system.register(self.session_id, **user2))
         user3 = users[0].copy()
-        user3["email"] = "email2@gmail.com"
+        user3[Um.EMAIL] = "email2@gmail.com"
         self.assertFalse(self.commerce_system.register(self.session_id, **user3))
 
     def test_login_successful(self):
         self.assertTrue(self.commerce_system.register(self.session_id, **users[0]))
-        self.assertTrue(self.commerce_system.login(self.session_id, **users[0]["credentials"]))
+        self.assertTrue(self.commerce_system.login(self.session_id, **get_credentials(users[0])))
 
     def test_login_failed(self):
         # user hasn't registered yet
-        self.assertFalse(self.commerce_system.login(self.session_id, **users[0]["credentials"]))
+        self.assertFalse(self.commerce_system.login(self.session_id, **get_credentials(users[0])))
 
     def test_login_failed_bad_credentials(self):
         user = users[0].copy()
         self.assertTrue(self.commerce_system.register(self.session_id, **user))
-        user["credentials"]["password"] = "pasSwordd"
-        self.assertFalse(self.commerce_system.login(self.session_id, **user["credentials"]))
+        user[Um.PASSWORD] = "pasSwordd"
+        self.assertFalse(self.commerce_system.login(self.session_id, **get_credentials(user)))
 
     def test_logout_without_login(self):
         self.assertFalse(self.commerce_system.logout(self.session_id))
@@ -74,9 +75,9 @@ class SubscribedTests(TestCase):
         self.session_id = enter_register_and_login(self.commerce_system, users[0])
 
     def tearDown(self) -> None:
-        status = self.commerce_system.exit(self.session_id)
-        self.assertTrue(not status)
         self.assertTrue(self.commerce_system.logout(self.session_id))
+        status = self.commerce_system.exit(self.session_id)
+        self.assertTrue(status)
 
     def test_logout(self):
         # setUp and tearDown will perform the login and logout
@@ -96,7 +97,7 @@ class SubscribedTests(TestCase):
 
     def test_register_when_logged_in(self):
         self.assertFalse(self.commerce_system.register(
-            **users[2]
+            self.session_id, **users[2]
         ))
 
 
@@ -117,7 +118,7 @@ class ShopOwnerOperations(TestCase):
             self.session_id, self.commerce_system, self.shop_id, products[0]
         )
         p = products[0].copy()
-        p["product_id"] = prod_id
+        p[Pm.PRODUCT_ID] = prod_id
         self.assertTrue(self.commerce_system.edit_product_info(
             self.session_id, self.shop_id, **p
         ))
@@ -127,10 +128,10 @@ class ShopOwnerOperations(TestCase):
             self.session_id, self.commerce_system, self.shop_id, products[0]
         ), "")
         p = products[0].copy()
-        p["product_id"] = "some_non_existing_id"
+        p[Pm.PRODUCT_ID] = "some_non_existing_id"
         self.assertTrue(self.commerce_system.edit_product_info(
             self.session_id, self.shop_id, **p
-        ), "p")
+        ))
 
     def test_delete_product_from_shop(self):
         prod_id = add_product(
@@ -148,58 +149,58 @@ class ShopOwnerOperations(TestCase):
     def test_appoint_shop_owner(self):
         enter_register_and_login(self.commerce_system, users[1])
         self.assertTrue(self.commerce_system.appoint_shop_owner(
-            self.session_id, self.shop_id, users[1]["username"]
+            self.session_id, self.shop_id, users[1][Um.USERNAME]
         ))
 
     def test_appoint_owner_by_non_owner(self):
         other_session_id = enter_register_and_login(self.commerce_system, users[1])
         self.assertFalse(self.commerce_system.appoint_shop_owner(
-            other_session_id, self.shop_id, users[0]["username"]
+            other_session_id, self.shop_id, users[0][Um.USERNAME]
         ))
 
     def test_appoint_owner_already_appointed(self):
         enter_register_and_login(self.commerce_system, users[1])
         self.assertTrue(self.commerce_system.appoint_shop_owner(
-            self.session_id, self.shop_id, users[1]["username"]
+            self.session_id, self.shop_id, users[1][Um.USERNAME]
         ))
         self.assertFalse(self.commerce_system.appoint_shop_owner(
-            self.session_id, self.shop_id, users[1]["username"]
+            self.session_id, self.shop_id, users[1][Um.USERNAME]
         ))
 
     def test_appoint_shop_manager(self):
         enter_register_and_login(self.commerce_system, users[1])
         self.assertTrue(self.commerce_system.appoint_shop_manager(
-            self.session_id, self.shop_id, users[1]["username"], permissions[0]
+            self.session_id, self.shop_id, users[1][Um.USERNAME], permissions[0]
         ))
 
     def test_appoint_manager_by_non_owner(self):
         other_session_id = enter_register_and_login(self.commerce_system, users[1])
         self.assertFalse(self.commerce_system.appoint_shop_manager(
-            other_session_id, self.shop_id, users[0]["username"], permissions[0]
+            other_session_id, self.shop_id, users[0][Um.USERNAME], permissions[0]
         ))
 
     def test_unappoint_shop_manager(self):
         enter_register_and_login(self.commerce_system, users[1])
         self.assertTrue(self.commerce_system.appoint_shop_manager(
-            self.session_id, self.shop_id, users[1]["username"], permissions[0]
+            self.session_id, self.shop_id, users[1][Um.USERNAME], permissions[0]
         ))
         self.assertTrue(self.commerce_system.unappoint_shop_worker(
-            self.session_id, self.shop_id, users[1]["username"]
+            self.session_id, self.shop_id, users[1][Um.USERNAME]
         ))
 
     def test_unappoint_shop_manager_by_non_appointer(self):
         enter_register_and_login(self.commerce_system, users[1])
         self.assertTrue(self.commerce_system.appoint_shop_manager(
-            self.session_id, self.shop_id, users[1]["username"], permissions[0]
+            self.session_id, self.shop_id, users[1][Um.USERNAME], permissions[0]
         ))
         u2_session_id = enter_register_and_login(self.commerce_system, users[2])
         self.assertTrue(self.commerce_system.appoint_shop_owner(
-            self.session_id, self.shop_id, users[2]["username"]
+            self.session_id, self.shop_id, users[2][Um.USERNAME]
         ))
         # check that user2 which is a shop owner is not able to unappoint user1
         # which is a shop manager appointed by user0
         self.assertTrue(self.commerce_system.unappoint_shop_worker(
-            u2_session_id, self.shop_id, users[1]["username"]
+            u2_session_id, self.shop_id, users[1][Um.USERNAME]
         ))
 
     def test_unappoint_shop_owner_by_non_owner(self):
@@ -207,31 +208,31 @@ class ShopOwnerOperations(TestCase):
         u_session_id = enter_register_and_login(self.commerce_system, users[1])
         enter_register_and_login(self.commerce_system, users[2])
         self.assertFalse(self.commerce_system.unappoint_shop_worker(
-            u_session_id, self.shop_id, users[2]["username"]
+            u_session_id, self.shop_id, users[2][Um.USERNAME]
         ))
 
     def test_appoint_manager_to_owner(self):
         # not sure what is the behaviour here?
         enter_register_and_login(self.commerce_system, users[1])
         self.assertTrue(self.commerce_system.appoint_shop_manager(
-            self.session_id, self.shop_id, users[1]["username"], permissions[0]
+            self.session_id, self.shop_id, users[1][Um.USERNAME], permissions[0]
         ))
         self.assertTrue(self.commerce_system.appoint_shop_owner(
-            self.session_id, self.shop_id, users[1]["username"]
+            self.session_id, self.shop_id, users[1][Um.USERNAME]
         ))
 
     def test_get_shop_staff(self):
         enter_register_and_login(self.commerce_system, users[1])
         self.assertTrue(self.commerce_system.appoint_shop_manager(
-            self.session_id, self.shop_id, users[1]["username"], permissions[0]
+            self.session_id, self.shop_id, users[1][Um.USERNAME], permissions[0]
         ))
         enter_register_and_login(self.commerce_system, users[2])
         self.assertTrue(self.commerce_system.appoint_shop_owner(
-            self.session_id, self.shop_id, users[1]["username"]
+            self.session_id, self.shop_id, users[1][Um.USERNAME]
         ))
         shop_staff = self.commerce_system.get_shop_staff_info(self.session_id, self.shop_id)
-        expected_usernames = {u["username"] for u in users[:2]}
-        usernames_got = {u["username"] for u in shop_staff}
+        expected_usernames = {u[Um.USERNAME] for u in users[:2]}
+        usernames_got = {u[Um.USERNAME] for u in shop_staff}
         self.assertEquals(expected_usernames, usernames_got)
 
     def test_get_shop_staff_by_non_owner(self):
@@ -246,15 +247,10 @@ class ShopManagerOperations(TestCase):
         self.owner_session_id = enter_register_and_login(self.commerce_system, users[0])
         self.shop_id = self.commerce_system.open_shop(self.owner_session_id, **shops[0])
         self.session_id = enter_register_and_login(self.commerce_system, users[1])
-        self.username = users[1]["username"]
+        self.username = users[1][Um.USERNAME]
         self.commerce_system.appoint_shop_manager(
-            self.owner_session_id, self.shop_id, users[1]["username"], permissions[0]
+            self.owner_session_id, self.shop_id, users[1][Um.USERNAME], permissions[0]
         )
-        self.permissions_to_functions_map = {
-            "add_product": self.commerce_system.add_product_to_shop,
-            "edit_product": self.commerce_system.edit_product_info,
-            "delete_product": self.commerce_system.delete_product,
-        }
 
     def edit_manager_permissions(self, m_permissions):
         self.assertTrue(self.commerce_system.edit_manager_permissions(
@@ -277,7 +273,7 @@ class ShopManagerOperations(TestCase):
             self.session_id, self.commerce_system, self.shop_id, products[0]
         )
         p = products[0].copy()
-        p["product_id"] = prod_id
+        p[Pm.PRODUCT_ID] = prod_id
         self.assertTrue(self.commerce_system.edit_product_info(
             self.session_id, self.shop_id, **p
         ))
@@ -287,7 +283,7 @@ class ShopManagerOperations(TestCase):
             self.owner_session_id, self.commerce_system, self.shop_id, products[0]
         )
         p = products[0].copy()
-        p["product_id"] = prod_id
+        p[Pm.PRODUCT_ID] = prod_id
         self.edit_manager_permissions([])
         self.assertTrue(self.commerce_system.edit_product_info(
             self.session_id, self.shop_id, **p
@@ -584,15 +580,13 @@ class ParallelismTests(TestCase):
 
     def test_parallel_registration_of_users_with_the_same_name(self):
         results = []
-        session_id2 = self.commerce_system.enter()
+        sess1, sess2 = self.commerce_system.enter(), self.commerce_system.enter()
 
         def u1():
-            print("here")
-            results.append(self.commerce_system.register(self.session_id, **users[0]))
+            results.append(self.commerce_system.register(sess1, **users[0]))
 
         def u2():
-            print("here2")
-            results.append(self.commerce_system.register(session_id2, **users[0]))
+            results.append(self.commerce_system.register(sess2, **users[0]))
 
         self.run_parallel_test(u1, u2)
         self.assertTrue(any(results))

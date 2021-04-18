@@ -11,6 +11,15 @@ import domain.commerce_system.valdiation as validate
 
 class CommerceSystemFacade(ICommerceSystemFacade):
 
+    active_users_lock = threading.Lock()
+    registered_users_lock = threading.Lock()
+    shops_lock = threading.Lock()
+
+    def __init__(self):
+        self.active_users: Dict[int, User] = {}  # dictionary {user_sess.id : user_sess object}
+        self.registered_users: Dict[str, Subscribed] = {}  # dictionary {user_sess.username : user_sess object}
+        self.shops: Dict[int, Shop] = {}  # dictionary {shop.shop_id : shop}
+
     def exit(self, session_id: int) -> bool:
         pass
 
@@ -112,15 +121,6 @@ class CommerceSystemFacade(ICommerceSystemFacade):
     def get_system_transaction_history(self, session_id: int) -> List[dict]:
         pass
 
-    active_users_lock = threading.Lock()
-    registered_users_lock = threading.Lock()
-    shops_lock = threading.Lock()
-
-    def __init__(self):
-        self.active_users: Dict[int, User] = {}  # dictionary {user.id : user object}
-        self.registered_users: Dict[str, Subscribed] = {}  # dictionary {user.username : user object}
-        self.shops: Dict[int, Shop] = {}  # dictionary {shop.shop_id : shop}
-
     def enter(self) -> int:
         new_user = User()
         self.active_users_lock.acquire()
@@ -139,7 +139,7 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         assert validate.validate_password(password), "Password length needs to be between 0 - 20 characters"
 
         new_subscribe = Subscribed(username, password)
-        # saving registered user's details
+        # saving registered user_sess's details
         self.registered_users_lock.acquire()
         self.registered_users[username] = new_subscribe
         self.registered_users_lock.release()
@@ -155,12 +155,20 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         sub_user = self.registered_users.get(username)
         assert sub_user.password == password, "Wrong Password"
         self.active_users_lock.acquire()
-        self.active_users.get(user_id).login(sub_user)
+        try:
+            self.active_users.get(user_id).login(sub_user)
+        except Exception as e:
+            self.active_users_lock.release()
+            raise e
         self.active_users_lock.release()
 
     def logout(self, user_id: int):
         self.active_users_lock.acquire()
-        self.active_users.get(user_id).set_user_state(Guest())
+        try:
+            self.active_users.get(user_id).logout()
+        except Exception as e:
+            self.active_users_lock.release()
+            raise e
         self.active_users_lock.release()
 
     def get_user(self, user_id) -> User:

@@ -33,7 +33,7 @@ class User:
         return self.user_state.register(username, password)
 
     def logout(self):
-        raise NotImplementedError()
+        self.user_state.logout()
 
     def buy_product(self, shop: Shop, product: Product, amount_to_buy: int, payment_details: dict):
         product_dto = ProductDTO(product, amount_to_buy)
@@ -165,6 +165,9 @@ class UserState:
     def add_transaction(self, transaction: Transaction):
         pass
 
+    def logout(self):
+        raise Exception("Error: User cannot logout in current state")
+
 
 class Guest(UserState):
 
@@ -184,7 +187,7 @@ class Subscribed(UserState):
         raise NotImplementedError()
 
     def logout(self):
-        raise NotImplementedError()
+        pass
 
     """ calls personal appointment for the request. if doesnt have permission raises an exception"""
 

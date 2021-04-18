@@ -32,18 +32,21 @@ class SystemService:
         except Exception as e:
             error_logger.error(e)
 
-    def exit(self, token: str) -> None:
+    def exit(self, token: str) -> bool:
+        ret = False
         user_id = self.authenticator.get_id_by_token(token)
         try:
             if self.authenticator.is_token_expired(token):
                 raise Exception("User: " + str(user_id) + " Token's is not valid")
             self.authenticator.remove_token(token)
             event_logger.info("User " + str(user_id) + " exit the system")
+            ret = True
         except Exception as e:
             error_logger.error(e)
         finally:
             if user_id > 0:
                 self.commerce_system_facade.remove_active_user(user_id)
+            return ret
 
     def register(self, token: str, username: str, password: str, **more) -> bool:
         if self.is_valid_token(token):
@@ -232,7 +235,7 @@ class SystemService:
         if self.is_valid_token(token):
             try:
                 user_id = self.authenticator.get_id_by_token(token)
-                event_logger.info(f"user {user_id} requested for shop {shop_id} information")
+                event_logger.info(f"user_sess {user_id} requested for shop {shop_id} information")
                 return self.commerce_system_facade.get_shop_info(shop_id)
             except AssertionError as e:
                 print(e)
@@ -259,7 +262,7 @@ class SystemService:
 
     def get_personal_purchase_history(self, token: str) -> List[dict]:
         try:
-            assert self.is_valid_token(token), f"Invalid user token {token}"
+            assert self.is_valid_token(token), f"Invalid user_sess token {token}"
             user_id = self.authenticator.get_id_by_token(token)
             return self.commerce_system_facade.get_personal_purchase_history(user_id)
         except AssertionError as e:

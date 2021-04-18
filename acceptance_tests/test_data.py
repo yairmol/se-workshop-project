@@ -1,50 +1,51 @@
+from data_model import UserModel as Um, ShopModel as Sm, ProductModel as Pm
+
 users = [
     {
-        "username": "user1", "password": "password", "email": "email@gmail.com",
-        "credentials": {"username": "user1", "password": "password"}
+        Um.USERNAME: "user1", Um.PASSWORD: "password", "email": "email@gmail.com",
     },
     {
-        "username": "user2", "password": "password", "email": "email2@gmail.com",
-        "credentials": {"username": "user2", "password": "password"}
+        Um.USERNAME: "user2", Um.PASSWORD: "password", "email": "email2@gmail.com",
     },
     {
-        "username": "user3", "password": "password", "email": "email3@gmail.com",
-        "credentials": {"username": "user3", "password": "password"}
+        Um.USERNAME: "user3", Um.PASSWORD: "password", "email": "email3@gmail.com",
     },
     {
-        "username": "user4", "password": "password", "email": "email4@gmail.com",
-        "credentials": {"username": "user4", "password": "password"}
+        Um.USERNAME: "user4", Um.PASSWORD: "password", "email": "email4@gmail.com",
     },
     {
-        "username": "user5", "password": "password", "email": "email5@gmail.com",
-        "credentials": {"username": "user5", "password": "password"}
+        Um.USERNAME: "user5", Um.PASSWORD: "password", "email": "email5@gmail.com",
     }
 ]
 
 shops = [
-    {"shop_name": "shop1"},
-    {"shop_name": "shop2"},
-    {"shop_name": "shop3"},
-    {"shop_name": "shop4"},
+    {Sm.SHOP_NAME: "shop1", Sm.SHOP_DESC: "shop1 desc"},
+    {Sm.SHOP_NAME: "shop2", Sm.SHOP_DESC: "shop2 desc"},
+    {Sm.SHOP_NAME: "shop3", Sm.SHOP_DESC: "shop3 desc"},
+    {Sm.SHOP_NAME: "shop4", Sm.SHOP_DESC: "shop4 desc"},
+]
+
+categories = [
+    "c1", "c2", "c3", "c4"
 ]
 
 products = [
-    {"product_name": "p1", "product_description": "a product", "price": 1, "quantity": 10},
-    {"product_name": "p2", "product_description": "a product", "price": 2.5, "quantity": 10},
-    {"product_name": "p3", "product_description": "a product", "price": 1.25, "quantity": 10},
-    {"product_name": "p4", "product_description": "a product", "price": 10, "quantity": 10},
-    {"product_name": "p5", "product_description": "a product", "price": 32, "quantity": 10},
-    {"product_name": "p6", "product_description": "a product", "price": 200, "quantity": 10},
-    {"product_name": "p7", "product_description": "a product", "price": 250, "quantity": 10},
-    {"product_name": "p8", "product_description": "a product", "price": 8999.99, "quantity": 10},
-    {"product_name": "p9", "product_description": "a product", "price": 47, "quantity": 10},
-    {"product_name": "p10", "product_description": "a product", "price": 96, "quantity": 10},
-    {"product_name": "p11", "product_description": "a product", "price": 1220, "quantity": 10},
-    {"product_name": "p12", "product_description": "a product", "price": 3, "quantity": 10},
+    {Pm.PRODUCT_NAME: "p1", Pm.PRODUCT_DESC: "a product", Pm.PRICE: 1, Pm.QUANTITY: 10, Pm.CATEGORIES: categories[0:1]},
+    {Pm.PRODUCT_NAME: "p2", Pm.PRODUCT_DESC: "a product", Pm.PRICE: 2.5, Pm.QUANTITY: 10, Pm.CATEGORIES: categories[0:1]},
+    {Pm.PRODUCT_NAME: "p3", Pm.PRODUCT_DESC: "a product", Pm.PRICE: 1.25, Pm.QUANTITY: 10, Pm.CATEGORIES: categories[0:1]},
+    {Pm.PRODUCT_NAME: "p4", Pm.PRODUCT_DESC: "a product", Pm.PRICE: 10, Pm.QUANTITY: 10, Pm.CATEGORIES: categories[0:1]},
+    {Pm.PRODUCT_NAME: "p5", Pm.PRODUCT_DESC: "a product", Pm.PRICE: 32, Pm.QUANTITY: 10, Pm.CATEGORIES: categories[0:1]},
+    {Pm.PRODUCT_NAME: "p6", Pm.PRODUCT_DESC: "a product", Pm.PRICE: 200, Pm.QUANTITY: 10, Pm.CATEGORIES: categories[0:1]},
+    {Pm.PRODUCT_NAME: "p7", Pm.PRODUCT_DESC: "a product", Pm.PRICE: 250, Pm.QUANTITY: 10, Pm.CATEGORIES: categories[0:1]},
+    {Pm.PRODUCT_NAME: "p8", Pm.PRODUCT_DESC: "a product", Pm.PRICE: 8999.99, Pm.QUANTITY: 10, Pm.CATEGORIES: categories[0:1]},
+    {Pm.PRODUCT_NAME: "p9", Pm.PRODUCT_DESC: "a product", Pm.PRICE: 47, Pm.QUANTITY: 10, Pm.CATEGORIES: categories[0:1]},
+    {Pm.PRODUCT_NAME: "p10", Pm.PRODUCT_DESC: "a product", Pm.PRICE: 96, Pm.QUANTITY: 10, Pm.CATEGORIES: categories[0:1]},
+    {Pm.PRODUCT_NAME: "p11", Pm.PRODUCT_DESC: "a product", Pm.PRICE: 1220, Pm.QUANTITY: 10, Pm.CATEGORIES: categories[0:1]},
+    {Pm.PRODUCT_NAME: "p12", Pm.PRODUCT_DESC: "a product", Pm.PRICE: 3, Pm.QUANTITY: 10, Pm.CATEGORIES: categories[0:1]},
 ]
 
 admin_credentials = {
-    "username": "admin", "password": "admin"
+    Um.USERNAME: "admin", Um.PASSWORD: "admin"
 }
 
 permissions = [

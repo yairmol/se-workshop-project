@@ -51,7 +51,7 @@ class ShoppingCart:
         return self.shopping_bags[item]
 
     def __iter__(self):
-        return self.shopping_bags.items()
+        return self.shopping_bags.items().__iter__()
 
     def add_product(self, product: Product, shop: Shop, amount_to_buy: int):
         if shop not in self.shopping_bags:
