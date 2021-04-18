@@ -1,59 +1,74 @@
 import threading
 from typing import Dict, List
 
-from domain.commerce_system.facade import ICommerceSystemFacade
+from domain.commerce_system.ifacade import ICommerceSystemFacade
 from domain.commerce_system.product import Product
+from domain.commerce_system.search_engine import search, Filter
 from domain.commerce_system.shop import Shop
-from domain.commerce_system.user import User, Guest, Subscribed
+from domain.commerce_system.user import User, Subscribed, Guest
 import domain.commerce_system.valdiation as validate
 
 
 class CommerceSystemFacade(ICommerceSystemFacade):
+
     def exit(self, session_id: int) -> bool:
         pass
 
-    def get_shop_info(self, shop_id: str) -> dict:
-        pass
+    def get_shop_info(self, shop_id: int) -> dict:
+        shop: Shop = self.shops[shop_id]
+        return shop.to_dict()
 
-    def save_product_to_cart(self, session_id: int, shop_id: str, product_id: str) -> bool:
-        pass
+    def save_product_to_cart(self, user_id: int, shop_id: str, product_id: int, amount_to_buy: int) -> bool:
+        user = self.get_user(user_id)
+        shop = self.get_shop(shop_id)
+        product = shop.products[product_id]
+        return user.save_product_to_cart(shop, product, amount_to_buy)
 
-    def get_cart_info(self, session_id: int) -> dict:
-        pass
-
-    def search_products(self, keywords: str, filters: list) -> List[dict]:
+    def get_cart_info(self, user_id: int) -> dict:
         pass
 
     def search_shops(self, keywords: str, filters: list) -> List[dict]:
         pass
 
-    def purchase_cart(self, session_id: int) -> dict:
-        pass
+    def purchase_cart(self, user_id: int, payment_details: dict, all_or_nothing: bool) -> bool:
+        user = self.get_user(user_id)
+        return user.buy_cart(payment_details, all_or_nothing)
 
-    def purchase_product(self, session_id: int, shop_id: str, product_id: str) -> dict:
-        pass
+    def purchase_shopping_bag(self, user_id: int, shop_id: str, payment_details: dict) -> bool:
+        user = self.get_user(user_id)
+        shop = self.get_shop(shop_id)
+        return user.buy_shopping_bag(shop, payment_details)
+
+    def purchase_product(self, user_id: int, shop_id: str, product_id: int, amount_to_buy: int,
+                         payment_details: dict) -> bool:
+        user = self.get_user(user_id)
+        shop = self.get_shop(shop_id)
+        product = shop.products[product_id]
+        return user.buy_product(shop, product, amount_to_buy, payment_details)
 
     def open_shop(self, session_id: int, **shop_details) -> int:
         pass
 
-    def get_personal_purchase_history(self, session_id: int) -> List[dict]:
-        pass
+    def get_personal_purchase_history(self, user_id: int) -> List[dict]:
+        transactions = self.get_user(user_id).get_personal_transactions_history()
+        return list(map(lambda t: t.to_dict(), transactions))
 
     """NEEDS TO BE CHANGED - HANDLE TRANSPORTING PRODUCT DATA DIFFERENTLY"""
-    def add_product_to_shop(self, user_id: int, shop_id: str, product: Product) -> int:
+    def add_product_to_shop(self, user_id: int, shop_id: int, **product_info) -> int:
         shop = self.get_shop(shop_id)
         worker = self.get_user(user_id).user_state
-        return worker.add_product(shop, product)
+        return worker.add_product(shop, **product_info)
 
-    def edit_product_info(self, user_id: int, shop_id: str, product_id: int, **product_info):
+    def edit_product_info(self, user_id: int, shop_id: int, **product_info):
         shop = self.get_shop(shop_id)
         worker = self.get_user(user_id).user_state
-        worker.edit_product(shop, product_id, **product_info)
+        assert "product_id" in product_info
+        worker.edit_product(shop, product_info["product_id"], **product_info)
 
-    def delete_product(self, user_id: int, shop_id: str, product_id: int) -> bool:
+    def delete_product(self, user_id: int, shop_id: int, product_id: int) -> bool:
         shop = self.get_shop(shop_id)
         worker = self.get_user(user_id).user_state
-        worker.delete_product(shop, product_id)
+        return worker.delete_product(shop, product_id)
 
     def appoint_shop_owner(self, user_id: int, shop_id: int, username: str):
         shop = self.get_shop(shop_id)
@@ -102,9 +117,9 @@ class CommerceSystemFacade(ICommerceSystemFacade):
     shops_lock = threading.Lock()
 
     def __init__(self):
-        self.active_users: Dict[int, User] = {}             # dictionary {user.id : user object}
-        self.registered_users: Dict[str, Subscribed] = {}   # dictionary {user.username : user object}
-        self.shops: Dict[int, Shop] = {}                    # dictionary {shop.shop_id : shop}
+        self.active_users: Dict[int, User] = {}  # dictionary {user.id : user object}
+        self.registered_users: Dict[str, Subscribed] = {}  # dictionary {user.username : user object}
+        self.shops: Dict[int, Shop] = {}  # dictionary {shop.shop_id : shop}
 
     def enter(self) -> int:
         new_user = User()
@@ -140,7 +155,7 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         sub_user = self.registered_users.get(username)
         assert sub_user.password == password, "Wrong Password"
         self.active_users_lock.acquire()
-        self.active_users.get(user_id).set_user_state(sub_user)
+        self.active_users.get(user_id).login(sub_user)
         self.active_users_lock.release()
 
     def logout(self, user_id: int):
@@ -165,3 +180,19 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         ret = self.shops[shop_id]
         self.shops_lock.release()
         return ret
+
+    def _get_all_products(self) -> List[Product]:
+        products = []
+        for shop in self.shops.values():
+            products.extend(shop.products.values())
+        return products
+
+    def search_products(
+            self, product_name: str = None, keywords: List[str] = None,
+            categories: List[str] = None, filters: List[dict] = None
+    ) -> List[dict]:
+        products: List[Product] = self._get_all_products()
+        search_results = search(
+            products, product_name, keywords, categories, list(map(Filter.from_dict, filters))
+        )
+        return list(map(lambda p: p.to_dict(), search_results))
