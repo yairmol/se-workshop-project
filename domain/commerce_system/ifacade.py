@@ -46,9 +46,10 @@ class ICommerceSystemFacade:
         """
         raise NotImplementedError()
 
-    def save_product_to_cart(self, user_id: int, shop_id: int, product_id: int) -> bool:
+    def save_product_to_cart(self, user_id: int, shop_id: int, product_id: int, amount_to_buy: int) -> bool:
         """
         saves a product to a shopping bag in the shopping cart of the user identified by user_id
+        :param amount_to_buy:
         :param user_id: user identifier
         :param shop_id: the shop that sells the product
         :param product_id: the product being saved to cart
@@ -153,7 +154,10 @@ class ICommerceSystemFacade:
         """
         raise NotImplementedError()
 
-    def edit_product_info(self, user_id: int, shop_id: int, **product_info) -> bool:
+    def edit_product_info(
+            self, user_id: int, shop_id: int, product_id: int,
+            product_name: str, description: str, price: float, quantity: int
+    ) -> bool:
         """
         edit the product info of a product identified by product_id in shop identified by shop_id.
         this action succeeds iff the user identified by user_id has the proper authorization

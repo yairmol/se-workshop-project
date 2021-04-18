@@ -60,6 +60,7 @@ class ShoppingCart:
             self.add_shopping_bag(bag)
         else:
             self.add_to_shopping_bag(shop, product, amount_to_buy)
+        return True
 
     def add_to_shopping_bag(self, shop: Shop, product: Product, amount_to_buy: int):
         self.shopping_bags[shop].add_product(product, amount_to_buy)
@@ -73,8 +74,7 @@ class ShoppingCart:
 
     def remove_shopping_bag(self, shop: Shop):
         assert shop in self.shopping_bags, "no shopping bag to remove"
-        self.shopping_bags.remove(shop)
-
+        self.shopping_bags.pop(shop)
 
     def remove_all_shopping_bags(self):
         self.shopping_bags.clear()

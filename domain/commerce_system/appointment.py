@@ -72,10 +72,12 @@ class ShopManager(Appointment):
     def edit_product(self, product_id: int, **to_edit):
         if not self.edit_product_permission:
             raise Exception("Subscribed user does not have permission to perform the action")
-        self.shop.edit_product(product_id, **to_edit)
+        self.shop.edit_product(
+            product_id, **to_edit
+        )
 
     def delete_product(self, product_id: int):
-        if not self.edit_product_permission:
+        if not self.delete_product_permission:
             raise Exception("Subscribed user does not have permission to perform the action")
         return self.shop.delete_product(product_id)
 
@@ -92,6 +94,7 @@ class ShopOwner(Appointment):
         self.manager_appointees = []
 
     """ adds manager appointment to selected subscribed user"""
+
     def appoint_manager(self, sub, permissions: List[str]):
         apps = sub.appointments
         if self.shop in apps.keys():
@@ -101,6 +104,7 @@ class ShopOwner(Appointment):
         self.manager_appointees += [sub]
 
     """ adds owner appointment to selected subscribed user"""
+
     def appoint_owner(self, sub):
         apps = sub.appointments
         if self.shop in apps.keys():
@@ -110,22 +114,23 @@ class ShopOwner(Appointment):
         self.owner_appointees += [sub]
 
     """ removes shop appointment from selected subscribed user"""
+
     def remove_appointment(self, sub):
         sub.appointments.pop(self.shop)
 
     def add_product(self, **product_info) -> int:
         product = Product(**product_info)
         return self.shop.add_product(product)
-    
+
     def edit_product(self, product_id: int, **to_edit):
         self.shop.edit_product(product_id, **to_edit)
 
     def delete_product(self, product_id: int):
         return self.shop.delete_product(product_id)
-    
+
     def un_appoint_manager(self, manager_sub, cascading=False):
         assert self.shop in manager_sub.appointments.keys() and isinstance(manager_sub.appointments[self.shop],
-                                                                       ShopManager), "user is not a manager"
+                                                                           ShopManager), "user is not a manager"
         assert manager_sub in self.manager_appointees, "manager was not assigned by this owner"
         self.remove_appointment(manager_sub)
         if not cascading:
@@ -133,7 +138,7 @@ class ShopOwner(Appointment):
 
     def edit_manager_permissions(self, manager_sub, permissions: List[str]):
         assert self.shop in manager_sub.appointments.keys() and isinstance(manager_sub.appointments[self.shop],
-                                                                       ShopManager), "user is not a manager"
+                                                                           ShopManager), "user is not a manager"
         assert manager_sub in self.manager_appointees, "manager was not assigned by this owner"
         manager_sub.appointments[self.shop].set_permissions(permissions)
 
@@ -144,7 +149,8 @@ class ShopOwner(Appointment):
             self.un_appoint_manager(manager, cascading=True)
 
     def un_appoint_owner(self, owner_sub, cascading=False):
-        assert self.shop in owner_sub.appointments.keys() and isinstance(owner_sub.appointments[self.shop], ShopOwner), "user is not an owner"
+        assert self.shop in owner_sub.appointments.keys() and isinstance(owner_sub.appointments[self.shop],
+                                                                         ShopOwner), "user is not an owner"
         assert owner_sub in self.owner_appointees, "owner was not assigned by this owner"
         owner_sub.appointments[self.shop].un_appoint_appointees()
         self.remove_appointment(owner_sub)
@@ -157,6 +163,6 @@ class ShopOwner(Appointment):
 
     def get_shop_staff_info(self):
         pass
-    
+
     def get_purchase_history(self):
         pass

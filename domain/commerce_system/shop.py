@@ -49,16 +49,9 @@ class Shop:
             raise Exception("no product with id=", product_id)
         product = self.products[product_id]
         for field, new_value in to_edit.items():
-            if field not in product.__dict__:
+            if not hasattr(product, field):
                 raise Exception("product has no field ", field)
-            product.__dict__[field] = new_value
-
-    def get_shop_info(self) -> str:
-        s = ""
-        for p_id, p_val in self.products:
-            s += "store product id: ", p_id, "\nproduct id: ", p_val.product_id, "\nproduct name: ",\
-                 p_val.name, "\nprice: ", p_val.price
-        return s
+            setattr(product, field, new_value)
 
     def get_free_id(self) -> int:
         last_id = 1
@@ -72,14 +65,14 @@ class Shop:
     def has_product(self, product_name: str):
         found = False
         for supply_product in self.products.values():
-            found = found or supply_product.name == product_name
+            found = found or supply_product.product_name == product_name
         return found
 
     """ returns id of first product named product_name"""
     def get_id(self, product_name: str):
         product_id = -1
         for p_id, supply_product in self.products.items():
-            if supply_product.name == product_name:
+            if supply_product.product_name == product_name:
                 product_id = p_id
         return product_id
 
@@ -114,5 +107,7 @@ class Shop:
         self.owners_lock.release()
 
     def display_managers_info(self):
+        pass
 
     def display_owners_info(self):
+        pass
