@@ -217,7 +217,7 @@ class ShopOwnerOperations(TestCase):
         self.assertTrue(self.commerce_system.appoint_shop_manager(
             self.session_id, self.shop_id, users[1][Um.USERNAME], permissions[0]
         ))
-        self.assertTrue(self.commerce_system.appoint_shop_owner(
+        self.assertTrue(self.commerce_system.promote_manager(
             self.session_id, self.shop_id, users[1][Um.USERNAME]
         ))
 
