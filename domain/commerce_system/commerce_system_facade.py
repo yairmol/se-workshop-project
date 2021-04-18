@@ -98,7 +98,7 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         new_owner = self.get_subscribed(username)
         new_owner.edit_manager_permissions(owner, shop, permissions)
 
-    def promote_shop_owner(self, user_id: int, shop_id: str, username: str):
+    def promote_shop_owner(self, user_id: int, shop_id: int, username: str):
         shop = self.get_shop(shop_id)
         owner = self.get_user(user_id).user_state.get_appointment(shop)
         new_owner = self.get_subscribed(username)

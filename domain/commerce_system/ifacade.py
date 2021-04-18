@@ -193,7 +193,7 @@ class ICommerceSystemFacade:
         """
         raise NotImplementedError()
 
-    def promote_shop_owner(self, user_id: int, shop_id: str, username: str) -> bool:
+    def promote_shop_owner(self, user_id: int, shop_id: int, username: str) -> bool:
         """
         promote a shop manager, to shop owner
         :param user_id: identifier for user performing the action
