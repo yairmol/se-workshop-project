@@ -98,16 +98,18 @@ class Shop:
                 product_id = p_id
         return product_id
 
-    def add_transaction(self, bag, transaction: Transaction):
+    def add_transaction(self, bag, transaction: Transaction) -> bool:
         self.products_lock.acquire()
         for product, amount in bag.items():
-            assert product.quantity >= amount, "amount > quantity available"
+            if product.quantity < amount:
+                return False
         for product, amount in bag.items():
             product.quantity -= amount
         self.transaction_history.append(
             Transaction(self, transaction.products, transaction.payment_details, transaction.date, transaction.price)
         )
         self.products_lock.release()
+        return True
 
     def remove_transaction(self, bag: dict, transaction: Transaction):
         self.products_lock.acquire()
