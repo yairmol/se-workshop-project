@@ -172,7 +172,7 @@ class SystemService:
         return False
 
     # 2.9
-    def purchase_shopping_bag(self, token: str, shop_id: str, payment_details: dict):
+    def purchase_shopping_bag(self, token: str, shop_id: str, payment_details: dict) -> bool:
         if self.is_valid_token(token):
             try:
                 user_id = self.authenticator.get_id_by_token(token)
@@ -189,7 +189,7 @@ class SystemService:
         return False
 
     # 2.9
-    def purchase_cart(self, token: str, shop_id: str, payment_details: dict, all_or_nothing: bool):
+    def purchase_cart(self, token: str, shop_id: str, payment_details: dict, all_or_nothing: bool) -> bool:
         if self.is_valid_token(token):
             try:
                 user_id = self.authenticator.get_id_by_token(token)
@@ -222,14 +222,14 @@ class SystemService:
         return False
 
     # 3.2
-    def open_shop(self, token: str, **shop_details) -> int:
+    def open_shop(self, token: str, **shop_details) -> bool:
         if self.is_valid_token(token):
             try:
                 user_id = self.authenticator.get_id_by_token(token)
                 event_logger.info(f"User: {user_id} tries to open shop: {shop_details['shop_name']}")
                 shop_id = self.commerce_system_facade.open_shop(user_id, **shop_details)
                 event_logger.info(f"User: {user_id} opened shop: {shop_id} successfully")
-                return shop_id
+                return True
             except AssertionError as e:
                 event_logger.warning(e)
                 return False
@@ -240,32 +240,36 @@ class SystemService:
 
     # 3.7
     def get_personal_purchase_history(self, token: str) -> List[dict]:
-        try:
-            assert self.is_valid_token(token), f"Invalid user_sess token {token}"
-            user_id = self.authenticator.get_id_by_token(token)
-            return self.commerce_system_facade.get_personal_purchase_history(user_id)
-        except AssertionError as e:
-            event_logger.error(e)
-        except Exception as e:
-            error_logger.error(e)
+
+        if self.is_valid_token(token):
+            try:
+                user_id = self.authenticator.get_id_by_token(token)
+                event_logger.info(f"User: {user_id} tries to get_personal_purchase_history")
+                history = self.commerce_system_facade.get_personal_purchase_history(user_id)
+                event_logger.info(f"User: {user_id} got personal purchase history successfully")
+                return history
+            except AssertionError as e:
+                event_logger.warning(e)
+            except Exception as e:
+                error_logger.error(e)
         return []
 
     # 4. Shop Owner Requirements
 
     # 4.1
-    def add_product_to_shop(self, token: str, shop_id: int, **product_info) -> int:
+    def add_product_to_shop(self, token: str, shop_id: int, **product_info) -> bool:
         if self.is_valid_token(token):
             try:
                 user_id = self.authenticator.get_id_by_token(token)
                 event_logger.info(f"User: {user_id} tries to add product to shop {shop_id}")
-                pid = self.commerce_system_facade.add_product_to_shop(user_id, shop_id, **product_info)
+                self.commerce_system_facade.add_product_to_shop(user_id, shop_id, **product_info)
                 event_logger.info(f"User: {user_id} added product successfully")
-                return pid
+                return True
             except AssertionError as e:
                 event_logger.warning(e)
             except Exception as e:
                 error_logger.error(e)
-        return -1
+        return False
 
     # 4.1
     def edit_product_info(
@@ -390,7 +394,7 @@ class SystemService:
         return False
 
     # 4.7
-    def un_appoint_shop_owner(self, token: str, shop_id: int, username: str):
+    def un_appoint_shop_owner(self, token: str, shop_id: int, username: str) -> bool:
         if self.is_valid_token(token):
             try:
                 user_id = self.authenticator.get_id_by_token(token)
