@@ -151,7 +151,7 @@ class SystemService:
         return False
 
     # 2.9
-    def purchase_product(self, token: str, shop_id: str, product_id: int,
+    def purchase_product(self, token: str, shop_id: int, product_id: int,
                          amount_to_buy: int, payment_details: dict) -> bool:
         if self.is_valid_token(token):
             try:

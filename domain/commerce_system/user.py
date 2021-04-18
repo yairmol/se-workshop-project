@@ -4,7 +4,6 @@ from datetime import datetime
 from typing import List, Dict
 
 from domain.commerce_system.appointment import Appointment, ShopOwner
-from domain.commerce_system.permission import Permission
 from domain.commerce_system.product import Product
 from domain.commerce_system.productDTO import ProductDTO
 from domain.commerce_system.shop import Shop
@@ -49,14 +48,26 @@ class User:
         transaction = Transaction(shop, products_dtos, payment_details, datetime.now(), bag.calculate_price())
         assert shop.add_transaction(bag, transaction), "bag purchasing failed"
         self.add_transaction(transaction)
-        self.cart.remove_shopping_bag(shop)
         pay(self.id, **payment_details)
 
+    def clear_cart(self, shops):
+        for shop in shops:
+            self.cart.remove_shopping_bag(shop)
 
     def buy_cart(self, payment_details: dict, all_or_nothing: bool):
         if not all_or_nothing:
-            for shop in self.cart:
-                self.buy_shopping_bag(shop, payment_details)
+            handled_shops = []
+            for shop, bag in self.cart:
+                try:
+                    self.buy_shopping_bag(shop, payment_details)
+                    handled_shops.append(shop)
+                except AssertionError as e:
+                    continue
+                except Exception as e:
+                    self.clear_cart(handled_shops)
+                    raise e
+            self.clear_cart(handled_shops)
+            return True
         else:
             date = datetime.now()
             to_be_canceled = []
@@ -73,7 +84,9 @@ class User:
                     to_be_canceled += [transaction]
             if not check_if_canceled:
                 self.cart.remove_all_shopping_bags()
-                pay(self, payment_details)
+                pay(self.id, **payment_details)
+                return True
+        return False
 
     def add_transaction(self, transaction: Transaction):
         self.user_state.add_transaction(transaction)
@@ -167,7 +180,7 @@ class UserState:
         raise Exception("Error: Guest User cannot edit manager permissions")
 
     def add_transaction(self, transaction: Transaction):
-        pass
+        raise Exception("Error: User cannot perform add transaction action")
 
     def logout(self):
         raise Exception("Error: User cannot logout in current state")
@@ -242,4 +255,10 @@ class Subscribed(UserState):
 
     def get_shop_transaction_history(self, shop: Shop):
         app = self.get_appointment(shop)
-        app.get_shop_transaction_history()
+        return app.get_shop_transaction_history()
+
+    def add_transaction(self, transaction: Transaction):
+        self.transactions.append(transaction)
+
+    def get_personal_transaction_history(self):
+        return self.transactions

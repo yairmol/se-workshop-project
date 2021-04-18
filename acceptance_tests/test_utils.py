@@ -1,6 +1,6 @@
 from typing import Tuple, List, Dict
 
-from acceptance_tests.test_data import users, shops, permissions, admin_credentials, products
+from acceptance_tests.test_data import users, shops, permissions, admin_credentials, products, payment_details
 from service.system_service import SystemService
 from data_model import UserModel as Um, ShopModel as Sm, ProductModel as Pm
 
@@ -111,8 +111,8 @@ def make_purchases(
         product_to_shop: Dict[int, int], products: List[int]
 ):
     return all(map(lambda p: commerce_system.purchase_product(
-        session, product_to_shop[p], p
-    ).get("status", False), products))
+        session, product_to_shop[p], p, 1, payment_details[0]
+    ), products))
 
 
 def fill_with_data(
@@ -123,11 +123,11 @@ def fill_with_data(
     subs_sessions = list(sess_to_users.keys())
     sid_to_shop, sid_to_sess = open_shops(commerce_system, subs_sessions, num_shops)
     shop_ids = list(sid_to_shop.keys())
-    pid_to_sid = add_products(commerce_system, subs_sessions, shop_ids, num_products)
+    pid_to_sid = add_products(commerce_system, sid_to_sess, shop_ids, num_products)
     return guest_sessions, subs_sessions, sid_to_shop, sid_to_sess, pid_to_sid
 
 
 def admin_login(commerce_system: SystemService):
     admin_session = commerce_system.enter()
-    commerce_system.login(**admin_credentials)
+    commerce_system.login(admin_session, **admin_credentials)
     return admin_session

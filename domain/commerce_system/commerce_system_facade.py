@@ -56,6 +56,7 @@ class CommerceSystemFacade(ICommerceSystemFacade):
             self.active_users_lock.release()
             raise e
         self.active_users_lock.release()
+        return True
 
     # 2.5
     def get_shop_info(self, shop_id: int) -> dict:
@@ -67,6 +68,14 @@ class CommerceSystemFacade(ICommerceSystemFacade):
             self, product_name: str = None, keywords: List[str] = None,
             categories: List[str] = None, filters: List[dict] = None
     ) -> List[dict]:
+        if not filters:
+            filters = []
+        if not keywords:
+            keywords = []
+        if not categories:
+            categories = []
+        if not product_name:
+            product_name = ""
         products: List[Product] = self._get_all_products()
         search_results = search(
             products, product_name, keywords, categories, list(map(Filter.from_dict, filters))
