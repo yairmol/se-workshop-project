@@ -1,6 +1,10 @@
-from domain.logger.log import event_logger
+class IPaymentsFacade:
+
+    def pay(self, total_price: int, payment_details: dict, contact_details: dict = None):
+        raise NotImplementedError()
 
 
-def pay(user_id: int, **payment_details) -> int:
-    event_logger.info("LOG: Subscribed user: " + str(user_id) + " performed payment.")
-    return True
+class PaymentsFacadeAlwaysTrue(IPaymentsFacade):
+
+    def pay(self, total_price: int, payment_details: dict, contact_details: dict = None):
+        return True

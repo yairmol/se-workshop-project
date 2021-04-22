@@ -1,6 +1,13 @@
-from domain.logger.log import event_logger
+from typing import List
 
 
-def deliver():
-    # TODO: implement
-    event_logger.info("delivery")
+class IDeliveryFacade:
+
+    def deliver_to(self, products: List[dict], address: str, contact_details: dict) -> bool:
+        raise NotImplementedError()
+
+
+class DeliveryFacadeAlwaysTrue(IDeliveryFacade):
+
+    def deliver_to(self, products: List[dict], address: str, contact_details: dict) -> bool:
+        return True
