@@ -245,8 +245,8 @@ class Subscribed(UserState):
         unappointing_owner_app.un_appoint_manager(unappointed_manager)
 
     def un_appoint_owner(self, owner_sub, shop: Shop):
-        session_app = self.get_appointment(shop)
-        session_app.un_appoint_owner(owner_sub)
+        session_app = owner_sub.get_appointment(shop)
+        session_app.un_appoint_owner(self)
 
     def edit_manager_permissions(self, manager_sub: Subscribed, shop: Shop, permissions: List[str]):
         owner_app = self.get_appointment(shop)
