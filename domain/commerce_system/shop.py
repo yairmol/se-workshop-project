@@ -1,6 +1,7 @@
 import threading
 from typing import Dict, List
 
+from domain.commerce_system.action import Action, ActionPool
 from domain.commerce_system.product import Product
 from domain.commerce_system.transaction import Transaction
 from data_model import ShopModel as Sm
@@ -41,7 +42,8 @@ class Shop:
     def add_product(self, **product_info):
         self.products_lock.acquire()
         try:
-            assert not self.has_product(product_info["product_name"]), f"product name {product_info['product_name']} is not unique"
+            assert not self.has_product(product_info["product_name"]),\
+                f"product name {product_info['product_name']} is not unique"
             product = Product(**product_info)
             self.products[product.product_id] = product
         except Exception as e:
@@ -68,6 +70,9 @@ class Shop:
             assert product_id in self.products, f"no product with id={product_id}"
             product = self.products[product_id]
             for field, new_value in to_edit.items():
+                if field == "quantity":
+                    product.set_quantity(new_value)
+                    continue
                 if not hasattr(product, field):
                     raise Exception("product has no field ", field)
                 setattr(product, field, new_value)
@@ -100,53 +105,51 @@ class Shop:
         return product_id
 
     def add_transaction(self, bag, transaction: Transaction) -> bool:
-        self.products_lock.acquire()
-        try:
-            for product, amount in bag:
-                if product.quantity < amount:
-                    return False
-            for product, amount in bag:
-                product.quantity -= amount
-            self.transaction_history.append(
-                Transaction(self, transaction.products, transaction.payment_details, transaction.date, transaction.price)
-            )
-        except AssertionError as e:
-            return False
-        self.products_lock.release()
-        return True
+        with self.products_lock:
+            product_update_actions = ActionPool([
+                Action(product.set_quantity, product.get_quantity() - amount)
+                .set_reverse(Action(product.set_quantity, product.get_quantity()))
+                for product, amount in bag
+            ])
+            product_update_actions.execute_actions()
+            self.transaction_history.append(transaction)
+            return True
 
-    def remove_transaction(self, bag: dict, transaction: Transaction):
-        self.products_lock.acquire()
-        for product, amount in bag:
-            product.quantity += amount
-        self.transaction_history.remove(transaction)
-        self.products_lock.release()
+    def cancel_transaction(self, bag: dict, transaction: Transaction):
+        with self.products_lock:
+            for product, amount in bag:
+                product.set_quantity(product.get_quantity() + amount)
+            self.transaction_history.remove(transaction)
 
     def add_manager(self, manager_sub):
-        self.managers_lock.acquire()
-        self.shop_managers[manager_sub.username] = manager_sub
-        self.managers_lock.release()
+        with self.managers_lock:
+            self.shop_managers[manager_sub.username] = manager_sub
 
     def add_owner(self, owner_sub):
-        self.owners_lock.acquire()
-        self.shop_owners[owner_sub.username] = owner_sub
-        self.owners_lock.release()
+        with self.owners_lock:
+            self.shop_owners[owner_sub.username] = owner_sub
 
     def remove_manager(self, manager_sub):
-        self.managers_lock.acquire()
-        self.shop_managers.pop(manager_sub.username)
-        self.managers_lock.release()
+        with self.managers_lock:
+            self.shop_managers.pop(manager_sub.username)
 
     def remove_owner(self, owner_sub):
-        self.owners_lock.acquire()
-        self.shop_owners.pop(owner_sub.username)
-        self.owners_lock.release()
+        with self.owners_lock:
+            self.shop_owners.pop(owner_sub.username)
 
     def get_manager_info(self, sub):
-        return {WORKER_NAME: sub.username, WORKER_TITLE: "manager", WORKER_APPOINTER: sub.get_appointment(self).appointer.username}
+        return {
+            WORKER_NAME: sub.username,
+            WORKER_TITLE: "manager",
+            WORKER_APPOINTER: sub.get_appointment(self).appointer.username
+        }
 
     def get_owner_info(self, sub):
-        return {WORKER_NAME: sub.username, WORKER_TITLE: "manager" if sub != self.founder else "founder", WORKER_APPOINTER: sub.get_appointment(self).appointer.username}
+        return {
+            WORKER_NAME: sub.username,
+            WORKER_TITLE: "manager" if sub != self.founder else "founder",
+            WORKER_APPOINTER: sub.get_appointment(self).appointer.username
+        }
 
     def get_managers_info(self):
         info_dicts = []
@@ -158,11 +161,10 @@ class Shop:
 
     def get_owners_info(self):
         info_dicts = []
-        self.owners_lock.acquire()
-        for owner_sub in self.shop_owners.values():
-            info_dicts += [self.get_owner_info(owner_sub)]
-        self.owners_lock.release()
-        return info_dicts
+        with self.owners_lock:
+            for owner_sub in self.shop_owners.values():
+                info_dicts += [self.get_owner_info(owner_sub)]
+            return info_dicts
 
     def get_staff_info(self):
         return self.get_managers_info() + self.get_owners_info()

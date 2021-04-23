@@ -56,6 +56,9 @@ class Appointment:
     def get_shop_transaction_history(self):
         raise Exception("Subscribed user does not have permission to perform action")
 
+    def promote_manager_to_owner(self, manager_sub):
+        raise Exception("Cannot promote manager to owner")
+
 
 class ShopManager(Appointment):
 
@@ -101,7 +104,8 @@ class ShopOwner(Appointment):
     """ adds manager appointment to selected subscribed user"""
     def appoint_manager(self, sub, permissions: List[str]):
         apps = sub.appointments
-        assert self.shop not in apps.keys(), f"subscriber already has appointment for shop. shop id - {self.shop.shop_id}"
+        assert self.shop not in apps.keys(), \
+            f"subscriber already has appointment for shop. shop id - {self.shop.shop_id}"
         appointment = ShopManager(self.shop, self, permissions, sub.username)
         apps[self.shop] = appointment
         self.manager_appointees_lock.acquire()
@@ -135,7 +139,8 @@ class ShopOwner(Appointment):
         return self.shop.delete_product(product_id)
     
     def un_appoint_manager(self, manager_sub, cascading=False):
-        assert self.shop in manager_sub.appointments and isinstance(manager_sub.appointments[self.shop], ShopManager), "user is not a manager"
+        assert self.shop in manager_sub.appointments and isinstance(manager_sub.appointments[self.shop], ShopManager),\
+            "user is not a manager"
         assert manager_sub in self.manager_appointees, "manager was not assigned by this owner"
         self.remove_appointment(manager_sub)
         self.shop.remove_manager(manager_sub)
@@ -145,7 +150,8 @@ class ShopOwner(Appointment):
             self.manager_appointees_lock.release()
 
     def edit_manager_permissions(self, manager_sub, permissions: List[str]):
-        assert self.shop in manager_sub.appointments.keys() and isinstance(manager_sub.appointments[self.shop], ShopManager), "user is not a manager"
+        assert self.shop in manager_sub.appointments.keys()\
+               and isinstance(manager_sub.appointments[self.shop], ShopManager), "user is not a manager"
         assert manager_sub in self.manager_appointees, "manager was not assigned by this owner"
         manager_sub.appointments[self.shop].set_permissions(permissions)
 
@@ -160,7 +166,8 @@ class ShopOwner(Appointment):
         self.manager_appointees_lock.release()
 
     def un_appoint_owner(self, owner_sub, cascading=False):
-        assert self.shop in owner_sub.appointments.keys() and isinstance(owner_sub.appointments[self.shop], ShopOwner), "user is not an owner"
+        assert self.shop in owner_sub.appointments.keys() and isinstance(owner_sub.appointments[self.shop], ShopOwner),\
+            "user is not an owner"
         assert owner_sub in self.owner_appointees, "owner was not assigned by this owner"
         owner_sub.appointments[self.shop].un_appoint_appointees()
         self.remove_appointment(owner_sub)

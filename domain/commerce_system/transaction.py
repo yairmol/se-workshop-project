@@ -1,6 +1,7 @@
 from datetime import datetime
-from typing import List
+from typing import List, Optional
 
+from domain.commerce_system.action import ActionPool
 from domain.commerce_system.productDTO import ProductDTO
 
 
@@ -17,6 +18,7 @@ class Transaction:
         self.payment_details = payment_details
         self.date = date
         self.price = price
+        self._transaction_action_pool: Optional[ActionPool] = None
 
     def to_dict(self):
         return {
@@ -25,6 +27,12 @@ class Transaction:
             DATE: self.date.timestamp(),
             PRICE: self.price,
         }
+
+    def set_transaction_action_pool(self, action_pool: ActionPool):
+        self._transaction_action_pool = action_pool
+
+    def cancel_transaction(self):
+        self._transaction_action_pool.cancel_actions()
 
 # class CartTransactionDTO:
 #     def __init__(self, transactions: list[TransactionDTO], payment_details, date, price):
