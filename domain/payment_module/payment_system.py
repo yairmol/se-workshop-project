@@ -1,7 +1,12 @@
+from __future__ import annotations
 from typing import Union
 
 
 class IPaymentsFacade:
+
+    @staticmethod
+    def get_payment_facade() -> IPaymentsFacade:
+        return PaymentsFacadeAlwaysTrue()
 
     def pay(self, total_price: int, payment_details: dict, contact_details: dict = None) -> Union[str, bool]:
         """

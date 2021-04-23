@@ -8,8 +8,8 @@ from domain.commerce_system.shop import Shop
 from typing import Dict, Union
 
 from domain.commerce_system.transaction import Transaction
-from domain.delivery_module.delivery_system import deliver
-from domain.payment_module.payment_system import pay
+from domain.delivery_module.delivery_system import IDeliveryFacade
+from domain.payment_module.payment_system import IPaymentsFacade
 
 CART_ID = "cart_id"
 SHOPPING_BAGS = "shopping_bags"
@@ -22,6 +22,8 @@ class ShoppingBag:
     def __init__(self, shop: Shop):
         self.shop = shop
         self.products: Dict[Product, int] = {}
+        self.payment_facade = IPaymentsFacade.get_payment_facade()
+        self.delivery_facade = IDeliveryFacade.get_delivery_facade()
 
     def __setitem__(self, key: Product, value: int):
         self.products[key] = value
@@ -74,10 +76,10 @@ class ShoppingBag:
 
         shop_action = Action(self.shop.add_transaction, self, transaction)
         shop_action.set_reverse(Action(self.shop.cancel_transaction, self, transaction))
-        payment_action = Action(pay, **payment_details)
-        payment_action.set_reverse(Action(cancel_payment, **payment_details), True, "payment_id")
-        delivery_action = Action(deliver)
-        delivery_action.set_reverse(Action(cancel_delivery), use_return_value=True)
+        payment_action = Action(self.payment_facade.pay, total_price, payment_details)
+        payment_action.set_reverse(Action(self.payment_facade.cancel_payment), True)
+        delivery_action = Action(self.delivery_facade.deliver_to, [p.to_dict() for p in products_dtos], "")
+        delivery_action.set_reverse(Action(self.delivery_facade.cancel_delivery), use_return_value=True)
 
         purchase_actions = ActionPool([shop_action, payment_action, delivery_action])
         assert purchase_actions.execute_actions(), f"couldn't purchase bag: {self}"

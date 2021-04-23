@@ -37,6 +37,7 @@ class Product:
     def set_quantity(self, new_quantity):
         assert new_quantity >= 0, "product quantity must be non-negative"
         self._quantity = new_quantity
+        return True
 
     def get_quantity(self):
         return self._quantity

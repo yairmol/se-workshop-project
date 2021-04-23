@@ -1,9 +1,14 @@
+from __future__ import annotations
 from typing import List, Union
 
 
 class IDeliveryFacade:
 
-    def deliver_to(self, products: List[dict], address: str, contact_details: dict) -> Union[str, bool]:
+    @staticmethod
+    def get_delivery_facade() -> IDeliveryFacade:
+        return DeliveryFacadeAlwaysTrue()
+
+    def deliver_to(self, products: List[dict], address: str, contact_details: dict = None) -> Union[str, bool]:
         """
         :param products:
         :param address:
@@ -24,7 +29,7 @@ class IDeliveryFacade:
 class DeliveryFacadeAlwaysTrue(IDeliveryFacade):
     __delivery_id = 0
 
-    def deliver_to(self, products: List[dict], address: str, contact_details: dict) -> Union[str, bool]:
+    def deliver_to(self, products: List[dict], address: str, contact_details: dict = None) -> Union[str, bool]:
         DeliveryFacadeAlwaysTrue.__delivery_id += 1
         return str(DeliveryFacadeAlwaysTrue.__delivery_id)
 
