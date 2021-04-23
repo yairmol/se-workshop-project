@@ -4,6 +4,7 @@ from domain.commerce_system.commerce_system_facade import CommerceSystemFacade
 from domain.commerce_system.user import User, Subscribed
 from domain.commerce_system.product import Product
 from domain.commerce_system.shop import Shop
+from domain.authentication_module.authenticator import Authenticator
 
 shop_dict = {"shop_name": "Armani", "description": "dudu faruk's favorite shop"}
 product1_dict = {"product_name": "Armani shirt", "price": 299.9, "description": "black shirt", "quantity": 5,
@@ -19,7 +20,7 @@ class IntegrationTests(unittest.TestCase):
 
     def setUp(self):
 
-        self.facade = CommerceSystemFacade()
+        self.facade = CommerceSystemFacade(Authenticator())
         self.user_id1 = self.facade.enter()
         self.user_id2 = self.facade.enter()
         self.username1 = "user1"
@@ -36,7 +37,7 @@ class IntegrationTests(unittest.TestCase):
             return False
 
     def test_open_shop(self):
-        self.assertTrue(self.facade.login(self.user_id1, self.username1, self.password))
+        self.facade.login(self.user_id1, self.username1, self.password)
         self.assertGreater(self.facade.open_shop(self.user_id1, **shop_dict), 0)
 
     def test_add_product(self):
