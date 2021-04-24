@@ -29,8 +29,8 @@ class User:
     def login(self, sub_user: Subscribed):
         self.user_state = sub_user
 
-    def register(self, username: str, password: str, **user_details):
-        return self.user_state.register(username, password)
+    def register(self, username: str, **user_details):
+        return self.user_state.register(username)
 
     def logout(self):
         self.user_state.logout()
@@ -143,7 +143,7 @@ class User:
 
 
 class UserState:
-    def register(self, username: str, password: str, **user_details):
+    def register(self, username: str, **user_details):
         raise Exception("Error: Logged-in User cannot register")
 
     def appoint_manager(self, owner_sub: Subscribed, shop: Shop, permissions: List[str]):
@@ -197,16 +197,15 @@ class UserState:
 
 class Guest(UserState):
 
-    def register(self, username: str, password: str, **user_details):
-        return Subscribed(username, password)
+    def register(self, username: str, **user_details):
+        return Subscribed(username)
 
 
 class Subscribed(UserState):
 
-    def __init__(self, username: str, password: str):
+    def __init__(self, username: str):
         self.appointments: Dict[Shop, Appointment] = {}
         self.username = username
-        self.password = password
         self.transactions: List[Transaction] = []
 
     def logout(self):
