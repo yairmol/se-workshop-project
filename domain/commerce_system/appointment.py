@@ -3,6 +3,7 @@ from __future__ import annotations
 import threading
 from typing import List
 
+from domain.commerce_system.product import Product
 from domain.commerce_system.shop import Shop
 
 
@@ -16,17 +17,15 @@ class Appointment:
     def appoint_manager(self, sub, permissions: List[str]):
         raise Exception("The Subscribed User doesn't have the permission to appoint manager")
 
-    """ adds owner appointment to selected subscribed user"""
-
     def appoint_owner(self, sub):
+        """ adds owner appointment to selected subscribed user"""
         raise Exception("Subscribed user does not have permission to perform action")
-
-    """ removes shop appointment from selected subscribed user"""
 
     def remove_appointment(self, sub):
+        """ removes shop appointment from selected subscribed user"""
         raise Exception("Subscribed user does not have permission to perform action")
 
-    def add_product(self, **product_info) -> int:
+    def add_product(self, **product_info) -> Product:
         raise Exception("Subscribed user does not have permission to perform action")
 
     def edit_product(self, product_id: int, **to_edit):
@@ -70,7 +69,7 @@ class ShopManager(Appointment):
         self.get_trans_history_permission = False
         self.set_permissions(permissions)
 
-    def add_product(self, **product_info) -> int:
+    def add_product(self, **product_info) -> Product:
         assert self.add_product_permission, "manager does not have permission to add product"
         return self.shop.add_product(**product_info)
 
@@ -101,8 +100,8 @@ class ShopOwner(Appointment):
         self.manager_appointees_lock = threading.Lock()
         self.owner_appointees_lock = threading.Lock()
 
-    """ adds manager appointment to selected subscribed user"""
     def appoint_manager(self, sub, permissions: List[str]):
+        """ adds manager appointment to selected subscribed user"""
         apps = sub.appointments
         assert self.shop not in apps.keys(), \
             f"subscriber already has appointment for shop. shop id - {self.shop.shop_id}"
@@ -113,9 +112,8 @@ class ShopOwner(Appointment):
         self.manager_appointees_lock.release()
         self.shop.add_manager(sub)
 
-    """ adds owner appointment to selected subscribed user"""
-
     def appoint_owner(self, new_owner_sub):
+        """ adds owner appointment to selected subscribed user"""
         apps = new_owner_sub.appointments
         assert self.shop not in apps, f"subscriber already has appointment for shop. shop id - {self.shop.shop_id}"
         appointment = ShopOwner(self.shop, new_owner_sub.username, self)
@@ -125,11 +123,11 @@ class ShopOwner(Appointment):
         self.owner_appointees_lock.release()
         self.shop.add_owner(new_owner_sub)
 
-    """ removes shop appointment from selected subscribed user"""
     def remove_appointment(self, sub):
+        """ removes shop appointment from selected subscribed user"""
         sub.appointments.pop(self.shop)
 
-    def add_product(self, **product_info) -> int:
+    def add_product(self, **product_info) -> Product:
         return self.shop.add_product(**product_info)
     
     def edit_product(self, product_id: int, **to_edit):
