@@ -104,15 +104,15 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         return user.get_cart_info()
 
     # 2.9
-    def purchase_cart(self, user_id: int, payment_details: dict, all_or_nothing: bool):
+    def purchase_cart(self, user_id: int, payment_details: dict, do_what_you_can=False):
         user = self.get_user(user_id)
-        assert user.buy_cart(payment_details, all_or_nothing), "purchase cart failed"
+        user.purchase_cart(payment_details, do_what_you_can)
 
     # 2.9
     def purchase_shopping_bag(self, user_id: int, shop_id: int, payment_details: dict):
         user = self.get_user(user_id)
         shop = self.get_shop(shop_id)
-        assert user.buy_shopping_bag(shop, payment_details), "purchase bag failed"
+        user.purchase_shopping_bag(shop, payment_details)
 
     # 2.9
     def purchase_product(self, user_id: int, shop_id: int, product_id: int, amount_to_buy: int,
@@ -120,7 +120,7 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         user = self.get_user(user_id)
         shop = self.get_shop(shop_id)
         product = shop.products[product_id]
-        user.buy_product(shop, product, amount_to_buy, payment_details)
+        user.purchase_product(shop, product, amount_to_buy, payment_details)
 
     # 3.1
     def logout(self, user_id: int):

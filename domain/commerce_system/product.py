@@ -21,7 +21,7 @@ class Product:
         self.product_name = product_name
         self.price = price
         self.description = description
-        self.quantity = quantity
+        self._quantity = quantity
         self.categories = categories
 
     def to_dict(self):
@@ -30,6 +30,14 @@ class Product:
             Pm.PRODUCT_NAME: self.product_name,
             Pm.PRODUCT_DESC: self.description,
             Pm.PRICE: self.price,
-            Pm.QUANTITY: self.quantity,
+            Pm.QUANTITY: self._quantity,
             Pm.CATEGORIES: self.categories,
         }
+
+    def set_quantity(self, new_quantity):
+        assert new_quantity >= 0, "product quantity must be non-negative"
+        self._quantity = new_quantity
+        return True
+
+    def get_quantity(self):
+        return self._quantity

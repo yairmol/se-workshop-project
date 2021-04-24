@@ -133,7 +133,7 @@ class SystemService:
                 event_logger.warning(e)
             except Exception as e:
                 error_logger.error(e)
-        return False
+        return {}
 
     # 2.8
     def remove_product_from_cart(self, token: str, shop_id: int, product_id: int, amount: int) -> bool:
@@ -173,7 +173,7 @@ class SystemService:
         return False
 
     # 2.9
-    def purchase_shopping_bag(self, token: str, shop_id: str, payment_details: dict) -> bool:
+    def purchase_shopping_bag(self, token: str, shop_id: int, payment_details: dict) -> bool:
         if self.is_valid_token(token):
             try:
                 user_id = self.tokenizer.get_id_by_token(token)
@@ -258,7 +258,7 @@ class SystemService:
     # 4. Shop Owner Requirements
 
     # 4.1
-    def add_product_to_shop(self, token: str, shop_id: int, **product_info) -> bool:
+    def add_product_to_shop(self, token: str, shop_id: int, **product_info) -> int:
         if self.is_valid_token(token):
             try:
                 user_id = self.tokenizer.get_id_by_token(token)

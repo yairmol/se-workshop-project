@@ -1,8 +1,15 @@
+from datetime import datetime
+
+from domain.commerce_system.action import Action, ActionPool
 from domain.commerce_system.product import Product
 from domain.commerce_system.productDTO import ProductDTO
 from domain.commerce_system.shop import Shop
 
-from typing import Dict
+from typing import Dict, Union
+
+from domain.commerce_system.transaction import Transaction
+from domain.delivery_module.delivery_system import IDeliveryFacade
+from domain.payment_module.payment_system import IPaymentsFacade
 
 CART_ID = "cart_id"
 SHOPPING_BAGS = "shopping_bags"
@@ -15,6 +22,8 @@ class ShoppingBag:
     def __init__(self, shop: Shop):
         self.shop = shop
         self.products: Dict[Product, int] = {}
+        self.payment_facade = IPaymentsFacade.get_payment_facade()
+        self.delivery_facade = IDeliveryFacade.get_delivery_facade()
 
     def __setitem__(self, key: Product, value: int):
         self.products[key] = value
@@ -56,6 +65,28 @@ class ShoppingBag:
         PRODUCT = 0
         AMOUNT = 1
         return list(map(lambda kv: ProductDTO(kv[PRODUCT], kv[AMOUNT]), self.products.items()))
+
+    def purchase_bag(self, payment_details) -> Transaction:
+        total_price = self.calculate_price()
+        products_dtos = self.get_products_dtos()
+        transaction = Transaction(
+            self.shop, products_dtos, payment_details,
+            datetime.now(), total_price
+        )
+
+        shop_action = Action(self.shop.add_transaction, self, transaction)
+        shop_action.set_reverse(Action(self.shop.cancel_transaction, self, transaction))
+        payment_action = Action(self.payment_facade.pay, total_price, payment_details)
+        payment_action.set_reverse(Action(self.payment_facade.cancel_payment), True)
+        delivery_action = Action(self.delivery_facade.deliver_to, [p.to_dict() for p in products_dtos], "")
+        delivery_action.set_reverse(Action(self.delivery_facade.cancel_delivery), use_return_value=True)
+
+        purchase_actions = ActionPool([shop_action, payment_action, delivery_action])
+        assert purchase_actions.execute_actions(), f"couldn't purchase bag: {self}"
+        return transaction
+
+    def cancel_transaction(self, transaction):
+        transaction.cancel_transaction()
 
 
 class ShoppingCart:
@@ -107,3 +138,21 @@ class ShoppingCart:
         for shop, bag in self.shopping_bags.items():
             total += bag.calculate_price()
         return total
+
+    def _purchase_shopping_bag(self, bag: ShoppingBag, payment_details):
+        transaction = bag.purchase_bag(payment_details)
+        self.remove_shopping_bag(bag.shop)
+        return transaction
+
+    def _cancel_purchase_of_shopping_bag(self, transaction, bag: ShoppingBag):
+        self.add_shopping_bag(bag)
+        bag.cancel_transaction(transaction)
+
+    def purchase_cart(self, payment_details: dict, do_what_you_can: bool = False):
+        bags_to_purchase = ActionPool([
+            Action(self._purchase_shopping_bag, bag, payment_details)
+            .set_reverse(Action(self._cancel_purchase_of_shopping_bag, bag), use_return_value=True)
+            for shop, bag in self
+        ])
+        assert bags_to_purchase.execute_actions(do_what_you_can)
+        return bags_to_purchase.get_return_values()
