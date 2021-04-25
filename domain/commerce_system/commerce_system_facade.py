@@ -149,7 +149,7 @@ class CommerceSystemFacade(ICommerceSystemFacade):
     def add_product_to_shop(self, user_id: int, shop_id: int, **product_info) -> int:
         shop = self.get_shop(shop_id)
         worker = self.get_user(user_id).user_state
-        return worker.add_product(shop, **product_info)
+        return worker.add_product(shop, **product_info).product_id
 
     # 4.1
     def edit_product_info(

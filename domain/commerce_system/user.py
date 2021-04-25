@@ -108,7 +108,7 @@ class UserState:
     def get_appointment(self, shop: Shop):
         raise Exception("Error: Guest User cannot get appointment")
 
-    def add_product(self, shop: Shop, **product_info) -> int:
+    def add_product(self, shop: Shop, **product_info) -> Product:
         raise Exception("Error: Guest User cannot add product")
 
     def edit_product(self, shop: Shop, product_id: int, **to_edit):
@@ -183,7 +183,7 @@ class Subscribed(UserState):
             return self.appointments[shop]
         raise Exception("no appointment for shop. shop id - ", shop.shop_id)
 
-    def add_product(self, shop: Shop, **product_info) -> int:
+    def add_product(self, shop: Shop, **product_info) -> Product:
         return self.get_appointment(shop).add_product(**product_info)
 
     def edit_product(self, shop: Shop, product_id: int, **to_edit):

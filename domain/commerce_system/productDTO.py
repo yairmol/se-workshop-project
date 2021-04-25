@@ -11,6 +11,16 @@ class ProductDTO:
         self.description = product.description
         self.amount = amount_to_buy
 
+    def __eq__(self, other):
+        return (
+            isinstance(other, ProductDTO) and
+            self.product_id == other.product_id and
+            self.amount == other.amount
+        )
+
+    def __hash__(self):
+        return hash((self.product_id, self.amount))
+
     def to_dict(self):
         return {
             Pm.PRODUCT_ID: self.product_id,

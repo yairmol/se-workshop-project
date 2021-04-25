@@ -38,35 +38,26 @@ class Shop:
             ret[Sm.SHOP_PRODS] = list(map(lambda p: p.to_dict(), self.products.values()))
         return ret
 
-    """ returns product_id if successful"""
-    def add_product(self, **product_info):
-        self.products_lock.acquire()
-        try:
+    def add_product(self, **product_info) -> Product:
+        """ returns product_id if successful"""
+        with self.products_lock:
             assert not self.has_product(product_info["product_name"]),\
                 f"product name {product_info['product_name']} is not unique"
             product = Product(**product_info)
             self.products[product.product_id] = product
-        except Exception as e:
-            self.products_lock.release()
-            raise e
-        self.products_lock.release()
-        return product.product_id
+            return product
 
     def delete_product(self, product_id: int):
-        self.products_lock.acquire()
-        try:
-            assert product_id in self.products.keys(), f"shop does not hold product with id - {product_id}"
+        with self.products_lock:
+            assert product_id in self.products.keys(), f"shop1 does not hold product with id - {product_id}"
             self.products.pop(product_id)
-        except Exception as e:
-            self.products_lock.release()
-            raise e
-        self.products_lock.release()
 
-    """ edit product receives product id and a dict of fields to alter and the new values.
-        MAKE SURE THE FIELD NAMES ARE ACCURATE"""
     def edit_product(self, product_id, **to_edit):
-        self.products_lock.acquire()
-        try:
+        """
+        edit product receives product id and a dict of fields to alter and the new values.
+        MAKE SURE THE FIELD NAMES ARE ACCURATE
+        """
+        with self.products_lock:
             assert product_id in self.products, f"no product with id={product_id}"
             product = self.products[product_id]
             for field, new_value in to_edit.items():
@@ -76,10 +67,6 @@ class Shop:
                 if not hasattr(product, field):
                     raise Exception("product has no field ", field)
                 setattr(product, field, new_value)
-        except Exception as e:
-            self.products_lock.release()
-            raise e
-        self.products_lock.release()
 
     def get_free_id(self) -> int:
         last_id = 1
@@ -89,15 +76,15 @@ class Shop:
             last_id = product_id
         return last_id + 1
 
-    """ return true if shop has product named product_name"""
     def has_product(self, product_name: str):
+        """ return true if shop has product named product_name"""
         found = False
         for supply_product in self.products.values():
             found = found or supply_product.product_name == product_name
         return found
 
-    """ returns id of first product named product_name"""
     def get_id(self, product_name: str):
+        """ returns id of first product named product_name"""
         product_id = -1
         for p_id, supply_product in self.products.items():
             if supply_product.product_name == product_name:
