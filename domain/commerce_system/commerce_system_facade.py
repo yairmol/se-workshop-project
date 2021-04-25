@@ -1,13 +1,16 @@
 import threading
 from typing import Dict, List
 
+from domain.authentication_module.authenticator import Authenticator
 from domain.commerce_system.ifacade import ICommerceSystemFacade
 from domain.commerce_system.product import Product
 from domain.commerce_system.search_engine import search, Filter
 from domain.commerce_system.shop import Shop
 from domain.commerce_system.transaction_repo import TransactionRepo
 from domain.commerce_system.user import User, Subscribed, SystemManager
-import domain.commerce_system.valdiation as validate
+
+
+# import domain.commerce_system.valdiation as validate
 
 
 class CommerceSystemFacade(ICommerceSystemFacade):
@@ -16,11 +19,12 @@ class CommerceSystemFacade(ICommerceSystemFacade):
     registered_users_lock = threading.Lock()
     shops_lock = threading.Lock()
 
-    def __init__(self):
+    def __init__(self, authenticator: Authenticator):
         self.active_users: Dict[int, User] = {}  # dictionary {user_sess.id : user_sess object}
         self.registered_users: Dict[str, Subscribed] = {}  # dictionary {user_id.username : user_sess object}
         self.shops: Dict[int, Shop] = {}  # dictionary {shop.shop_id : shop}
         self.transaction_repo = TransactionRepo.get_transaction_repo()
+        self.authenticator = authenticator
 
     # 2.1
     def enter(self) -> int:
@@ -36,11 +40,9 @@ class CommerceSystemFacade(ICommerceSystemFacade):
 
     # 2.3
     def register(self, user_id: int, username: str, password: str, **more):
-        assert not self.is_username_exists(username), "Username already exists"
-        assert validate.validate_username(username), "Username length needs to be between 0 - 20 characters"
-        assert validate.validate_password(password), "Password length needs to be between 0 - 20 characters"
+        self.authenticator.register_new_user(username, password)
         user = self.get_user(user_id)
-        new_subscribe = user.register(username, password)
+        new_subscribe = user.register(username)
         # saving registered user_sess's details
         self.registered_users_lock.acquire()
         self.registered_users[username] = new_subscribe
@@ -48,17 +50,15 @@ class CommerceSystemFacade(ICommerceSystemFacade):
 
     # 2.4
     def login(self, user_id: int, username: str, password: str):
-        assert self.is_username_exists(username), "Username doesn't exists"
+        self.authenticator.login(username, password)
+        self.registered_users_lock.acquire()
         sub_user = self.registered_users.get(username)
-        assert sub_user.password == password, "Wrong Password"
+        self.registered_users_lock.release()
+
+        # **************** NEED TO CHECK IF THE USER IS GUEST ?
         self.active_users_lock.acquire()
-        try:
-            self.active_users.get(user_id).login(sub_user)
-        except Exception as e:
-            self.active_users_lock.release()
-            raise e
+        self.active_users.get(user_id).login(sub_user)
         self.active_users_lock.release()
-        return True
 
     # 2.5
     def get_shop_info(self, shop_id: int) -> dict:
