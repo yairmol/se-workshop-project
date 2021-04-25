@@ -272,7 +272,7 @@ class CommerceSystemFacade(ICommerceSystemFacade):
     def create_admin_user(self):
         from data_model import UserModel as Um, admin_credentials as ac
         self.registered_users[ac[Um.USERNAME]] = SystemManager(
-            ac[Um.USERNAME], ac[Um.PASSWORD], self.transaction_repo
+            ac[Um.USERNAME], self.transaction_repo
         )
 
     def clean_up(self):

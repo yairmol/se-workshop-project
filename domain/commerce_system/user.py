@@ -223,8 +223,8 @@ class Subscribed(UserState):
 
 
 class SystemManager(Subscribed):
-    def __init__(self, username: str, password: str, system_transactions: TransactionRepo):
-        super().__init__(username, password)
+    def __init__(self, username: str, system_transactions: TransactionRepo):
+        super().__init__(username)
         self.system_transactions = system_transactions
 
     def get_system_transaction_history(self):
