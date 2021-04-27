@@ -101,13 +101,17 @@ const pages = {
 export default function Blog() {
   const classes = useStyles();
   const [selected, setSelected] = useState(pages.user_transactions);
-
+  const [signedIn, setSignedIn] = useState(false);
+  const onSignUp = () => {
+    // TODO: add sign in logic here
+    setSignedIn(!signedIn)
+  }
   return (
       <React.Fragment>
         <CssBaseline/>
         <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap"/>
         <Container maxWidth="lg">
-          <Header title={selected.name} categories={categories}/>
+          <Header title={selected.name} categories={categories} signedIn={signedIn}/>
           <main>
             <Grid alignItems="center" container spacing={5} className={classes.mainGrid}>
               {
