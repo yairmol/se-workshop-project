@@ -1,5 +1,6 @@
 from typing import List
 
+from domain.authentication_module.authenticator import Authenticator
 from domain.token_module.tokenizer import Tokenizer
 from domain.commerce_system.commerce_system_facade import CommerceSystemFacade
 from domain.logger.log import event_logger, error_logger
@@ -11,10 +12,20 @@ class TokenNotValidException(Exception):
 
 class SystemService:
 
+    __instance = None
+
     def __init__(self, commerce_system_facade: CommerceSystemFacade, tokenizer: Tokenizer):
         self.commerce_system_facade = commerce_system_facade
         self.tokenizer = tokenizer
         self.commerce_system_facade.create_admin_user()
+
+    @classmethod
+    def get_system_service(cls):
+        if not SystemService.__instance:
+            SystemService.__instance = SystemService(
+                CommerceSystemFacade(Authenticator()), Tokenizer()
+            )
+        return SystemService.__instance
 
     def is_valid_token(self, token: str):
         if self.tokenizer.is_token_expired(token):
