@@ -1,4 +1,14 @@
-import {Accordion, AccordionDetails, AccordionSummary, Card, Divider, List, ListItem, Paper} from "@material-ui/core";
+import {
+    Accordion,
+    AccordionDetails,
+    AccordionSummary,
+    Card,
+    Divider,
+    Link,
+    List,
+    ListItem,
+    Paper
+} from "@material-ui/core";
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import Typography from "@material-ui/core/Typography";
 import {makeStyles} from "@material-ui/core/styles";
@@ -10,7 +20,7 @@ const useStyles = makeStyles((theme) => ({
         width: '100%',
     },
     heading: {
-        fontSize: theme.typography.pxToRem(15),
+        fontSize: theme.typography.pxToRem(20),
         flexBasis: '33.33%',
         flexShrink: 0,
     },
@@ -40,7 +50,7 @@ function ProductView({product}) {
         <Paper className={classes.paper}>
             <Grid container spacing={5} direction="row" alignItems="center">
                 <Grid item>
-                    <Typography className={classes.heading}>name: {product.product_name}</Typography>
+                    <Typography className={classes.secondaryHeading}>name: {product.product_name}</Typography>
                 </Grid>
                 <Grid item>
                     <Typography className={classes.secondaryHeading}>price: {product.price}</Typography>
@@ -68,14 +78,15 @@ export function Transaction({transaction}) {
                 aria-controls={`panel${transaction.id}bh-content`}
                 id={`panel${transaction.id}bh-header`}
             >
-                <Grid container direction="column" alignItems="center">
-                    <Typography className={classes.heading}> bought from shop: {transaction.shop.shop_name}</Typography>
+                <Grid container direction="column">
+                    <Link className={classes.heading}>Transaction ID: {transaction.id}</Link>
+                    <Typography className={classes.secondaryHeading}>bought from shop: {transaction.shop.shop_name}</Typography>
                     <Typography className={classes.secondaryHeading}>total: {transaction.price}</Typography>
                     <Typography className={classes.secondaryHeading}>date: {date.toString()}</Typography>
                 </Grid>
             </AccordionSummary>
             <AccordionDetails>
-                <Grid container direction="column" alignItems="center">
+                <Grid container direction="column">
                     <Grid item>
                         <Typography>Products</Typography>
                     </Grid>

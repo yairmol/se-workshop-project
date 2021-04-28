@@ -14,6 +14,7 @@ import NotificationsIcon from '@material-ui/icons/Notifications';
 const useStyles = makeStyles((theme) => ({
   toolbar: {
     borderBottom: `1px solid ${theme.palette.divider}`,
+    alignItems: "center",
   },
   toolbarButton:{
     margin: theme.spacing(1),
@@ -35,17 +36,17 @@ const useStyles = makeStyles((theme) => ({
 
 export default function Header(props) {
   const classes = useStyles();
-  const {categories, title, signedIn, onSignUp} = props;
+  const {categories, title, signedIn, onSignInClick, onSignUpClick} = props;
 
   return (
       <React.Fragment>
         <Toolbar className={classes.toolbar}>
-          <Button variant="outlined" size="small">Subscribe</Button>
+          {/*<Button variant="outlined" size="small">Subscribe</Button>*/}
           <Typography
               component="h2"
               variant="h5"
               color="inherit"
-              align="center"
+              align="left"
               noWrap
               className={classes.toolbarTitle}
           >
@@ -69,10 +70,10 @@ export default function Header(props) {
             <AccountCircle/>
           </IconButton></> :
           <div>
-          <Button variant="outlined" size="small" onClick={onSignUp} className={classes.toolbarButton}>
+          <Button variant="outlined" size="small" onClick={onSignUpClick} className={classes.toolbarButton}>
             Sign up
           </Button>
-          <Button variant="outlined" size="small" onClick={onSignUp} className={classes.toolbarButton}>
+          <Button variant="outlined" size="small" onClick={onSignInClick} className={classes.toolbarButton}>
             Sign in
           </Button>
           </div>}

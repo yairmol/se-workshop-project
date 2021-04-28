@@ -7,6 +7,7 @@ import Header from './components/Header'
 import Transactions from "./components/Transactions";
 import {Transaction} from "./components/Transaction";
 import {Typography} from "@material-ui/core";
+import SignIn from "./components/SignIn";
 
 const useStyles = makeStyles((theme) => ({
   mainGrid: {
@@ -29,6 +30,7 @@ const categories = [
 
 const transactions = [
   {
+    id: 1,
     "shop": {
       "shop_id": 2,
       "shop_name": "shop2",
@@ -54,6 +56,7 @@ const transactions = [
     "price": 2.5
   },
   {
+    id: 2,
     "shop": {
       "shop_id": 2,
       "shop_name": "shop2",
@@ -72,6 +75,7 @@ const transactions = [
     "price": 200
   },
   {
+    id: 3,
     "shop": {
       "shop_id": 2,
       "shop_name": "shop2",
@@ -92,30 +96,49 @@ const transactions = [
 ]
 
 const pages = {
-  user_transactions: {
+  userTransactions: {
     name: "User Transactions",
+  },
+  signIn: {
+    name: "Sign In",
+  },
+  signUp: {
+    name: "Sign Up",
   },
 }
 
 
 export default function Blog() {
   const classes = useStyles();
-  const [selected, setSelected] = useState(pages.user_transactions);
+  const [selected, setSelected] = useState(pages.userTransactions);
   const [signedIn, setSignedIn] = useState(false);
+  const [activeUsername, setActiveUsername] = useState(null);
+
   const onSignUp = () => {
     // TODO: add sign in logic here
     setSignedIn(!signedIn)
   }
+
+  const onSignInClick = () => setSelected(pages.signIn);
+  const onSignUpClick = () => setSelected(pages.signUp);
+  
+  const setLoggedIn = (username) => {
+    setSignedIn(true);
+    setActiveUsername(username);
+  }
+
   return (
       <React.Fragment>
         <CssBaseline/>
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap"/>
+        {/*<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap"/>*/}
         <Container maxWidth="lg">
-          <Header title={selected.name} categories={categories} signedIn={signedIn}/>
+          <Header title={selected.name} categories={categories} signedIn={signedIn}
+                  onSignInClick={onSignInClick} onSignUpClick={onSignUpClick}/>
           <main>
-            <Grid alignItems="center" container spacing={5} className={classes.mainGrid}>
+            <Grid container justify="center" spacing={5} className={classes.mainGrid}>
               {
-                selected === pages.user_transactions ? <Transactions transactions={transactions}/> :
+                selected === pages.userTransactions ? <Transactions transactions={transactions}/> :
+                selected === pages.signIn ? <SignIn onSignUpClick={onSignUpClick} setLoggedIn={setLoggedIn}/> :
                     //insert more options here
                     <Typography>oops</Typography>
               }

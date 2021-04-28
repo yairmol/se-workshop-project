@@ -40,12 +40,7 @@ export default function Transactions({transactions}) {
 
   return (
       <>
-        <Grid item lg={3}>
-
-        </Grid>
         <Grid item lg={6}>
-            <Typography align="center" component="h5" variant="h5" color="inherit" gutterBottom>
-            </Typography>
             {transactions.map((transaction, index) =>
                 <Transaction key={index} transaction={transaction}/>)}
         </Grid></>
