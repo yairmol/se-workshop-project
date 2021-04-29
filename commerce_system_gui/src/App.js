@@ -1,13 +1,13 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect, useLayoutEffect} from 'react';
 import {makeStyles} from '@material-ui/core/styles';
 import CssBaseline from '@material-ui/core/CssBaseline';
 import Grid from '@material-ui/core/Grid';
 import Container from '@material-ui/core/Container';
-import Header from './components/Header'
+import Header from './components/Header';
 import Transactions from "./components/Transactions";
-import {Transaction} from "./components/Transaction";
 import {Typography} from "@material-ui/core";
 import SignIn from "./components/SignIn";
+import {enter, logout} from "./api";
 
 const useStyles = makeStyles((theme) => ({
   mainGrid: {
@@ -111,20 +111,69 @@ const pages = {
 export default function Blog() {
   const classes = useStyles();
   const [selected, setSelected] = useState(pages.userTransactions);
-  const [signedIn, setSignedIn] = useState(false);
-  const [activeUsername, setActiveUsername] = useState(null);
+  const [user, setUser] = useState();
 
-  const onSignUp = () => {
-    // TODO: add sign in logic here
-    setSignedIn(!signedIn)
+  const setSelectedPage = (page) => {
+    localStorage.setItem("page", page.name)
+    setSelected(page)
   }
 
-  const onSignInClick = () => setSelected(pages.signIn);
-  const onSignUpClick = () => setSelected(pages.signUp);
+  const onSignInClick = () => setSelectedPage(pages.signIn);
+  const onSignUpClick = () => setSelectedPage(pages.signUp);
+
+  useEffect(() => {
+    // localStorage.clear();
+    const userToken = localStorage.getItem("token");
+    alert(userToken);
+    if (!userToken){
+      enter().then((token) => localStorage.setItem("token", token))
+    }
+    const loggedInUser = localStorage.getItem("user");
+    if (loggedInUser) {
+      setUser(loggedInUser);
+    }
+  }, []);
+
+  useLayoutEffect(() => {
+    const page = localStorage.getItem("page")
+    if (page){
+      for (const obj1 in pages) {
+        if (pages[obj1].name === page) {
+          setSelected(pages[obj1]);
+        }
+      }
+    }
+  })
+  // logout the user
+  const handleLogout = () => {
+    logout(localStorage.getItem("token")).then((res) => {
+      alert(JSON.stringify(res))
+      if (res.status) {
+        setUser(null);
+        localStorage.removeItem('user');
+        setSelectedPage(pages.signIn);
+      }
+    })
+  };
+
+  // login the user
+  // const handleSubmit = async e => {
+  //   e.preventDefault();
+  //   const user = { username, password };
+  //   // send the username and password to the server
+  //   const response = await axios.post(
+  //     "http://blogservice.herokuapp.com/api/login",
+  //     user
+  //   );
+  //   // set the state of the user
+  //   // store the user in localStorage
+  //   localStorage.setItem("user", JSON.stringify(response.data));
+  // };
   
   const setLoggedIn = (username) => {
-    setSignedIn(true);
-    setActiveUsername(username);
+    localStorage.setItem('user', username);
+    setUser((username));
+    setSelectedPage(pages.userTransactions);
   }
 
   return (
@@ -132,8 +181,8 @@ export default function Blog() {
         <CssBaseline/>
         {/*<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap"/>*/}
         <Container maxWidth="lg">
-          <Header title={selected.name} categories={categories} signedIn={signedIn}
-                  onSignInClick={onSignInClick} onSignUpClick={onSignUpClick}/>
+          <Header title={selected.name} categories={categories} signedIn={user}
+                  onSignInClick={onSignInClick} onSignUpClick={onSignUpClick} onSignOut={handleLogout}/>
           <main>
             <Grid container justify="center" spacing={5} className={classes.mainGrid}>
               {

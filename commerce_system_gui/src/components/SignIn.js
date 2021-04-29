@@ -40,10 +40,15 @@ export default function SignIn({onSignUpClick, setLoggedIn}) {
        password: '',
      },
      onSubmit: values => {
-       alert(JSON.stringify(values));
-       login("", values.username, values.password)
-           .then(() => setLoggedIn(values.username, values.password))
-           .catch((error) => alert(error))
+       // alert(JSON.stringify(values));
+       alert(localStorage.getItem('token'))
+       alert(values.username);
+       alert(values.password);
+       login(localStorage.getItem('token'), values.username, values.password)
+           .then((res) => {
+             alert(JSON.stringify(res.data));
+             return res.data.status ? setLoggedIn(values.username) : res.data
+           }).catch((error) => alert(error))
      },
    });
 

@@ -36,7 +36,7 @@ const useStyles = makeStyles((theme) => ({
 
 export default function Header(props) {
   const classes = useStyles();
-  const {categories, title, signedIn, onSignInClick, onSignUpClick} = props;
+  const {categories, title, signedIn, onSignInClick, onSignUpClick, onSignOut} = props;
 
   return (
       <React.Fragment>
@@ -55,7 +55,10 @@ export default function Header(props) {
           <IconButton>
             <SearchIcon/>
           </IconButton>
-          {signedIn ? <>
+          {signedIn != null ? <>
+          <Button variant="outlined" size="small" onClick={onSignOut} className={classes.toolbarButton}>
+            Sign out
+          </Button>
           <IconButton aria-label="show 17 new notifications" color="inherit">
             <Badge badgeContent={0} color="secondary">
               <NotificationsIcon/>
