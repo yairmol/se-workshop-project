@@ -1,9 +1,11 @@
 import {Transaction} from "./Transaction";
 import {Typography} from "@material-ui/core";
-import React from 'react';
-import { makeStyles } from '@material-ui/core/styles';
-import Paper from '@material-ui/core/Paper';
+import React, {useEffect, useState} from 'react';
+import {makeStyles} from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
+import {get_user_transactions} from "../api";
+import {useAuth} from "./use-auth";
+import {Link} from "react-router-dom";
 
 const useStyles = makeStyles((theme) => ({
   mainFeaturedPost: {
@@ -35,14 +37,26 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-export default function Transactions({transactions}) {
+export default function Transactions() {
   const classes = useStyles();
+  const [transactions, setTransactions] = useState([]);
+  const auth = useAuth();
+
+  useEffect(() => {
+    get_user_transactions(auth.token)
+        .then((res) => {
+          setTransactions(res || [])
+        })
+        .catch((err) => setTransactions([]))
+  }, [])
 
   return (
       <>
         <Grid item lg={6}>
-            {transactions.map((transaction, index) =>
-                <Transaction key={index} transaction={transaction}/>)}
+          {(transactions && transactions.length > 0) ?
+              transactions.map((transaction, index) => <Transaction key={index} transaction={transaction}/>)
+              : <Typography align="center">You currently have no transactions, start shopping <Link to="/">here</Link></Typography>
+          }
         </Grid></>
   );
 }

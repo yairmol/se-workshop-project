@@ -9,7 +9,12 @@ import Grid from '@material-ui/core/Grid';
 import { makeStyles } from '@material-ui/core/styles';
 import Container from '@material-ui/core/Container';
 import { useFormik } from 'formik';
-import {login} from '../api'
+import {
+  Link as RouteLink,
+  useHistory,
+  useLocation
+} from 'react-router-dom';
+import {useAuth} from "./use-auth";
 
 const useStyles = makeStyles((theme) => ({
   paper: {
@@ -33,6 +38,11 @@ const useStyles = makeStyles((theme) => ({
 
 export default function SignIn({onSignUpClick, setLoggedIn}) {
   const classes = useStyles();
+  const auth = useAuth();
+  let history = useHistory();
+  let location = useLocation();
+
+  let { from } = location.state || { from: { pathname: "/transactions" } };
 
   const formik = useFormik({
      initialValues: {
@@ -44,11 +54,14 @@ export default function SignIn({onSignUpClick, setLoggedIn}) {
        alert(localStorage.getItem('token'))
        alert(values.username);
        alert(values.password);
-       login(localStorage.getItem('token'), values.username, values.password)
-           .then((res) => {
-             alert(JSON.stringify(res.data));
-             return res.data.status ? setLoggedIn(values.username) : res.data
-           }).catch((error) => alert(error))
+       auth.signin(values.username, values.password).then((res) => {
+         history.replace(from);
+       });
+       // login(localStorage.getItem('token'), values.username, values.password)
+       //     .then((res) => {
+       //       alert(JSON.stringify(res.data));
+       //       return res.data.status ? setLoggedIn(values.username) : res.data
+       //     }).catch((error) => alert(error))
      },
    });
 
@@ -56,9 +69,6 @@ export default function SignIn({onSignUpClick, setLoggedIn}) {
     <Container component="main" maxWidth="xs">
       <CssBaseline />
       <div className={classes.paper}>
-        {/*<Avatar className={classes.avatar}>*/}
-        {/*  <LockOutlinedIcon/>*/}
-        {/*</Avatar>*/}
         <form onSubmit={formik.handleSubmit} className={classes.form} noValidate>
           <TextField
             variant="outlined"
@@ -107,9 +117,11 @@ export default function SignIn({onSignUpClick, setLoggedIn}) {
               </Link>
             </Grid>
             <Grid item>
-              <Link onClick={onSignUpClick} variant="body2">
+                <Link variant="body2">
+                  <RouteLink to="/register" style={{textDecoration: "none"}}>
                 {"Don't have an account? Sign Up"}
-              </Link>
+                  </RouteLink>
+                </Link>
             </Grid>
           </Grid>
         </form>

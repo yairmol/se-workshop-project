@@ -28,13 +28,37 @@ export const enter = () => {
   return axios({
     method: "post",
     url: url,
-  }).then((res) => {
-    const token = res.data;
-    // alert(token);
-    // alert(token.toString());
-    return token;
-  }).catch((err) => alert(`failed to enter the system due to ${err}`))
+  }).then((res) => res.data)
+    .catch((err) => alert(`failed to enter the system due to ${err}`))
+}
 
+export const exit = (token) => {
+  const url = "http://127.0.0.1:5000/api/exit";
+  return axios({
+    method: "delete",
+    url: url,
+    data: {
+      token: token
+    }
+  }).then((res) => {
+    return res.data;
+  }).catch((err) => alert(`failed to exit the system due to ${err}`))
+
+}
+
+export const register = (token, user_data) => {
+  // const url = `${base_route}/${routes.login}`;
+  const url = "http://127.0.0.1:5000/api/register";
+  alert(url);
+  return axios({
+    method: "post",
+    url: url,
+    data: {
+      token: token,
+      ...user_data
+    }
+  }).then((res) => res.data.status)
+    .catch((err) => alert(err))
 }
 
 export const login = (token, username, password) => {
@@ -49,7 +73,8 @@ export const login = (token, username, password) => {
       username: username,
       password: password,
     }
-  })
+  }).then((result) => result.data.status)
+    .catch((err) => alert(`failed to login due to ${err}`))
 }
 
 export const logout = (token) => {
@@ -62,17 +87,15 @@ export const logout = (token) => {
     data: {
       token: token,
     }
-  }).then((res) => res.data).catch((err) => alert(err))
+  }).then((res) => res.data.status).catch((err) => alert(err))
 }
 
 export const get_user_transactions = (token) =>
     axios({
       method: "get",
-      url: `${base_route}/${routes.transactions}`,
-      data: {
-        token: token
-      }
-    });
+      url: `http://127.0.0.1:5000/api/transactions?token=${token}`,
+    }).then((res) => res.data)
+        .catch((err) => alert(`can't find user transactions due to ${err}`));
 
 
 export const get_shop_transactions = (token, shop_id) =>
