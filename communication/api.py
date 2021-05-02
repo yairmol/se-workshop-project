@@ -1,19 +1,33 @@
 import json
 from typing import List
 
-from flask import Flask, request
+from flask import Flask, request, jsonify
+from flask_cors import CORS
 
+from acceptance_tests.test_data import products
+from acceptance_tests.test_utils import fill_with_data, make_purchases
 from service.system_service import SystemService
 
 app = Flask(__name__)
+CORS(app)
+
+CORS(app, resources={
+    r"/.*": {
+        "origins": "*",
+        "Content-Type": "application/json"
+    }
+})
+app.config['CORS_HEADERS'] = 'Content-Type'
 
 API_BASE = '/api'
 
 __system_service = SystemService.get_system_service()
+guest_sess, subs_sess, sids_to_shop, sid_to_sess, pid_to_sid = fill_with_data(__system_service, 2, 2, 2, 6)
+make_purchases(__system_service, subs_sess[0], pid_to_sid, list(pid_to_sid.keys())[:3])
 
 
 def apply_request_on_function(func, *args, **kwargs):
-    data = json.loads(request)
+    data = json.loads(request.data)
     return func(*args, **kwargs, **data)
 
 
@@ -26,19 +40,26 @@ def enter() -> dict:
 # 2.2
 @app.route(f'{API_BASE}/exit', methods=['DELETE'])
 def exit_():
-    apply_request_on_function(__system_service.exit)
+    return {
+        "status": apply_request_on_function(__system_service.exit)
+    }
 
 
 # 2.3
 @app.route(f'{API_BASE}/register', methods=['POST'])
 def register() -> dict:
-    return apply_request_on_function(__system_service.register)
+    return {
+        "status": apply_request_on_function(__system_service.register)
+    }
 
 
 # 2.4
-@app.route(f'{API_BASE}/login')
+@app.route(f'{API_BASE}/login', methods=["POST"])
 def login() -> dict:
-    return apply_request_on_function(__system_service.login)
+    print("login", request.remote_user, "addr", request.remote_addr, request.environ.get('REMOTE_PORT'))
+    return {
+        "status": apply_request_on_function(__system_service.login)
+    }
 
 
 # 2.5
@@ -104,9 +125,11 @@ def purchase_cart() -> dict:
 # 3. Subscriber Requirements
 
 # 3.1
-@app.route(f'{API_BASE}/logout')
+@app.route(f'{API_BASE}/logout', methods=['PUT'])
 def logout() -> dict:
-    return apply_request_on_function(__system_service.logout)
+    return {
+        "status": apply_request_on_function(__system_service.logout)
+    }
 
 
 # 3.2
@@ -118,7 +141,7 @@ def open_shop() -> dict:
 # 3.7
 @app.route(f'{API_BASE}/transactions')
 def get_personal_purchase_history() -> List[dict]:
-    return apply_request_on_function(__system_service.get_personal_purchase_history)
+    return jsonify(__system_service.get_personal_purchase_history(request.args.get("token")))
 
 
 # 4. Shop Owner Requirements
@@ -211,3 +234,12 @@ def get_shop_transaction_history(shop_id: int) -> List[dict]:
 @app.route(f'{API_BASE}/system/transactions')
 def get_system_transactions():
     return apply_request_on_function(__system_service.get_system_transactions)
+
+
+@app.errorhandler(404)
+def server_error(e):
+    return jsonify(error=str(e)), 404
+
+
+if __name__ == '__main__':
+    app.run(port=5000, debug=True)
