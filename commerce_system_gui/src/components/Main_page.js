@@ -2,7 +2,7 @@ import {Input} from "@material-ui/core";
 import {useState} from "react";
 import Button from "@material-ui/core/Button";
 
-export const Main = () => {
+export const Main_page = () => {
   const [query, setQuery] = useState("");
   const onSearch = () => {
 
@@ -10,8 +10,7 @@ export const Main = () => {
 
   return (
       <div>
-        <Input value={query} onChange={(e) => setQuery(...)}/>
-        <Button onSubmit={}/>
+
       </div>
   );
 };

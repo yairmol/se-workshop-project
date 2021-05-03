@@ -20,7 +20,7 @@ import {Shop} from "./components/Shop";
 import {ShoppingBag} from "./components/ShoppingBag";
 import {Cart} from "./components/Cart";
 import { ProvideAuth } from "./components/use-auth.js";
-import {Main} from "./components/Main";
+import {Main_page} from "./components/Main_page";
 
 const useStyles = makeStyles((theme) => ({
   mainGrid: {
@@ -208,7 +208,7 @@ export default function Blog() {
                     <Transactions/>
                   </Route>
                   <Route path="/" exact>
-                    <Main />
+                    <Main_page />
                     <Typography>nothing to see here</Typography>
                   </Route>
                   }
