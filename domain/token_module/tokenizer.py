@@ -5,7 +5,7 @@ import threading
 import time
 
 
-class Authenticator:
+class Tokenizer:
     alphabet = string.ascii_letters + string.digits
     tokens_ids_lock = threading.Lock()
     tokens_time_lock = threading.Lock()

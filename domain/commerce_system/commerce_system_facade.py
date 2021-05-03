@@ -1,13 +1,16 @@
 import threading
 from typing import Dict, List
 
+from domain.authentication_module.authenticator import Authenticator
 from domain.commerce_system.ifacade import ICommerceSystemFacade
 from domain.commerce_system.product import Product
 from domain.commerce_system.search_engine import search, Filter
 from domain.commerce_system.shop import Shop
 from domain.commerce_system.transaction_repo import TransactionRepo
 from domain.commerce_system.user import User, Subscribed, SystemManager
-import domain.commerce_system.valdiation as validate
+
+
+# import domain.commerce_system.valdiation as validate
 
 
 class CommerceSystemFacade(ICommerceSystemFacade):
@@ -16,11 +19,12 @@ class CommerceSystemFacade(ICommerceSystemFacade):
     registered_users_lock = threading.Lock()
     shops_lock = threading.Lock()
 
-    def __init__(self):
+    def __init__(self, authenticator: Authenticator):
         self.active_users: Dict[int, User] = {}  # dictionary {user_sess.id : user_sess object}
         self.registered_users: Dict[str, Subscribed] = {}  # dictionary {user_id.username : user_sess object}
         self.shops: Dict[int, Shop] = {}  # dictionary {shop.shop_id : shop}
         self.transaction_repo = TransactionRepo.get_transaction_repo()
+        self.authenticator = authenticator
 
     # 2.1
     def enter(self) -> int:
@@ -36,11 +40,9 @@ class CommerceSystemFacade(ICommerceSystemFacade):
 
     # 2.3
     def register(self, user_id: int, username: str, password: str, **more):
-        assert not self.is_username_exists(username), "Username already exists"
-        assert validate.validate_username(username), "Username length needs to be between 0 - 20 characters"
-        assert validate.validate_password(password), "Password length needs to be between 0 - 20 characters"
+        self.authenticator.register_new_user(username, password)
         user = self.get_user(user_id)
-        new_subscribe = user.register(username, password)
+        new_subscribe = user.register(username)
         # saving registered user_sess's details
         self.registered_users_lock.acquire()
         self.registered_users[username] = new_subscribe
@@ -48,17 +50,15 @@ class CommerceSystemFacade(ICommerceSystemFacade):
 
     # 2.4
     def login(self, user_id: int, username: str, password: str):
-        assert self.is_username_exists(username), "Username doesn't exists"
+        self.authenticator.login(username, password)
+        self.registered_users_lock.acquire()
         sub_user = self.registered_users.get(username)
-        assert sub_user.password == password, "Wrong Password"
+        self.registered_users_lock.release()
+
+        # **************** NEED TO CHECK IF THE USER IS GUEST ?
         self.active_users_lock.acquire()
-        try:
-            self.active_users.get(user_id).login(sub_user)
-        except Exception as e:
-            self.active_users_lock.release()
-            raise e
+        self.active_users.get(user_id).login(sub_user)
         self.active_users_lock.release()
-        return True
 
     # 2.5
     def get_shop_info(self, shop_id: int) -> dict:
@@ -104,15 +104,15 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         return user.get_cart_info()
 
     # 2.9
-    def purchase_cart(self, user_id: int, payment_details: dict, all_or_nothing: bool):
+    def purchase_cart(self, user_id: int, payment_details: dict, do_what_you_can=False):
         user = self.get_user(user_id)
-        assert user.buy_cart(payment_details, all_or_nothing), "purchase cart failed"
+        user.purchase_cart(payment_details, do_what_you_can)
 
     # 2.9
     def purchase_shopping_bag(self, user_id: int, shop_id: int, payment_details: dict):
         user = self.get_user(user_id)
         shop = self.get_shop(shop_id)
-        assert user.buy_shopping_bag(shop, payment_details), "purchase bag failed"
+        user.purchase_shopping_bag(shop, payment_details)
 
     # 2.9
     def purchase_product(self, user_id: int, shop_id: int, product_id: int, amount_to_buy: int,
@@ -120,7 +120,7 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         user = self.get_user(user_id)
         shop = self.get_shop(shop_id)
         product = shop.products[product_id]
-        user.buy_product(shop, product, amount_to_buy, payment_details)
+        user.purchase_product(shop, product, amount_to_buy, payment_details)
 
     # 3.1
     def logout(self, user_id: int):
@@ -149,7 +149,7 @@ class CommerceSystemFacade(ICommerceSystemFacade):
     def add_product_to_shop(self, user_id: int, shop_id: int, **product_info) -> int:
         shop = self.get_shop(shop_id)
         worker = self.get_user(user_id).user_state
-        return worker.add_product(shop, **product_info)
+        return worker.add_product(shop, **product_info).product_id
 
     # 4.1
     def edit_product_info(
@@ -272,7 +272,7 @@ class CommerceSystemFacade(ICommerceSystemFacade):
     def create_admin_user(self):
         from data_model import UserModel as Um, admin_credentials as ac
         self.registered_users[ac[Um.USERNAME]] = SystemManager(
-            ac[Um.USERNAME], ac[Um.PASSWORD], self.transaction_repo
+            ac[Um.USERNAME], self.transaction_repo
         )
 
     def clean_up(self):
