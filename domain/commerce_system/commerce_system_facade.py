@@ -64,7 +64,9 @@ class CommerceSystemFacade(ICommerceSystemFacade):
     def get_shop_info(self, shop_id: int) -> dict:
         shop: Shop = self.shops[shop_id]
         return shop.to_dict()
-
+    def get_all_shop_info(self) -> dict:
+        shops: List[Shop] = map(lambda shop : shop.to_dict(), self.shops)
+        return shops
     # 2.6
     def search_products(
             self, product_name: str = None, keywords: List[str] = None,
