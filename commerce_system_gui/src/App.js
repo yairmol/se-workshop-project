@@ -129,47 +129,6 @@ export default function Blog() {
     setSelected(page)
   }
 
-  // useEffect(() => {
-  //   // localStorage.clear();
-  //   const userToken = localStorage.getItem("token");
-  //   alert(userToken);
-  //   if (!userToken) {
-  //     enter().then((token) => localStorage.setItem("token", token))
-  //   }
-  //   const loggedInUser = localStorage.getItem("user");
-  //   if (loggedInUser) {
-  //     setUser(loggedInUser);
-  //   }
-  // }, []);
-
-  // useLayoutEffect(() => {
-  //   const page = localStorage.getItem("page")
-  //   if (page) {
-  //     for (const obj1 in pages) {
-  //       if (pages[obj1].name === page) {
-  //         setSelected(pages[obj1]);
-  //       }
-  //     }
-  //   }
-  // })
-
-  // logout the user
-  // const handleLogout = () => {
-  //   logout(localStorage.getItem("token")).then((res) => {
-  //     alert(JSON.stringify(res))
-  //     if (res.status) {
-  //       setUser(null);
-  //       localStorage.removeItem('user');
-  //       setSelectedPage(pages.signIn);
-  //     }
-  //   })
-  // };
-
-  // const setLoggedIn = (username) => {
-  //   localStorage.setItem('user', username);
-  //   setUser((username));
-  // }
-
   return (
       <ProvideAuth>
       <Router>
