@@ -7,14 +7,13 @@ import Header from './components/Header';
 import Transactions from "./components/Transactions";
 import {Typography} from "@material-ui/core";
 import SignIn from "./components/SignIn";
-import {enter, logout} from "./api";
 import {
   BrowserRouter as Router,
   Switch,
   Route,
   Link
 } from "react-router-dom";
-import {Register} from "./components/Register";
+import Register from "./components/Register";
 import {Product} from "./components/Product";
 import {Shop} from "./components/Shop";
 import {ShoppingBag} from "./components/ShoppingBag";
@@ -134,47 +133,6 @@ export default function Blog() {
     localStorage.setItem("page", page.name)
     setSelected(page)
   }
-
-  // useEffect(() => {
-  //   // localStorage.clear();
-  //   const userToken = localStorage.getItem("token");
-  //   alert(userToken);
-  //   if (!userToken) {
-  //     enter().then((token) => localStorage.setItem("token", token))
-  //   }
-  //   const loggedInUser = localStorage.getItem("user");
-  //   if (loggedInUser) {
-  //     setUser(loggedInUser);
-  //   }
-  // }, []);
-
-  // useLayoutEffect(() => {
-  //   const page = localStorage.getItem("page")
-  //   if (page) {
-  //     for (const obj1 in pages) {
-  //       if (pages[obj1].name === page) {
-  //         setSelected(pages[obj1]);
-  //       }
-  //     }
-  //   }
-  // })
-
-  // logout the user
-  // const handleLogout = () => {
-  //   logout(localStorage.getItem("token")).then((res) => {
-  //     alert(JSON.stringify(res))
-  //     if (res.status) {
-  //       setUser(null);
-  //       localStorage.removeItem('user');
-  //       setSelectedPage(pages.signIn);
-  //     }
-  //   })
-  // };
-
-  // const setLoggedIn = (username) => {
-  //   localStorage.setItem('user', username);
-  //   setUser((username));
-  // }
 
   return (
       <ProvideAuth>
