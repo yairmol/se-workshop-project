@@ -35,10 +35,8 @@ export const isValidToken = (token) => {
     params: {
       token: token
     }
-  }).then((res) => {
-    const isvalid = res.data.is_valid;
-    return isvalid;
-  }).catch((err) => alert(`failed to enter the system due to ${err}`))
+  }).then((res) => res.data.is_valid)
+      .catch((err) => alert(`failed to enter the system due to ${err}`))
 }
 
 export const enter = () => {
@@ -186,32 +184,7 @@ export const get_all_shops_info = (token) =>
         token: token,
       }
     });
-export const save_product_to_cart = (token, shop_id, product_id, amount_to_buy) =>
-    axios({
-      method: "POST",
-      url: `${base_route}/${urljoin(routes.cart, shop_id.toString(), product_id.toString())}`,
-      data: {
-        token: token,
-          amount_to_buy : amount_to_buy
-      }
-    });
-export const get_cart_info = (token) =>
-    axios({
-      method: "get",
-      url: `${base_route}/${urljoin(routes.cart)}`,
-      data: {
-        token: token,
-      }
-    });
-export const remove_product_from_cart = (token, shop_id, product_id, amount) =>
-    axios({
-      method: "DELETE",
-      url: `${base_route}/${urljoin(routes.cart, shop_id.toString(), product_id.toString())}`,
-      data: {
-          token: token,
-          amount: amount
-      }
-    });
+
 export const purchase_product = (token, shop_id, product_id, amount, details) =>
     axios({
       method: "POST",
@@ -223,6 +196,7 @@ export const purchase_product = (token, shop_id, product_id, amount, details) =>
 
       }
     });
+
 export const purchase_shopping_bag = (token, shop_id, details) =>
     axios({
       method: "POST",
@@ -232,6 +206,7 @@ export const purchase_shopping_bag = (token, shop_id, details) =>
           details : details
       }
     });
+
 export const purchase_cart = (token,details) =>
     axios({
       method: "POST",
@@ -241,6 +216,7 @@ export const purchase_cart = (token,details) =>
           details: details
       }
     });
+
 export const open_shop = (token, details) =>
     axios({
       method: "POST",
@@ -250,6 +226,7 @@ export const open_shop = (token, details) =>
           details: details
       }
     });
+
 export const get_personal_purchase_history = (token) =>
     axios({
       method: "get",
@@ -258,6 +235,7 @@ export const get_personal_purchase_history = (token) =>
           token: token,
       }
     });
+
 export const add_product_to_shop = (token, shop_id, info) =>
     axios({
       method: "POST",
@@ -267,6 +245,7 @@ export const add_product_to_shop = (token, shop_id, info) =>
           info:info
       }
     });
+
 export const edit_product_info = (token, shop_id, product_id, product_name, description, price, quantity, categories) =>
     axios({
       method: "PUT",
@@ -280,6 +259,7 @@ export const edit_product_info = (token, shop_id, product_id, product_name, desc
           categories: categories
       }
     });
+
 export const delete_product = (token, shop_id, product_id) =>
     axios({
       method: "DELETE",
@@ -288,6 +268,7 @@ export const delete_product = (token, shop_id, product_id) =>
           token: token,
       }
     });
+
 export const appoint_shop_manager = (token, shop_id, username, permissions) =>
     axios({
       method: "POST",
@@ -298,6 +279,7 @@ export const appoint_shop_manager = (token, shop_id, username, permissions) =>
           permissions: permissions
       }
     });
+
 export const appoint_shop_owner = (token, shop_id, username) =>
     axios({
       method: "POST",
@@ -307,6 +289,7 @@ export const appoint_shop_owner = (token, shop_id, username) =>
           username: username
       }
     });
+
 export const promote_shop_owner = (token, shop_id, username) =>
     axios({
       method: "POST",
@@ -316,6 +299,7 @@ export const promote_shop_owner = (token, shop_id, username) =>
           username: username
       }
     });
+
 export const edit_manager_permissions = (token, shop_id, username, permissions) =>
     axios({
       method: "PUT",
@@ -326,6 +310,7 @@ export const edit_manager_permissions = (token, shop_id, username, permissions) 
           permissions: permissions
       }
     });
+
 export const unappoint_manager = (token, shop_id, username) =>
     axios({
       method: "DELETE",
@@ -335,6 +320,7 @@ export const unappoint_manager = (token, shop_id, username) =>
           username: username
       }
     });
+
 export const unappoint_shop_owner = (token, shop_id, username) =>
     axios({
       method: "DELETE",
@@ -344,6 +330,7 @@ export const unappoint_shop_owner = (token, shop_id, username) =>
           username: username
       }
     });
+
 export const get_shop_staff_info = (token, shop_id) =>
     axios({
       method: "GET",
@@ -352,6 +339,7 @@ export const get_shop_staff_info = (token, shop_id) =>
           token: token,
       }
     });
+
 export const get_shop_transaction_history = (token, shop_id) =>
     axios({
       method: "GET",
@@ -360,19 +348,3 @@ export const get_shop_transaction_history = (token, shop_id) =>
           token: token,
       }
     });
-export const get_system_transactions = (token) =>
-    axios({
-      method: "GET",
-      url: `${base_route}/${urljoin(routes.system, routes.appointments)}`,
-      data: {
-          token: token,
-      }
-    });
-// export const server_error = (token) =>
-//     axios({
-//       method: "GET",
-//       url: `${base_route}/${urljoin(routes.system, routes.appointments)}`,
-//       data: {
-//           token: token,
-//       }
-//     });
