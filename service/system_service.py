@@ -108,6 +108,19 @@ class SystemService:
                 return {}
         return {}
 
+    def get_all_shops_info(self, token: str) -> dict:
+        if self.is_valid_token(token):
+            try:
+                user_id = self.tokenizer.get_id_by_token(token)
+                event_logger.info(f"user_sess {user_id} requested for all shops information")
+                return self.commerce_system_facade.get_all_shop_info()
+            except AssertionError as e:
+                event_logger.warning(e)
+                return {}
+            except Exception as e:
+                error_logger.error(e)
+                return {}
+        return {}
     # 2.6
     def search_products(
             self, product_name: str = None, keywords: List[str] = None,
