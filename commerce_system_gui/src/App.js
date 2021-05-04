@@ -7,14 +7,13 @@ import Header from './components/Header';
 import Transactions from "./components/Transactions";
 import {Typography} from "@material-ui/core";
 import SignIn from "./components/SignIn";
-import {enter, logout} from "./api";
 import {
   BrowserRouter as Router,
   Switch,
   Route,
   Link
 } from "react-router-dom";
-import {Register} from "./components/Register";
+import Register from "./components/Register";
 import {Product} from "./components/Product";
 import {Shop} from "./components/Shop";
 import {ShoppingBag} from "./components/ShoppingBag";
