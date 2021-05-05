@@ -32,6 +32,14 @@ def apply_request_on_function(func, *args, **kwargs):
 
 
 # 2.1
+@app.route(f'{API_BASE}/validate_token')
+def is_valid_token() -> dict:
+    return {
+        "is_valid": __system_service.is_valid_token(request.args.get("token"))
+    }
+
+
+# 2.1
 @app.route(f'{API_BASE}/enter', methods=['POST'])
 def enter() -> dict:
     return __system_service.enter()
@@ -78,25 +86,29 @@ def search_products() -> List[dict]:
 # TODO: decide on route
 @app.route(f'{API_BASE}/cart/<int:shop_id>/<int:product_id>', methods=['POST'])
 def save_product_to_cart(shop_id: int, product_id: int) -> dict:
-    return apply_request_on_function(
-        __system_service.save_product_to_cart,
-        shop_id=shop_id, product_id=product_id
-    )
+    return {
+        "status": apply_request_on_function(
+            __system_service.save_product_to_cart,
+            shop_id=shop_id, product_id=product_id
+        )
+    }
 
 
 # 2.8
 @app.route(f'{API_BASE}/cart')
 def get_cart_info() -> dict:
-    return apply_request_on_function(__system_service.get_cart_info)
+    return __system_service.get_cart_info(request.args.get("token"))
 
 
 # 2.8
 @app.route(f'{API_BASE}/cart/<int:shop_id>/<int:product_id>', methods=['DELETE'])
 def remove_product_from_cart(shop_id: int, product_id: int) -> dict:
-    return apply_request_on_function(
-        __system_service.remove_product_from_cart,
-        shop_id=shop_id, product_id=product_id
-    )
+    return {
+        "status": apply_request_on_function(
+            __system_service.remove_product_from_cart,
+            shop_id=shop_id, product_id=product_id
+        )
+    }
 
 
 # 2.9
