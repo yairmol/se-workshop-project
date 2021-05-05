@@ -236,6 +236,16 @@ def get_system_transactions():
     return apply_request_on_function(__system_service.get_system_transactions)
 
 
+@app.route(f'{API_BASE}/shops/<int:shop_id>/products/<int:product_id>')
+def get_product_info(shop_id: int, product_id: int):
+    return __system_service.get_product_info(request.args.get("token"), shop_id, product_id)
+
+
+@app.route(f'{API_BASE}/permissions/<int:shop_id>')
+def has_edit_permissions(shop_id: int):
+    return __system_service.get_permissions(request.args.get("token"), shop_id)
+
+
 @app.errorhandler(404)
 def server_error(e):
     return jsonify(error=str(e)), 404

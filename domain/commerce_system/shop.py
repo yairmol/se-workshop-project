@@ -2,6 +2,7 @@ import threading
 from typing import Dict, List
 
 from domain.commerce_system.action import Action, ActionPool
+from domain.commerce_system.discount_module.discount_calculator import AdditiveDiscount
 from domain.commerce_system.product import Product
 from domain.commerce_system.transaction import Transaction
 from data_model import ShopModel as Sm
@@ -27,6 +28,7 @@ class Shop:
         self.owners_lock = threading.Lock()
         self.shop_managers = {}
         self.shop_owners = {}
+        self.discount = AdditiveDiscount([])
 
     def to_dict(self, include_products=True):
         ret = {
@@ -158,3 +160,7 @@ class Shop:
 
     def get_shop_transaction_history(self):
         return list(map(lambda x: x.to_dict(), self.transaction_history))
+
+    def get_product_info(self, product_id):
+        assert product_id in self.products, "product id doesn't exists"
+        return self.products.get(product_id)
