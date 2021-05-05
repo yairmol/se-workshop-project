@@ -3,6 +3,8 @@ import React, {useEffect, useState} from "react";
 import Button from "@material-ui/core/Button";
 import ButtonBase from '@material-ui/core/ButtonBase';
 import Typography from '@material-ui/core/Typography';
+import {makeStyles} from '@material-ui/core/styles';
+import Grid from '@material-ui/core/Grid';
 
 import {useAuth} from "./use-auth";
 import {get_all_shops_info, get_user_transactions} from "../api";
@@ -80,46 +82,73 @@ const useStyles = makeStyles((theme) => ({
     transition: theme.transitions.create('opacity'),
   },
 }));
-
-export const Main_page = () => {
-  const [shops, setShops] = useState([]);
+const shopData = [{
+  shop_name: "Burger Shop",
+  description: "desc",
+  shop_id: "1",
+  shopImage: "https://media1.s-nbcnews.com/i/newscms/2019_21/2870431/190524-classic-american-cheeseburger-ew-207p_d9270c5c545b30ea094084c7f2342eb4.jpg",
+},
+{
+  shop_name: "Shoe Shop",
+  description: "desc",
+  shop_id: "2",
+  shopImage: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTSl1bzkA2J0UpyeDJTG1PqbYOqOJE4o-AAvw&usqp=CAU",
+},
+{
+  shop_name: "Flower Shop",
+  description: "desc",
+  shop_id: "3",
+  shopImage: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQVocyW9xaVWyWJKH1IF9VOQDqXCyK6wTdB0Q&usqp=CAU",
+},];
+export const Main_page = (props) => {
+  const {searchQuery} = props;
+  const [shops, setShops] = useState(shopData);
   const auth = useAuth();
 
-  useEffect(() => {
-    get_all_shops_info(auth.token)
-        .then((res) => {
-          setShops(res.data || [])
-        })
-        .catch((err) => setShops([]))
-  }, [])
-
+  // useEffect(() => {
+  //   get_all_shops_info(auth.token)
+  //       .then((res) => {
+  //         setShops(res.data || shopData)
+  //       })
+  //       .catch((err) => setShops(shopData))
+  // }, [])
+  const filteredShops = shops.filter((shop) => shop.shop_name.toLowerCase().includes(searchQuery.toLowerCase()));
+  console.log(filteredShops);
   return (
       <div>
-        <Grid item lg = {6}>
-          {shops.length > 0 ? shops.map((shop, index) => <ButtonBases shops = shops />) :
-           <Typography align="center">There ar no shops :( </Typography>}
+        <Grid
+        container
+        spacing = {3}
+        xl
+          >
+          {filteredShops.length > 0 ?  <ButtonBases shops ={filteredShops} /> :
+           <Typography  color = "secondary" align="center" variant= "h3">There are no open shops  <br /> :( </Typography>}
         </Grid>
       </div>
   );
-};
-export default function ButtonBases(shops) {
+}
+export default function ButtonBases({shops}){
   const classes = useStyles();
   const defaultImageUrl = "https://p1.hiclipart.com/preview/33/96/19/shopping-cart-red-line-material-property-logo-circle-vehicle-rectangle-png-clipart.jpg";
+  console.log(shops[0].shopImage === "" ? defaultImageUrl : shops[0].shopImage);
   return (
     <div className={classes.root}>
-      {shops.map((shop) => (
+      {shops.map((shop) =>
+      <Grid item xs = {12} >
         <ButtonBase
           focusRipple
           key={shop.shop_id}
           className={classes.shopImage}
           focusVisibleClassName={classes.focusVisible}
+          href={`/shop/${shop.shop_name}`}
           style={{
-            width: '30%',
+            width: '100%',
           }}
         >
           <span
             className={classes.imageSrc}
             style={{
+
               backgroundImage: `url(${shop.shopImage === "" ? defaultImageUrl : shop.shopImage})`,
             }}
           />
@@ -136,7 +165,8 @@ export default function ButtonBases(shops) {
             </Typography>
           </span>
         </ButtonBase>
-      ))}
+      </Grid>
+      )}
     </div>
   );
 }
