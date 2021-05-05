@@ -12,6 +12,7 @@ import {Badge} from "@material-ui/core";
 import AccountCircle from '@material-ui/icons/AccountCircle';
 import NotificationsIcon from '@material-ui/icons/Notifications';
 import {useAuth} from "./use-auth";
+import ShoppingCartIcon from '@material-ui/icons/ShoppingCart';
 
 const useStyles = makeStyles((theme) => ({
   empty: {
@@ -51,7 +52,7 @@ export default function Header(props) {
   const signout = () => {
     auth.signout().then((res) => {
       if (res) {
-        history.replace({ pathname: "/login" })
+        history.replace({pathname: "/login"})
       }
     })
   }
@@ -73,6 +74,13 @@ export default function Header(props) {
           <IconButton>
             <SearchIcon/>
           </IconButton>
+          <RouteLink to="/cart">
+            <IconButton>
+              <Badge badgeContent={0} color="secondary">
+                <ShoppingCartIcon/>
+              </Badge>
+            </IconButton>
+          </RouteLink>
           {auth.user ? <>
                 <Button variant="outlined" size="small" onClick={signout} className={classes.toolbarButton}>
                   Sign out
