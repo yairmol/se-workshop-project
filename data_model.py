@@ -8,6 +8,7 @@ class ShopModel:
     SHOP_NAME = "shop_name"
     SHOP_DESC = "description"
     SHOP_ID = "shop_id"
+    SHOP_IMAGE = "shopImage"
     SHOP_PRODS = "products"
 
 
