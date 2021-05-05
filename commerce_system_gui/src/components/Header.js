@@ -51,7 +51,7 @@ export default function Header(props) {
   const signout = () => {
     auth.signout().then((res) => {
       if (res) {
-        history.replace({ pathname: "/login" })
+        history.replace({pathname: "/login"})
       }
     })
   }
@@ -73,6 +73,11 @@ export default function Header(props) {
           <IconButton>
             <SearchIcon/>
           </IconButton>
+          <RouteLink to="/products" style={{textDecoration: "none"}}>
+            <Button variant="outlined" size="small" className={classes.toolbarButton}>
+              product info
+            </Button>
+          </RouteLink>
           {auth.user ? <>
                 <Button variant="outlined" size="small" onClick={signout} className={classes.toolbarButton}>
                   Sign out
@@ -101,6 +106,7 @@ export default function Header(props) {
                     Sign in
                   </Button>
                 </RouteLink>
+
               </div>}
         </Toolbar>
         <Toolbar component="nav" variant="dense" className={classes.toolbarSecondary}>

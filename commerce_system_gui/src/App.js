@@ -19,7 +19,7 @@ import {Product} from "./components/Product";
 import {Shop} from "./components/Shop";
 import {ShoppingBag} from "./components/ShoppingBag";
 import {Cart} from "./components/Cart";
-import { ProvideAuth } from "./components/use-auth.js";
+import {ProvideAuth} from "./components/use-auth.js";
 import {Main} from "./components/Main";
 
 const useStyles = makeStyles((theme) => ({
@@ -173,51 +173,55 @@ export default function Blog() {
 
   return (
       <ProvideAuth>
-      <Router>
-        <React.Fragment>
-          <CssBaseline/>
-          <Container maxWidth="lg" className={`site-layout-wrapper=modal-active`}>
-            <Header title={selected.name} categories={categories} />
-            <main>
-              <Grid container justify="center" spacing={5} className={classes.mainGrid}>
-                <Switch>
-                  {/* Guest routes */}
-                  <Route path="/register">
-                    <Register />
-                  </Route>
-                  <Route path="/cart">
-                    <Cart/>
-                  </Route>
-                  <Route path="/cart/:shop_id">
-                    <ShoppingBag/> {/* This means shopping bag of shop shop_id*/}
-                  </Route>
-                  <Route path="/shops">
-                    <Route path="/:shop_id">  {/* this means that in the shop component we can use UseParams()*/}
-                      <Shop/>                 {/* to get the shop_id param and then get the proper shop info */}
+        <Router>
+          <React.Fragment>
+            <CssBaseline/>
+            <Container maxWidth="lg" className={`site-layout-wrapper=modal-active`}>
+              <Header title={selected.name} categories={categories}/>
+              <main>
+                <Grid container justify="center" spacing={5} className={classes.mainGrid}>
+                  <Switch>
+                    {/* Guest routes */}
+                    <Route path="/register">
+                      <Register/>
                     </Route>
-                    <Route path="/products">
-                      <Route path="/:product_id">
-                        <Product/>
-                      </Route>
+                    <Route path="/cart">
+                      <Cart/>
                     </Route>
-                  </Route>
-                  <Route path="/login" exact>
-                    <SignIn />
-                  </Route>
-                  <Route path="/transactions">
-                    <Transactions/>
-                  </Route>
-                  <Route path="/" exact>
-                    <Main />
-                    <Typography>nothing to see here</Typography>
-                  </Route>
-                  }
-                </Switch>
-              </Grid>
-            </main>
-          </Container>
-        </React.Fragment>
-      </Router>
+                    <Route path="/cart/:shop_id">
+                      <ShoppingBag/> {/* This means shopping bag of shop shop_id*/}
+                    </Route>
+                    {/*<Route path="/shops">*/}
+                    {/*  <Route*/}
+                    {/*      path="/:shop_id">  /!* this means that in the shop component we can use UseParams()*!/*/}
+                    {/*    /!*<Shop/> /!* to get the shop_id param and then get the proper shop info *!/*!/*/}
+                    {/*    <Route path="/products">*/}
+                    {/*      <Route path="/:product_id">*/}
+                    {/*        <Product/>*/}
+                    {/*      </Route>*/}
+                    {/*    </Route>*/}
+                    {/*  </Route>*/}
+                    {/*</Route>*/}
+                    <Route path="/products" exact>
+                      <Product shop_name={'Armani'}/>
+                    </Route>
+                    <Route path="/login" exact>
+                      <SignIn/>
+                    </Route>
+                    <Route path="/transactions">
+                      <Transactions/>
+                    </Route>
+                    <Route path="/" exact>
+                      <Main/>
+                      <Typography>nothing to see here</Typography>
+                    </Route>
+                    }
+                  </Switch>
+                </Grid>
+              </main>
+            </Container>
+          </React.Fragment>
+        </Router>
       </ProvideAuth>
   );
 }

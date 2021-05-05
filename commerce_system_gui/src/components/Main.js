@@ -10,8 +10,7 @@ export const Main = () => {
 
   return (
       <div>
-        <Input value={query} onChange={(e) => setQuery(...)}/>
-        <Button onSubmit={}/>
+
       </div>
   );
 };

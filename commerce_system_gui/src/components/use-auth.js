@@ -52,6 +52,7 @@ function useProvideAuth() {
     alert(`user token ${token}`);
 
     if (!token) {
+
       await enter().then((new_token) => {
         localStorage.setItem("token", new_token)
         setToken(new_token);

@@ -280,3 +280,11 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         self.shops.clear()
         self.registered_users.clear()
         self.active_users.clear()
+
+    def get_product_info(self, shop_id, product_id):
+        return self.shops.get(shop_id).get_product_info(product_id).to_dict()
+
+    # @TODO: TO CHANGE IMPLEMENTAION
+    def get_permissions(self, user_id, shop_id) -> dict:
+        return {"edit": True, "add": True, "delete": True, "get_history":True}
+
