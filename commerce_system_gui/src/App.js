@@ -20,6 +20,7 @@ import {ShoppingBag} from "./components/ShoppingBag";
 import {Cart} from "./components/Cart";
 import { ProvideAuth } from "./components/use-auth.js";
 import {Main} from "./components/Main";
+import {Checkout} from "./components/Checkout";
 
 const useStyles = makeStyles((theme) => ({
   mainGrid: {
@@ -148,6 +149,12 @@ export default function Blog() {
                   </Route>
                   <Route path="/cart/:shop_id">
                     <ShoppingBag/> {/* This means shopping bag of shop shop_id*/}
+                  </Route>
+                  <Route path="/checkout/:shop_id">
+                    <Checkout />
+                  </Route>
+                  <Route path="/checkout/">
+                    <Checkout />
                   </Route>
                   <Route path="/shops">
                     <Route path="/:shop_id">  {/* this means that in the shop component we can use UseParams()*/}

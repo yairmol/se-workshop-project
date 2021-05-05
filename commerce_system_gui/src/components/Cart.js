@@ -1,5 +1,5 @@
-import {Button, CircularProgress, IconButton, Link, TextField} from "@material-ui/core";
-import {useEffect, useState} from "react";
+import {Button, CircularProgress, IconButton, TextField, Link as MUILink} from "@material-ui/core";
+import React, {useEffect, useState} from "react";
 import {makeStyles} from '@material-ui/core/styles';
 import Accordion from '@material-ui/core/Accordion';
 import AccordionSummary from '@material-ui/core/AccordionSummary';
@@ -19,6 +19,7 @@ import TableRow from '@material-ui/core/TableRow';
 import {get_cart_info, remove_product_from_cart, save_product_to_cart} from "../api";
 import {useAuth} from "./use-auth";
 import RemoveCircleOutlineIcon from '@material-ui/icons/RemoveCircleOutline';
+import {Link} from "react-router-dom";
 
 const columns = [
   {id: 'product_name', label: 'Name'},
@@ -79,11 +80,21 @@ const useStyles = makeStyles((theme) => ({
   root: {
     width: '100%',
     marginTop: theme.spacing(3),
+    alignItems: "center",
   },
   accordion: {
     width: '80%',
     margin: "auto",
     marginBottom: theme.spacing(1.5),
+  },
+  checkoutButton: {
+    margin: 10,
+    // padding: "0"
+  },
+  cartCheckoutButton: {
+    marginLeft: "500px",
+    marginRight: "5%",
+    // padding: "0"
   },
   heading: {
     fontSize: theme.typography.pxToRem(19),
@@ -280,23 +291,29 @@ const ShoppingBagView = ({shopId, shoppingBag}) => {
 
   return (
       <div className={classes.accordion}>
-        <Accordion defaultExpanded>
+        <Accordion>
           <AccordionSummary
               expandIcon={<ExpandMoreIcon/>}
               aria-controls="panel1c-content"
               id="panel1c-header"
           >
             <div className={classes.column}>
-              <Link className={classes.heading}>Shopping Bag for {shoppingBag.shop_name}</Link>
+              <MUILink className={classes.heading}>Shopping Bag for {shoppingBag.shop_name}</MUILink>
               <Typography className={classes.secondaryHeading}>total: {shoppingBag.total}</Typography>
+              {productsState.length > 0 &&
+              <Link to={`/checkout/${shopId}`}>
+                <Button color="primary" variant="outlined" className={classes.checkoutButton}>Checkout</Button>
+              </Link>}
             </div>
             <div className={classes.column}>
               {edited ? <Typography className={classes.secondaryHeading}>edited</Typography> : <></>}
             </div>
           </AccordionSummary>
           <AccordionDetails className={classes.details}>
-            <StickyHeadProductsTable products={productsState} onProductChange={onProductChange}
-                                     onRemoveProduct={onRemoveProduct}/>
+            {productsState.length > 0 ?
+                <StickyHeadProductsTable products={productsState} onProductChange={onProductChange}
+                                         onRemoveProduct={onRemoveProduct}/>
+                : <Typography>Shopping bag is empty</Typography>}
           </AccordionDetails>
           <Divider/>
           <AccordionActions>
@@ -330,8 +347,22 @@ export const Cart = () => {
   return (
       <div className={classes.root}>
         {
-          loaded ? Object.keys(cart.shopping_bags).map((sid) =>
+          loaded ?
+            <div className={classes.root}>
+              {
+                Object.keys(cart.shopping_bags).map((sid) =>
                   <ShoppingBagView shopId={sid} shoppingBag={cart.shopping_bags[sid]}/>)
+              }
+              {
+                Object.keys(cart.shopping_bags).length === 0 ?
+                  <Typography align="center">
+                    You currently have no shopping bags, start shopping <Link to="/">here</Link>
+                  </Typography> :
+                    <Link to={'/checkout/'}>
+                      <Button className={classes.cartCheckoutButton} variant="contained" color="primary">Checkout Cart</Button>
+                    </Link>
+              }
+            </div>
               : <CircularProgress/>
         }
       </div>
