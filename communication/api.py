@@ -1,11 +1,12 @@
 import json
-from typing import List
+from typing import List, Union
 
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 
 from acceptance_tests.test_data import products
 from acceptance_tests.test_utils import fill_with_data, make_purchases
+from domain.discount_module.discount_management import DiscountDict, SimpleCond
 from service.system_service import SystemService
 
 app = Flask(__name__)
@@ -254,8 +255,27 @@ def get_product_info(shop_id: int, product_id: int):
 
 
 @app.route(f'{API_BASE}/permissions/<int:shop_id>')
-def has_edit_permissions(shop_id: int):
+def get_permissions(shop_id: int):
     return __system_service.get_permissions(request.args.get("token"), shop_id)
+
+
+''' NEED TO ADD TOKEN TO FUNCTIONS BELOW'''
+
+
+@app.route(f'{API_BASE}/shops/<int:shop_id>/discounts')
+def add_discount(self, token: str, shop_id: int, has_cond: bool, condition: List[Union[str, SimpleCond, List]],
+                 discount: DiscountDict):
+    return __system_service.add_discount(shop_id, has_cond, condition, discount)
+
+
+@app.route(f'{API_BASE}/shops/<int:shop_id>/discounts')
+def delete_discounts(self, token: str, shop_id: int, discount_ids: [int]):
+    return __system_service.delete_discounts(shop_id, discount_ids)
+
+
+@app.route(f'{API_BASE}/shops/<int:shop_id>/discounts')
+def aggregate_discounts(self, token: str, shop_id: int, discount_ids: [int], func: str):
+    return __system_service.aggregate_discounts(shop_id, discount_ids, func)
 
 
 @app.errorhandler(404)

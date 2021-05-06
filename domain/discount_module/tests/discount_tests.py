@@ -1,6 +1,5 @@
 import unittest
-
-from domain.commerce_system.discount_module.discount_calculator import *
+from domain.discount_module.discount_calculator import *
 
 product_dict1 = {"product_name": "Armani shirt", "price": 300, "description": "black shirt", "quantity": 5,
                  "categories": ['gvarim', 'dokrim']}
@@ -26,7 +25,7 @@ class DiscountTests(unittest.TestCase):
     def test_Product_Discount_With_Cond_Single_quantity(self):
         simple_cond = TotalSumCondition(100)
         cond_lst = [simple_cond]
-        complete_condition = CompleteCondition(cond_lst)
+        complete_condition = ORCondition(cond_lst)
 
         product_discount = ProductDiscount(True, complete_condition, 10, p1.product_id)
         products = {p1: 1, p2: 10}
@@ -35,7 +34,7 @@ class DiscountTests(unittest.TestCase):
     def test_Product_Discount_With_Cond_Multiplie_quantity(self):
         simple_cond = TotalSumCondition(100)
         cond_lst = [simple_cond]
-        complete_condition = CompleteCondition(cond_lst)
+        complete_condition = ORCondition(cond_lst)
 
         product_discount = ProductDiscount(True, complete_condition, 10, p1.product_id)
         products = {p1: 10}
@@ -44,7 +43,7 @@ class DiscountTests(unittest.TestCase):
     def test_Product_Discount_Failed_Cond(self):
         simple_cond = TotalSumCondition(1000)
         cond_lst = [simple_cond]
-        complete_condition = CompleteCondition(cond_lst)
+        complete_condition = ORCondition(cond_lst)
         product_discount = ProductDiscount(True, complete_condition, 10, p1.product_id)
         products = {p1: 1}
         assert product_discount.apply(products) == 0
@@ -67,7 +66,7 @@ class DiscountTests(unittest.TestCase):
     def test_Category_Discount_With_Cond_Single_quantity(self):
         simple_cond = TotalSumCondition(100)
         cond_lst = [simple_cond]
-        complete_condition = CompleteCondition(cond_lst)
+        complete_condition = ORCondition(cond_lst)
         category_dis = CategoryDiscount(True, complete_condition, 10, 'gvarim')
         products = {p1: 1}
         assert category_dis.apply(products) == 30
@@ -75,7 +74,7 @@ class DiscountTests(unittest.TestCase):
     def test_Category_Discount_With_Cond_Multiplie_quantity(self):
         simple_cond = TotalSumCondition(100)
         cond_lst = [simple_cond]
-        complete_condition = CompleteCondition(cond_lst)
+        complete_condition = ORCondition(cond_lst)
         category_dis = CategoryDiscount(True, complete_condition, 10, 'gvarim')
         p1_quantity = 0
         p2_quantity = 10
@@ -87,7 +86,7 @@ class DiscountTests(unittest.TestCase):
     def test_Category_Discount_Failed_Cond(self):
         simple_cond = TotalSumCondition(1000)
         cond_lst = [simple_cond]
-        complete_condition = CompleteCondition(cond_lst)
+        complete_condition = ORCondition(cond_lst)
         category_discount = CategoryDiscount(True, complete_condition, 10, "gvarim")
         products = {p1: 1, p2: 3}
         assert category_discount.apply(products) == 0
@@ -112,7 +111,7 @@ class DiscountTests(unittest.TestCase):
     def test_Store_Discount_With_Cond_Single_Product(self):
         simple_cond = TotalSumCondition(100)
         cond_lst = [simple_cond]
-        complete_condition = CompleteCondition(cond_lst)
+        complete_condition = ORCondition(cond_lst)
         store_dis = StoreDiscount(True, complete_condition, 50)
         p1_quantity = 10
         products = {p1: p1_quantity}
@@ -122,7 +121,7 @@ class DiscountTests(unittest.TestCase):
     def test_Store_Discount_With_Cond_Multiplie_Products(self):
         simple_cond = TotalSumCondition(100)
         cond_lst = [simple_cond]
-        complete_condition = CompleteCondition(cond_lst)
+        complete_condition = ORCondition(cond_lst)
         store_dis = StoreDiscount(True, complete_condition, 99)
         p1_quantity = 0
         p2_quantity = 10
@@ -134,7 +133,7 @@ class DiscountTests(unittest.TestCase):
     def test_Store_Discount_Failed_Cond(self):
         simple_cond = TotalSumCondition(1000)
         cond_lst = [simple_cond]
-        complete_condition = CompleteCondition(cond_lst)
+        complete_condition = ORCondition(cond_lst)
         store_dis = StoreDiscount(True, complete_condition, 99)
         products = {p1: 1, p2: 3}
         assert store_dis.apply(products) == 0
@@ -155,7 +154,7 @@ class DiscountTests(unittest.TestCase):
     def test_XorDiscount_Single_Discount_With_cond(self):
         simple_cond = TotalSumCondition(1000)
         cond_lst = [simple_cond]
-        complete_condition = CompleteCondition(cond_lst)
+        complete_condition = ORCondition(cond_lst)
         store_dis = StoreDiscount(True, complete_condition, 50)
 
         discount_lst = [store_dis]
@@ -170,7 +169,7 @@ class DiscountTests(unittest.TestCase):
     def test_XorDiscount_Single_Discount_With_FAILED_cond(self):
         simple_cond = TotalSumCondition(10000)
         cond_lst = [simple_cond]
-        complete_condition = CompleteCondition(cond_lst)
+        complete_condition = ORCondition(cond_lst)
         store_dis = StoreDiscount(True, complete_condition, 50)
 
         discount_lst = [store_dis]
@@ -199,12 +198,12 @@ class DiscountTests(unittest.TestCase):
     def test_XorDiscount_Multiplie_Discount_With_cond(self):
         simple_cond = TotalSumCondition(1000)
         cond_lst = [simple_cond]
-        complete_condition = CompleteCondition(cond_lst)
+        complete_condition = ORCondition(cond_lst)
         store_dis = StoreDiscount(True, complete_condition, 50)  # first discount
 
         simple_cond = TotalSumCondition(100)
         cond_lst = [simple_cond]
-        complete_condition = CompleteCondition(cond_lst)
+        complete_condition = ORCondition(cond_lst)
         category_dis = CategoryDiscount(True, complete_condition, 10, 'gvarim')  # second discount
 
         discount_lst = [category_dis, store_dis]
@@ -217,17 +216,15 @@ class DiscountTests(unittest.TestCase):
         expected_dis_sum = expected_discount.apply(products)
         assert xor_dis.apply(products) == expected_dis_sum
 
-
-
     def test_XorDiscount_Multiplie_Discount_With_FAILED_cond(self):
         simple_cond = TotalSumCondition(100000)
         cond_lst = [simple_cond]
-        complete_condition = CompleteCondition(cond_lst)
+        complete_condition = ORCondition(cond_lst)
         store_dis = StoreDiscount(True, complete_condition, 50)  # first discount
 
         simple_cond = TotalSumCondition(100000)
         cond_lst = [simple_cond]
-        complete_condition = CompleteCondition(cond_lst)
+        complete_condition = ORCondition(cond_lst)
         category_dis = CategoryDiscount(True, complete_condition, 10, 'gvarim')  # second discount
 
         discount_lst = [category_dis, store_dis]
@@ -236,7 +233,6 @@ class DiscountTests(unittest.TestCase):
         p2_quantity = 10
         products = {p1: p1_quantity, p2: p2_quantity}
         assert xor_dis.apply(products) == 0
-
 
     def test_AdditiveDiscount_Single_Discount(self):
         store_dis = StoreDiscount(False, None, 50)
@@ -249,7 +245,6 @@ class DiscountTests(unittest.TestCase):
         expected_dis_sum = store_dis.apply(products)
 
         assert additive_discount.apply(products) == expected_dis_sum
-
 
     def test_AdditiveDiscount_Multiplie_Discount(self):
         store_dis = StoreDiscount(False, None, 10)
@@ -275,7 +270,7 @@ class DiscountTests(unittest.TestCase):
 
         assert max_discount.apply(products) == expected_dis_sum
 
-    def test_Max_discount_Multiplie_Discount(self):
+    def test_MaxDiscount_Multiplie_Discount(self):
         store_dis = StoreDiscount(False, None, 10)
         category_dis = CategoryDiscount(False, None, 10, 'gvarim')
         discount_lst = [store_dis, category_dis]
@@ -286,3 +281,52 @@ class DiscountTests(unittest.TestCase):
 
         expected_dis_sum = max(store_dis.apply(products), category_dis.apply(products))
         assert max_discount.apply(products) == expected_dis_sum
+
+    '''Discount Aggregation tests '''
+
+    def test_Max_Aggregation(self):
+        main_discount = AdditiveDiscount([])
+        discount1 = StoreDiscount(False, None, 10)
+        discount2 = CategoryDiscount(False, None, 15, 'gvarim')
+        main_discount.add_discount(discount1)
+        main_discount.add_discount(discount2)
+        main_discount.aggregate_discounts([discount1.discount_id, discount2.discount_id], "max")
+        products = {p1: 1, p2: 1}
+
+        assert main_discount.apply(products) == max(discount1.apply(products), discount2.apply(products))
+
+    def test_Max_Aggregation2(self):
+        main_discount = AdditiveDiscount([])
+        discount1 = StoreDiscount(False, None, 10)
+        discount2 = CategoryDiscount(False, None, 15, 'gvarim')
+        discount3 = ProductDiscount(False, None, 5, p1.product_id)
+
+        main_discount.add_discount(discount1)
+        main_discount.add_discount(discount2)
+        main_discount.add_discount(discount3)
+        main_discount.aggregate_discounts([discount1.discount_id, discount2.discount_id], "max")
+        products = {p1: 1, p2: 1}
+
+        assert main_discount.apply(products) == (max(discount1.apply(products), discount2.apply(products)) + discount3.apply(products))
+
+    def test_Xor_Aggregation(self):
+        main_discount = AdditiveDiscount([])
+        discount1 = StoreDiscount(False, None, 10)
+        discount2 = CategoryDiscount(False, None, 15, 'gvarim')
+        main_discount.add_discount(discount1)
+        main_discount.add_discount(discount2)
+        main_discount.aggregate_discounts([discount1.discount_id, discount2.discount_id], "xor")
+        products = {p1: 1, p2: 1}
+
+        assert main_discount.apply(products) in (discount1.apply(products), discount2.apply(products))
+
+    def test_Add_Aggregation(self):
+        main_discount = AdditiveDiscount([])
+        discount1 = StoreDiscount(False, None, 10)
+        discount2 = CategoryDiscount(False, None, 15, 'gvarim')
+        main_discount.add_discount(discount1)
+        main_discount.add_discount(discount2)
+        main_discount.aggregate_discounts([discount1.discount_id, discount2.discount_id], "add")
+        products = {p1: 1, p2: 1}
+
+        assert main_discount.apply(products) == discount1.apply(products) + discount2.apply(products)

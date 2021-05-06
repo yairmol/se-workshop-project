@@ -1,6 +1,7 @@
 import unittest
 
-from domain.commerce_system.discount_module.discount_calculator import *
+from domain.commerce_system.product import Product
+from domain.discount_module.discount_calculator import *
 
 product_dict1 = {"product_name": "Armani shirt", "price": 299.9, "description": "black shirt", "quantity": 5,
                  "categories": ['gvarim', 'dokrim']}
@@ -97,72 +98,103 @@ class ConditionTests(unittest.TestCase):
         assert not simple_condition.resolve(products)
 
     # Multiple conditions tests ---------------------------------------------------------
-    def test_Composed_condition1(self):
+    
+    # AND Condition Tests 
+    def test_ANDCondition1(self):
         simple_condition1 = CategorySumCondition(100, 'gvarim')
         simple_condition2 = CategorySumCondition(100, 'dokrim')
         cond_lst = [simple_condition1, simple_condition2]
-        composed_condition = ComposedCondition(cond_lst)
+        and_condition = ANDCondition(cond_lst)
         products = {p1: 1, p2: 1}
-        assert composed_condition.resolve(products)
+        assert and_condition.resolve(products)
 
-    def test_Composed_condition2(self):
+    def test_ANDCondition2(self):
         simple_condition1 = ProductQuantityCondition(1, p1.product_id)
         simple_condition2 = CategorySumCondition(100, 'dokrim')
         cond_lst = [simple_condition1, simple_condition2]
-        composed_condition = ComposedCondition(cond_lst)
+        and_condition = ANDCondition(cond_lst)
         products = {p1: 1, p2: 1}
-        assert composed_condition.resolve(products)
+        assert and_condition.resolve(products)
 
-    def test_Composed_condition3(self):
+    def test_ANDCondition3(self):
         cond_lst = []
-        composed_condition = ComposedCondition(cond_lst)
+        and_condition = ANDCondition(cond_lst)
         products = {p1: 1, p2: 1}
-        assert composed_condition.resolve(products)
+        assert and_condition.resolve(products)
 
-    def test_Composed_condition4(self):
+    def test_ANDCondition4(self):
         simple_condition1 = ProductQuantityCondition(100, p1.product_id)
         simple_condition2 = CategorySumCondition(100, 'gvarim')
         cond_lst = [simple_condition1, simple_condition2]
-        composed_condition = ComposedCondition(cond_lst)
+        and_condition = ANDCondition(cond_lst)
         products = {p1: 0, p2: 5}
-        assert not composed_condition.resolve(products)
+        assert not and_condition.resolve(products)
 
-    def test_Composed_condition5(self):
+    def test_ANDCondition5(self):
         simple_condition1 = ProductQuantityCondition(1, p1.product_id)
         simple_condition2 = CategorySumCondition(10000, 'gvarim')
         cond_lst = [simple_condition1, simple_condition2]
-        composed_condition = ComposedCondition(cond_lst)
+        and_condition = ANDCondition(cond_lst)
         products = {p1: 2, p2: 5}
-        assert not composed_condition.resolve(products)
+        assert not and_condition.resolve(products)
 
-    # Tests Discount's Conditions = Returns true if at least 1 condition is met
-    def test_Complete_Condition1(self):
+    # OR ConditionTests = Returns true if at least 1 condition is met
+    def test_OR_Condition1(self):
         simple_condition1 = ProductQuantityCondition(1, p1.product_id)
         simple_condition2 = CategorySumCondition(200, 'gvarim')
         cond_lst = [simple_condition1, simple_condition2]
-        complete_condition = CompleteCondition(cond_lst)
+        or_condition = ORCondition(cond_lst)
         products = {p1: 0, p2: 5}
-        assert complete_condition.resolve(products)
+        assert or_condition.resolve(products)
 
-    def test_Complete_Condition2(self):
+    def test_OR_Condition2(self):
         simple_condition1 = ProductQuantityCondition(1, p1.product_id)
         simple_condition2 = CategorySumCondition(20000, 'gvarim')
         cond_lst = [simple_condition1, simple_condition2]
-        complete_condition = CompleteCondition(cond_lst)
+        or_condition = ORCondition(cond_lst)
         products = {p1: 1, p2: 5}
-        assert complete_condition.resolve(products)
+        assert or_condition.resolve(products)
 
-    def test_Complete_Condition3(self):
+    def test_OR_Condition3(self):
         simple_condition1 = ProductQuantityCondition(1, p1.product_id)
         simple_condition2 = CategorySumCondition(20000, 'gvarim')
         cond_lst = [simple_condition1, simple_condition2]
-        complete_condition = CompleteCondition(cond_lst)
+        or_condition = ORCondition(cond_lst)
         products = {p1: 0, p2: 5}
-        assert not complete_condition.resolve(products)
+        assert not or_condition.resolve(products)
 
-    def test_Complete_Condition4(self):
+    def test_OR_Condition4(self):
         cond_lst = []
-        complete_condition = CompleteCondition(cond_lst)
+        or_condition = ORCondition(cond_lst)
         products = {p1: 0, p2: 5}
-        assert not complete_condition.resolve(products)
+        assert not or_condition.resolve(products)
 
+    def test_AND_Composed_of_OR_Condiion(self):
+        simple_condition1 = ProductQuantityCondition(1, p1.product_id)
+        simple_condition2 = CategorySumCondition(20000, 'dokrim')
+        cond_lst1 = [simple_condition1, simple_condition2]
+        or_condition = ORCondition(cond_lst1)
+
+        simple_condition1 = ProductQuantityCondition(1, p2.product_id)
+        simple_condition2 = CategorySumCondition(100, 'gvarim')
+        cond_lst2 = [simple_condition1, simple_condition2]
+        or_condition2 = ORCondition(cond_lst2)
+
+        products = {p1: 1, p2: 5}
+        and_condition = ANDCondition([or_condition,or_condition2])
+        assert and_condition.resolve(products)
+
+    def test_OR_Composed_of_AND_Condiion(self):
+        simple_condition1 = ProductQuantityCondition(1, p1.product_id)
+        simple_condition2 = CategorySumCondition(100, 'gvarim')
+        cond_lst1 = [simple_condition1, simple_condition2]
+        and_condition = ANDCondition(cond_lst1)
+
+        simple_condition1 = ProductQuantityCondition(100, p2.product_id)
+        simple_condition2 = CategorySumCondition(10000, 'gvarim')
+        cond_lst2 = [simple_condition1, simple_condition2]
+        and_condition2 = ANDCondition(cond_lst2)
+
+        products = {p1: 1, p2: 5}
+        or_condition = ORCondition([and_condition, and_condition2])
+        assert and_condition.resolve(products)

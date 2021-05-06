@@ -2,10 +2,11 @@ import threading
 from typing import Dict, List
 
 from domain.commerce_system.action import Action, ActionPool
-from domain.commerce_system.discount_module.discount_calculator import AdditiveDiscount
+from domain.discount_module.discount_calculator import AdditiveDiscount
 from domain.commerce_system.product import Product
 from domain.commerce_system.transaction import Transaction
 from data_model import ShopModel as Sm
+from domain.discount_module.discount_management import SimpleCond, DiscountManagement, DiscountDict
 
 WORKER_NAME = "name"
 WORKER_TITLE = "title"
@@ -26,6 +27,7 @@ class Shop:
         self.products_lock = threading.Lock()
         self.managers_lock = threading.Lock()
         self.owners_lock = threading.Lock()
+        self.discount_lock = threading.Lock()
         self.shop_managers = {}
         self.shop_owners = {}
         self.discount = AdditiveDiscount([])
@@ -43,7 +45,7 @@ class Shop:
     def add_product(self, **product_info) -> Product:
         """ returns product_id if successful"""
         with self.products_lock:
-            assert not self.has_product(product_info["product_name"]),\
+            assert not self.has_product(product_info["product_name"]), \
                 f"product name {product_info['product_name']} is not unique"
             product = Product(**product_info)
             self.products[product.product_id] = product
@@ -97,7 +99,7 @@ class Shop:
         with self.products_lock:
             product_update_actions = ActionPool([
                 Action(product.set_quantity, product.get_quantity() - amount)
-                .set_reverse(Action(product.set_quantity, product.get_quantity()))
+                    .set_reverse(Action(product.set_quantity, product.get_quantity()))
                 for product, amount in bag
             ])
             product_update_actions.execute_actions()
@@ -164,3 +166,18 @@ class Shop:
     def get_product_info(self, product_id):
         assert product_id in self.products, "product id doesn't exists"
         return self.products.get(product_id)
+
+    def add_discount(self, has_cond: bool, condition: [str or SimpleCond or []], discount: DiscountDict):
+        self.discount_lock.acquire()
+        DiscountManagement.add_discount(self.discount, has_cond, condition, discount)
+        self.discount_lock.release()
+
+    def aggregate_discounts(self, discount_ids: [int], func: str):
+        self.discount_lock.acquire()
+        self.discount.aggregate_discounts(discount_ids,func)
+        self.discount_lock.release()
+
+    def delete_discounts(self, discount_ids):
+        self.discount_lock.acquire()
+        self.discount.delete_discounts(discount_ids)
+        self.discount_lock.release()

@@ -1,6 +1,7 @@
-from typing import List
+from typing import List, Union
 
 from domain.authentication_module.authenticator import Authenticator
+from domain.discount_module.discount_management import SimpleCond, DiscountDict
 from domain.token_module.tokenizer import Tokenizer
 from domain.commerce_system.commerce_system_facade import CommerceSystemFacade
 from domain.logger.log import event_logger, error_logger
@@ -494,7 +495,6 @@ class SystemService:
         return {}
 
     def get_permissions(self, token, shop_id: int) -> dict:  # [permission: str, bool]
-        # return {"edit": True}
         if self.is_valid_token(token):
             try:
                 user_id = self.tokenizer.get_id_by_token(token)
@@ -504,6 +504,13 @@ class SystemService:
             except Exception as e:
                 error_logger.error(e)
         return {}
+
+    ''' NEED TO ADD TOKEN CHECK... But Maybe token check will be moved to ABOVE layer '''
+    def add_discount(self, token: str, shop_id: int, has_cond: bool, condition: List[Union[str,SimpleCond, List]], discount: DiscountDict):
+        self.commerce_system_facade.add_discount(shop_id, has_cond, condition, discount)
+
+    def aggregate_discounts(self, token:str, shop_id: int, discount_ids: [int], func: str):
+        self.commerce_system_facade.aggregate_discounts(shop_id,discount_ids,func)
 
     def cleanup(self):
         self.commerce_system_facade.clean_up()
