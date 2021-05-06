@@ -8,9 +8,10 @@ from domain.commerce_system.transaction import Transaction
 from data_model import ShopModel as Sm
 from domain.discount_module.discount_management import SimpleCond, DiscountManagement, DiscountDict
 
-WORKER_NAME = "name"
-WORKER_TITLE = "title"
-WORKER_APPOINTER = "appointer"
+SHOP_ID = "shopId"
+SHOP_NAME = "shopName"
+SHOP_DESC = "shopDesc"
+SHOP_IMAGE = "shopImage"
 
 
 class Shop:
@@ -31,12 +32,14 @@ class Shop:
         self.shop_managers = {}
         self.shop_owners = {}
         self.discount = AdditiveDiscount([])
+        self.imageUrl = ""
 
     def to_dict(self, include_products=True):
         ret = {
             Sm.SHOP_ID: self.shop_id,
             Sm.SHOP_NAME: self.name,
             Sm.SHOP_DESC: self.description,
+            Sm.SHOP_IMAGE: self.imageUrl,
         }
         if include_products:
             ret[Sm.SHOP_PRODS] = list(map(lambda p: p.to_dict(), self.products.values()))

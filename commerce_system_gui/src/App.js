@@ -20,6 +20,7 @@ import {ShoppingBag} from "./components/ShoppingBag";
 import {Cart} from "./components/Cart";
 import { ProvideAuth } from "./components/use-auth.js";
 import {Main} from "./components/Main";
+import {Main_page} from "./components/Main_page";
 
 const useStyles = makeStyles((theme) => ({
   mainGrid: {
@@ -28,6 +29,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 const categories = [
+  {title: 'Main page', url: ''},
   {title: 'Technology', url: 'technology'},
   {title: 'Design', url: 'design'},
   {title: 'Culture', url: 'culture'},
@@ -117,25 +119,32 @@ const pages = {
   signUp: {
     name: "Sign Up",
   },
+  mainPage: {
+    name: "Main Page",
+  },
 }
 
 
 export default function Blog() {
   const classes = useStyles();
   const [selected, setSelected] = useState(pages.userTransactions);
-
+  const [searchQuery, setSearchQuery] = useState("");
   const setSelectedPage = (page) => {
     localStorage.setItem("page", page.name)
     setSelected(page)
   }
-
+  function onSearchChange(event){
+    // event.persist();
+    console.log( event.target.value);
+    setSearchQuery(event.target.value);
+  }
   return (
       <ProvideAuth>
       <Router>
         <React.Fragment>
           <CssBaseline/>
           <Container maxWidth="lg" className={`site-layout-wrapper=modal-active`}>
-            <Header title={selected.name} categories={categories} />
+            <Header title={selected.name} categories={categories} onSearchChange = {onSearchChange}/>
             <main>
               <Grid container justify="center" spacing={5} className={classes.mainGrid}>
                 <Switch>
@@ -166,8 +175,7 @@ export default function Blog() {
                     <Transactions/>
                   </Route>
                   <Route path="/" exact>
-                    <Main />
-                    <Typography>nothing to see here</Typography>
+                    <Main_page searchQuery = {searchQuery}/>
                   </Route>
                   }
                 </Switch>
