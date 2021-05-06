@@ -2,9 +2,9 @@ import unittest
 from unittest import TestCase
 import threading as th
 
-from acceptance_tests.driver import Driver
-from acceptance_tests.test_data import users, shops, products, permissions, payment_details
-from acceptance_tests.test_utils import (
+from driver import Driver
+from test_data import users, shops, products, permissions, payment_details
+from test_utils import (
     enter_register_and_login, add_product, make_purchases, register_login_users,
     open_shops, add_products, appoint_owners_and_managers, shop_to_products,
     sessions_to_shops, get_shops_not_owned_by_user, fill_with_data, admin_login, get_credentials
@@ -232,7 +232,7 @@ class ShopOwnerOperations(TestCase):
         ))
         shop_staff = self.commerce_system.get_shop_staff_info(self.session_id, self.shop_id)
         expected_usernames = {u[Um.USERNAME] for u in users[:2]}
-        self.assertEquals(len(shop_staff), len(expected_usernames))
+        self.assertEqual(len(shop_staff), len(expected_usernames))
         # usernames_got = {u[Um.USERNAME] for u in shop_staff}
         # self.assertEquals(expected_usernames, usernames_got)
         print(shop_staff)
@@ -361,7 +361,7 @@ class PurchasesTests(TestCase):
         cart_info = self.commerce_system.get_cart_info(u1)
         print(cart_info)
         self.assertTrue(shop_id in cart_info["shopping_bags"])
-        self.assertEquals(len(cart_info["shopping_bags"].items()), 1)
+        self.assertEqual(len(cart_info["shopping_bags"].items()), 1)
         self.assertTrue(any(map(lambda p: p[Pm.PRODUCT_ID] == prod_id, cart_info["shopping_bags"][shop_id]["products"])))
 
     def test_purchase_product(self):
@@ -394,7 +394,7 @@ class PurchasesTests(TestCase):
             prods += self.shops_to_products[shop]
         make_purchases(self.commerce_system, u1, self.product_to_shop, prods[:NUM_PRODS])
         transaction_history = self.commerce_system.get_personal_purchase_history(u1)
-        self.assertEquals(len(transaction_history), NUM_PRODS)
+        self.assertEqual(len(transaction_history), NUM_PRODS)
         self.assertTrue(
             all(map(lambda pr:
                 any(map(lambda t: pr == t["products"][0]["product_id"],
@@ -469,11 +469,11 @@ class GuestTestsWithData(TestCase):
         shop_info = self.commerce_system.get_shop_info(self.guest_sess[self.U1], s1)
         print(shop_info)
         self.assertNotEqual(shop_info, {})
-        self.assertEquals(shop_info["shop_name"], self.sids_to_shop[s1]["shop_name"])
-        self.assertEquals(len(shop_info["products"]), len([pid for pid, sid in self.pid_to_sid.items() if sid == s1]))
+        self.assertEqual(shop_info["shop_name"], self.sids_to_shop[s1]["shop_name"])
+        self.assertEqual(len(shop_info["products"]), len([pid for pid, sid in self.pid_to_sid.items() if sid == s1]))
 
     def test_get_shop_info_bad_shop_id(self):
-        self.assertEquals(self.commerce_system.get_shop_info(self.subs_sess[0], "non_existing_shop_id"), {})
+        self.assertEqual(self.commerce_system.get_shop_info(self.subs_sess[0], "non_existing_shop_id"), {})
 
     def test_search_products_by_name_simple(self):
         results = self.commerce_system.search_products(product_name=products[0]["product_name"])
