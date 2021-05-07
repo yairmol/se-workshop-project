@@ -28,7 +28,6 @@ function useProvideAuth() {
         setToken(new_token);
       })
     }
-    alert(`user token ${token}`);
     return token;
   }
 

@@ -301,7 +301,7 @@ class SystemService:
             self, token: str, shop_id: int, product_id: int,
             product_name: str = None, description: str = None,
             price: float = None, quantity: int = None, categories: List[str] = None
-    ) -> bool:
+    ) -> dict:
         if self.is_valid_token(token):
             try:
                 user_id = self.tokenizer.get_id_by_token(token)
@@ -311,12 +311,13 @@ class SystemService:
                     user_id, shop_id, product_id, product_name, description, price, quantity, categories
                 )
                 event_logger.info(f"User: {user_id} Edit product info successfully")
-                return True
+                return {'status': True, 'description': "Edit product info successfully"}
             except AssertionError as e:
                 event_logger.warning(e)
+                return {'status': False, 'description': e}
             except Exception as e:
                 error_logger.error(e)
-        return False
+        return {'status': False, 'description': 'Failed to edit product'}
 
     # 4.1
     def delete_product(self, token: str, shop_id: int, product_id: int) -> bool:
@@ -503,7 +504,7 @@ class SystemService:
                 event_logger.warning(e)
             except Exception as e:
                 error_logger.error(e)
-        return {}
+        return {'delete': False, 'edit': False, 'add': False, 'discount': False, 'transaction': False, 'owner': False}
 
     ''' NEED TO ADD TOKEN CHECK... But Maybe token check will be moved to ABOVE layer '''
     def add_discount(self, token: str, shop_id: int, has_cond: bool, condition: List[Union[str,SimpleCond, List]], discount: DiscountDict):
