@@ -1,5 +1,5 @@
 import React, {useState, useEffect, useContext, createContext} from "react";
-import {enter, exit, login, logout, register} from "../api";
+import {enter, exit, isValidToken, login, logout, register} from "../api";
 
 const authContext = createContext();
 
@@ -21,8 +21,19 @@ function useProvideAuth() {
   const [token, setToken] = useState(localStorage.getItem("token"));
   const [user, setUser] = useState(localStorage.getItem("user"));
 
-  const signin = (username, password) => {
-    return login(token, username, password)
+  const getToken = async () => {
+    if (!token || !(await isValidToken(token))) {
+      await enter().then((new_token) => {
+        localStorage.setItem("token", new_token)
+        setToken(new_token);
+      })
+    }
+    alert(`user token ${token}`);
+    return token;
+  }
+
+  const signin = async (username, password) => {
+    return login(await getToken(), username, password)
         .then((response) => {
           if (response) {
             setUser(username);
@@ -31,12 +42,14 @@ function useProvideAuth() {
           }
         });
   };
-  const signup = (userData) => {
-    return register(token, userData)
+
+  const signup = async (userData) => {
+    return register(await getToken(), userData)
         .then((response) => {
           return response;
         });
   };
+
   const signout = () =>
       logout(token).then((res) => {
         if (res) {
@@ -48,17 +61,7 @@ function useProvideAuth() {
       });
 
   useEffect(async () => {
-    localStorage.clear();
-    alert(`user token ${token}`);
-
-    if (!token) {
-
-      await enter().then((new_token) => {
-        localStorage.setItem("token", new_token)
-        setToken(new_token);
-        register(new_token, {username: 'yairmol', password: 'mypassword'});
-      })
-    }
+    await getToken();
 
     if (user) {
       setUser(user);
@@ -73,7 +76,7 @@ function useProvideAuth() {
 
   // Return the user object and auth methods
   return {
-    token,
+    getToken,
     user,
     signin,
     signup,

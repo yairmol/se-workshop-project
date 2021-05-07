@@ -1,11 +1,12 @@
 import json
-from typing import List
+from typing import List, Union
 
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 
 from acceptance_tests.test_data import products
 from acceptance_tests.test_utils import fill_with_data, make_purchases
+from domain.discount_module.discount_management import DiscountDict, SimpleCond
 from service.system_service import SystemService
 
 app = Flask(__name__)
@@ -29,6 +30,14 @@ make_purchases(__system_service, subs_sess[0], pid_to_sid, list(pid_to_sid.keys(
 def apply_request_on_function(func, *args, **kwargs):
     data = json.loads(request.data)
     return func(*args, **kwargs, **data)
+
+
+# 2.1
+@app.route(f'{API_BASE}/validate_token')
+def is_valid_token() -> dict:
+    return {
+        "is_valid": __system_service.is_valid_token(request.args.get("token"))
+    }
 
 
 # 2.1
@@ -78,25 +87,29 @@ def search_products() -> List[dict]:
 # TODO: decide on route
 @app.route(f'{API_BASE}/cart/<int:shop_id>/<int:product_id>', methods=['POST'])
 def save_product_to_cart(shop_id: int, product_id: int) -> dict:
-    return apply_request_on_function(
-        __system_service.save_product_to_cart,
-        shop_id=shop_id, product_id=product_id
-    )
+    return {
+        "status": apply_request_on_function(
+            __system_service.save_product_to_cart,
+            shop_id=shop_id, product_id=product_id
+        )
+    }
 
 
 # 2.8
 @app.route(f'{API_BASE}/cart')
 def get_cart_info() -> dict:
-    return apply_request_on_function(__system_service.get_cart_info)
+    return __system_service.get_cart_info(request.args.get("token"))
 
 
 # 2.8
 @app.route(f'{API_BASE}/cart/<int:shop_id>/<int:product_id>', methods=['DELETE'])
 def remove_product_from_cart(shop_id: int, product_id: int) -> dict:
-    return apply_request_on_function(
-        __system_service.remove_product_from_cart,
-        shop_id=shop_id, product_id=product_id
-    )
+    return {
+        "status": apply_request_on_function(
+            __system_service.remove_product_from_cart,
+            shop_id=shop_id, product_id=product_id
+        )
+    }
 
 
 # 2.9
@@ -234,6 +247,35 @@ def get_shop_transaction_history(shop_id: int) -> List[dict]:
 @app.route(f'{API_BASE}/system/transactions')
 def get_system_transactions():
     return apply_request_on_function(__system_service.get_system_transactions)
+
+
+@app.route(f'{API_BASE}/shops/<int:shop_id>/products/<int:product_id>')
+def get_product_info(shop_id: int, product_id: int):
+    return __system_service.get_product_info(request.args.get("token"), shop_id, product_id)
+
+
+@app.route(f'{API_BASE}/permissions/<int:shop_id>')
+def get_permissions(shop_id: int):
+    return __system_service.get_permissions(request.args.get("token"), shop_id)
+
+
+''' NEED TO ADD TOKEN TO FUNCTIONS BELOW'''
+
+
+@app.route(f'{API_BASE}/shops/<int:shop_id>/discounts')
+def add_discount(self, token: str, shop_id: int, has_cond: bool, condition: List[Union[str, SimpleCond, List]],
+                 discount: DiscountDict):
+    return __system_service.add_discount(shop_id, has_cond, condition, discount)
+
+
+@app.route(f'{API_BASE}/shops/<int:shop_id>/discounts')
+def delete_discounts(self, token: str, shop_id: int, discount_ids: [int]):
+    return __system_service.delete_discounts(shop_id, discount_ids)
+
+
+@app.route(f'{API_BASE}/shops/<int:shop_id>/discounts')
+def aggregate_discounts(self, token: str, shop_id: int, discount_ids: [int], func: str):
+    return __system_service.aggregate_discounts(shop_id, discount_ids, func)
 
 
 @app.errorhandler(404)

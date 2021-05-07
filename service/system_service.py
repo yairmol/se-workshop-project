@@ -1,6 +1,7 @@
-from typing import List
+from typing import List, Union
 
 from domain.authentication_module.authenticator import Authenticator
+from domain.discount_module.discount_management import SimpleCond, DiscountDict
 from domain.token_module.tokenizer import Tokenizer
 from domain.commerce_system.commerce_system_facade import CommerceSystemFacade
 from domain.logger.log import event_logger, error_logger
@@ -11,7 +12,6 @@ class TokenNotValidException(Exception):
 
 
 class SystemService:
-
     __instance = None
 
     def __init__(self, commerce_system_facade: CommerceSystemFacade, tokenizer: Tokenizer):
@@ -108,6 +108,19 @@ class SystemService:
                 return {}
         return {}
 
+    def get_all_shops_info(self, token: str) -> dict:
+        if self.is_valid_token(token):
+            try:
+                user_id = self.tokenizer.get_id_by_token(token)
+                event_logger.info(f"user_sess {user_id} requested for all shops information")
+                return self.commerce_system_facade.get_all_shop_info()
+            except AssertionError as e:
+                event_logger.warning(e)
+                return {}
+            except Exception as e:
+                error_logger.error(e)
+                return {}
+        return {}
     # 2.6
     def search_products(
             self, product_name: str = None, keywords: List[str] = None,
@@ -468,6 +481,36 @@ class SystemService:
                 error_logger.error(e)
                 return []
         return []
+
+    def get_product_info(self, token, shop_id: int, product_id: int) -> dict:
+        if self.is_valid_token(token):
+            try:
+                user_id = self.tokenizer.get_id_by_token(token)
+                event_logger.info(f"user {user_id} requested for product {product_id} info page")
+                return self.commerce_system_facade.get_product_info(shop_id, product_id)
+            except AssertionError as e:
+                event_logger.warning(e)
+            except Exception as e:
+                error_logger.error(e)
+        return {}
+
+    def get_permissions(self, token, shop_id: int) -> dict:  # [permission: str, bool]
+        if self.is_valid_token(token):
+            try:
+                user_id = self.tokenizer.get_id_by_token(token)
+                return self.commerce_system_facade.get_permissions(user_id, shop_id)
+            except AssertionError as e:
+                event_logger.warning(e)
+            except Exception as e:
+                error_logger.error(e)
+        return {}
+
+    ''' NEED TO ADD TOKEN CHECK... But Maybe token check will be moved to ABOVE layer '''
+    def add_discount(self, token: str, shop_id: int, has_cond: bool, condition: List[Union[str,SimpleCond, List]], discount: DiscountDict):
+        self.commerce_system_facade.add_discount(shop_id, has_cond, condition, discount)
+
+    def aggregate_discounts(self, token:str, shop_id: int, discount_ids: [int], func: str):
+        self.commerce_system_facade.aggregate_discounts(shop_id,discount_ids,func)
 
     def cleanup(self):
         self.commerce_system_facade.clean_up()

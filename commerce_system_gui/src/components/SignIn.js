@@ -36,7 +36,7 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-export default function SignIn({onSignUpClick, setLoggedIn}) {
+export default function SignIn({}) {
   const classes = useStyles();
   const auth = useAuth();
   let history = useHistory();
@@ -50,16 +50,11 @@ export default function SignIn({onSignUpClick, setLoggedIn}) {
        password: '',
      },
      onSubmit: values => {
-       // alert(JSON.stringify(values));
-       alert(localStorage.getItem('token'))
-       alert(values.username);
-       alert(values.password);
        auth.signin(values.username, values.password).then((res) => {
          history.replace(from);
        });
        // login(localStorage.getItem('token'), values.username, values.password)
        //     .then((res) => {
-       //       alert(JSON.stringify(res.data));
        //       return res.data.status ? setLoggedIn(values.username) : res.data
        //     }).catch((error) => alert(error))
      },

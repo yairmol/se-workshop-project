@@ -7,20 +7,20 @@ import Header from './components/Header';
 import Transactions from "./components/Transactions";
 import {Typography} from "@material-ui/core";
 import SignIn from "./components/SignIn";
-import {enter, logout} from "./api";
 import {
   BrowserRouter as Router,
   Switch,
   Route,
   Link
 } from "react-router-dom";
-import {Register} from "./components/Register";
+import Register from "./components/Register";
 import {Product} from "./components/Product";
 import {Shop} from "./components/Shop";
 import {ShoppingBag} from "./components/ShoppingBag";
 import {Cart} from "./components/Cart";
 import {ProvideAuth} from "./components/use-auth.js";
 import {Main} from "./components/Main";
+import {Main_page} from "./components/Main_page";
 
 const useStyles = makeStyles((theme) => ({
   mainGrid: {
@@ -29,6 +29,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 const categories = [
+  {title: 'Main page', url: ''},
   {title: 'Technology', url: 'technology'},
   {title: 'Design', url: 'design'},
   {title: 'Culture', url: 'culture'},
@@ -118,78 +119,48 @@ const pages = {
   signUp: {
     name: "Sign Up",
   },
+  mainPage: {
+    name: "Main Page",
+  },
 }
 
 
 export default function Blog() {
   const classes = useStyles();
   const [selected, setSelected] = useState(pages.userTransactions);
-
+  const [searchQuery, setSearchQuery] = useState("");
   const setSelectedPage = (page) => {
     localStorage.setItem("page", page.name)
     setSelected(page)
   }
-
-  // useEffect(() => {
-  //   // localStorage.clear();
-  //   const userToken = localStorage.getItem("token");
-  //   alert(userToken);
-  //   if (!userToken) {
-  //     enter().then((token) => localStorage.setItem("token", token))
-  //   }
-  //   const loggedInUser = localStorage.getItem("user");
-  //   if (loggedInUser) {
-  //     setUser(loggedInUser);
-  //   }
-  // }, []);
-
-  // useLayoutEffect(() => {
-  //   const page = localStorage.getItem("page")
-  //   if (page) {
-  //     for (const obj1 in pages) {
-  //       if (pages[obj1].name === page) {
-  //         setSelected(pages[obj1]);
-  //       }
-  //     }
-  //   }
-  // })
-
-  // logout the user
-  // const handleLogout = () => {
-  //   logout(localStorage.getItem("token")).then((res) => {
-  //     alert(JSON.stringify(res))
-  //     if (res.status) {
-  //       setUser(null);
-  //       localStorage.removeItem('user');
-  //       setSelectedPage(pages.signIn);
-  //     }
-  //   })
-  // };
-
-  // const setLoggedIn = (username) => {
-  //   localStorage.setItem('user', username);
-  //   setUser((username));
-  // }
-
+  function onSearchChange(event){
+    // event.persist();
+    console.log( event.target.value);
+    setSearchQuery(event.target.value);
+  }
   return (
       <ProvideAuth>
-        <Router>
-          <React.Fragment>
-            <CssBaseline/>
-            <Container maxWidth="lg" className={`site-layout-wrapper=modal-active`}>
-              <Header title={selected.name} categories={categories}/>
-              <main>
-                <Grid container justify="center" spacing={5} className={classes.mainGrid}>
-                  <Switch>
-                    {/* Guest routes */}
-                    <Route path="/register">
-                      <Register/>
-                    </Route>
-                    <Route path="/cart">
-                      <Cart/>
-                    </Route>
-                    <Route path="/cart/:shop_id">
-                      <ShoppingBag/> {/* This means shopping bag of shop shop_id*/}
+      <Router>
+        <React.Fragment>
+          <CssBaseline/>
+          <Container maxWidth="lg" className={`site-layout-wrapper=modal-active`}>
+            <Header title={selected.name} categories={categories} onSearchChange = {onSearchChange}/>
+            <main>
+              <Grid container justify="center" spacing={5} className={classes.mainGrid}>
+                <Switch>
+                  {/* Guest routes */}
+                  <Route path="/register">
+                    <Register />
+                  </Route>
+                  <Route path="/cart">
+                    <Cart/>
+                  </Route>
+                  <Route path="/cart/:shop_id">
+                    <ShoppingBag/> {/* This means shopping bag of shop shop_id*/}
+                  </Route>
+                  <Route path="/shops">
+                    <Route path="/:shop_id">  {/* this means that in the shop component we can use UseParams()*/}
+                      <Shop/>                 {/* to get the shop_id param and then get the proper shop info */}
                     </Route>
                     {/*<Route path="/shops">*/}
                     {/*  <Route*/}
@@ -205,23 +176,23 @@ export default function Blog() {
                     <Route path="/products" exact>
                       <Product shop_name={'Armani'}/>
                     </Route>
-                    <Route path="/login" exact>
-                      <SignIn/>
-                    </Route>
-                    <Route path="/transactions">
-                      <Transactions/>
-                    </Route>
-                    <Route path="/" exact>
-                      <Main/>
-                      <Typography>nothing to see here</Typography>
-                    </Route>
-                    }
-                  </Switch>
-                </Grid>
-              </main>
-            </Container>
-          </React.Fragment>
-        </Router>
+                  </Route>
+                  <Route path="/login" exact>
+                    <SignIn />
+                  </Route>
+                  <Route path="/transactions">
+                    <Transactions/>
+                  </Route>
+                  <Route path="/" exact>
+                    <Main_page searchQuery = {searchQuery}/>
+                  </Route>
+                  }
+                </Switch>
+              </Grid>
+            </main>
+          </Container>
+        </React.Fragment>
+      </Router>
       </ProvideAuth>
   );
 }

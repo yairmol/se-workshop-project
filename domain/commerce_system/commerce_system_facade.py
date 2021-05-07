@@ -1,5 +1,5 @@
 import threading
-from typing import Dict, List
+from typing import Dict, List, Union
 
 from domain.authentication_module.authenticator import Authenticator
 from domain.commerce_system.ifacade import ICommerceSystemFacade
@@ -9,12 +9,11 @@ from domain.commerce_system.shop import Shop
 from domain.commerce_system.transaction_repo import TransactionRepo
 from domain.commerce_system.user import User, Subscribed, SystemManager
 
-
 # import domain.commerce_system.valdiation as validate
+from domain.discount_module.discount_management import SimpleCond, DiscountDict
 
 
 class CommerceSystemFacade(ICommerceSystemFacade):
-
     active_users_lock = threading.Lock()
     registered_users_lock = threading.Lock()
     shops_lock = threading.Lock()
@@ -64,6 +63,10 @@ class CommerceSystemFacade(ICommerceSystemFacade):
     def get_shop_info(self, shop_id: int) -> dict:
         shop: Shop = self.shops[shop_id]
         return shop.to_dict()
+
+    def get_all_shop_info(self) -> dict:
+        shops: List[Shop] = map(lambda shop: shop.to_dict(), self.shops)
+        return shops
 
     # 2.6
     def search_products(
@@ -280,6 +283,18 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         self.shops.clear()
         self.registered_users.clear()
         self.active_users.clear()
+
+    ''' NEED TO ADD USER PERMISSIONS CHECK.... '''
+
+    def add_discount(self, shop_id: int, has_cond: bool, condition: List[Union[str, SimpleCond, List]],
+                     discount: DiscountDict):
+        self.get_shop(shop_id).add_discount(has_cond, condition, discount)
+
+    def delete_discounts(self, shop_id, discount_ids):
+        self.get_shop(shop_id).delete_discounts(discount_ids)
+
+    def aggregate_discounts(self, shop_id: int, discount_ids: [int], func: str):
+        self.get_shop(shop_id).aggregate_discounts(discount_ids, func)
 
     def get_product_info(self, shop_id, product_id):
         return self.shops.get(shop_id).get_product_info(product_id).to_dict()
