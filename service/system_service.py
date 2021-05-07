@@ -41,7 +41,6 @@ class SystemService:
             new_user_id = self.commerce_system_facade.enter()
             event_logger.info(f"A User entered the system, got id: {new_user_id}")
             token = self.tokenizer.add_new_user_token(new_user_id)
-            event_logger.info(f"User {new_user_id} got token {token}")
             return token
         except Exception as e:
             error_logger.error(e)
@@ -68,7 +67,7 @@ class SystemService:
         if self.is_valid_token(token):
             try:
                 user_id = self.tokenizer.get_id_by_token(token)
-                event_logger.info(f"User: {user_id} tries to register with username: {username} password: {password}")
+                event_logger.info(f"User: {user_id} tries to register with username: {username}")
                 self.commerce_system_facade.register(user_id, username, password, **more)
                 event_logger.info(f"User: {user_id} Registered Successfully")
                 return True
@@ -83,7 +82,7 @@ class SystemService:
         if self.is_valid_token(token):
             try:
                 user_id = self.tokenizer.get_id_by_token(token)
-                event_logger.info(f"User: {user_id} tries to login with username: {username} password: {password}")
+                event_logger.info(f"User: {user_id} tries to login with username: {username}")
                 self.commerce_system_facade.login(user_id, username, password)
                 event_logger.info(f"User: {user_id} Logged in Successfully")
                 return True
