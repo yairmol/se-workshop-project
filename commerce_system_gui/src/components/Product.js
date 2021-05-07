@@ -32,15 +32,16 @@ export const Product = ({shop_name}) => {
   const [description, setDescription] = useState(product.description);
   const [categories, setCategories] = useState(product.categories);
 
-  useEffect(() => {
+  useEffect(async () => {
 
     if (!product) {
-      get_product_info(auth.token, 1, 1).then((res) => {
+      get_product_info(await auth.getToken(), 1, 1).then((res) => {
         setProduct(res)
       });
     }
     if (!permissions) {
-      get_permissions(auth.token, 1).then((res) => {
+      get_permissions(await auth.getToken(), 1).then((res) => {
+        alert(JSON.stringify(res))
         setPermissions(res)
       });
     }
@@ -51,10 +52,17 @@ export const Product = ({shop_name}) => {
     e.preventDefault()
     // WHAT TO DO WITH then.. ?
     edit_product(auth.token, shop_id, product_id, name, price, description, categories)
+        .then((res)=> res.status ? alert("edit product successfully") : alert(res.description))
+
   }
   const onSubmitDelete = (e) => {
     e.preventDefault()
     delete_product(auth.token,shop_id, product_id)
+  }
+
+   const onSubmitBuy = (e) => {
+    e.preventDefault()
+    alert("Need to redirect to Buying page")
   }
 
 
@@ -67,7 +75,7 @@ export const Product = ({shop_name}) => {
               <tr><td>Description:{product.description}</td><td><TextField id="standard-basic" label="New Description" onChange={(e) => setDescription(e.target.value)}/></td></tr>
               <tr><td>Categories:{product.categories}</td><td><TextField id="standard-basic" label="New Categories" onChange={(e) => setCategories(e.target.value)}/></td></tr>
               <tr>  {/* For Regular User */}
-                <Button variant="contained" color="primary"> Buy Now </Button></tr>
+                <Button onClick={onSubmitBuy} variant="contained" color="primary"> Buy Now </Button></tr>
               <tr>  {/* For Owner/Manager */}
                  {permissions.edit ? <Button onClick={onSubmitEdit} variant="contained" color="primary" >
                   Edit Product </Button> : <> </>}

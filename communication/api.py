@@ -256,6 +256,7 @@ def get_product_info(shop_id: int, product_id: int):
 
 @app.route(f'{API_BASE}/permissions/<int:shop_id>')
 def get_permissions(shop_id: int):
+    print(__system_service.get_permissions(request.args.get("token"), shop_id))
     return __system_service.get_permissions(request.args.get("token"), shop_id)
 
 

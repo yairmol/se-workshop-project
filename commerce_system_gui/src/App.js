@@ -173,9 +173,10 @@ export default function Blog() {
                     {/*    </Route>*/}
                     {/*  </Route>*/}
                     {/*</Route>*/}
-                    <Route path="/products" exact>
-                      <Product shop_name={'Armani'}/>
-                    </Route>
+
+                  </Route>
+                  <Route path="/products" exact>
+                    <Product shop_name={'Armani'}/>
                   </Route>
                   <Route path="/login" exact>
                     <SignIn />

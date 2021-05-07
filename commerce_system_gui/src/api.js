@@ -179,28 +179,26 @@ export const edit_product = (token, shop_id, product_id, name, price, descriptio
 {
   const details = `shop id: ${shop_id} product id: ${product_id} name: ${name} price: ${price} description: ${description} categories: ${categories}`
   alert(details)
-  // const url = "http://127.0.0.1:5000/api/edit_product";  // PATH?
-  // return axios({
-  //   method: "put",
-  //   url: url,
-  //   data: {
-  //     token: token,
-  //     shop_id: shop_id,
-  //     product_id: product_id,
-  //     product_name: name,
-  //     price: price,
-  //     description: description,
-  //     categories: categories
-  //   }
-  // }).then((result) => result.data.status)
-  //   .catch((err) => alert(`failed to edit product info due to ${err}`))
+  const url = `http://127.0.0.1:5000/api/shops/${shop_id}/products/${product_id}`;
+  return axios({
+    method: "put",
+    url: url,
+    data: {
+      token: token,
+      product_name: name,
+      price: price,
+      description: description,
+      categories: categories
+    }
+  }).then((result) => result.data)
+    .catch((err) => alert(`failed to edit product info due to ${err}`))
 }
 
-export const delete_product = (token, shop_id, product_id) =>
-{
-  const details = `shop id: ${shop_id} product id: ${product_id} `
-  alert(details)
-}
+// export const delete_product = (token, shop_id, product_id) =>
+// {
+//   const details = `shop id: ${shop_id} product id: ${product_id} `
+//   alert(details)
+// }
 
 export const get_shop_transactions = (token, shop_id) =>
     axios({
