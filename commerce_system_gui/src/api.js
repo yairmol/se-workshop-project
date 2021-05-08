@@ -51,7 +51,7 @@ export const enter = () => {
   return axios({
     method: "post",
     url: url,
-  }).then((res) => res.data.result)
+  }).then((res) => res.data)
       .catch((err) => alert(`failed to enter the system due to ${err}`))
 }
 
@@ -289,6 +289,40 @@ export const get_system_transactions = (token) =>
       throw new Error(res.data.description)
     }
   }).catch((err) => alert(`failed to get system transactions due to ${err}`));
+
+export const get_system_transactions_of_shops = (token, shop_id) =>
+    axios({
+      method: "get",
+      url: `${base_route}/${urljoin(routes.system, routes.transactions, routes.shops)}`,
+      data: {
+        token: token,
+          shop_id: shop_id
+      }
+    }).then((res) => {
+    if (res.data.status) {
+      return res.data.result
+    } else {
+      throw new Error(res.data.description)
+    }
+  }).catch((err) => alert(`failed to get system transactions of shop due to ${err}`));;
+
+export const get_system_transactions_of_user = (token, username) =>
+    axios({
+      method: "get",
+      url: `${base_route}/${urljoin(routes.system, routes.transactions, routes.user)}`,
+      data: {
+        token: token,
+          username: username
+      }
+    }).then((res) => {
+    if (res.data.status) {
+      return res.data.result
+    } else {
+      throw new Error(res.data.description)
+    }
+  }).catch((err) => alert(`failed to get system transactions of user due to ${err}`));;
+
+
 export const get_shop_info = (token, shop_id) =>
     axios({
       method: "get",
