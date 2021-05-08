@@ -2,7 +2,7 @@
 const axios = require("axios");
 const urljoin = require('url-join');
 
-const host = "127.0.0.1"
+const host = "https://127.0.0.1"
 const port = 5000
 
 const host_port = `${host}:${port}`
@@ -19,16 +19,18 @@ const routes = {
   cart: "cart",
   transactions: "transactions",
   system: "system",
-    appointments: "appointments",
-    managers:"managers",
-    owners:"owners",
-    promotions: "promotions"
+  appointments: "appointments",
+  managers: "managers",
+  owners: "owners",
+  promotions: "promotions",
+  discounts: "discounts",
 }
 
 const base_route = `${host_port}/${routes.base}`;
 
 export const isValidToken = (token) => {
-  const url = "http://127.0.0.1:5000/api/validate_token";
+  const url = `${base_route}/validate_token`;
+  alert(url)
   return axios({
     method: "get",
     url: url,
@@ -40,7 +42,8 @@ export const isValidToken = (token) => {
 }
 
 export const enter = () => {
-  const url = "http://127.0.0.1:5000/api/enter";
+  const url = `${base_route}/enter`;
+  alert(url)
   return axios({
     method: "post",
     url: url,
@@ -49,7 +52,7 @@ export const enter = () => {
 }
 
 export const exit = (token) => {
-  const url = "http://127.0.0.1:5000/api/exit";
+  const url = `${base_route}/exit`;
   return axios({
     method: "delete",
     url: url,
@@ -64,7 +67,7 @@ export const exit = (token) => {
 
 export const register = (token, user_data) => {
   // const url = `${base_route}/${routes.login}`;
-  const url = "http://127.0.0.1:5000/api/register";
+  const url = `${base_route}/register`;
   return axios({
     method: "post",
     url: url,
@@ -78,7 +81,7 @@ export const register = (token, user_data) => {
 
 export const login = (token, username, password) => {
   // const url = `${base_route}/${routes.login}`;
-  const url = "http://127.0.0.1:5000/api/login";
+  const url = `${base_route}/login`;
 
   return axios({
     method: "post",
@@ -94,7 +97,7 @@ export const login = (token, username, password) => {
 
 export const logout = (token) => {
   // const url = `${base_route}/${routes.login}`;
-  const url = "http://127.0.0.1:5000/api/logout";
+  const url = `${base_route}/logout`;
 
   return axios({
     method: "put",
@@ -106,7 +109,7 @@ export const logout = (token) => {
 }
 
 export const get_cart_info = (token) => {
-  const url = "http://127.0.0.1:5000/api/cart";
+  const url = `${base_route}/cart`;
   return axios({
     url: url,
     method: "get",
@@ -118,7 +121,7 @@ export const get_cart_info = (token) => {
 }
 
 export const save_product_to_cart = (token, shop_id, product_id, amount_to_buy) => {
-  const url = `http://127.0.0.1:5000/api/cart/${shop_id}/${product_id}`;
+  const url = `${base_route}/cart/${shop_id}/${product_id}`;
   return axios({
     url: url,
     method: "post",
@@ -131,7 +134,7 @@ export const save_product_to_cart = (token, shop_id, product_id, amount_to_buy) 
 }
 
 export const remove_product_from_cart = (token, shop_id, product_id, amount) => {
-  const url = `http://127.0.0.1:5000/api/cart/${shop_id}/${product_id}`;
+  const url = `${base_route}/cart/${shop_id}/${product_id}`;
   return axios({
     url: url,
     method: "delete",
@@ -146,14 +149,15 @@ export const remove_product_from_cart = (token, shop_id, product_id, amount) => 
 export const get_user_transactions = (token) =>
     axios({
       method: "get",
-      url: `http://127.0.0.1:5000/api/transactions?token=${token}`,
+      url: `${base_route}/transactions?token=${token}`,
     }).then((res) => res.data)
         .catch((err) => alert(`can't find user transactions due to ${err}`));
 
 
+
 export const get_product_info = (token, shop_id, product_id) => {
   // const url = `${base_route}/${routes.login}`;
-  const url = `http://127.0.0.1:5000/api/shops/${shop_id}/products/${product_id}`;
+  const url = `http://0.0.0.0:8080/api/shops/${shop_id}/products/${product_id}`;
   return axios({
     params: {
       token: token
@@ -165,7 +169,7 @@ export const get_product_info = (token, shop_id, product_id) => {
 }
 export const get_permissions = (token, shop_id) =>
 {
-  const url = `http://127.0.0.1:5000/api/permissions/${shop_id}`;
+  const url = `http://0.0.0.0:8080/api/permissions/${shop_id}`;
   return axios({
     params: {
       token: token
@@ -179,7 +183,7 @@ export const edit_product = (token, shop_id, product_id, name, price, descriptio
 {
   const details = `shop id: ${shop_id} product id: ${product_id} name: ${name} price: ${price} description: ${description} categories: ${categories}`
   alert(details)
-  const url = `http://127.0.0.1:5000/api/shops/${shop_id}/products/${product_id}`;
+  const url = `http://0.0.0.0:8080/api/shops/${shop_id}/products/${product_id}`;
   return axios({
     method: "put",
     url: url,
