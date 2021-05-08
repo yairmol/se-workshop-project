@@ -58,6 +58,18 @@ class Appointment:
     def promote_manager_to_owner(self, manager_sub):
         raise Exception("Cannot promote manager to owner")
 
+    def add_discount(self, has_cond, condition, discount):
+        raise Exception("Cannot manage discounts")
+
+    def delete_discount(self, discount_ids):
+        raise Exception("Cannot manage discounts")
+
+    def aggregate_discounts(self, discount_ids, func):
+        raise Exception("Cannot manage discounts")
+
+    def get_permissions(self):
+        pass
+
 
 class ShopManager(Appointment):
 
@@ -66,6 +78,7 @@ class ShopManager(Appointment):
         self.delete_product_permission = False
         self.edit_product_permission = False
         self.add_product_permission = False
+        self.discount_permission = False
         self.get_trans_history_permission = False
         self.set_permissions(permissions)
 
@@ -90,7 +103,24 @@ class ShopManager(Appointment):
         self.edit_product_permission = "edit_product" in permissions
         self.add_product_permission = "add_product" in permissions
         self.get_trans_history_permission = "get_transaction_history" in permissions
+        self.get_trans_history_permission = "discount" in permissions
 
+    def add_discount(self, has_cond, condition, discount):
+        assert self.discount_permission, "manager user does not have permission to manage discounts"
+        return self.shop.add_discount(has_cond, condition, discount)
+
+    def delete_discounts(self, discount_ids):
+        assert self.discount_permission, "manager user does not have permission to manage discounts"
+        return self.shop.delete_discounts(discount_ids)
+
+    def aggregate_discounts(self, discount_ids: [int], func: str):
+        assert self.discount_permission, "manager user does not have permission to manage discounts"
+        return self.shop.aggregate_discounts(discount_ids, func)
+
+    def get_permissions(self):
+        return {'delete': self.delete_product_permission, 'edit': self.edit_product_permission,
+                'add': self.add_product_permission, 'discount': self.discount_permission,
+                'transaction': self.get_trans_history_permission, 'owner': False}
 
 class ShopOwner(Appointment):
     def __init__(self, shop: Shop, username: str = "default_username", appointer=None):
@@ -129,15 +159,15 @@ class ShopOwner(Appointment):
 
     def add_product(self, **product_info) -> Product:
         return self.shop.add_product(**product_info)
-    
+
     def edit_product(self, product_id: int, **to_edit):
         self.shop.edit_product(product_id, **to_edit)
 
     def delete_product(self, product_id: int):
         return self.shop.delete_product(product_id)
-    
+
     def un_appoint_manager(self, manager_sub, cascading=False):
-        assert self.shop in manager_sub.appointments and isinstance(manager_sub.appointments[self.shop], ShopManager),\
+        assert self.shop in manager_sub.appointments and isinstance(manager_sub.appointments[self.shop], ShopManager), \
             "user is not a manager"
         assert manager_sub in self.manager_appointees, "manager was not assigned by this owner"
         self.remove_appointment(manager_sub)
@@ -148,7 +178,7 @@ class ShopOwner(Appointment):
             self.manager_appointees_lock.release()
 
     def edit_manager_permissions(self, manager_sub, permissions: List[str]):
-        assert self.shop in manager_sub.appointments.keys()\
+        assert self.shop in manager_sub.appointments.keys() \
                and isinstance(manager_sub.appointments[self.shop], ShopManager), "user is not a manager"
         assert manager_sub in self.manager_appointees, "manager was not assigned by this owner"
         manager_sub.appointments[self.shop].set_permissions(permissions)
@@ -164,7 +194,7 @@ class ShopOwner(Appointment):
         self.manager_appointees_lock.release()
 
     def un_appoint_owner(self, owner_sub, cascading=False):
-        assert self.shop in owner_sub.appointments.keys() and isinstance(owner_sub.appointments[self.shop], ShopOwner),\
+        assert self.shop in owner_sub.appointments.keys() and isinstance(owner_sub.appointments[self.shop], ShopOwner), \
             "user is not an owner"
         assert owner_sub in self.owner_appointees, "owner was not assigned by this owner"
         owner_sub.appointments[self.shop].un_appoint_appointees()
@@ -184,3 +214,15 @@ class ShopOwner(Appointment):
 
     def get_shop_staff_info(self):
         pass
+
+    def add_discount(self, has_cond, condition, discount):
+        return self.shop.add_discount(has_cond, condition, discount)
+
+    def delete_discounts(self, discount_ids):
+        return self.shop.delete_discounts(discount_ids)
+
+    def aggregate_discounts(self, discount_ids, func):
+        return self.shop.aggregate_discounts(discount_ids, func)
+
+    def get_permissions(self):
+        return {'delete': True, 'edit': True, 'add': True, 'discount': True, 'transaction': True, 'owner': True}

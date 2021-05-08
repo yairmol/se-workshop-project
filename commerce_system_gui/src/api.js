@@ -158,6 +158,55 @@ export const get_user_transactions = (token) =>
         // .catch((err) => alert(`can't find user transactions due to ${err}`));
 
 
+export const get_product_info = (token, shop_id, product_id) => {
+  // const url = `${base_route}/${routes.login}`;
+  const url = `http://127.0.0.1:5000/api/shops/${shop_id}/products/${product_id}`;
+  return axios({
+    params: {
+      token: token
+    },
+    method: "get",
+    url: url,
+  }).then((res) => res.data)
+    .catch((err) => alert(err))
+}
+export const get_permissions = (token, shop_id) =>
+{
+  const url = `http://127.0.0.1:5000/api/permissions/${shop_id}`;
+  return axios({
+    params: {
+      token: token
+    },
+    method: "get",
+    url: url,
+  }).then((res) => res.data)
+    .catch((err) => alert(err))
+}
+export const edit_product = (token, shop_id, product_id, name, price, description, categories) =>
+{
+  const details = `shop id: ${shop_id} product id: ${product_id} name: ${name} price: ${price} description: ${description} categories: ${categories}`
+  alert(details)
+  const url = `http://127.0.0.1:5000/api/shops/${shop_id}/products/${product_id}`;
+  return axios({
+    method: "put",
+    url: url,
+    data: {
+      token: token,
+      product_name: name,
+      price: price,
+      description: description,
+      categories: categories
+    }
+  }).then((result) => result.data)
+    .catch((err) => alert(`failed to edit product info due to ${err}`))
+}
+
+// export const delete_product = (token, shop_id, product_id) =>
+// {
+//   const details = `shop id: ${shop_id} product id: ${product_id} `
+//   alert(details)
+// }
+
 export const get_shop_transactions = (token, shop_id) =>
     axios({
       method: "get",

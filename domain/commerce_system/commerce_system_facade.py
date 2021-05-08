@@ -303,14 +303,29 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         self.registered_users.clear()
         self.active_users.clear()
 
-    ''' NEED TO ADD USER PERMISSIONS CHECK.... '''
-
-    def add_discount(self, shop_id: int, has_cond: bool, condition: List[Union[str, SimpleCond, List]],
+    def add_discount(self, user_id: int, shop_id: int, has_cond: bool, condition: List[Union[str, SimpleCond, List]],
                      discount: DiscountDict):
-        self.get_shop(shop_id).add_discount(has_cond, condition, discount)
 
-    def delete_discounts(self, shop_id, discount_ids):
-        self.get_shop(shop_id).delete_discounts(discount_ids)
+        shop = self.get_shop(shop_id)
+        subscribed = self.get_user(user_id).user_state
+        subscribed.add_discount(shop, has_cond, condition, discount)
 
-    def aggregate_discounts(self, shop_id: int, discount_ids: [int], func: str):
-        self.get_shop(shop_id).aggregate_discounts(discount_ids, func)
+    def delete_discounts(self, user_id: int, shop_id, discount_ids):
+        shop = self.get_shop(shop_id)
+        subscribed = self.get_user(user_id).user_state
+        subscribed.delete_discounts(shop, discount_ids)
+
+    def aggregate_discounts(self, user_id: int, shop_id: int, discount_ids: [int], func: str):
+        shop = self.get_shop(shop_id)
+        subscribed = self.get_user(user_id).user_state
+        subscribed.aggregate_discounts(shop, discount_ids, func)
+
+    def get_product_info(self, shop_id, product_id):
+        return self.shops.get(shop_id).get_product_info(product_id).to_dict()
+
+    def get_permissions(self, user_id, shop_id) -> dict:
+        # return {'delete': False, 'edit': False, 'add': False, 'discount': False, 'transaction': False, 'owner': False}
+
+        shop = self.get_shop(shop_id)
+        subscribed = self.get_user(user_id).user_state
+        return subscribed.get_permissions(shop)
