@@ -1,6 +1,6 @@
 from typing import Tuple, List, Dict
 
-from acceptance_tests.test_data import users, shops, permissions, products, payment_details
+from test_data import users, shops, permissions, products, payment_details
 from service.system_service import SystemService
 from data_model import UserModel as Um, ShopModel as Sm, ProductModel as Pm, admin_credentials
 
@@ -10,7 +10,7 @@ def get_credentials(user: dict):
 
 
 def enter_register_and_login(commerce_system: SystemService, user: dict) -> str:
-    session_id = commerce_system.enter()
+    session_id = commerce_system.enter()['result']
     assert isinstance(session_id, str) and session_id != ""
     assert commerce_system.register(session_id, **user)
     assert commerce_system.login(session_id, **get_credentials(user))
@@ -18,7 +18,7 @@ def enter_register_and_login(commerce_system: SystemService, user: dict) -> str:
 
 
 def add_product(session_id: str, comm_sys: SystemService, shop: int, product: dict):
-    product_id = comm_sys.add_product_to_shop(session_id, shop, **product)
+    product_id = comm_sys.add_product_to_shop(session_id, shop, **product)['result']
     assert isinstance(product_id, int)
     assert product_id > 0
     return product_id
@@ -31,13 +31,13 @@ def register_login_users(commerce_system, num_users) -> Dict[str, dict]:
 
 
 def enter_guests(commerce_system: SystemService, num_guests) -> List[str]:
-    return [commerce_system.enter() for i in range(num_guests)]
+    return [commerce_system.enter()['result'] for i in range(num_guests)]
 
 
 def open_shops(commerce_system: SystemService, sessions, num_shops) -> (Dict[int, dict], Dict[int, str]):
     num_users = len(sessions)
     shop_ids_to_sessions_and_shops = {
-        commerce_system.open_shop(sessions[i % num_users], **shops[i]): (shops[i], sessions[i % num_users])
+        commerce_system.open_shop(sessions[i % num_users], **shops[i])['result']: (shops[i], sessions[i % num_users])
         for i in range(num_shops)
     }
     shop_id_to_shop = {sid: shop for sid, (shop, _) in shop_ids_to_sessions_and_shops.items()}
