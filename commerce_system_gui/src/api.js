@@ -224,6 +224,27 @@ export const get_system_transactions = (token) =>
         token: token
       }
     });
+
+export const get_system_transactions_of_shops = (token, shop_id) =>
+    axios({
+      method: "get",
+      url: `${base_route}/${urljoin(routes.system, routes.transactions, routes.shops)}`,
+      data: {
+        token: token,
+          shop_id: shop_id
+      }
+    });
+
+export const get_system_transactions_of_user = (token, username) =>
+    axios({
+      method: "get",
+      url: `${base_route}/${urljoin(routes.system, routes.transactions, routes.user)}`,
+      data: {
+        token: token,
+          username: username
+      }
+    });
+
 export const get_shop_info = (token, shop_id) =>
     axios({
       method: "get",
