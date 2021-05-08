@@ -15,6 +15,10 @@ const routes = {
   login: "login",
   logout: "logout",
   shops: "shops",
+    user: "user",
+    all_shops: "all_shops",
+    all_user_names: "all_user_names",
+    all_shops_ids_and_names: "all_shops_ids_and_names",
   search: "search",
   cart: "cart",
   transactions: "transactions",
@@ -194,7 +198,7 @@ export const get_user_transactions = (token) =>
 
 export const get_product_info = (token, shop_id, product_id) => {
   // const url = `${base_route}/${routes.login}`;
-  const url = `http://0.0.0.0:8080/api/shops/${shop_id}/products/${product_id}`;
+  const url = `http://127.0.0.1:5000/api/shops/${shop_id}/products/${product_id}`;
   return axios({
     params: {
       token: token
@@ -211,7 +215,7 @@ export const get_product_info = (token, shop_id, product_id) => {
 }
 export const get_permissions = (token, shop_id) =>
 {
-  const url = `http://0.0.0.0:8080/api/permissions/${shop_id}`;
+  const url = `http://127.0.0.1:5000/api/permissions/${shop_id}`;
   return axios({
     params: {
       token: token
@@ -230,7 +234,7 @@ export const edit_product = (token, shop_id, product_id, name, price, descriptio
 {
   const details = `shop id: ${shop_id} product id: ${product_id} name: ${name} price: ${price} description: ${description} categories: ${categories}`
   alert(details)
-  const url = `http://0.0.0.0:8080/api/shops/${shop_id}/products/${product_id}`;
+  const url = `http://127.0.0.1:5000/api/shops/${shop_id}/products/${product_id}`;
   return axios({
     method: "put",
     url: url,
@@ -303,7 +307,16 @@ export const get_shop_info = (token, shop_id) =>
 export const get_all_shops_info = (token) =>
     axios({
       method: "get",
-      url: `${base_route}/${urljoin(routes.shops)}`,
+      url: `${base_route}/${urljoin(routes.all_shops)}`,
+      data: {
+        token: token,
+      }
+    }).then((res) => res.data)
+
+export const get_all_shops_ids_and_names = (token) =>
+    axios({
+      method: "get",
+      url: `${base_route}/${urljoin(routes.all_shops_ids_and_names)}`,
       data: {
         token: token,
       }
@@ -314,6 +327,19 @@ export const get_all_shops_info = (token) =>
       throw new Error(res.data.description)
     }
   }).catch((err) => alert(`failed to get all shops info due to ${err}`));
+    }).then((res) => res.data)
+        // .catch((err) => alert(`can't find user transactions due to ${err}`));;
+        // .catch((err) => alert(`can't find user transactions due to ${err}`));;
+
+
+export const get_all_user_names = (token) =>
+    axios({
+      method: "get",
+      url: `${base_route}/${urljoin(routes.all_user_names)}`,
+      data: {
+        token: token,
+      }
+    }).then((res) => res.data)
 
 export const purchase_product = (token, shop_id, product_id, amount, details) =>
     axios({

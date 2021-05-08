@@ -23,6 +23,9 @@ class User:
         self.counter_lock.release()
         self.cart = ShoppingCart(self.id)
 
+    def get_name(self):
+        raise NotImplementedError()
+
     def login(self, sub_user: Subscribed):
         self.user_state = sub_user
 
@@ -35,16 +38,16 @@ class User:
     def purchase_product(self, shop: Shop, product: Product, amount_to_buy: int, payment_details: dict):
         bag = ShoppingBag(shop)
         bag.add_product(product, amount_to_buy)
-        transaction = bag.purchase_bag(payment_details)
+        transaction = bag.purchase_bag(self.get_name(), payment_details)
         self._add_transaction(transaction)
 
     def purchase_shopping_bag(self, shop: Shop, payment_details: dict):
         bag = self.cart[shop]
-        transaction = bag.purchase_bag(payment_details)
+        transaction = bag.purchase_bag(self.get_name(), payment_details)
         self._add_transaction(transaction)
 
     def purchase_cart(self, payment_details: dict, do_what_you_can=False):
-        transactions = self.cart.purchase_cart(payment_details, do_what_you_can)
+        transactions = self.cart.purchase_cart(self.get_name(), payment_details, do_what_you_can)
         for transaction in transactions:
             self._add_transaction(transaction)
 
@@ -96,6 +99,9 @@ class User:
 
 
 class UserState:
+    def get_name(self):
+        return "Guest"
+
     def register(self, username: str, **user_details):
         raise Exception("Logged-in User cannot register")
 
@@ -160,7 +166,6 @@ class UserState:
         return {'delete': False, 'edit': False, 'add': False, 'discount': False, 'transaction': False, 'owner': False}
 
 class Guest(UserState):
-
     def register(self, username: str, **user_details):
         return Subscribed(username)
 
@@ -176,6 +181,8 @@ class Subscribed(UserState):
         pass
 
     """ calls personal appointment for the request. if doesnt have permission raises an exception"""
+    def get_name(self):
+        return self.username
 
     def appoint_manager(self, sub: Subscribed, shop: Shop, permissions: List[str]):
         session_app = self.get_appointment(shop)
@@ -259,3 +266,9 @@ class SystemManager(Subscribed):
 
     def get_system_transaction_history(self):
         return self.system_transactions.get_transactions()
+
+    def get_system_transaction_history_of_shop(self,shop_id):
+        return self.system_transactions.get_transactions_of_shop(shop_id)
+
+    def get_system_transaction_history_of_user(self, username):
+        return self.system_transactions.get_transactions_of_user(username)
