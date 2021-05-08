@@ -4,7 +4,7 @@ from typing import Dict, List, Union
 from domain.authentication_module.authenticator import Authenticator
 from domain.commerce_system.ifacade import ICommerceSystemFacade
 from domain.commerce_system.product import Product
-from domain.commerce_system.purchase_conditions import Condition, MaxTimeForCategoryCondition, MaxQuantityForProductCondition
+from domain.commerce_system.purchase_conditions import Condition, TimeWindowForCategoryCondition, MaxQuantityForProductCondition
 from domain.commerce_system.search_engine import search, Filter
 from domain.commerce_system.shop import Shop
 from domain.commerce_system.transaction_repo import TransactionRepo

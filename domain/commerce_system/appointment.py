@@ -80,6 +80,7 @@ class ShopManager(Appointment):
         self.edit_product_permission = False
         self.add_product_permission = False
         self.discount_permission = False
+        self.purchase_condition_permission = False
         self.get_trans_history_permission = False
         self.set_permissions(permissions)
 

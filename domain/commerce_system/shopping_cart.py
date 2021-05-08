@@ -75,9 +75,12 @@ class ShoppingBag:
         self.products.clear()
         return True
 
-    def purchase_bag(self, username, payment_details) -> Transaction:
+    def resolve_shop_conditions(self) -> bool:
         conditions = ANDCondition(self.shop.conditions)
-        assert conditions.resolve(self.products), f"condition exception: {self}"
+        return conditions.resolve(self.products)
+
+    def purchase_bag(self, username, payment_details) -> Transaction:
+        assert self.resolve_shop_conditions(), f"condition exception: {self}"
 
         total_price = self.calculate_price()
         products_dtos = self.get_products_dtos()
