@@ -2,6 +2,7 @@ import threading
 from typing import Dict, List
 
 from domain.commerce_system.action import Action, ActionPool
+from domain.commerce_system.purchase_conditions import Condition
 from domain.discount_module.discount_calculator import AdditiveDiscount
 from domain.commerce_system.product import Product
 from domain.commerce_system.transaction import Transaction
@@ -33,6 +34,7 @@ class Shop:
         self.shop_owners = {}
         self.discount = AdditiveDiscount([])
         self.imageUrl = ""
+        self.conditions = []
 
     def to_dict(self, include_products=True):
         ret = {
@@ -184,3 +186,9 @@ class Shop:
         self.discount_lock.acquire()
         self.discount.delete_discounts(discount_ids)
         self.discount_lock.release()
+
+    def add_purchase_condition(self, condition: Condition):
+        self.conditions.append(condition)
+
+    def remove_purchase_condition(self, condition: Condition):
+        self.conditions.remove(condition)

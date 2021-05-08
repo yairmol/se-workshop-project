@@ -4,6 +4,7 @@ from typing import Dict, List, Union
 from domain.authentication_module.authenticator import Authenticator
 from domain.commerce_system.ifacade import ICommerceSystemFacade
 from domain.commerce_system.product import Product
+from domain.commerce_system.purchase_conditions import Condition, MaxTimeForCategoryCondition, MaxQuantityForProductCondition
 from domain.commerce_system.search_engine import search, Filter
 from domain.commerce_system.shop import Shop
 from domain.commerce_system.transaction_repo import TransactionRepo
@@ -173,6 +174,18 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         shop = self.get_shop(shop_id)
         worker = self.get_user(user_id).user_state
         return worker.delete_product(shop, product_id)
+
+    # 4.2
+    def add_purchase_condition(self, user_id: int, shop_id: int, condition: Condition):
+        worker = self.get_user(user_id).user_state
+        shop = self.get_shop(shop_id)
+        worker.add_purchase_condition(shop, condition)
+
+    # 4.2
+    def remove_purchase_condition(self, user_id: int, shop_id: int, condition: Condition):
+        worker = self.get_user(user_id).user_state
+        shop = self.get_shop(shop_id)
+        worker.remove_purchase_condition(shop, condition)
 
     # 4.3
     def appoint_shop_owner(self, user_id: int, shop_id: int, username: str):

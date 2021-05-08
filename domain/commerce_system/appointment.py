@@ -4,6 +4,7 @@ import threading
 from typing import List
 
 from domain.commerce_system.product import Product
+from domain.commerce_system.purchase_conditions import Condition
 from domain.commerce_system.shop import Shop
 
 
@@ -116,6 +117,16 @@ class ShopManager(Appointment):
     def aggregate_discounts(self, discount_ids: [int], func: str):
         assert self.discount_permission, "manager user does not have permission to manage discounts"
         return self.shop.aggregate_discounts(discount_ids, func)
+
+    def add_purchase_condition(self, condition: Condition):
+        assert self.purchase_condition_permission, "manager user does not have permission to" \
+                                                   " manage purchase conditions"
+        return self.shop.add_purchase_condition(condition)
+
+    def remove_purchase_condition(self, condition: Condition):
+        assert self.purchase_condition_permission, "manager user does not have permission to " \
+                                                   "manage purchase conditions"
+        return self.shop.remove_purchase_condition(condition)
 
     def get_permissions(self):
         return {'delete': self.delete_product_permission, 'edit': self.edit_product_permission,

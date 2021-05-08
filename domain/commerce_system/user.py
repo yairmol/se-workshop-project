@@ -4,6 +4,7 @@ from typing import List, Dict
 
 from domain.commerce_system.appointment import Appointment, ShopOwner
 from domain.commerce_system.product import Product
+from domain.commerce_system.purchase_conditions import Condition
 from domain.commerce_system.shop import Shop
 from domain.commerce_system.shopping_cart import ShoppingBag
 from domain.commerce_system.transaction_repo import TransactionRepo
@@ -33,6 +34,8 @@ class User:
         self.user_state.logout()
 
     def purchase_product(self, shop: Shop, product: Product, amount_to_buy: int, payment_details: dict):
+        conditions = shop.conditions
+
         bag = ShoppingBag(shop)
         bag.add_product(product, amount_to_buy)
         transaction = bag.purchase_bag(payment_details)
@@ -92,6 +95,12 @@ class User:
         raise NotImplementedError()
 
     def get_shop_transaction_history(self, shop: Shop) -> List[Transaction]:
+        raise NotImplementedError()
+
+    def add_purchase_condition(self, shop: Shop, condition: Condition):
+        raise NotImplementedError()
+
+    def remove_purchase_condition(self, shop: Shop, condition: Condition):
         raise NotImplementedError()
 
 
@@ -156,8 +165,15 @@ class UserState:
     def aggregate_discounts(self, shop, discount_ids, func):
         raise Exception("User doesnt have permissions to manage discounts")
 
+    def add_purchase_condition(self, shop: Shop, condition: Condition):
+        raise Exception("User cannot perform this action")
+
+    def remove_purchase_condition(self, shop: Shop, condition: Condition):
+        raise Exception("User cannot perform this action")
+
     def get_permissions(self, shop):
         return {'delete': False, 'edit': False, 'add': False, 'discount': False, 'transaction': False, 'owner': False}
+
 
 class Guest(UserState):
 
@@ -242,7 +258,15 @@ class Subscribed(UserState):
 
     def aggregate_discounts(self, shop, discount_ids, func):
         appointment = self.get_appointment(shop)
-        appointment.aggregate_discounts(discount_ids,func)
+        appointment.aggregate_discounts(discount_ids, func)
+
+    def add_purchase_condition(self, shop: Shop, condition: Condition):
+        appointment = self.get_appointment(shop)
+        appointment.add_purchase_condition(condition)
+
+    def remove_purchase_condition(self, shop: Shop, condition: Condition):
+        appointment = self.get_appointment(shop)
+        appointment.remove_purchase_condition(condition)
 
     def get_permissions(self, shop):
         try:
@@ -250,7 +274,9 @@ class Subscribed(UserState):
             appointment.get_permissions()
         except:
             print("!!!!!!!!!!!!!!!!!!!")
-            return {'delete': False, 'edit': False, 'add': False, 'discount': False, 'transaction': False, 'owner': False}
+            return {'delete': False, 'edit': False, 'add': False, 'discount': False, 'transaction': False,
+                    'owner': False}
+
 
 class SystemManager(Subscribed):
     def __init__(self, username: str, system_transactions: TransactionRepo):

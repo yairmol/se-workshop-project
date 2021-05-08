@@ -3,6 +3,7 @@ from datetime import datetime
 from domain.commerce_system.action import Action, ActionPool
 from domain.commerce_system.product import Product
 from domain.commerce_system.productDTO import ProductDTO
+from domain.commerce_system.purchase_conditions import ANDCondition
 from domain.commerce_system.shop import Shop
 
 from typing import Dict
@@ -75,6 +76,9 @@ class ShoppingBag:
         return True
 
     def purchase_bag(self, payment_details) -> Transaction:
+        conditions = ANDCondition(self.shop.conditions)
+        assert conditions.resolve(self.products), f"condition exception: {self}"
+
         total_price = self.calculate_price()
         products_dtos = self.get_products_dtos()
         transaction = Transaction(
