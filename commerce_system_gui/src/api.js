@@ -2,7 +2,7 @@
 const axios = require("axios");
 const urljoin = require('url-join');
 
-const host = "127.0.0.1"
+const host = "https://127.0.0.1"
 const port = 5000
 
 const host_port = `${host}:${port}`
@@ -19,16 +19,18 @@ const routes = {
   cart: "cart",
   transactions: "transactions",
   system: "system",
-    appointments: "appointments",
-    managers:"managers",
-    owners:"owners",
-    promotions: "promotions"
+  appointments: "appointments",
+  managers: "managers",
+  owners: "owners",
+  promotions: "promotions",
+  discounts: "discounts",
 }
 
 const base_route = `${host_port}/${routes.base}`;
 
 export const isValidToken = (token) => {
-  const url = "http://127.0.0.1:5000/api/validate_token";
+  const url = `${base_route}/validate_token`;
+  alert(url)
   return axios({
     method: "get",
     url: url,
@@ -40,7 +42,8 @@ export const isValidToken = (token) => {
 }
 
 export const enter = () => {
-  const url = "http://127.0.0.1:5000/api/enter";
+  const url = `${base_route}/enter`;
+  alert(url)
   return axios({
     method: "post",
     url: url,
@@ -49,7 +52,7 @@ export const enter = () => {
 }
 
 export const exit = (token) => {
-  const url = "http://127.0.0.1:5000/api/exit";
+  const url = `${base_route}/exit`;
   return axios({
     method: "delete",
     url: url,
@@ -64,7 +67,7 @@ export const exit = (token) => {
 
 export const register = (token, user_data) => {
   // const url = `${base_route}/${routes.login}`;
-  const url = "http://127.0.0.1:5000/api/register";
+  const url = `${base_route}/register`;
   return axios({
     method: "post",
     url: url,
@@ -78,7 +81,7 @@ export const register = (token, user_data) => {
 
 export const login = (token, username, password) => {
   // const url = `${base_route}/${routes.login}`;
-  const url = "http://127.0.0.1:5000/api/login";
+  const url = `${base_route}/login`;
 
   return axios({
     method: "post",
@@ -94,7 +97,7 @@ export const login = (token, username, password) => {
 
 export const logout = (token) => {
   // const url = `${base_route}/${routes.login}`;
-  const url = "http://127.0.0.1:5000/api/logout";
+  const url = `${base_route}/logout`;
 
   return axios({
     method: "put",
@@ -106,19 +109,24 @@ export const logout = (token) => {
 }
 
 export const get_cart_info = (token) => {
-  const url = "http://127.0.0.1:5000/api/cart";
+  const url = `${base_route}/cart`;
   return axios({
     url: url,
     method: "get",
     params: {
       token: token
     },
-  }).then((res) => res.data)
-      .catch((err) => alert(`failed to get cart info due to ${err}`))
+  }).then((res) => {
+    if (res.data.status) {
+      return res.data.results
+    } else {
+      throw new Error(res.data.description)
+    }
+  }).catch((err) => alert(`failed to get cart info due to ${err}`))
 }
 
 export const save_product_to_cart = (token, shop_id, product_id, amount_to_buy) => {
-  const url = `http://127.0.0.1:5000/api/cart/${shop_id}/${product_id}`;
+  const url = `${base_route}/cart/${shop_id}/${product_id}`;
   return axios({
     url: url,
     method: "post",
@@ -131,7 +139,7 @@ export const save_product_to_cart = (token, shop_id, product_id, amount_to_buy) 
 }
 
 export const remove_product_from_cart = (token, shop_id, product_id, amount) => {
-  const url = `http://127.0.0.1:5000/api/cart/${shop_id}/${product_id}`;
+  const url = `${base_route}/cart/${shop_id}/${product_id}`;
   return axios({
     url: url,
     method: "delete",
@@ -146,7 +154,7 @@ export const remove_product_from_cart = (token, shop_id, product_id, amount) => 
 export const get_user_transactions = (token) =>
     axios({
       method: "get",
-      url: `http://127.0.0.1:5000/api/transactions?token=${token}`,
+      url: `${base_route}/transactions?token=${token}`,
     }).then((res) => res.data)
         .catch((err) => alert(`can't find user transactions due to ${err}`));
 
@@ -190,9 +198,9 @@ export const purchase_product = (token, shop_id, product_id, amount, details) =>
       method: "POST",
       url: `${base_route}/${urljoin(routes.cart, shop_id.toString(), product_id.toString())}`,
       data: {
-          token: token,
-          amount : amount,
-          details : details
+        token: token,
+        amount: amount,
+        details: details
 
       }
     });
@@ -202,18 +210,18 @@ export const purchase_shopping_bag = (token, shop_id, details) =>
       method: "POST",
       url: `${base_route}/${urljoin(routes.cart, shop_id.toString())}`,
       data: {
-          token: token,
-          details : details
+        token: token,
+        details: details
       }
     });
 
-export const purchase_cart = (token,details) =>
+export const purchase_cart = (token, details) =>
     axios({
       method: "POST",
       url: `${base_route}/${urljoin(routes.cart)}`,
       data: {
-          token: token,
-          details: details
+        token: token,
+        details: details
       }
     });
 
@@ -222,8 +230,8 @@ export const open_shop = (token, details) =>
       method: "POST",
       url: `${base_route}/${urljoin(routes.shop)}`,
       data: {
-          token: token,
-          details: details
+        token: token,
+        details: details
       }
     });
 
@@ -232,7 +240,7 @@ export const get_personal_purchase_history = (token) =>
       method: "get",
       url: `${base_route}/${urljoin(routes.transactions)}`,
       data: {
-          token: token,
+        token: token,
       }
     });
 
@@ -241,8 +249,8 @@ export const add_product_to_shop = (token, shop_id, info) =>
       method: "POST",
       url: `${base_route}/${urljoin(routes.shop, shop_id.toString(), routes.products)}`,
       data: {
-          token: token,
-          info:info
+        token: token,
+        info: info
       }
     });
 
@@ -251,12 +259,12 @@ export const edit_product_info = (token, shop_id, product_id, product_name, desc
       method: "PUT",
       url: `${base_route}/${urljoin(routes.shops, shop_id.toString(), routes.products, product_id.toString())}`,
       data: {
-          token: token,
-          product_name : product_name,
-          description : description,
-          price: price,
-          quantity: quantity,
-          categories: categories
+        token: token,
+        product_name: product_name,
+        description: description,
+        price: price,
+        quantity: quantity,
+        categories: categories
       }
     });
 
@@ -265,7 +273,7 @@ export const delete_product = (token, shop_id, product_id) =>
       method: "DELETE",
       url: `${base_route}/${urljoin(routes.shops, shop_id.toString(), routes.products, product_id.toString())}`,
       data: {
-          token: token,
+        token: token,
       }
     });
 
@@ -274,9 +282,9 @@ export const appoint_shop_manager = (token, shop_id, username, permissions) =>
       method: "POST",
       url: `${base_route}/${urljoin(routes.shops, shop_id.toString(), routes.appointments, routes.promotions)}`,
       data: {
-          token: token,
-          username: username,
-          permissions: permissions
+        token: token,
+        username: username,
+        permissions: permissions
       }
     });
 
@@ -285,8 +293,8 @@ export const appoint_shop_owner = (token, shop_id, username) =>
       method: "POST",
       url: `${base_route}/${urljoin(routes.shops, shop_id.toString(), routes.appointments, routes.owners)}`,
       data: {
-          token: token,
-          username: username
+        token: token,
+        username: username
       }
     });
 
@@ -295,8 +303,8 @@ export const promote_shop_owner = (token, shop_id, username) =>
       method: "POST",
       url: `${base_route}/${urljoin(routes.shops, shop_id.toString(), routes.appointments, routes.promotions)}`,
       data: {
-          token: token,
-          username: username
+        token: token,
+        username: username
       }
     });
 
@@ -305,9 +313,9 @@ export const edit_manager_permissions = (token, shop_id, username, permissions) 
       method: "PUT",
       url: `${base_route}/${urljoin(routes.shops, shop_id.toString(), routes.appointments, routes.managers)}`,
       data: {
-          token: token,
-          username: username,
-          permissions: permissions
+        token: token,
+        username: username,
+        permissions: permissions
       }
     });
 
@@ -316,8 +324,8 @@ export const unappoint_manager = (token, shop_id, username) =>
       method: "DELETE",
       url: `${base_route}/${urljoin(routes.shops, shop_id.toString(), routes.appointments, routes.managers)}`,
       data: {
-          token: token,
-          username: username
+        token: token,
+        username: username
       }
     });
 
@@ -326,8 +334,8 @@ export const unappoint_shop_owner = (token, shop_id, username) =>
       method: "DELETE",
       url: `${base_route}/${urljoin(routes.shops, shop_id.toString(), routes.appointments, routes.owners)}`,
       data: {
-          token: token,
-          username: username
+        token: token,
+        username: username
       }
     });
 
@@ -336,7 +344,7 @@ export const get_shop_staff_info = (token, shop_id) =>
       method: "GET",
       url: `${base_route}/${urljoin(routes.shops, shop_id.toString(), routes.appointments)}`,
       data: {
-          token: token,
+        token: token,
       }
     });
 
@@ -345,6 +353,16 @@ export const get_shop_transaction_history = (token, shop_id) =>
       method: "GET",
       url: `${base_route}/${urljoin(routes.shops, shop_id.toString(), routes.transactions)}`,
       data: {
-          token: token,
+        token: token,
       }
     });
+
+export const get_shop_discounts = (token, shop_id) =>
+    axios({
+      method: "GET",
+      url: `${base_route}/${urljoin(routes.shops, shop_id.toString(), routes.discounts)}`,
+      params: {
+        token: token,
+      }
+    }).then((res) => res.data)
+        .catch((err) => alert(`failed to get shop transactions due to ${err}`));
