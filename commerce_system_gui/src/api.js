@@ -311,7 +311,13 @@ export const get_all_shops_info = (token) =>
       data: {
         token: token,
       }
-    }).then((res) => res.data)
+    }).then((res) => {
+    if (res.data.status) {
+      return res.data.result
+    } else {
+      throw new Error(res.data.description)
+    }
+  }).catch((err) => alert(`failed to get all shops info due to ${err}`))
 
 export const get_all_shops_ids_and_names = (token) =>
     axios({
@@ -326,10 +332,8 @@ export const get_all_shops_ids_and_names = (token) =>
     } else {
       throw new Error(res.data.description)
     }
-  }).catch((err) => alert(`failed to get all shops info due to ${err}`));
-    }).then((res) => res.data)
-        // .catch((err) => alert(`can't find user transactions due to ${err}`));;
-        // .catch((err) => alert(`can't find user transactions due to ${err}`));;
+  }).catch((err) => alert(`failed to get shops ids and names due to ${err}`));
+
 
 
 export const get_all_user_names = (token) =>
