@@ -13,6 +13,9 @@ SHOP_NAME = "shopName"
 SHOP_DESC = "shopDesc"
 SHOP_IMAGE = "shopImage"
 
+WORKER_NAME = "name"
+WORKER_TITLE = "title"
+WORKER_APPOINTER = "appointer"
 
 class Shop:
     __shop_id = 1

@@ -9,10 +9,12 @@ SHOP = "shop"
 PRODUCTS = "products"
 DATE = "date"
 PRICE = "price"
+USERNAME = "username"
 
 
 class Transaction:
-    def __init__(self, shop, products: List[ProductDTO], payment_details, date: datetime, price: float):
+    def __init__(self, username: str, shop, products: List[ProductDTO], payment_details, date: datetime, price: float):
+        self.username = username
         self.shop = shop
         self.products = products
         self.payment_details = payment_details
@@ -22,6 +24,7 @@ class Transaction:
 
     def to_dict(self):
         return {
+            USERNAME: self.username,
             SHOP: self.shop.to_dict(include_products=False),
             PRODUCTS: list(map(lambda p: p.to_dict(), self.products)),
             DATE: self.date.timestamp(),
