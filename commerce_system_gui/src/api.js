@@ -23,17 +23,18 @@ const routes = {
   cart: "cart",
   transactions: "transactions",
   system: "system",
-    appointments: "appointments",
-    managers:"managers",
-    owners:"owners",
-    promotions: "promotions"
-
-    }
+  appointments: "appointments",
+  managers: "managers",
+  owners: "owners",
+  promotions: "promotions",
+  discounts: "discounts",
+}
 
 const base_route = `${host_port}/${routes.base}`;
 
 export const isValidToken = (token) => {
-  const url = "http://127.0.0.1:5000/api/validate_token";
+  const url = `${base_route}/validate_token`;
+  alert(url)
   return axios({
     method: "get",
     url: url,
@@ -41,20 +42,21 @@ export const isValidToken = (token) => {
       token: token
     }
   }).then((res) => res.data.is_valid)
-      // .catch((err) => alert(`failed to enter the system due to ${err}`))
+      .catch((err) => alert(`failed to enter the system due to ${err}`))
 }
 
 export const enter = () => {
-  const url = "http://127.0.0.1:5000/api/enter";
+  const url = `${base_route}/enter`;
+  alert(url)
   return axios({
     method: "post",
     url: url,
   }).then((res) => res.data)
-      // .catch((err) => alert(`failed to enter the system due to ${err}`))
+      .catch((err) => alert(`failed to enter the system due to ${err}`))
 }
 
 export const exit = (token) => {
-  const url = "http://127.0.0.1:5000/api/exit";
+  const url = `${base_route}/exit`;
   return axios({
     method: "delete",
     url: url,
@@ -63,14 +65,13 @@ export const exit = (token) => {
     }
   }).then((res) => {
     return res.data;
-  })
-      // .catch((err) => alert(`failed to exit the system due to ${err}`))
+  }).catch((err) => alert(`failed to exit the system due to ${err}`))
 
 }
 
 export const register = (token, user_data) => {
   // const url = `${base_route}/${routes.login}`;
-  const url = "http://127.0.0.1:5000/api/register";
+  const url = `${base_route}/register`;
   return axios({
     method: "post",
     url: url,
@@ -79,12 +80,12 @@ export const register = (token, user_data) => {
       ...user_data
     }
   }).then((res) => res.data.status)
-      // .catch((err) => alert(err))
+      .catch((err) => alert(err))
 }
 
 export const login = (token, username, password) => {
   // const url = `${base_route}/${routes.login}`;
-  const url = "http://127.0.0.1:5000/api/login";
+  const url = `${base_route}/login`;
 
   return axios({
     method: "post",
@@ -95,12 +96,12 @@ export const login = (token, username, password) => {
       password: password,
     }
   }).then((result) => result.data.status)
-      // .catch((err) => alert(`failed to login due to ${err}`))
+      .catch((err) => alert(`failed to login due to ${err}`))
 }
 
 export const logout = (token) => {
   // const url = `${base_route}/${routes.login}`;
-  const url = "http://127.0.0.1:5000/api/logout";
+  const url = `${base_route}/logout`;
 
   return axios({
     method: "put",
@@ -108,12 +109,11 @@ export const logout = (token) => {
     data: {
       token: token,
     }
-  }).then((res) => res.data.status)
-      // .catch((err) => alert(err))
+  }).then((res) => res.data.status).catch((err) => alert(err))
 }
 
 export const get_cart_info = (token) => {
-  const url = "http://127.0.0.1:5000/api/cart";
+  const url = `${base_route}/cart`;
   return axios({
     url: url,
     method: "get",
@@ -121,11 +121,11 @@ export const get_cart_info = (token) => {
       token: token
     },
   }).then((res) => res.data)
-      // .catch((err) => alert(`failed to get cart info due to ${err}`))
+      .catch((err) => alert(`failed to get cart info due to ${err}`))
 }
 
 export const save_product_to_cart = (token, shop_id, product_id, amount_to_buy) => {
-  const url = `http://127.0.0.1:5000/api/cart/${shop_id}/${product_id}`;
+  const url = `${base_route}/cart/${shop_id}/${product_id}`;
   return axios({
     url: url,
     method: "post",
@@ -134,11 +134,11 @@ export const save_product_to_cart = (token, shop_id, product_id, amount_to_buy) 
       amount_to_buy: amount_to_buy
     },
   }).then((res) => res.data)
-      // .catch((err) => alert(`failed to get cart info due to ${err}`))
+      .catch((err) => alert(`failed to get cart info due to ${err}`))
 }
 
 export const remove_product_from_cart = (token, shop_id, product_id, amount) => {
-  const url = `http://127.0.0.1:5000/api/cart/${shop_id}/${product_id}`;
+  const url = `${base_route}/cart/${shop_id}/${product_id}`;
   return axios({
     url: url,
     method: "delete",
@@ -147,20 +147,20 @@ export const remove_product_from_cart = (token, shop_id, product_id, amount) => 
       amount: amount,
     },
   }).then((res) => res.data)
-      // .catch((err) => alert(`failed to remove from cart info due to ${err}`))
+      .catch((err) => alert(`failed to remove from cart info due to ${err}`))
 }
 
 export const get_user_transactions = (token) =>
     axios({
       method: "get",
-      url: `http://127.0.0.1:5000/api/transactions?token=${token}`,
+      url: `${base_route}/transactions?token=${token}`,
     }).then((res) => res.data)
-        // .catch((err) => alert(`can't find user transactions due to ${err}`));
+        .catch((err) => alert(`can't find user transactions due to ${err}`));
 
 
 export const get_product_info = (token, shop_id, product_id) => {
   // const url = `${base_route}/${routes.login}`;
-  const url = `http://127.0.0.1:5000/api/shops/${shop_id}/products/${product_id}`;
+  const url = `http://0.0.0.0:8080/api/shops/${shop_id}/products/${product_id}`;
   return axios({
     params: {
       token: token
@@ -172,7 +172,7 @@ export const get_product_info = (token, shop_id, product_id) => {
 }
 export const get_permissions = (token, shop_id) =>
 {
-  const url = `http://127.0.0.1:5000/api/permissions/${shop_id}`;
+  const url = `http://0.0.0.0:8080/api/permissions/${shop_id}`;
   return axios({
     params: {
       token: token
@@ -186,7 +186,7 @@ export const edit_product = (token, shop_id, product_id, name, price, descriptio
 {
   const details = `shop id: ${shop_id} product id: ${product_id} name: ${name} price: ${price} description: ${description} categories: ${categories}`
   alert(details)
-  const url = `http://127.0.0.1:5000/api/shops/${shop_id}/products/${product_id}`;
+  const url = `http://0.0.0.0:8080/api/shops/${shop_id}/products/${product_id}`;
   return axios({
     method: "put",
     url: url,
@@ -224,27 +224,6 @@ export const get_system_transactions = (token) =>
         token: token
       }
     });
-
-export const get_system_transactions_of_shops = (token, shop_id) =>
-    axios({
-      method: "get",
-      url: `${base_route}/${urljoin(routes.system, routes.transactions, routes.shop)}`,
-      data: {
-        token: token,
-          shop_id: shop_id
-      }
-    }).then((res) => res.data)
-
-export const get_system_transactions_of_user = (token, username) =>
-    axios({
-      method: "get",
-      url: `${base_route}/${urljoin(routes.system, routes.transactions, routes.user)}`,
-      data: {
-        token: token,
-        username: username
-      }
-    }).then((res) => res.data)
-
 export const get_shop_info = (token, shop_id) =>
     axios({
       method: "get",
