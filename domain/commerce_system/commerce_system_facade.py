@@ -69,6 +69,15 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         shops: List[Shop] = map(lambda shop: shop.to_dict(), self.shops)
         return shops
 
+    def get_all_shop_ids_and_names(self) -> dict:
+        ret = {}
+        for shopId in self.shops.keys():
+            ret[shopId] = self.shops[shopId].name
+        return ret
+
+    def get_all_user_names(self) -> dict:
+        names: List[str] = self.registered_users.keys()
+        return names
     # 2.6
     def search_products(
             self, product_name: str = None, keywords: List[str] = None,
@@ -242,6 +251,16 @@ class CommerceSystemFacade(ICommerceSystemFacade):
     def get_system_transaction_history(self, user_id: int) -> List[dict]:
         user = self.get_user(user_id)
         transactions = user.user_state.get_system_transaction_history()
+        return list(map(lambda t: t.to_dict(), transactions))
+
+    def get_system_transaction_history_of_shop(self, user_id: int, shop_id: int) -> List[dict]:
+        user = self.get_user(user_id)
+        transactions = user.user_state.get_system_transaction_history_of_shop(shop_id)
+        return list(map(lambda t: t.to_dict(), transactions))
+
+    def get_system_transaction_history_of_user(self, user_id: int, username: str) -> List[dict]:
+        user = self.get_user(user_id)
+        transactions = user.user_state.get_system_transaction_history_of_user(username)
         return list(map(lambda t: t.to_dict(), transactions))
 
     # utils:

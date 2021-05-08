@@ -120,6 +120,35 @@ class SystemService:
                 error_logger.error(e)
                 return {}
         return {}
+
+    def get_all_shops_ids_and_names(self, token: str) -> dict:
+        if self.is_valid_token(token):
+            try:
+                user_id = self.tokenizer.get_id_by_token(token)
+                event_logger.info(f"user_sess {user_id} requested for all shops ids and names")
+                return self.commerce_system_facade.get_all_shop_ids_and_names()
+            except AssertionError as e:
+                event_logger.warning(e)
+                return {}
+            except Exception as e:
+                error_logger.error(e)
+                return {}
+        return {}
+
+    def get_all_user_names(self, token: str) -> dict:
+        if self.is_valid_token(token):
+            try:
+                user_id = self.tokenizer.get_id_by_token(token)
+                event_logger.info(f"user_sess {user_id} requested for all user names")
+                return self.commerce_system_facade.get_all_user_names()
+            except AssertionError as e:
+                event_logger.warning(e)
+                return {}
+            except Exception as e:
+                error_logger.error(e)
+                return {}
+        return {}
+
     # 2.6
     def search_products(
             self, product_name: str = None, keywords: List[str] = None,
@@ -490,6 +519,34 @@ class SystemService:
                 user_id = self.tokenizer.get_id_by_token(token)
                 event_logger.info(f"user {user_id} requested for the system transaction history")
                 return self.commerce_system_facade.get_system_transaction_history(user_id)
+            except AssertionError as e:
+                event_logger.warning(e)
+                return []
+            except Exception as e:
+                error_logger.error(e)
+                return []
+        return []
+
+    def get_system_transactions_of_shop(self, token: str, shop_id: int):
+        if self.is_valid_token(token):
+            try:
+                user_id = self.tokenizer.get_id_by_token(token)
+                event_logger.info(f"user {user_id} requested for the system transaction history of shop")
+                return self.commerce_system_facade.get_system_transaction_history_of_shop(user_id, shop_id)
+            except AssertionError as e:
+                event_logger.warning(e)
+                return []
+            except Exception as e:
+                error_logger.error(e)
+                return []
+        return []
+
+    def get_system_transactions_of_user(self, token: str, username: str):
+        if self.is_valid_token(token):
+            try:
+                user_id = self.tokenizer.get_id_by_token(token)
+                event_logger.info(f"user {user_id} requested for the system transaction history")
+                return self.commerce_system_facade.get_system_transaction_history_of_user(user_id, username)
             except AssertionError as e:
                 event_logger.warning(e)
                 return []

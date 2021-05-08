@@ -105,13 +105,13 @@ export const Main_page = (props) => {
   const [shops, setShops] = useState(shopData);
   const auth = useAuth();
 
-  // useEffect(() => {
-  //   get_all_shops_info(auth.token)
-  //       .then((res) => {
-  //         setShops(res.data || shopData)
-  //       })
-  //       .catch((err) => setShops(shopData))
-  // }, [])
+  useEffect(() => {
+    get_all_shops_info(auth.token)
+        .then((res) => {
+          setShops(res.data || shopData)
+        })
+        .catch((err) => setShops(shopData))
+  }, [])
   const filteredShops = shops.filter((shop) => shop.shop_name.toLowerCase().includes(searchQuery.toLowerCase()));
   console.log(filteredShops);
   return (
