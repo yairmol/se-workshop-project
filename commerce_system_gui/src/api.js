@@ -15,6 +15,10 @@ const routes = {
   login: "login",
   logout: "logout",
   shops: "shops",
+    user: "user",
+    all_shops: "all_shops",
+    all_user_names: "all_user_names",
+    all_shops_ids_and_names: "all_shops_ids_and_names",
   search: "search",
   cart: "cart",
   transactions: "transactions",
@@ -23,7 +27,8 @@ const routes = {
     managers:"managers",
     owners:"owners",
     promotions: "promotions"
-}
+
+    }
 
 const base_route = `${host_port}/${routes.base}`;
 
@@ -36,7 +41,7 @@ export const isValidToken = (token) => {
       token: token
     }
   }).then((res) => res.data.is_valid)
-      .catch((err) => alert(`failed to enter the system due to ${err}`))
+      // .catch((err) => alert(`failed to enter the system due to ${err}`))
 }
 
 export const enter = () => {
@@ -45,7 +50,7 @@ export const enter = () => {
     method: "post",
     url: url,
   }).then((res) => res.data)
-      .catch((err) => alert(`failed to enter the system due to ${err}`))
+      // .catch((err) => alert(`failed to enter the system due to ${err}`))
 }
 
 export const exit = (token) => {
@@ -58,7 +63,8 @@ export const exit = (token) => {
     }
   }).then((res) => {
     return res.data;
-  }).catch((err) => alert(`failed to exit the system due to ${err}`))
+  })
+      // .catch((err) => alert(`failed to exit the system due to ${err}`))
 
 }
 
@@ -73,7 +79,7 @@ export const register = (token, user_data) => {
       ...user_data
     }
   }).then((res) => res.data.status)
-      .catch((err) => alert(err))
+      // .catch((err) => alert(err))
 }
 
 export const login = (token, username, password) => {
@@ -89,7 +95,7 @@ export const login = (token, username, password) => {
       password: password,
     }
   }).then((result) => result.data.status)
-      .catch((err) => alert(`failed to login due to ${err}`))
+      // .catch((err) => alert(`failed to login due to ${err}`))
 }
 
 export const logout = (token) => {
@@ -102,7 +108,8 @@ export const logout = (token) => {
     data: {
       token: token,
     }
-  }).then((res) => res.data.status).catch((err) => alert(err))
+  }).then((res) => res.data.status)
+      // .catch((err) => alert(err))
 }
 
 export const get_cart_info = (token) => {
@@ -114,7 +121,7 @@ export const get_cart_info = (token) => {
       token: token
     },
   }).then((res) => res.data)
-      .catch((err) => alert(`failed to get cart info due to ${err}`))
+      // .catch((err) => alert(`failed to get cart info due to ${err}`))
 }
 
 export const save_product_to_cart = (token, shop_id, product_id, amount_to_buy) => {
@@ -127,7 +134,7 @@ export const save_product_to_cart = (token, shop_id, product_id, amount_to_buy) 
       amount_to_buy: amount_to_buy
     },
   }).then((res) => res.data)
-      .catch((err) => alert(`failed to get cart info due to ${err}`))
+      // .catch((err) => alert(`failed to get cart info due to ${err}`))
 }
 
 export const remove_product_from_cart = (token, shop_id, product_id, amount) => {
@@ -140,7 +147,7 @@ export const remove_product_from_cart = (token, shop_id, product_id, amount) => 
       amount: amount,
     },
   }).then((res) => res.data)
-      .catch((err) => alert(`failed to remove from cart info due to ${err}`))
+      // .catch((err) => alert(`failed to remove from cart info due to ${err}`))
 }
 
 export const get_user_transactions = (token) =>
@@ -148,7 +155,7 @@ export const get_user_transactions = (token) =>
       method: "get",
       url: `http://127.0.0.1:5000/api/transactions?token=${token}`,
     }).then((res) => res.data)
-        .catch((err) => alert(`can't find user transactions due to ${err}`));
+        // .catch((err) => alert(`can't find user transactions due to ${err}`));
 
 
 export const get_shop_transactions = (token, shop_id) =>
@@ -168,6 +175,27 @@ export const get_system_transactions = (token) =>
         token: token
       }
     });
+
+export const get_system_transactions_of_shops = (token, shop_id) =>
+    axios({
+      method: "get",
+      url: `${base_route}/${urljoin(routes.system, routes.transactions, routes.shop)}`,
+      data: {
+        token: token,
+          shop_id: shop_id
+      }
+    }).then((res) => res.data)
+
+export const get_system_transactions_of_user = (token, username) =>
+    axios({
+      method: "get",
+      url: `${base_route}/${urljoin(routes.system, routes.transactions, routes.user)}`,
+      data: {
+        token: token,
+        username: username
+      }
+    }).then((res) => res.data)
+
 export const get_shop_info = (token, shop_id) =>
     axios({
       method: "get",
@@ -179,11 +207,32 @@ export const get_shop_info = (token, shop_id) =>
 export const get_all_shops_info = (token) =>
     axios({
       method: "get",
-      url: `${base_route}/${urljoin(routes.shops)}`,
+      url: `${base_route}/${urljoin(routes.all_shops)}`,
       data: {
         token: token,
       }
-    });
+    }).then((res) => res.data)
+
+export const get_all_shops_ids_and_names = (token) =>
+    axios({
+      method: "get",
+      url: `${base_route}/${urljoin(routes.all_shops_ids_and_names)}`,
+      data: {
+        token: token,
+      }
+    }).then((res) => res.data)
+        // .catch((err) => alert(`can't find user transactions due to ${err}`));;
+        // .catch((err) => alert(`can't find user transactions due to ${err}`));;
+
+
+export const get_all_user_names = (token) =>
+    axios({
+      method: "get",
+      url: `${base_route}/${urljoin(routes.all_user_names)}`,
+      data: {
+        token: token,
+      }
+    }).then((res) => res.data)
 
 export const purchase_product = (token, shop_id, product_id, amount, details) =>
     axios({
