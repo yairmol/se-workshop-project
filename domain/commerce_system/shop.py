@@ -187,9 +187,15 @@ class Shop:
         with self.discount_lock:
             self.discount.aggregate_discounts(discount_ids, func)
 
+    def move_discount_to(self, src_discount_id: int, dst_discount_id: int):
+        with self.discount_lock:
+            discount = DiscountManagement.remove(self.discount, src_discount_id)
+            DiscountManagement.add(self.discount, dst_discount_id, discount)
+
     def delete_discounts(self, discount_ids):
         with self.discount_lock:
-            self.discount.delete_discounts(discount_ids)
+            for d_id in discount_ids:
+                DiscountManagement.remove(self.discount, d_id)
 
     def add_purchase_condition(self, condition: Condition):
         self.conditions.append(condition)

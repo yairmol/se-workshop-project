@@ -176,6 +176,9 @@ class UserState:
     def aggregate_discounts(self, shop, discount_ids, func):
         raise Exception("User doesnt have permissions to manage discounts")
 
+    def move_discount_to(self, shop: Shop, src_discount_id: int, dst_discount_id: int):
+        raise Exception("User doesnt have permissions to manage discounts")
+
     def add_purchase_condition(self, shop: Shop, condition: Condition):
         raise Exception("User cannot perform this action")
 
@@ -281,6 +284,10 @@ class Subscribed(UserState):
     def aggregate_discounts(self, shop, discount_ids, func):
         appointment = self.get_appointment(shop)
         appointment.aggregate_discounts(discount_ids, func)
+
+    def move_discount_to(self, shop: Shop, src_discount_id: int, dst_discount_id: int):
+        appointment = self.get_appointment(shop)
+        appointment.move_discount_to(src_discount_id, dst_discount_id)
 
     def add_purchase_condition(self, shop: Shop, condition: Condition):
         appointment = self.get_appointment(shop)
