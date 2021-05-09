@@ -2,6 +2,7 @@ import unittest
 from datetime import datetime, time
 from unittest import TestCase
 
+from data_model import ConditionsModel as Cm
 from domain.commerce_system.product import Product
 from domain.commerce_system.productDTO import ProductDTO
 from domain.commerce_system.purchase_conditions import MaxQuantityForProductCondition, TimeWindowForCategoryCondition, \
@@ -36,7 +37,8 @@ class PurchaseConditionTests(TestCase):
         self.product = self.products[0]
 
     def test_MaxQuantityForProductCondition(self):
-        condition = MaxQuantityForProductCondition(5, self.product)
+        condition_dict = {Cm.MAX_QUANTITY: 5, Cm.PRODUCT: self.product.product_id}
+        condition = MaxQuantityForProductCondition(condition_dict)
         self.shop.add_purchase_condition(condition)
         amount = 4
         self.bag.add_product(self.product, amount)

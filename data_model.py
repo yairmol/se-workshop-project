@@ -35,6 +35,21 @@ class PermissionsModel:
     DELETE_PRODUCT_PERM = "delete_product"
 
 
+class ConditionsModel:
+    MAX_QUANTITY = "max_quantity"
+    PRODUCT = "product"
+    CATEGORY = "category"
+    MIN_TIME = "min_time"
+    MAX_TIME = "max_time"
+    MIN_DATE = "min_date"
+    MAX_DATE = "max_date"
+    MAX_QUANTITY_FOR_PRODUCT = "MaxQuantityForProductCondition"
+    TIME_WINDOW_FOR_CATEGORY = "TimeWindowForCategoryCondition"
+    TIME_WINDOW_FOR_PRODUCT = "TimeWindowForProductCondition"
+    DATE_WINDOW_FOR_CATEGORY = "DateWindowForCategoryCondition"
+    DATE_WINDOW_FOR_PRODUCT = "DateWindowForProductCondition"
+
+
 admin_credentials = {
     UserModel.USERNAME: "admin",
     UserModel.PASSWORD: "admin-password",

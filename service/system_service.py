@@ -341,7 +341,7 @@ class SystemService:
                 user_id = self.tokenizer.get_id_by_token(token)
                 event_logger.info(f"User: {user_id} tries to add purchase condition "
                                   f"shop_id: {shop_id}")
-                self.commerce_system_facade.add_purchase_condition(user_id, shop_id, condition_type, condition_dict)
+                self.commerce_system_facade.add_purchase_condition(user_id, shop_id, condition_type, **condition_dict)
                 event_logger.info("User: " + str(user_id) + " added condition successfully")
                 return make_status_dict(True, "", "")
             except AssertionError as e:
