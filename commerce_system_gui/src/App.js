@@ -4,7 +4,7 @@ import CssBaseline from '@material-ui/core/CssBaseline';
 import Grid from '@material-ui/core/Grid';
 import Container from '@material-ui/core/Container';
 import Header from './components/Header';
-import Transactions from "./components/Transactions";
+import {UserTransactions} from "./components/Transactions";
 import {Typography} from "@material-ui/core";
 import SignIn from "./components/SignIn";
 import {
@@ -186,7 +186,7 @@ export default function Blog() {
                     <SignIn />
                   </Route>
                   <Route path="/transactions">
-                    <Transactions/>
+                    <UserTransactions/>
                   </Route>
                   <Route path="/" exact>
                     <Main_page searchQuery = {searchQuery}/>
