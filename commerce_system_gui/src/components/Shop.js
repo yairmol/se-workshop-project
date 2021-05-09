@@ -15,7 +15,18 @@ import {makeStyles} from "@material-ui/core/styles";
 import {useEffect, useState} from "react";
 import Grid from "@material-ui/core/Grid";
 import {useAuth} from "./use-auth";
-import {get_cart_info, get_permissions, get_shop_info, get_shop_staff_info} from "../api";
+import {
+  add_product_to_shop,
+  appoint_shop_manager,
+  appoint_shop_owner,
+  delete_product, edit_manager_permissions,
+  edit_product,
+  get_cart_info,
+  get_permissions,
+  get_shop_info,
+  get_shop_staff_info, promote_shop_owner,
+  unappoint_manager, unappoint_shop_owner
+} from "../api";
 import {ShopWorkers} from "./ShopWorkers";
 import {ShopTransactions} from "./Transactions";
 import ShopProducts from './ShopProducts'
@@ -27,6 +38,7 @@ import RemoveProductPopup from "./PopUps/RemoveProductPopup";
 import EditProductPopup from "./PopUps/EditProductPopup";
 import AddProductPopup from "./PopUps/AddProductPopup";
 import AddAppointmentPopup from "./PopUps/AddApointmentPopup";
+import {useParams} from "react-router-dom";
 
 const useStyles = makeStyles((theme) => ({
     root: {
@@ -62,11 +74,16 @@ const useStyles = makeStyles((theme) => ({
     },
 }));
 
-export const Shop = ({shop_id}) => {
+export const Shop = () => {
+  const {shop_id} = useParams()
   const classes = useStyles();
-  const [load, set_load] = useState(true)
+  const [load_shop_info_bool, set_load_info] = useState(true)
+  const [load_perms, set_load_perms] = useState(true)
   const [shop_info, set_info] = useState([])
   const [worker_permissions, set_perms] = useState({'edit': false, 'delete': true})
+
+  const [load_workers_bool, set_load_workers] = useState(true)
+  const [workers, set_workers] = useState([])
 
   // for editing manager permissions
   const [shop_worker_for_perms, set_worker_for_perms] = useState([])
@@ -108,18 +125,121 @@ export const Shop = ({shop_id}) => {
 
   const auth = useAuth();
   const username = "yossi" // = auth.user;
-  useEffect(async () => {
-      if (load) {
-        await auth.getToken().then((token) => {
-          get_shop_info(token, shop_id).then((info) => {
-            set_info(info)
-          }).then((res) =>
-          get_permissions(token)).then((permissions) =>
-          set_perms(permissions))
+
+  const load_info_func = async () => {
+    await auth.getToken().then((token) => {
+        get_shop_info(token, shop_id).then((info) => {
+          set_info(info)
         })
+      })
+  }
+
+  useEffect(async () => {
+    if (load_shop_info_bool) {
+      await load_info_func()
+    }
+    set_load_info(false)
+  }, [])
+
+  const load_perms_func = async () => {
+    await auth.getToken().then((token) =>
+              get_permissions(token)).then((permissions) =>
+              set_perms(permissions))
+  }
+
+  useEffect(async () => {
+      if (load_perms) {
+          await load_perms_func()
       }
-      set_load(false)
-    }, [])
+      set_load_perms(false)
+  }, [])
+
+  const load_workers_func = async () => {
+    await auth.getToken().then((token) => {
+              get_shop_staff_info(token, shop_id).then((staff_info) => {
+                  set_workers(staff_info)
+              })
+          })
+  }
+
+  useEffect(async () => {
+      if (load_workers_bool) {
+        await load_workers_func()
+      }
+      set_load_workers(false)
+  }, [])
+
+  const edit_product_func = (product_id, name, price, description, categories) => {
+     auth.getToken().then(token =>
+         edit_product(token, shop_info.shop_id, product_id, name, price, description, categories).then(_ =>
+             load_info_func().then(_ =>
+                alert("Successfully Edited Product (product id = " + product_id + ")")
+             )))
+  }
+
+  const add_product_func = (product_id, name, price, description, categories) => {
+     auth.getToken().then(token =>
+         add_product_to_shop(token, shop_info.shop_id, product_id, name, price, description, categories).then(_ =>
+             load_info_func().then(_ =>
+                alert("Successfully Added Product (product id = " + product_id + ")")
+             )))
+  }
+
+  const remove_product_func = (product_id) => {
+    auth.getToken().then(token =>
+        delete_product(token, shop_info.shop_id, product_id).then(_ =>
+            load_info_func().then(_ =>
+                alert("Successfully Deleted Product (product id = " + product_id + ")")
+            )))
+  }
+
+  const promote_manager = (username) => {
+    auth.getToken().then(token =>
+        promote_shop_owner(token, shop_info.shop_id, username).then(_ =>
+            load_info_func().then(_ =>
+                alert("Successfully Promoted Manager " + username)
+            )))
+  }
+
+  const edit_perms_func = (username, permissions) => {
+      auth.getToken().then(token =>
+       edit_manager_permissions(token, shop_info.shop_id, username, permissions).then(_ =>
+           load_workers_func().then(_ =>
+              alert("Successfully Edited Permissions Of Manager " + username)
+           )))
+  }
+
+  const unappoint_owner_func = (username) => {
+      auth.getToken().then(token =>
+       unappoint_shop_owner(token, shop_info.shop_id, username).then(_ =>
+           load_workers_func().then(_ =>
+              alert("Successfully Unappointed Owner " + username)
+           )))
+  }
+
+  const unappoint_manager_func = (username) => {
+      auth.getToken().then(token =>
+       unappoint_manager(token, shop_info.shop_id, username).then(_ =>
+           load_workers_func().then(_ =>
+              alert("Successfully Unappointed Manager " + username)
+           )))
+  }
+
+  const appoint_owner_func = (username) => {
+      auth.getToken().then(token =>
+       appoint_shop_owner(token, shop_info.shop_id, username).then(_ =>
+           load_workers_func().then(_ =>
+              alert("Successfully Appointed Owner " + username)
+           )))
+  }
+
+  const appoint_manager_func = (username, permissions) => {
+      auth.getToken().then(token =>
+       appoint_shop_manager(token, shop_info.shop_id, username, permissions).then(_ =>
+           load_workers_func().then(_ =>
+              alert("Successfully Unappointed Manager " + username)
+           )))
+  }
 
   return (
       <div className={classes.root}>
@@ -137,6 +257,7 @@ export const Shop = ({shop_id}) => {
             </Grid>
             <Grid item className="Grid">
               <div className={classes.grid_window}><ShopWorkers
+                  workers={workers}
                   add_appointment_func={() => {set_add_appointment(true)}}
                   remove_appointment_func={open_remove_app_window}
                   edit_permissions_func={open_edit_perms_window}
@@ -151,31 +272,58 @@ export const Shop = ({shop_id}) => {
         {open_edit_permissions ?
             (<EditWorkerPermissions
                 worker={shop_worker_for_perms}
-                close_window_func={() => {set_edit_perms(false)}} />)
+                close_window_func={() => {
+                  set_edit_perms(false)
+                  }}
+                edit_perms_func={edit_perms_func}
+                promote_manager={promote_manager}
+            />)
             : []}
         {open_remove_app ?
             (<RemoveAppointmentPopup
                 worker={shop_worker_for_remove_app}
-                close_window_func={() => {set_remove_app(false)}} />)
+                close_window_func={() => {
+                  set_remove_app(false)
+                  }}
+                unappoint_manager_func={unappoint_manager_func}
+                unappoint_owner_func={unappoint_owner_func}
+                  />)
             : []}
         {open_remove_product ?
             (<RemoveProductPopup
                 product={product_for_remove}
-                close_window_func={() => {set_remove_product(false)}} />)
+                close_window_func={() => {
+                  set_remove_app(false)
+                  }}
+                remove_product_func={remove_product_func}
+                  />)
             : []}
         {open_edit_product ?
             (<EditProductPopup
                 product={product_for_edit}
-                close_window_func={() => {set_edit_product(false)}} />)
+                close_window_func={() => {
+                  set_remove_app(false)
+                  }}
+                edit_product_func={edit_product_func}
+                  />)
             : []}
         {open_add_product ?
             (<AddProductPopup
-                close_window_func={() => {set_add_product(false)}} />)
+                close_window_func={() => {
+                  set_add_product(false)
+                  }}
+                add_product_func={add_product_func}
+                  />)
             : []}
         {open_add_appointment ?
             (<AddAppointmentPopup
                 shop_id={shop_info.shop_id}
-                close_window_func={() => {set_add_appointment(false)}} />)
+                close_window_func={() => {
+                  set_add_appointment(false)
+                  }}
+                appoint_owner_func={appoint_owner_func}
+                appoint_manager_func={appoint_manager_func}
+            />)
             : []}
       </div>
   );

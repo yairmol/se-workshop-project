@@ -168,18 +168,20 @@ export const get_product_info = (token, shop_id, product_id) => {
   }).then((res) => res.data)
     .catch((err) => alert(err))
 }
-// export const get_permissions = (token, shop_id) =>
-// {
-//   const url = `http://0.0.0.0:8080/api/permissions/${shop_id}`;
-//   return axios({
-//     params: {
-//       token: token
-//     },
-//     method: "get",
-//     url: url,
-//   }).then((res) => res.data)
-//     .catch((err) => alert(err))
-// }
+
+export const get_permissions = (token, shop_id) =>
+{
+  const url = `http://0.0.0.0:8080/api/permissions/${shop_id}`;
+  return axios({
+    params: {
+      token: token
+    },
+    method: "get",
+    url: url,
+  }).then((res) => res.data)
+    .catch((err) => alert(err))
+}
+
 export const edit_product = (token, shop_id, product_id, name, price, description, categories) =>
 {
   const details = `shop id: ${shop_id} product id: ${product_id} name: ${name} price: ${price} description: ${description} categories: ${categories}`
@@ -274,14 +276,14 @@ const transactions = [
 
 
 export const get_shop_transactions = (token, shop_id) =>
-    // axios({
-    //   method: "get",
-    //   url: `${base_route}/${urljoin(routes.shops, shop_id.toString(), routes.transactions)}`,
-    //   data: {
-    //     token: token
-    //   }
-    // });
-  new Promise((resolve, reject) => resolve(transactions))
+    axios({
+      method: "get",
+      url: `${base_route}/${urljoin(routes.shops, shop_id.toString(), routes.transactions)}`,
+      params: {
+        token: token
+      }
+    });
+  // new Promise((resolve, reject) => resolve(transactions))
 
 export const get_system_transactions_of_shops = (token) =>
     new Promise((resolve) => resolve(2))
@@ -324,17 +326,17 @@ const shop_info = {
 
 
 export const get_shop_info = (token, shop_id) =>
-    // axios({
-    //   method: "get",
-    //   url: `${base_route}/${urljoin(routes.shops, shop_id.toString())}`,
-    //   data: {
-    //     token: token,
-    //   }
-    // });
-    new Promise((resolve, reject) => resolve(shop_info))
+    axios({
+      method: "get",
+      url: `${base_route}/${urljoin(routes.shops, shop_id.toString())}`,
+      params: {
+        token: token,
+      }
+    });
+    // new Promise((resolve, reject) => resolve(shop_info))
 
-export const get_permissions = (token) =>
-    new Promise((resolve, reject) => resolve({'delete': true, 'edit': true, 'add': true, 'discount': true, 'transaction': true, 'owner': true}))
+// export const get_permissions = (token) =>
+//     new Promise((resolve, reject) => resolve({'delete': true, 'edit': true, 'add': true, 'discount': true, 'transaction': true, 'owner': true}))
 
 const staff_info = [
         {
@@ -365,14 +367,14 @@ const staff_info = [
 ]
 
 export const get_shop_staff_info = (token, shop_id) =>
-  // axios({
-  //   method: "GET",
-  //   url: `${base_route}/${urljoin(routes.shops, shop_id.toString(), routes.appointments)}`,
-  //   data: {
-  //       token: token,
-  //   }
-  // }).then(val => staff_info);
-  new Promise((resolve, reject) => resolve(staff_info))
+  axios({
+    method: "GET",
+    url: `${base_route}/${urljoin(routes.shops, shop_id.toString(), routes.appointments)}`,
+    params: {
+        token: token,
+    }
+  }).then(val => staff_info);
+  // new Promise((resolve, reject) => resolve(staff_info))
 
 export const get_all_shops_info = (token) =>
     axios({
@@ -559,11 +561,3 @@ export const unappoint_shop_owner = (token, shop_id, username) =>
 //       }
 //     });
 
-export const get_shop_transaction_history = (token, shop_id) =>
-    axios({
-      method: "GET",
-      url: `${base_route}/${urljoin(routes.shops, shop_id.toString(), routes.transactions)}`,
-      data: {
-          token: token,
-      }
-    });

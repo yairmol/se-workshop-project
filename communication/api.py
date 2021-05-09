@@ -68,7 +68,7 @@ def create_app():
     # 2.5
     @app.route(f'{API_BASE}/shops/<int:shop_id>')
     def get_shop_info(shop_id: int) -> dict:
-        return apply_request_on_function(__system_service.get_shop_info, shop_id=shop_id)
+        return __system_service.get_shop_info(request.args.get("token"), shop_id=shop_id)
 
     @app.route(f'{API_BASE}/all_shops/', methods=["GET"])
     def get_all_shop_info() -> dict:
@@ -218,12 +218,12 @@ def create_app():
     # 4.9
     @app.route(f'{API_BASE}/shops/<int:shop_id>/appointments', methods=['GET'])
     def get_shop_staff_info(shop_id: int) -> List[dict]:
-        return apply_request_on_function(__system_service.get_shop_staff_info, shop_id=shop_id)
+        return __system_service.get_shop_staff_info(request.args.get("token"), shop_id=shop_id)
 
     # 4.11
     @app.route(f'{API_BASE}/shops/<int:shop_id>/transactions', methods=['GET'])
     def get_shop_transaction_history(shop_id: int) -> List[dict]:
-        return apply_request_on_function(__system_service.get_shop_transaction_history, shop_id=shop_id)
+        return __system_service.get_shop_transaction_history(request.args.get("token"), shop_id=shop_id)
 
     # 6. System Administrator Requirements
 

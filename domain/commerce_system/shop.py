@@ -16,6 +16,7 @@ SHOP_IMAGE = "shopImage"
 WORKER_NAME = "name"
 WORKER_TITLE = "title"
 WORKER_APPOINTER = "appointer"
+PERMISSIONS = "permissions"
 
 class Shop:
     __shop_id = 1
@@ -138,13 +139,14 @@ class Shop:
         return {
             WORKER_NAME: sub.username,
             WORKER_TITLE: "manager",
-            WORKER_APPOINTER: sub.get_appointment(self).appointer.username
+            WORKER_APPOINTER: sub.get_appointment(self).appointer.username,
+            PERMISSIONS: sub.get_appointment(self).permissions
         }
 
     def get_owner_info(self, sub):
         return {
             WORKER_NAME: sub.username,
-            WORKER_TITLE: "manager" if sub != self.founder else "founder",
+            WORKER_TITLE: "owner" if sub != self.founder else "founder",
             WORKER_APPOINTER: sub.get_appointment(self).appointer.username
         }
 

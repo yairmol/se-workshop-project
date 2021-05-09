@@ -11,7 +11,7 @@ import {
   BrowserRouter as Router,
   Switch,
   Route,
-  Link
+  Link, useParams
 } from "react-router-dom";
 import Register from "./components/Register";
 import {Product} from "./components/Product";
@@ -162,10 +162,9 @@ export default function Blog() {
                   <Route path="/cart/:shop_id">
                     <ShoppingBag/> {/* This means shopping bag of shop shop_id*/}
                   </Route>
-                  <Route path="/shops">
-                    <Route path="/:shop_id">  {/* this means that in the shop component we can use UseParams()*/}
+                  <Route path="/shops/:shop_id">
+                    {/* this means that in the shop component we can use UseParams()*/}
                       <Shop/>                 {/* to get the shop_id param and then get the proper shop info */}
-                    </Route>
                     {/*<Route path="/shops">*/}
                     {/*  <Route*/}
                     {/*      path="/:shop_id">  /!* this means that in the shop component we can use UseParams()*!/*/}

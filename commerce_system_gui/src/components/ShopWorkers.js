@@ -50,25 +50,8 @@ const useStyles = makeStyles((theme) => ({
     }
 }));
 
-export function ShopWorkers({shop_id, user, edit_permissions_func, remove_appointment_func, add_appointment_func}) {
+export function ShopWorkers({workers, shop_id, user, edit_permissions_func, remove_appointment_func, add_appointment_func}) {
     const classes = useStyles();
-    const [expanded, setExpanded] = useState(false);
-    const onChange = () => {
-        setExpanded(!expanded)
-    }
-    const [load, set_load] = useState(true)
-    const [workers, set_workers] = useState([])
-    const auth = useAuth();
-    useEffect(async () => {
-        if (load) {
-          await auth.getToken().then((token) => {
-            get_shop_staff_info(token, shop_id).then((staff_info) => {
-              set_workers(staff_info)
-            })
-          })
-        }
-        set_load(false)
-      }, [])
 
     return (
         <>

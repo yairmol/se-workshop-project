@@ -10,7 +10,7 @@ import {
 } from "@material-ui/core";
 import Button from "@material-ui/core/Button";
 
-export default function AddAppointmentPopup({shop_id, close_window_func}) {
+export default function AddAppointmentPopup({shop_id, close_window_func, appoint_manager_func, appoint_owner_func}) {
   const [open, setOpen] = useState(true)
   const [show_perms, set_show_perms] = useState(true)
 
@@ -32,11 +32,23 @@ export default function AddAppointmentPopup({shop_id, close_window_func}) {
     close_window_func()
   }
 
+  const { delete_p, edit, add, discount, transaction } = state;
+
   const done = () => {
     if (show_perms) {
       // ADD MANAGER
+      const perms =
+          [[delete_p, "delete"], [edit, "edit"], [add, "add"], [discount, "discount"], [transaction, "transaction"]]
+      let perms_lst = []
+      for (let i =0; i<perms.length; i++) {
+        if (perms[i][0]) {
+          perms_lst.push(perms[i][1])
+        }
+      }
+      appoint_manager_func(username, perms_lst)
     } else {
       // ADD OWNER
+      appoint_owner_func(username)
     }
     handleClose()
   }
@@ -44,8 +56,6 @@ export default function AddAppointmentPopup({shop_id, close_window_func}) {
   const handleChange = (event) => {
     setState({ ...state, [event.target.name]: event.target.checked });
   };
-
-  const { delete_p, edit, add, discount, transaction } = state;
 
   return (
     <div>

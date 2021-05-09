@@ -44,7 +44,7 @@ function NumberFormatCustom(props) {
 }
 
 
-export default function AddProductPopup({close_window_func}) {
+export default function AddProductPopup({close_window_func, add_product_func}) {
   const [open, setOpen] = useState(true)
 
   const [name, setName] = useState("");
@@ -67,8 +67,9 @@ export default function AddProductPopup({close_window_func}) {
 
   const done = () => {
     /*
-    CALL FOR ADD PERMISSIONS
+    CALL FOR ADD PRODUCT
      */
+    add_product_func(name, price, description, categories)
     handleClose()
   }
 

@@ -122,6 +122,7 @@ class ShopManager(Appointment):
                 'add': self.add_product_permission, 'discount': self.discount_permission,
                 'transaction': self.get_trans_history_permission, 'owner': False}
 
+
 class ShopOwner(Appointment):
     def __init__(self, shop: Shop, username: str = "default_username", appointer=None):
         super().__init__(shop, username, appointer)
