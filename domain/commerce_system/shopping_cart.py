@@ -76,7 +76,7 @@ class ShoppingBag:
         return True
 
     def resolve_shop_conditions(self) -> bool:
-        conditions = ANDCondition(self.shop.conditions)
+        conditions = ANDCondition({"conditions": self.shop.conditions})
         return conditions.resolve(self.products)
 
     def purchase_bag(self, username, payment_details) -> Transaction:
