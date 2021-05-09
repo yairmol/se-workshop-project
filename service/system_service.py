@@ -198,8 +198,8 @@ class SystemService:
                 return make_status_dict(True, "", "")
             except AssertionError as e:
                 return handle_assertion(e)
-            except Exception as e:
-                return handle_exception(e)
+            # except Exception as e:
+            #     return handle_exception(e)
         return make_status_dict(False, "Invalid Token", "")
 
     # 2.9
@@ -529,9 +529,9 @@ class SystemService:
             try:
                 user_id = self.tokenizer.get_id_by_token(token)
                 event_logger.info(f"User: {user_id} tries to add discount to shop: {shop_id}")
-                self.commerce_system_facade.add_discount(user_id, shop_id, has_cond, condition, discount)
+                discount_id = self.commerce_system_facade.add_discount(user_id, shop_id, has_cond, condition, discount)
                 event_logger.info(f"User: {user_id} added discount to shop: {shop_id} successfully")
-                return make_status_dict(True, "", "")
+                return make_status_dict(True, "", discount_id)
             except AssertionError as e:
                 return handle_assertion(e)
             except Exception as e:
@@ -552,7 +552,7 @@ class SystemService:
                 return handle_exception(e)
         return make_status_dict(False, "Invalid Token", "")
 
-    def delete_discounts(self, token: str, shop_id, discount_ids):
+    def delete_discounts(self, token: str, shop_id, discount_ids: List[int]):
         if self.is_valid_token(token):
             try:
                 user_id = self.tokenizer.get_id_by_token(token)

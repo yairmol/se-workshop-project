@@ -37,5 +37,5 @@ class PermissionsModel:
 
 admin_credentials = {
     UserModel.USERNAME: "admin",
-    UserModel.PASSWORD: "admin",
+    UserModel.PASSWORD: "admin-password",
 }

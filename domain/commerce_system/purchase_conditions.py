@@ -9,10 +9,10 @@ from typing import Dict, List
 
 
 class Condition:
-    __id_counter = 1
+    _id_counter = 1
     counter_lock = threading.Lock()
-
-    def resolve(self) -> bool:
+    
+    def resolve(self, products: Dict[Product, int]) -> bool:
         raise NotImplementedError()
 
 
@@ -42,10 +42,9 @@ class ShoppingBagCondition(Condition):
 
 class MaxQuantityForProductCondition(ProductCondition):
     def __init__(self, condition_dict: dict):
-        self.counter_lock.acquire()
-        self.id = self.__id_counter
-        Condition.__id_counter = Condition.__id_counter + 1
-        self.counter_lock.release()
+        with Condition.counter_lock:
+            self.id = Condition._id_counter
+            Condition._id_counter += 1
         self.max_quantity = condition_dict["max_quantity"]
         self.product = condition_dict["product"]
 
@@ -65,10 +64,9 @@ class MaxQuantityForProductCondition(ProductCondition):
 
 class TimeWindowForCategoryCondition(CategoryCondition):
     def __init__(self, condition_dict: dict):
-        self.counter_lock.acquire()
-        self.id = self.__id_counter
-        Condition.__id_counter = Condition.__id_counter + 1
-        self.counter_lock.release()
+        with Condition.counter_lock:
+            self.id = Condition._id_counter
+            Condition._id_counter += 1
         self.min_time = condition_dict["min_time"]
         self.max_time = condition_dict["max_time"]
         self.category = condition_dict["category"]
@@ -84,10 +82,9 @@ class TimeWindowForCategoryCondition(CategoryCondition):
 
 class TimeWindowForProductCondition(CategoryCondition):
     def __init__(self, condition_dict: dict):
-        self.counter_lock.acquire()
-        self.id = self.__id_counter
-        Condition.__id_counter = Condition.__id_counter + 1
-        self.counter_lock.release()
+        with self.counter_lock:
+            self.id = self._id_counter
+            Condition._id_counter += 1
         self.min_time = condition_dict["min_time"]
         self.max_time = condition_dict["max_time"]
         self.product = condition_dict["product"]
@@ -102,10 +99,9 @@ class TimeWindowForProductCondition(CategoryCondition):
 
 class DateWindowForCategoryCondition(CategoryCondition):
     def __init__(self, condition_dict: dict):
-        self.counter_lock.acquire()
-        self.id = self.__id_counter
-        Condition.__id_counter = Condition.__id_counter + 1
-        self.counter_lock.release()
+        with self.counter_lock:
+            self.id = self._id_counter
+            Condition._id_counter += 1
         self.min_date = condition_dict["min_date"]
         self.max_date = condition_dict["max_date"]
         self.category = condition_dict["category"]
@@ -121,10 +117,9 @@ class DateWindowForCategoryCondition(CategoryCondition):
 
 class DateWindowForProductCondition(CategoryCondition):
     def __init__(self, condition_dict: dict):
-        self.counter_lock.acquire()
-        self.id = self.__id_counter
-        Condition.__id_counter = Condition.__id_counter + 1
-        self.counter_lock.release()
+        with self.counter_lock:
+            self.id = self._id_counter
+            Condition._id_counter += 1
         self.min_date = condition_dict["min_date"]
         self.max_date = condition_dict["max_date"]
         self.product = condition_dict["product"]
@@ -139,10 +134,9 @@ class DateWindowForProductCondition(CategoryCondition):
 
 class ANDCondition(Condition):
     def __init__(self, condition_dict: dict):
-        self.counter_lock.acquire()
-        self.id = self.__id_counter
-        Condition.__id_counter = Condition.__id_counter + 1
-        self.counter_lock.release()
+        with self.counter_lock:
+            self.id = self._id_counter
+            Condition._id_counter += 1
         self.conditions = condition_dict["conditions"]
 
     # returns AND between all conditions
@@ -155,10 +149,9 @@ class ANDCondition(Condition):
 
 class ORCondition(Condition):
     def __init__(self, condition_dict: dict):
-        self.counter_lock.acquire()
-        self.id = self.__id_counter
-        Condition.__id_counter = Condition.__id_counter + 1
-        self.counter_lock.release()
+        with self.counter_lock:
+            self.id = self._id_counter
+            Condition._id_counter += 1
         self.conditions = condition_dict["conditions"]
 
     # returns OR between all conditions
