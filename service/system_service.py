@@ -343,12 +343,12 @@ class SystemService:
                                   f"shop_id: {shop_id}")
                 self.commerce_system_facade.add_purchase_condition(user_id, shop_id, condition_type, condition_dict)
                 event_logger.info("User: " + str(user_id) + " added condition successfully")
-                return True
+                return make_status_dict(True, "", "")
             except AssertionError as e:
                 event_logger.warning(e)
             except Exception as e:
                 error_logger.error(e)
-        return False
+        return make_status_dict(False, "Invalid Token", "")
 
     # 4.2
     def remove_purchase_condition(self, token: str, shop_id: int, condition_id: int):
@@ -360,12 +360,12 @@ class SystemService:
                                   f"shop_id: {shop_id}")
                 self.commerce_system_facade.add_purchase_condition(user_id, shop_id, condition_id)
                 event_logger.info("User: " + str(user_id) + " removed condition successfully")
-                return True
+                return make_status_dict(True, "", "")
             except AssertionError as e:
                 event_logger.warning(e)
             except Exception as e:
                 error_logger.error(e)
-        return False
+        return make_status_dict(False, "Invalid Token", "")
 
     # 4.5
     def appoint_shop_manager(self, token: str, shop_id: int, username: str, permissions: List[str]) -> dict:
