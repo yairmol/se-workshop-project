@@ -4,7 +4,9 @@ from typing import Dict, List, Union
 from domain.authentication_module.authenticator import Authenticator
 from domain.commerce_system.ifacade import ICommerceSystemFacade
 from domain.commerce_system.product import Product
-from domain.commerce_system.purchase_conditions import Condition, TimeWindowForCategoryCondition, MaxQuantityForProductCondition
+from domain.commerce_system.purchase_conditions import Condition, TimeWindowForCategoryCondition, \
+    MaxQuantityForProductCondition, ORCondition, ANDCondition, DateWindowForProductCondition, \
+    TimeWindowForProductCondition, DateWindowForCategoryCondition
 from domain.commerce_system.search_engine import search, Filter
 from domain.commerce_system.shop import Shop
 from domain.commerce_system.transaction_repo import TransactionRepo
@@ -12,6 +14,16 @@ from domain.commerce_system.user import User, Subscribed, SystemManager
 
 # import domain.commerce_system.valdiation as validate
 from domain.discount_module.discount_management import SimpleCond, DiscountDict
+
+condition_map = {
+    "MaxQuantityForProductCondition": MaxQuantityForProductCondition,
+    "TimeWindowForCategoryCondition": TimeWindowForCategoryCondition,
+    "TimeWindowForProductCondition": TimeWindowForProductCondition,
+    "DateWindowForCategoryCondition": DateWindowForCategoryCondition,
+    "DateWindowForProductCondition": DateWindowForProductCondition,
+    "ANDCondition": ANDCondition,
+    "ORCondition": ORCondition
+}
 
 
 class CommerceSystemFacade(ICommerceSystemFacade):
@@ -78,6 +90,7 @@ class CommerceSystemFacade(ICommerceSystemFacade):
     def get_all_user_names(self) -> dict:
         names: List[str] = self.registered_users.keys()
         return names
+
     # 2.6
     def search_products(
             self, product_name: str = None, keywords: List[str] = None,
@@ -185,16 +198,17 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         return worker.delete_product(shop, product_id)
 
     # 4.2
-    def add_purchase_condition(self, user_id: int, shop_id: int, condition: Condition):
+    def add_purchase_condition(self, user_id: int, shop_id: int, condition_type, **condition_dict):
         worker = self.get_user(user_id).user_state
         shop = self.get_shop(shop_id)
+        condition = condition_map[condition_type](condition_dict)
         worker.add_purchase_condition(shop, condition)
 
     # 4.2
-    def remove_purchase_condition(self, user_id: int, shop_id: int, condition: Condition):
+    def remove_purchase_condition(self, user_id: int, shop_id: int, condition_id: int):
         worker = self.get_user(user_id).user_state
         shop = self.get_shop(shop_id)
-        worker.remove_purchase_condition(shop, condition)
+        worker.remove_purchase_condition(shop, condition_id)
 
     # 4.3
     def appoint_shop_owner(self, user_id: int, shop_id: int, username: str):

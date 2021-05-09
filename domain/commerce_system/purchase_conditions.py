@@ -9,6 +9,8 @@ from typing import Dict, List
 
 
 class Condition:
+    __id_counter = 1
+    counter_lock = threading.Lock()
 
     def resolve(self) -> bool:
         raise NotImplementedError()
@@ -39,9 +41,13 @@ class ShoppingBagCondition(Condition):
 
 
 class MaxQuantityForProductCondition(ProductCondition):
-    def __init__(self, max_quantity: int, product: Product):
-        self.max_quantity = max_quantity
-        self.product = product
+    def __init__(self, condition_dict: dict):
+        self.counter_lock.acquire()
+        self.id = self.__id_counter
+        Condition.__id_counter = Condition.__id_counter + 1
+        self.counter_lock.release()
+        self.max_quantity = condition_dict["max_quantity"]
+        self.product = condition_dict["product"]
 
     def resolve(self, products: Dict[Product, int]) -> bool:
         return False if \
@@ -58,10 +64,14 @@ class MaxQuantityForProductCondition(ProductCondition):
 
 
 class TimeWindowForCategoryCondition(CategoryCondition):
-    def __init__(self, min_time: time, max_time: time, category: str):
-        self.min_time = min_time
-        self.max_time = max_time
-        self.category = category
+    def __init__(self, condition_dict: dict):
+        self.counter_lock.acquire()
+        self.id = self.__id_counter
+        Condition.__id_counter = Condition.__id_counter + 1
+        self.counter_lock.release()
+        self.min_time = condition_dict["min_time"]
+        self.max_time = condition_dict["max_time"]
+        self.category = condition_dict["category"]
 
     def resolve(self, products: Dict[Product, int]) -> bool:
         cur_time = datetime.now().time()
@@ -73,10 +83,14 @@ class TimeWindowForCategoryCondition(CategoryCondition):
 
 
 class TimeWindowForProductCondition(CategoryCondition):
-    def __init__(self, min_time: time, max_time: time, product: Product):
-        self.min_time = min_time
-        self.max_time = max_time
-        self.product = product
+    def __init__(self, condition_dict: dict):
+        self.counter_lock.acquire()
+        self.id = self.__id_counter
+        Condition.__id_counter = Condition.__id_counter + 1
+        self.counter_lock.release()
+        self.min_time = condition_dict["min_time"]
+        self.max_time = condition_dict["max_time"]
+        self.product = condition_dict["product"]
 
     def resolve(self, products: Dict[Product, int]) -> bool:
         cur_time = datetime.now().time()
@@ -87,10 +101,14 @@ class TimeWindowForProductCondition(CategoryCondition):
 
 
 class DateWindowForCategoryCondition(CategoryCondition):
-    def __init__(self, min_date: datetime, max_date: datetime, category: str):
-        self.min_date = min_date
-        self.max_date = max_date
-        self.category = category
+    def __init__(self, condition_dict: dict):
+        self.counter_lock.acquire()
+        self.id = self.__id_counter
+        Condition.__id_counter = Condition.__id_counter + 1
+        self.counter_lock.release()
+        self.min_date = condition_dict["min_date"]
+        self.max_date = condition_dict["max_date"]
+        self.category = condition_dict["category"]
 
     def resolve(self, products: Dict[Product, int]) -> bool:
         cur_date = datetime.now()
@@ -102,10 +120,14 @@ class DateWindowForCategoryCondition(CategoryCondition):
 
 
 class DateWindowForProductCondition(CategoryCondition):
-    def __init__(self, min_date: datetime, max_date: datetime, product: Product):
-        self.min_date = min_date
-        self.max_date = max_date
-        self.product = product
+    def __init__(self, condition_dict: dict):
+        self.counter_lock.acquire()
+        self.id = self.__id_counter
+        Condition.__id_counter = Condition.__id_counter + 1
+        self.counter_lock.release()
+        self.min_date = condition_dict["min_date"]
+        self.max_date = condition_dict["max_date"]
+        self.product = condition_dict["product"]
 
     def resolve(self, products: Dict[Product, int]) -> bool:
         cur_date = datetime.now()
@@ -116,8 +138,12 @@ class DateWindowForProductCondition(CategoryCondition):
 
 
 class ANDCondition(Condition):
-    def __init__(self, conditions: List[Condition]):
-        self.conditions = conditions
+    def __init__(self, condition_dict: dict):
+        self.counter_lock.acquire()
+        self.id = self.__id_counter
+        Condition.__id_counter = Condition.__id_counter + 1
+        self.counter_lock.release()
+        self.conditions = condition_dict["conditions"]
 
     # returns AND between all conditions
     def resolve(self, products: Dict[Product, int]) -> bool:
@@ -128,8 +154,12 @@ class ANDCondition(Condition):
 
 
 class ORCondition(Condition):
-    def __init__(self, conditions: List[Condition]):
-        self.conditions = conditions
+    def __init__(self, condition_dict: dict):
+        self.counter_lock.acquire()
+        self.id = self.__id_counter
+        Condition.__id_counter = Condition.__id_counter + 1
+        self.counter_lock.release()
+        self.conditions = condition_dict["conditions"]
 
     # returns OR between all conditions
     def resolve(self, products: Dict[Product, int]) -> bool:
@@ -139,13 +169,13 @@ class ORCondition(Condition):
         return False
 
 
-class ConditioningCondition(Condition):
-    def __init__(self, conditions: List[Condition]):  # expecting 2 conditions
-        self.conditions = conditions
-
-    # returns conditioning between all conditions
-    def resolve(self, products: Dict[Product, int]) -> bool:
-        if self.conditions[0].resolve(products):
-            if not self.conditions[1].resolve(products):
-                return False
-        return True
+# class ConditioningCondition(Condition):
+#     def __init__(self, conditions: List[Condition]):  # expecting 2 conditions
+#         self.conditions = conditions
+#
+#     # returns conditioning between all conditions
+#     def resolve(self, products: Dict[Product, int]) -> bool:
+#         if self.conditions[0].resolve(products):
+#             if not self.conditions[1].resolve(products):
+#                 return False
+#         return True

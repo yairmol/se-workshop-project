@@ -37,8 +37,6 @@ class User:
         self.user_state.logout()
 
     def purchase_product(self, shop: Shop, product: Product, amount_to_buy: int, payment_details: dict):
-        conditions = shop.conditions
-
         bag = ShoppingBag(shop)
         bag.add_product(product, amount_to_buy)
         transaction = bag.purchase_bag(self.get_name(), payment_details)
@@ -103,7 +101,7 @@ class User:
     def add_purchase_condition(self, shop: Shop, condition: Condition):
         raise NotImplementedError()
 
-    def remove_purchase_condition(self, shop: Shop, condition: Condition):
+    def remove_purchase_condition(self, shop: Shop, condition_id: int):
         raise NotImplementedError()
 
 
@@ -174,7 +172,7 @@ class UserState:
     def add_purchase_condition(self, shop: Shop, condition: Condition):
         raise Exception("User cannot perform this action")
 
-    def remove_purchase_condition(self, shop: Shop, condition: Condition):
+    def remove_purchase_condition(self, shop: Shop, condition_id: int):
         raise Exception("User cannot perform this action")
 
     def get_permissions(self, shop):
@@ -271,9 +269,9 @@ class Subscribed(UserState):
         appointment = self.get_appointment(shop)
         appointment.add_purchase_condition(condition)
 
-    def remove_purchase_condition(self, shop: Shop, condition: Condition):
+    def remove_purchase_condition(self, shop: Shop, condition_id: int):
         appointment = self.get_appointment(shop)
-        appointment.remove_purchase_condition(condition)
+        appointment.remove_purchase_condition(condition_id)
 
     def get_permissions(self, shop):
         try:

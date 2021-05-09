@@ -68,6 +68,12 @@ class Appointment:
     def aggregate_discounts(self, discount_ids, func):
         raise Exception("Cannot manage discounts")
 
+    def add_purchase_condition(self, condition: Condition):
+        raise Exception("Cannot manage conditions")
+
+    def remove_purchase_condition(self, condition_id: int):
+        raise Exception("Cannot manage conditions")
+
     def get_permissions(self):
         pass
 
@@ -124,10 +130,10 @@ class ShopManager(Appointment):
                                                    " manage purchase conditions"
         return self.shop.add_purchase_condition(condition)
 
-    def remove_purchase_condition(self, condition: Condition):
+    def remove_purchase_condition(self, condition_id: int):
         assert self.purchase_condition_permission, "manager user does not have permission to " \
                                                    "manage purchase conditions"
-        return self.shop.remove_purchase_condition(condition)
+        assert self.shop.remove_purchase_condition(condition_id), "remove condition failed"
 
     def get_permissions(self):
         return {'delete': self.delete_product_permission, 'edit': self.edit_product_permission,
@@ -235,6 +241,12 @@ class ShopOwner(Appointment):
 
     def aggregate_discounts(self, discount_ids, func):
         return self.shop.aggregate_discounts(discount_ids, func)
+
+    def add_purchase_condition(self, condition: Condition):
+        return self.shop.add_purchase_condition(condition)
+
+    def remove_purchase_condition(self, condition_id: int):
+        assert self.shop.remove_purchase_condition(condition_id), "remove condition failed"
 
     def get_permissions(self):
         return {'delete': True, 'edit': True, 'add': True, 'discount': True, 'transaction': True, 'owner': True}

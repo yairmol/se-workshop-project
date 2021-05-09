@@ -18,6 +18,7 @@ WORKER_NAME = "name"
 WORKER_TITLE = "title"
 WORKER_APPOINTER = "appointer"
 
+
 class Shop:
     __shop_id = 1
 
@@ -182,7 +183,7 @@ class Shop:
 
     def aggregate_discounts(self, discount_ids: [int], func: str):
         self.discount_lock.acquire()
-        self.discount.aggregate_discounts(discount_ids,func)
+        self.discount.aggregate_discounts(discount_ids, func)
         self.discount_lock.release()
 
     def delete_discounts(self, discount_ids):
@@ -193,5 +194,9 @@ class Shop:
     def add_purchase_condition(self, condition: Condition):
         self.conditions.append(condition)
 
-    def remove_purchase_condition(self, condition: Condition):
-        self.conditions.remove(condition)
+    def remove_purchase_condition(self, condition_id: int) -> bool:
+        for condition in self.conditions:
+            if condition.id == condition_id:
+                self.conditions.remove(condition)
+                return True
+        return False
