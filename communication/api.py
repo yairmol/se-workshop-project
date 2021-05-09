@@ -232,6 +232,13 @@ def create_app():
     def get_system_transactions():
         return apply_request_on_function(__system_service.get_system_transactions)
 
+    @app.route(f'{API_BASE}/system/transactions/shops')
+    def get_system_transactions_of_shop(shop_id):
+        return apply_request_on_function(__system_service.get_system_transactions_of_shop(shop_id))
+
+    @app.route(f'{API_BASE}/system/transactions/shops')
+    def get_system_transactions_of_user(username):
+        return apply_request_on_function(__system_service.get_system_transactions_of_user(username))
 
     @app.route(f'{API_BASE}/shops/<int:shop_id>/products/<int:product_id>')
     def get_product_info(shop_id: int, product_id: int):

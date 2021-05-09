@@ -142,6 +142,7 @@ export default function Blog() {
     console.log( event.target.value);
     setSearchQuery(event.target.value);
   }
+
   return (
       <ProvideAuth>
       <Router>
