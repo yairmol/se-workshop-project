@@ -28,9 +28,9 @@ class CommerceSystemFacade(ICommerceSystemFacade):
     # 2.1
     def enter(self) -> int:
         new_user = User()
-        self.active_users_lock.acquire()
-        self.active_users[new_user.id] = new_user
-        self.active_users_lock.release()
+        with self.active_users_lock:
+            self.active_users[new_user.id] = new_user
+        
         return new_user.id
 
     # 2.2
@@ -43,21 +43,19 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         user = self.get_user(user_id)
         new_subscribe = user.register(username)
         # saving registered user_sess's details
-        self.registered_users_lock.acquire()
-        self.registered_users[username] = new_subscribe
-        self.registered_users_lock.release()
+        with self.registered_users_lock:
+            self.registered_users[username] = new_subscribe
 
     # 2.4
     def login(self, user_id: int, username: str, password: str):
         self.authenticator.login(username, password)
-        self.registered_users_lock.acquire()
-        sub_user = self.registered_users.get(username)
-        self.registered_users_lock.release()
+        with self.registered_users_lock:
+            sub_user = self.registered_users.get(username)
 
         # **************** NEED TO CHECK IF THE USER IS GUEST ?
-        self.active_users_lock.acquire()
-        self.active_users.get(user_id).login(sub_user)
-        self.active_users_lock.release()
+        with self.active_users_lock:
+            self.active_users.get(user_id).login(sub_user)
+        
 
     # 2.5
     def get_shop_info(self, shop_id: int) -> dict:
@@ -77,6 +75,7 @@ class CommerceSystemFacade(ICommerceSystemFacade):
     def get_all_user_names(self) -> dict:
         names: List[str] = self.registered_users.keys()
         return names
+
     # 2.6
     def search_products(
             self, product_name: str = None, keywords: List[str] = None,
@@ -136,13 +135,8 @@ class CommerceSystemFacade(ICommerceSystemFacade):
 
     # 3.1
     def logout(self, user_id: int):
-        self.active_users_lock.acquire()
-        try:
+        with self.active_users_lock:
             self.active_users.get(user_id).logout()
-        except Exception as e:
-            self.active_users_lock.release()
-            raise e
-        self.active_users_lock.release()
 
     # 3.2
     def open_shop(self, user_id: int, **shop_details) -> int:
@@ -226,7 +220,7 @@ class CommerceSystemFacade(ICommerceSystemFacade):
 
     # 4.9
     def get_shop_staff_info(self, user_id: int, shop_id: int) -> List[dict]:
-        return self.get_shop(shop_id).get_staff_info()
+        return self.get_user(user_id).get_shop_staff_info(self.get_shop(shop_id))
 
     # 4.11
     def get_shop_transaction_history(self, user_id: int, shop_id: int) -> List[dict]:
@@ -252,38 +246,30 @@ class CommerceSystemFacade(ICommerceSystemFacade):
 
     # utils:
     def remove_active_user(self, user_id: int) -> None:
-        self.active_users_lock.acquire()
-        self.active_users.pop(user_id)
-        self.active_users_lock.release()
+        with self.active_users_lock:
+            self.active_users.pop(user_id)
 
     def is_username_exists(self, username: str):
-        self.registered_users_lock.acquire()
-        ret_val = username in self.registered_users
-        self.registered_users_lock.release()
-        return ret_val
+        with self.registered_users_lock:
+            return username in self.registered_users
 
     def get_user(self, user_id) -> User:
-        self.active_users_lock.acquire()
-        ret = self.active_users[user_id]
-        self.active_users_lock.release()
+        with self.active_users_lock:
+            ret = self.active_users[user_id]
+        
         return ret
 
     def get_subscribed(self, username) -> Subscribed:
-        self.registered_users_lock.acquire()
-        ret = self.registered_users[username]
-        self.registered_users_lock.release()
-        return ret
+        with self.registered_users_lock:
+            return self.registered_users[username]
 
     def get_shop(self, shop_id) -> Shop:
-        self.shops_lock.acquire()
-        ret = self.shops[shop_id]
-        self.shops_lock.release()
-        return ret
+        with self.shops_lock:
+            return self.shops[shop_id]
 
     def add_shop(self, shop):
-        self.shops_lock.acquire()
-        self.shops[shop.shop_id] = shop
-        self.shops_lock.release()
+        with self.shops_lock:
+            self.shops[shop.shop_id] = shop
 
     def _get_all_products(self) -> List[Product]:
         products = []
@@ -293,6 +279,7 @@ class CommerceSystemFacade(ICommerceSystemFacade):
 
     def create_admin_user(self):
         from data_model import UserModel as Um, admin_credentials as ac
+        self.authenticator.register_new_user(ac[Um.USERNAME], ac[Um.PASSWORD])
         self.registered_users[ac[Um.USERNAME]] = SystemManager(
             ac[Um.USERNAME], self.transaction_repo
         )

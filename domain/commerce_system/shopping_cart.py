@@ -74,7 +74,7 @@ class ShoppingBag:
         self.products.clear()
         return True
 
-    def purchase_bag(self,username, payment_details) -> Transaction:
+    def purchase_bag(self, username, payment_details) -> Transaction:
         total_price = self.calculate_price()
         products_dtos = self.get_products_dtos()
         transaction = Transaction(
@@ -160,9 +160,9 @@ class ShoppingCart:
     def purchase_cart(self, username: str, payment_details: dict, do_what_you_can: bool = False):
         purchased_shops = []
         actions = ActionPool([
-            Action(self._purchase_shopping_bag, username, bag, payment_details, purchased_shops)
-            .set_reverse(Action(ShoppingBag.cancel_transaction), use_return_value=True)
-            for shop, bag in self
-        ] + [Action(self.remove_shopping_bags, purchased_shops)])
+                                 Action(self._purchase_shopping_bag, username, bag, payment_details, purchased_shops)
+                             .set_reverse(Action(ShoppingBag.cancel_transaction), use_return_value=True)
+                                 for shop, bag in self
+                             ] + [Action(self.remove_shopping_bags, purchased_shops)])
         assert actions.execute_actions(do_what_you_can)
         return actions.get_return_values()[:-1]

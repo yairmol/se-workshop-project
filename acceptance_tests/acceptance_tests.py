@@ -227,12 +227,13 @@ class ShopOwnerOperations(TestCase):
         self.assertTrue(self.commerce_system.appoint_shop_owner(
             self.session_id, self.shop_id, users[2][Um.USERNAME]
         )['status'])
-        shop_staff = self.commerce_system.get_shop_staff_info(self.session_id, self.shop_id)['result']
-        expected_usernames = {u[Um.USERNAME] for u in users[:2]}
+        shop_staff_res = self.commerce_system.get_shop_staff_info(self.session_id, self.shop_id)
+        self.assertTrue(shop_staff_res["status"])
+        shop_staff = shop_staff_res["result"]
+        expected_usernames = {u[Um.USERNAME] for u in users[:3]}
         self.assertEqual(len(shop_staff), len(expected_usernames))
-        # usernames_got = {u[Um.USERNAME] for u in shop_staff}
-        # self.assertEquals(expected_usernames, usernames_got)
-        print(shop_staff)
+        usernames_got = {u[Um.USERNAME] for u in shop_staff}
+        self.assertEquals(expected_usernames, usernames_got)
 
     def test_get_shop_staff_by_non_owner(self):
         non_owner = enter_register_and_login(self.commerce_system, users[1])
@@ -356,7 +357,6 @@ class PurchasesTests(TestCase):
         prod_id = self.shops_to_products[shop_id][0]
         self.assertTrue(self.commerce_system.save_product_to_cart(u1, shop_id, prod_id, 1)['status'])
         cart_info = self.commerce_system.get_cart_info(u1)['result']
-        print(cart_info)
         self.assertTrue(shop_id in cart_info["shopping_bags"])
         self.assertEqual(len(cart_info["shopping_bags"].items()), 1)
         self.assertTrue(any(map(lambda p: p[Pm.PRODUCT_ID] == prod_id, cart_info["shopping_bags"][shop_id]["products"])))
@@ -367,8 +367,8 @@ class PurchasesTests(TestCase):
         prod_id = self.shops_to_products[shop_id][0]
         transaction_status = self.commerce_system.purchase_product(
             u1, shop_id, prod_id, 1, payment_details[0]
-        )['status']
-        self.assertTrue(transaction_status)
+        )
+        self.assertTrue(transaction_status["status"])
 
     def test_purchase_cart(self):
         NUM_PRODS = 4
@@ -412,8 +412,7 @@ class PurchasesTests(TestCase):
         self.assertTrue(make_purchases(self.commerce_system, u2, self.product_to_shop, prods[2:NUM_PRODS]))
         transactions = self.commerce_system.get_shop_transaction_history(
             self.shop_to_opener[shop_id], shop_id
-        )
-        print(transactions)
+        )["result"]
         self.assertTrue(len(transactions) == NUM_PRODS)
         self.assertTrue(
             all(map(lambda pid:
@@ -431,7 +430,7 @@ class PurchasesTests(TestCase):
             self.assertTrue(make_purchases(self.commerce_system, u, self.product_to_shop, prods))
             products_purchased.extend(prods)
         admin_session = admin_login(self.commerce_system)
-        transactions = self.commerce_system.get_system_transactions(admin_session)
+        transactions = self.commerce_system.get_system_transactions(admin_session)["result"]
         self.assertTrue(len(transactions), len(products_purchased))
         self.assertTrue(
             all(map(lambda pid:
@@ -464,7 +463,6 @@ class GuestTestsWithData(TestCase):
     def test_get_shop_info(self):
         s1 = self.sids[self.S1]
         shop_info = self.commerce_system.get_shop_info(self.guest_sess[self.U1], s1)['result']
-        print(shop_info)
         self.assertNotEqual(shop_info, {})
         self.assertEqual(shop_info["shop_name"], self.sids_to_shop[s1]["shop_name"])
         self.assertEqual(len(shop_info["products"]), len([pid for pid, sid in self.pid_to_sid.items() if sid == s1]))
@@ -505,7 +503,7 @@ class GuestTestsWithData(TestCase):
         ), other_products)))
         results = self.commerce_system.search_products(product_name="bambaa", filters=[
             {"type": "price_range", "from": 5, "to": 5}
-        ])
+        ])["result"]
         self.assertTrue(len(results) == 1)
         self.assertTrue(results[0]["product_name"] == "bamba")
 
@@ -546,10 +544,10 @@ class ParallelismTests(TestCase):
         results = []
 
         def buyer1():
-            results.append(self.commerce_system.purchase_product(u_buyer1, sid, pid, 1, payment_details[0]))
+            results.append(self.commerce_system.purchase_product(u_buyer1, sid, pid, 1, payment_details[0])["status"])
 
         def buyer2():
-            results.append(self.commerce_system.purchase_product(u_buyer2, sid, pid, 1, payment_details[0]))
+            results.append(self.commerce_system.purchase_product(u_buyer2, sid, pid, 1, payment_details[0])["status"])
 
         self.run_parallel_test(buyer1, buyer2)
         self.assertTrue(any(results))
