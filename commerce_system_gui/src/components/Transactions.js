@@ -42,8 +42,8 @@ export default function Transactions() {
   const [transactions, setTransactions] = useState([]);
   const auth = useAuth();
 
-  useEffect(() => {
-    get_user_transactions(auth.token)
+  useEffect(async () => {
+    get_user_transactions(await auth.getToken())
         .then((res) => {
           setTransactions(res || [])
         })

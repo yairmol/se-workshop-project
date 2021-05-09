@@ -29,35 +29,37 @@ export const Product = ({shop_name}) => {
   const [permissions, setPermissions] = useState(false);
   const [name, setName] = useState(product.product_name);
   const [price, setPrice] = useState(product.price);
+  const [loaded, setLoaded] = useState(false);
   const [description, setDescription] = useState(product.description);
   const [categories, setCategories] = useState(product.categories);
 
   useEffect(async () => {
-
-    if (!product) {
-      get_product_info(await auth.getToken(), 1, 1).then((res) => {
-        setProduct(res)
-      });
-    }
-    if (!permissions) {
-      get_permissions(await auth.getToken(), 1).then((res) => {
-        alert(JSON.stringify(res))
-        setPermissions(res)
-      });
+    if (!loaded) {
+      if (!product) {
+        await get_product_info(await auth.getToken(), 1, 1).then((res) => {
+          setProduct(res)
+        });
+      }
+      if (!permissions) {
+        await get_permissions(await auth.getToken(), 1).then((res) => {
+          setPermissions(res)
+        });
+      }
+      setLoaded(true);
     }
   })
 
 
-  const onSubmitEdit = (e) => {
+  const onSubmitEdit = async (e) => {
     e.preventDefault()
     // WHAT TO DO WITH then.. ?
-    edit_product(auth.token, shop_id, product_id, name, price, description, categories)
+    edit_product(await auth.getToken(), shop_id, product_id, name, price, description, categories)
         .then((res)=> res.status ? alert("edit product successfully") : alert(res.description))
 
   }
-  const onSubmitDelete = (e) => {
+  const onSubmitDelete = async (e) => {
     e.preventDefault()
-    delete_product(auth.token,shop_id, product_id)
+    await delete_product(await auth.getToken,shop_id, product_id)
   }
 
    const onSubmitBuy = (e) => {
@@ -66,7 +68,7 @@ export const Product = ({shop_name}) => {
   }
 
 
-  return (
+  return (loaded &&
       <form>
             <table>
               <tr> <h1> {shop_name} </h1></tr>

@@ -3,7 +3,7 @@ from typing import Dict, List
 
 from domain.commerce_system.action import Action, ActionPool
 from domain.commerce_system.purchase_conditions import Condition
-from domain.discount_module.discount_calculator import AdditiveDiscount
+from domain.discount_module.discount_calculator import AdditiveDiscount, Discount
 from domain.commerce_system.product import Product
 from domain.commerce_system.transaction import Transaction
 from data_model import ShopModel as Sm
@@ -175,6 +175,9 @@ class Shop:
     def get_product_info(self, product_id):
         assert product_id in self.products, "product id doesn't exists"
         return self.products.get(product_id)
+
+    def get_discounts(self) -> List[Discount]:
+        return self.discount.discounts
 
     def add_discount(self, has_cond: bool, condition: [str or SimpleCond or []], discount: DiscountDict)-> int:
         with self.discount_lock:

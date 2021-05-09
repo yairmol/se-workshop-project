@@ -83,26 +83,26 @@ export default function System_manager_transaction_history() {
       setNameOf(event.target.value)
   }
 
-  const onSearchClick = () => {
+  const onSearchClick = async () => {
       nameOf === "User" ?
-      get_system_transactions_of_user(auth.token, name)
+      await get_system_transactions_of_user(await auth.getToken(), name)
         .then((res) => {
           setTransactions(res || [])
         })
         .catch((err) => setTransactions([])) :
-      get_system_transactions_of_shops(auth.token, name.id)
+      await get_system_transactions_of_shops(await auth.getToken(), name.id)
         .then((res) => {
           setTransactions(res || [])
         })
         .catch((err) => setTransactions([]))
   }
-  useEffect(() => {
-    get_all_user_names(auth.token)
+  useEffect(async () => {
+    await get_all_user_names(await auth.getToken())
         .then((res) => {
           setAllUserNames(res || allUserNames)
         })
         .catch((err) => setAllUserNames(allUserNames))
-     get_all_shops_ids_and_names(auth.token)
+     await get_all_shops_ids_and_names(auth.getToken())
         .then((res) => {
           setAllShopNames(res || allShopNames)
         })
