@@ -105,8 +105,8 @@ export const Main_page = (props) => {
   const [shops, setShops] = useState(shopData);
   const auth = useAuth();
 
-  useEffect(() => {
-    get_all_shops_info(auth.token)
+  useEffect(async () => {
+    await get_all_shops_info(await auth.getToken())
         .then((res) => {
           setShops(res.data || shopData)
         })

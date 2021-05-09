@@ -44,7 +44,7 @@ const useStyles = makeStyles((theme) => ({
     color: "gray",
     textDecoration: "none",
   },
-   search: {
+  search: {
     position: 'relative',
     borderRadius: theme.shape.borderRadius,
     backgroundColor: fade(theme.palette.common.white, 0.15),
@@ -128,18 +128,18 @@ export default function Header(props) {
           >
             {title}
           </Typography>
-           <div className={classes.search}>
+          <div className={classes.search}>
             <div className={classes.searchIcon}>
-              <SearchIcon />
+              <SearchIcon/>
             </div>
             <InputBase
-              placeholder="Search…"
-              classes={{
-                root: classes.inputRoot,
-                input: classes.inputInput,
-              }}
-              onChange={onSearchChange}
-              inputProps={{ 'aria-label': 'search' }}
+                placeholder="Search…"
+                classes={{
+                  root: classes.inputRoot,
+                  input: classes.inputInput,
+                }}
+                onChange={onSearchChange}
+                inputProps={{'aria-label': 'search'}}
             />
           </div>
 
@@ -155,6 +155,11 @@ export default function Header(props) {
                 <ShoppingCartIcon/>
               </Badge>
             </IconButton>
+          </RouteLink>
+          <RouteLink to="/shops/:shop_id/discounts">
+            <Button variant="outlined" size="small" className={classes.toolbarButton}>
+              discounts
+            </Button>
           </RouteLink>
           {auth.user ? <>
                 <Button variant="outlined" size="small" onClick={signout} className={classes.toolbarButton}>
