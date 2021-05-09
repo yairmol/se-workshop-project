@@ -34,7 +34,6 @@ const base_route = `${host_port}/${routes.base}`;
 
 export const isValidToken = (token) => {
   const url = `${base_route}/validate_token`;
-  alert(url)
   return axios({
     method: "get",
     url: url,
@@ -47,12 +46,16 @@ export const isValidToken = (token) => {
 
 export const enter = () => {
   const url = `${base_route}/enter`;
-  alert(url)
   return axios({
     method: "post",
     url: url,
-  }).then((res) => res.data)
-    .catch((err) => alert(`failed to enter the system due to ${err}`))
+  }).then((res) => {
+    if (res.data.status) {
+      return res.data.result
+    } else {
+      throw new Error(res.data.description)
+    }
+  }).catch((err) => alert(`failed to enter the system due to ${err}`))
 }
 
 export const exit = (token) => {
@@ -85,8 +88,7 @@ export const register = (token, user_data) => {
     } else {
       throw new Error(res.data.description)
     }
-  })
-    .catch((err) => alert(err))
+  }).catch((err) => alert(err))
 }
 
 export const login = (token, username, password) => {
@@ -197,7 +199,7 @@ export const get_user_transactions = (token) =>
 
 export const get_product_info = (token, shop_id, product_id) => {
   // const url = `${base_route}/${routes.login}`;
-  const url = `http://127.0.0.1:5000/api/shops/${shop_id}/products/${product_id}`;
+  const url = `${base_route}/shops/${shop_id}/products/${product_id}`;
   return axios({
     params: {
       token: token
@@ -210,10 +212,10 @@ export const get_product_info = (token, shop_id, product_id) => {
     } else {
       throw new Error(res.data.description)
     }
-  }).catch((err) => alert(err))
+  }).catch((err) => alert(`failed to get product info ${err}`))
 }
 export const get_permissions = (token, shop_id) => {
-  const url = `http://127.0.0.1:5000/api/permissions/${shop_id}`;
+  const url = `${base_route}/permissions/${shop_id}`;
   return axios({
     params: {
       token: token
@@ -325,9 +327,9 @@ export const get_system_transactions_of_user = (token, username) =>
 export const get_shop_info = (token, shop_id) =>
   axios({
     method: "get",
-    url: `${base_route}/${urljoin(routes.shops, shop_id.toString())}`,
-    data: {
-      token: token,
+    url: `${base_route}/${routes.shops}/${shop_id.toString()}`,
+    params: {
+      token: token
     }
   }).then((res) => {
     if (res.data.status) {
@@ -600,7 +602,7 @@ export const get_shop_staff_info = (token, shop_id) =>
     } else {
       throw new Error(res.data.description)
     }
-  }).catch((err) => alert(`failed to get shop staff info  due to ${err}`));
+  }).catch((err) => alert(`failed to get shop staff info due to ${err}`));
 
 export const get_shop_transaction_history = (token, shop_id) =>
   axios({
@@ -617,12 +619,41 @@ export const get_shop_transaction_history = (token, shop_id) =>
     }
   }).catch((err) => alert(`failed to get shop transaction history due to ${err}`));
 
-export const get_shop_discounts = (token, shop_id) =>
-  axios({
+export const add_discount = (token, shop_id, has_cond, discount, condition) => {
+  return axios({
+    method: "POST",
+    url: `${base_route}/${routes.shops}/${shop_id.toString()}/${routes.discounts}`,
+    data: {
+      token: token,
+      has_cond: has_cond,
+      discount: {
+        type: discount.discountTarget,
+        identifier: discount.identifier,
+        percentage: discount.percentage,
+      },
+      condition: condition
+    }
+  }).then((res) => {
+    if (res.data.status) {
+      return res.data.result
+    } else {
+      throw new Error(res.data.description)
+    }
+  }).catch((err) => alert(`failed to get shop transaction history due to ${err}`));
+}
+
+export const get_shop_discounts = (token, shop_id) => {
+  return axios({
     method: "GET",
     url: `${base_route}/${urljoin(routes.shops, shop_id.toString(), routes.discounts)}`,
     params: {
       token: token,
     }
-  }).then((res) => res.data)
-    .catch((err) => alert(`failed to get shop transactions due to ${err}`));
+  }).then((res) => {
+    if (res.data.status) {
+      return res.data.result
+    } else {
+      throw new Error(res.data.description)
+    }
+  }).catch((err) => alert(`failed to get shop discounts due to ${err}`));
+}

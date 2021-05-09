@@ -6,6 +6,7 @@ from typing import List
 from domain.commerce_system.product import Product
 from domain.commerce_system.purchase_conditions import Condition
 from domain.commerce_system.shop import Shop
+from domain.discount_module.discount_calculator import Discount
 
 
 class Appointment:
@@ -59,6 +60,9 @@ class Appointment:
     def promote_manager_to_owner(self, manager_sub):
         raise Exception("Cannot promote manager to owner")
 
+    def get_discounts(self):
+        raise Exception("Cannot get discounts")
+
     def add_discount(self, has_cond, condition, discount):
         raise Exception("Cannot manage discounts")
 
@@ -75,7 +79,7 @@ class Appointment:
         raise Exception("Cannot manage conditions")
 
     def get_permissions(self):
-        pass
+        raise NotImplementedError()
 
 
 class ShopManager(Appointment):
@@ -114,6 +118,10 @@ class ShopManager(Appointment):
         self.get_trans_history_permission = "get_transaction_history" in permissions
         self.get_trans_history_permission = "discount" in permissions
         self.get_staff_permission = "get_staff" in permissions
+
+    def get_discounts(self) -> List[Discount]:
+        assert self.discount_permission, "manager user does not have permission to manage discounts"
+        return self.shop.get_discounts()
 
     def add_discount(self, has_cond, condition, discount):
         assert self.discount_permission, "manager user does not have permission to manage discounts"
@@ -237,6 +245,9 @@ class ShopOwner(Appointment):
     def get_shop_staff_info(self):
         return self.shop.get_staff_info()
 
+    def get_discounts(self):
+        return self.shop.get_discounts()
+
     def add_discount(self, has_cond, condition, discount):
         return self.shop.add_discount(has_cond, condition, discount)
 
@@ -253,5 +264,6 @@ class ShopOwner(Appointment):
         assert self.shop.remove_purchase_condition(condition_id), "remove condition failed"
 
     def get_permissions(self):
+        print("here")
         return {'delete': True, 'edit': True, 'add': True, 'discount': True,
                 'transaction': True, 'get_staff': True, 'owner': True}

@@ -523,6 +523,20 @@ class SystemService:
                 return handle_exception(e)
         return make_status_dict(False, "Invalid Token", "")
 
+    def get_discounts(self, token: str, shop_id: int) -> dict:
+        if self.is_valid_token(token):
+            try:
+                user_id = self.tokenizer.get_id_by_token(token)
+                event_logger.info(f"User: {user_id} tries to get the discounts of shop: {shop_id}")
+                ret = self.commerce_system_facade.get_discounts(user_id, shop_id)
+                event_logger.info(f"User: {user_id} got discounts of shop: {shop_id} successfully")
+                return make_status_dict(True, "", ret)
+            except AssertionError as e:
+                return handle_assertion(e)
+            except Exception as e:
+                return handle_exception(e)
+        return make_status_dict(False, "Invalid Token", [])
+
     def add_discount(self, token: str, shop_id: int, has_cond: bool, condition: List[Union[str, SimpleCond, List]],
                      discount: DiscountDict) -> dict:
         if self.is_valid_token(token):

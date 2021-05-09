@@ -4,12 +4,26 @@ import {useFormik} from "formik";
 import TextField from "@material-ui/core/TextField";
 import Button from "@material-ui/core/Button";
 import Grid from "@material-ui/core/Grid";
-import {FormControl, InputLabel, List, ListItem, MenuItem, Paper, Select, Typography} from "@material-ui/core";
+import {
+  FormControl,
+  IconButton,
+  InputLabel,
+  List,
+  ListItem,
+  MenuItem,
+  Paper,
+  Select,
+  Typography
+} from "@material-ui/core";
 import Divider from "@material-ui/core/Divider";
 import DragHandleIcon from '@material-ui/icons/DragHandle';
 import {useDrag, useDrop} from "react-dnd";
 import {HTML5Backend} from 'react-dnd-html5-backend'
 import {DndProvider} from 'react-dnd'
+import DeleteIcon from '@material-ui/icons/Delete';
+import {add_discount, get_shop_discounts, get_shop_info} from "../api";
+import {useAuth} from "./use-auth";
+import {useParams} from "react-router-dom";
 
 const conditionTypes = {
   "sum": "Total Price",
@@ -237,7 +251,7 @@ function CompositeDiscount({discount, onDrop}) {
   )
 }
 
-function DiscountView({discount, index, onDrop}) {
+function DiscountView({discount, index, onDrop, removeDiscount}) {
   const classes = useStyles();
   const [{isDragging}, drag, dragPreview] = useDrag(
     () => ({
@@ -258,6 +272,9 @@ function DiscountView({discount, index, onDrop}) {
           <SimpleDiscount discount={discount} classname={"discountText"}/> :
           discount.type === "composite" ?
             <CompositeDiscount discount={discount} onDrop={onDrop}/> : <Typography>Not a valid discount</Typography>}
+        <IconButton onClick={() => removeDiscount(discount)}>
+        <DeleteIcon/>
+        </IconButton>
       </Paper>
     </div>
   )
@@ -275,38 +292,54 @@ export const Discounts = () => {
   const [shop, setShop] = useState({products: []});
   const [loaded, setLoaded] = useState(false);
   const [addComp, setAddComp] = useState(null);
+  const auth = useAuth();
   const forceUpdate = useForceUpdate();
-
+  const {shop_id} = useParams();
+  alert(JSON.stringify(discounts))
   useEffect(async () => {
     if (!loaded) {
-      setDiscounts([
-        {
-          id: `id-${1}`,
-          "type": "simple",
-          "target_type": "product",
-          "target_identifier": 1,
-          "percentage": 20
-        },
-        {
-          id: `id-${2}`,
-          "type": "simple",
-          "target_type": "product",
-          "target_identifier": 2,
-          "percentage": 20
-        }
-      ])
-      setShop(shop_info1);
-      // await get_shop_info(auth.getToken(), shop_id).then((shopInfo) => {
-      //   setShop(shopInfo);
-      // })
+      await get_shop_info(await auth.getToken(), shop_id).then((shopInfo) => {
+        setShop(shopInfo);
+      })
+      await get_shop_discounts(await auth.getToken(), shop_id).then((discounts) => {
+        setDiscounts(discounts);
+      })
       setLoaded(true);
     }
   })
 
-  const saveDiscount = (discount) => {
+  const parseCondition = (conditions, rators) => {
+    if (conditions.length === 0) {
+      return []
+    }
+    if (conditions.length === 1){
+      return conditions[0]
+    }
+    return [
+      rators[0], conditions[0], parseCondition(conditions.slice(1), rators.slice(1))
+    ]
+  }
+
+  const saveDiscount = async (discount) => {
     // alert(`saving discount ${JSON.stringify(discount)}`);
-    discounts.push(discount)
-    setDiscounts(discounts);
+    const has_cond = discount.conditions.length > 0;
+    alert(JSON.stringify(parseCondition(discount.conditions, discount.rators)))
+
+    add_discount(
+      await auth.getToken(), shop.shop_id, has_cond, discount,
+      parseCondition(discount.conditions, discount.rators)
+    ).then((res) => {
+      if (res) {
+        discounts.push(discount)
+        setDiscounts(discounts);
+        forceUpdate();
+      }
+    })
+  }
+
+  const removeDiscount = (discount) => {
+    remove(discounts, getDiscountPath(discounts, discount.id))
+    setDiscounts(discounts)
     forceUpdate();
   }
 
@@ -334,7 +367,7 @@ export const Discounts = () => {
                 {discounts.map((discount, index) => (
                   <Grid item>
                     <DiscountView discount={discount} index={index} key={discount.id}
-                                  onDrop={(d, i, m) => onDrop(d, i, m)}/>
+                                  onDrop={(d, i, m) => onDrop(d, i, m)} removeDiscount={removeDiscount}/>
                   </Grid>
                 ))}
               </DndProvider>

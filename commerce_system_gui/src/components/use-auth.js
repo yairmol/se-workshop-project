@@ -23,6 +23,7 @@ function useProvideAuth() {
 
   const getToken = async () => {
     if (!token || !(await isValidToken(token))) {
+      localStorage.clear();
       await enter().then((new_token) => {
         localStorage.setItem("token", new_token)
         setToken(new_token);
@@ -51,16 +52,13 @@ function useProvideAuth() {
 
   const signout = () =>
       logout(token).then((res) => {
-        if (res) {
-          localStorage.removeItem("user")
-          setUser(null);
-          return true
-        }
-        return false
+        localStorage.removeItem("user")
+        setUser(null);
+        return res
       });
 
   useEffect(async () => {
-    localStorage.clear();
+    // localStorage.clear();
     await getToken();
 
     if (user) {

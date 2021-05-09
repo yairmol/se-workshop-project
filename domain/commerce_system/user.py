@@ -10,6 +10,7 @@ from domain.commerce_system.shopping_cart import ShoppingBag
 from domain.commerce_system.transaction_repo import TransactionRepo
 from domain.commerce_system.transaction import Transaction
 from domain.commerce_system.shopping_cart import ShoppingCart
+from domain.discount_module.discount_calculator import Discount
 
 
 class User:
@@ -104,6 +105,9 @@ class User:
     def remove_purchase_condition(self, shop: Shop, condition_id: int):
         raise NotImplementedError()
 
+    def get_shop_discounts(self, shop: Shop) -> List[Discount]:
+        return self.user_state.get_shop_discounts(shop)
+
 
 class UserState:
     def get_name(self, userid):
@@ -159,6 +163,9 @@ class UserState:
 
     def get_system_transaction_history(self):
         raise Exception("only system administrator can see the system transaction history")
+
+    def get_shop_discounts(self, shop: Shop):
+        raise Exception("User doesn't have premissions to get shop transactions")
 
     def add_discount(self, shop, has_cond, condition, discount):
         raise Exception("User doesnt have permissions to manage discounts")
@@ -260,6 +267,9 @@ class Subscribed(UserState):
     def get_personal_transaction_history(self):
         return self.transactions
 
+    def get_shop_discounts(self, shop: Shop) -> List[Discount]:
+        return self.get_appointment(shop).get_discounts()
+
     def add_discount(self, shop, has_cond, condition, discount):
         appointment = self.get_appointment(shop)
         appointment.add_discount(has_cond, condition, discount)
@@ -281,13 +291,8 @@ class Subscribed(UserState):
         appointment.remove_purchase_condition(condition_id)
 
     def get_permissions(self, shop):
-        try:
-            appointment = self.get_appointment(shop)
-            appointment.get_permissions()
-        except:
-            print("!!!!!!!!!!!!!!!!!!!")
-            return {'delete': False, 'edit': False, 'add': False, 'discount': False, 'transaction': False,
-                    'owner': False}
+        appointment = self.get_appointment(shop)
+        return appointment.get_permissions()
 
     def get_shop_staff_info(self, shop: Shop) -> List[Appointment]:
         appointment = self.get_appointment(shop)

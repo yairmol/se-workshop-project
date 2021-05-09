@@ -68,7 +68,6 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         # **************** NEED TO CHECK IF THE USER IS GUEST ?
         with self.active_users_lock:
             self.active_users.get(user_id).login(sub_user)
-        
 
     # 2.5
     def get_shop_info(self, shop_id: int) -> dict:
@@ -316,6 +315,11 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         self.registered_users.clear()
         self.active_users.clear()
 
+    def get_discounts(self, user_id, shop_id):
+        user = self.get_user(user_id)
+        shop = self.get_shop(shop_id)
+        return list(map(lambda d: d.to_dict(), user.get_shop_discounts(shop)))
+
     def add_discount(self, user_id: int, shop_id: int, has_cond: bool, condition: List[Union[str, SimpleCond, List]],
                      discount: DiscountDict):
 
@@ -341,4 +345,5 @@ class CommerceSystemFacade(ICommerceSystemFacade):
 
         shop = self.get_shop(shop_id)
         subscribed = self.get_user(user_id).user_state
-        return subscribed.get_permissions(shop)
+        ret = subscribed.get_permissions(shop)
+        return ret
