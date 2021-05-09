@@ -4,6 +4,7 @@ from typing import List, Dict
 
 from domain.commerce_system.appointment import Appointment, ShopOwner
 from domain.commerce_system.product import Product
+from domain.commerce_system.purchase_conditions import Condition
 from domain.commerce_system.shop import Shop
 from domain.commerce_system.shopping_cart import ShoppingBag
 from domain.commerce_system.transaction_repo import TransactionRepo
@@ -97,6 +98,12 @@ class User:
     def get_shop_transaction_history(self, shop: Shop) -> List[Transaction]:
         raise NotImplementedError()
 
+    def add_purchase_condition(self, shop: Shop, condition: Condition):
+        raise NotImplementedError()
+
+    def remove_purchase_condition(self, shop: Shop, condition_id: int):
+        raise NotImplementedError()
+
 
 class UserState:
     def get_name(self, userid):
@@ -161,6 +168,12 @@ class UserState:
 
     def aggregate_discounts(self, shop, discount_ids, func):
         raise Exception("User doesnt have permissions to manage discounts")
+
+    def add_purchase_condition(self, shop: Shop, condition: Condition):
+        raise Exception("User cannot perform this action")
+
+    def remove_purchase_condition(self, shop: Shop, condition_id: int):
+        raise Exception("User cannot perform this action")
 
     def get_permissions(self, shop):
         return {'delete': False, 'edit': False, 'add': False, 'discount': False, 'transaction': False, 'owner': False}
@@ -259,6 +272,14 @@ class Subscribed(UserState):
         appointment = self.get_appointment(shop)
         appointment.aggregate_discounts(discount_ids, func)
 
+    def add_purchase_condition(self, shop: Shop, condition: Condition):
+        appointment = self.get_appointment(shop)
+        appointment.add_purchase_condition(condition)
+
+    def remove_purchase_condition(self, shop: Shop, condition_id: int):
+        appointment = self.get_appointment(shop)
+        appointment.remove_purchase_condition(condition_id)
+
     def get_permissions(self, shop):
         try:
             appointment = self.get_appointment(shop)
@@ -286,3 +307,4 @@ class SystemManager(Subscribed):
 
     def get_system_transaction_history_of_user(self, username):
         return self.system_transactions.get_transactions_of_user(username)
+

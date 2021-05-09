@@ -4,6 +4,7 @@ import threading
 from typing import List
 
 from domain.commerce_system.product import Product
+from domain.commerce_system.purchase_conditions import Condition
 from domain.commerce_system.shop import Shop
 
 
@@ -67,6 +68,12 @@ class Appointment:
     def aggregate_discounts(self, discount_ids, func):
         raise Exception("Cannot manage discounts")
 
+    def add_purchase_condition(self, condition: Condition):
+        raise Exception("Cannot manage conditions")
+
+    def remove_purchase_condition(self, condition_id: int):
+        raise Exception("Cannot manage conditions")
+
     def get_permissions(self):
         pass
 
@@ -79,6 +86,7 @@ class ShopManager(Appointment):
         self.edit_product_permission = False
         self.add_product_permission = False
         self.discount_permission = False
+        self.purchase_condition_permission = False
         self.get_trans_history_permission = False
         self.get_staff_permission = False
         self.set_permissions(permissions)
@@ -118,6 +126,16 @@ class ShopManager(Appointment):
     def aggregate_discounts(self, discount_ids: [int], func: str):
         assert self.discount_permission, "manager user does not have permission to manage discounts"
         return self.shop.aggregate_discounts(discount_ids, func)
+
+    def add_purchase_condition(self, condition: Condition):
+        assert self.purchase_condition_permission, "manager user does not have permission to" \
+                                                   " manage purchase conditions"
+        return self.shop.add_purchase_condition(condition)
+
+    def remove_purchase_condition(self, condition_id: int):
+        assert self.purchase_condition_permission, "manager user does not have permission to " \
+                                                   "manage purchase conditions"
+        assert self.shop.remove_purchase_condition(condition_id), "remove condition failed"
 
     def get_permissions(self):
         return {
@@ -227,6 +245,12 @@ class ShopOwner(Appointment):
 
     def aggregate_discounts(self, discount_ids, func):
         return self.shop.aggregate_discounts(discount_ids, func)
+
+    def add_purchase_condition(self, condition: Condition):
+        return self.shop.add_purchase_condition(condition)
+
+    def remove_purchase_condition(self, condition_id: int):
+        assert self.shop.remove_purchase_condition(condition_id), "remove condition failed"
 
     def get_permissions(self):
         return {'delete': True, 'edit': True, 'add': True, 'discount': True,
