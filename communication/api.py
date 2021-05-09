@@ -6,6 +6,7 @@ from flask_cors import CORS
 
 from acceptance_tests.test_data import products
 from acceptance_tests.test_utils import fill_with_data, make_purchases
+from domain.discount_module.discount_management import SimpleCond, DiscountDict
 from service.system_service import SystemService
 
 
@@ -28,6 +29,7 @@ def create_app():
     make_purchases(__system_service, subs_sess[0], pid_to_sid, list(pid_to_sid.keys())[:3])
 
     def apply_request_on_function(func, *args, **kwargs):
+        print(request.data)
         data = json.loads(request.data)
         return func(*args, **kwargs, **data)
 
@@ -46,41 +48,35 @@ def create_app():
     # 2.2
     @app.route(f'{API_BASE}/exit', methods=['DELETE'])
     def exit_():
-        return {
-            "status": apply_request_on_function(__system_service.exit)
-        }
+        return apply_request_on_function(__system_service.exit)
 
     # 2.3
     @app.route(f'{API_BASE}/register', methods=['POST'])
     def register() -> dict:
-        return {
-            "status": apply_request_on_function(__system_service.register)
-        }
+        return apply_request_on_function(__system_service.register)
 
     # 2.4
     @app.route(f'{API_BASE}/login', methods=["POST"])
     def login() -> dict:
         print("login", request.remote_user, "addr", request.remote_addr, request.environ.get('REMOTE_PORT'))
-        return {
-            "status": apply_request_on_function(__system_service.login)
-        }
+        return apply_request_on_function(__system_service.login)
 
     # 2.5
     @app.route(f'{API_BASE}/shops/<int:shop_id>')
     def get_shop_info(shop_id: int) -> dict:
-        return __system_service.get_shop_info(request.args.get("token"), shop_id=shop_id)
+        return __system_service.get_shop_info(token=request.args.get("token"), shop_id=shop_id)
 
     @app.route(f'{API_BASE}/all_shops/', methods=["GET"])
     def get_all_shop_info() -> dict:
-        return apply_request_on_function(__system_service.get_all_shops_info)
+        return __system_service.get_all_shops_info(request.args.get("token"))
 
     @app.route(f'{API_BASE}/all_user_names/', methods=["GET"])
     def get_all_user_names() -> dict:
-        return apply_request_on_function(__system_service.get_all_user_names)
+        return __system_service.get_all_user_names(request.args.get("token"))
 
     @app.route(f'{API_BASE}/all_shops_ids_and_names/', methods=["GET"])
     def get_all_shops_ids_and_names() -> dict:
-        return apply_request_on_function(__system_service.get_all_ids_and_names)
+        return __system_service.get_all_ids_and_names(request.args.get("token"))
 
     # 2.6
     @app.route(f'{API_BASE}/search')
@@ -91,12 +87,10 @@ def create_app():
     # TODO: decide on route
     @app.route(f'{API_BASE}/cart/<int:shop_id>/<int:product_id>', methods=['POST'])
     def save_product_to_cart(shop_id: int, product_id: int) -> dict:
-        return {
-            "status": apply_request_on_function(
+        return apply_request_on_function(
                 __system_service.save_product_to_cart,
                 shop_id=shop_id, product_id=product_id
             )
-        }
 
     # 2.8
     @app.route(f'{API_BASE}/cart')
@@ -106,12 +100,10 @@ def create_app():
     # 2.8
     @app.route(f'{API_BASE}/cart/<int:shop_id>/<int:product_id>', methods=['DELETE'])
     def remove_product_from_cart(shop_id: int, product_id: int) -> dict:
-        return {
-            "status": apply_request_on_function(
+        return apply_request_on_function(
                 __system_service.remove_product_from_cart,
                 shop_id=shop_id, product_id=product_id
             )
-        }
 
     # 2.9
     @app.route(f'{API_BASE}/cart/<int:shop_id>/<int:product_id>', methods=['POST'])
@@ -138,9 +130,7 @@ def create_app():
     # 3.1
     @app.route(f'{API_BASE}/logout', methods=['PUT'])
     def logout() -> dict:
-        return {
-            "status": apply_request_on_function(__system_service.logout)
-        }
+        return apply_request_on_function(__system_service.logout)
 
     # 3.2
     @app.route(f'{API_BASE}/shops', methods=['POST'])
@@ -230,44 +220,42 @@ def create_app():
     # 6.4
     @app.route(f'{API_BASE}/system/transactions')
     def get_system_transactions():
-        return apply_request_on_function(__system_service.get_system_transactions)
+        return __system_service.get_system_transactions(request.args.get("token"))
 
-    @app.route(f'{API_BASE}/system/transactions/shops')
+    @app.route(f'{API_BASE}/system/transactions/shops/<int:shop_id>')
     def get_system_transactions_of_shop(shop_id):
-        return apply_request_on_function(__system_service.get_system_transactions_of_shop(shop_id))
+        return __system_service.get_system_transactions_of_shop(request.args.get("token"), shop_id)
 
-    @app.route(f'{API_BASE}/system/transactions/shops')
-    def get_system_transactions_of_user(username):
-        return apply_request_on_function(__system_service.get_system_transactions_of_user(username))
+    # @app.route(f'{API_BASE}/system/transactions/shops')
+    # def get_system_transactions_of_user(username):
+    #     return apply_request_on_function(__system_service.get_system_transactions_of_user(username))
 
     @app.route(f'{API_BASE}/shops/<int:shop_id>/products/<int:product_id>')
     def get_product_info(shop_id: int, product_id: int):
         return __system_service.get_product_info(request.args.get("token"), shop_id, product_id)
-
 
     @app.route(f'{API_BASE}/permissions/<int:shop_id>')
     def get_permissions(shop_id: int):
         print(__system_service.get_permissions(request.args.get("token"), shop_id))
         return __system_service.get_permissions(request.args.get("token"), shop_id)
 
+    @app.route(f'{API_BASE}/shops/<int:shop_id>/discounts', methods=["GET"])
+    def get_discounts(shop_id: int):
+        ret = __system_service.get_discounts(token=request.args.get("token"), shop_id=shop_id)
+        print(ret)
+        return ret
 
-    ''' NEED TO ADD TOKEN TO FUNCTIONS BELOW'''
+    @app.route(f'{API_BASE}/shops/<int:shop_id>/discounts', methods=["POST"])
+    def add_discount(shop_id: int):
+        return apply_request_on_function(__system_service.add_discount, shop_id=shop_id)
 
-    # @app.route(f'{API_BASE}/shops/<int:shop_id>/discounts')
-    # def add_discount(self, token: str, shop_id: int, has_cond: bool, condition: List[Union[str, SimpleCond, List]],
-    #                  discount: DiscountDict):
-    #     return __system_service.add_discount(shop_id, has_cond, condition, discount)
+    @app.route(f'{API_BASE}/shops/<int:shop_id>/discounts', methods=["DELETE"])
+    def delete_discounts(shop_id: int):
+        return apply_request_on_function(__system_service.delete_discounts, shop_id=shop_id)
 
-
-    @app.route(f'{API_BASE}/shops/<int:shop_id>/discounts')
-    def delete_discounts(self, token: str, shop_id: int, discount_ids: [int]):
-        return __system_service.delete_discounts(shop_id, discount_ids)
-
-
-    @app.route(f'{API_BASE}/shops/<int:shop_id>/discounts')
-    def aggregate_discounts(self, token: str, shop_id: int, discount_ids: [int], func: str):
-        return __system_service.aggregate_discounts(shop_id, discount_ids, func)
-
+    @app.route(f'{API_BASE}/shops/<int:shop_id>/discounts', methods=["PUT"])
+    def aggregate_discounts(shop_id: int):
+        return apply_request_on_function(__system_service.aggregate_discounts, shop_id=shop_id)
 
     @app.errorhandler(404)
     def server_error(e):

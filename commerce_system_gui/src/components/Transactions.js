@@ -3,7 +3,7 @@ import {Typography} from "@material-ui/core";
 import React, {useEffect, useState} from 'react';
 import {makeStyles} from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
-import {get_user_transactions, get_shop_transactions} from "../api";
+import {get_user_transactions} from "../api";
 import {useAuth} from "./use-auth";
 import {Link} from "react-router-dom";
 
@@ -35,22 +35,15 @@ const useStyles = makeStyles((theme) => ({
       paddingRight: 0,
     },
   },
-  heading: {
-      fontSize: theme.typography.pxToRem(20),
-      flexBasis: '33.33%',
-      flexShrink: 0,
-      fontWeight: 530,
-      padding: theme.spacing(1)
-  },
 }));
 
-function Transactions(transactions_getter) {
+export default function Transactions() {
   const classes = useStyles();
   const [transactions, setTransactions] = useState([]);
   const auth = useAuth();
 
-  useEffect(() => {
-    auth.getToken().then(transactions_getter)
+  useEffect(async () => {
+    get_user_transactions(await auth.getToken())
         .then((res) => {
           setTransactions(res || [])
         })
@@ -59,20 +52,11 @@ function Transactions(transactions_getter) {
 
   return (
       <>
-        <Grid item lg={6} >
-          <Typography className={classes.heading}>Transactions</Typography>
+        <Grid item lg={6}>
           {(transactions && transactions.length > 0) ?
-              transactions.map((transaction, index) => <div style={{width:'200%'}}><Transaction key={index} transaction={transaction}/></div>)
+              transactions.map((transaction, index) => <Transaction key={index} transaction={transaction}/>)
               : <Typography align="center">You currently have no transactions, start shopping <Link to="/">here</Link></Typography>
           }
         </Grid></>
   );
-}
-
-export function UserTransactions() {
-  return Transactions((res) => get_user_transactions(res))
-}
-
-export function ShopTransactions({shop_id}) {
-  return Transactions((res) => get_shop_transactions(res, shop_id))
 }

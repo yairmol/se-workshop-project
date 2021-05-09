@@ -4,14 +4,14 @@ import CssBaseline from '@material-ui/core/CssBaseline';
 import Grid from '@material-ui/core/Grid';
 import Container from '@material-ui/core/Container';
 import Header from './components/Header';
-import {UserTransactions} from "./components/Transactions";
+import Transactions from "./components/Transactions";
 import {Typography} from "@material-ui/core";
 import SignIn from "./components/SignIn";
 import {
   BrowserRouter as Router,
   Switch,
   Route,
-  Link, useParams
+  Link
 } from "react-router-dom";
 import Register from "./components/Register";
 import {Product} from "./components/Product";
@@ -21,6 +21,7 @@ import {Cart} from "./components/Cart";
 import {ProvideAuth} from "./components/use-auth.js";
 import {Main} from "./components/Main";
 import {Main_page} from "./components/Main_page";
+import {Discounts} from "./components/Discounts";
 import System_manager_transaction_history from "./components/system_manager_transaction_history";
 
 const useStyles = makeStyles((theme) => ({
@@ -163,30 +164,23 @@ export default function Blog() {
                   <Route path="/cart/:shop_id">
                     <ShoppingBag/> {/* This means shopping bag of shop shop_id*/}
                   </Route>
-                  <Route path="/shops/:shop_id">
-                    {/* this means that in the shop component we can use UseParams()*/}
-                      <Shop/>                 {/* to get the shop_id param and then get the proper shop info */}
-                    {/*<Route path="/shops">*/}
-                    {/*  <Route*/}
-                    {/*      path="/:shop_id">  /!* this means that in the shop component we can use UseParams()*!/*/}
-                    {/*    /!*<Shop/> /!* to get the shop_id param and then get the proper shop info *!/*!/*/}
-                    {/*    <Route path="/products">*/}
-                    {/*      <Route path="/:product_id">*/}
-                    {/*        <Product/>*/}
-                    {/*      </Route>*/}
-                    {/*    </Route>*/}
-                    {/*  </Route>*/}
-                    {/*</Route>*/}
-
+                  <Route path="/shops/:shop_id/discounts">
+                    <Discounts/>
                   </Route>
-                  <Route path="/products" exact>
-                    <Product shop_name={'Armani'}/>
+                  <Route path="/shops/:shop_id">
+                    <Shop/>
+                  </Route>
+                  <Route path="/shops/:shop_id/products/:product_id">
+                    <Product/>
                   </Route>
                   <Route path="/login" exact>
                     <SignIn />
                   </Route>
                   <Route path="/transactions">
-                    <UserTransactions/>
+                    <Transactions/>
+                  </Route>
+                  <Route path="/products" exact>
+                    <Product shop_name={'Armani'}/>
                   </Route>
                   <Route path="/" exact>
                     <Main_page searchQuery = {searchQuery}/>
