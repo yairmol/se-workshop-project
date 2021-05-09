@@ -27,6 +27,7 @@ class DiscountManagement:
             cond = None
         discount_to_add = DiscountManagement.create_discount_from_dict(has_cond, cond, new_discount_dict)
         shop_discount.add_discount(discount_to_add)
+        return discount_to_add.discount_id
 
     @staticmethod
     def create_discount_from_dict(has_cond: bool, cond: Condition, new_discount: DiscountDict) -> Discount:
@@ -34,7 +35,7 @@ class DiscountManagement:
             return ProductDiscount(has_cond, cond, new_discount['percentage'], new_discount['identifier'])
         if new_discount['type'] == 'category':
             return CategoryDiscount(has_cond, cond, new_discount['percentage'], new_discount['identifier'])
-        if new_discount['type'] == 'product':
+        if new_discount['type'] == 'shop':
             return StoreDiscount(has_cond, cond, new_discount['percentage'])
 
     @staticmethod

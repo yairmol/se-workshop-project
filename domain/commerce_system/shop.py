@@ -176,9 +176,9 @@ class Shop:
         assert product_id in self.products, "product id doesn't exists"
         return self.products.get(product_id)
 
-    def add_discount(self, has_cond: bool, condition: [str or SimpleCond or []], discount: DiscountDict):
+    def add_discount(self, has_cond: bool, condition: [str or SimpleCond or []], discount: DiscountDict)-> int:
         with self.discount_lock:
-            DiscountManagement.add_discount(self.discount, has_cond, condition, discount)
+            return DiscountManagement.add_discount(self.discount, has_cond, condition, discount)
 
     def aggregate_discounts(self, discount_ids: [int], func: str):
         with self.discount_lock:

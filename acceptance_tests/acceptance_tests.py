@@ -2,6 +2,7 @@ import unittest
 from unittest import TestCase
 import threading as th
 
+from domain.discount_module.discount_management import DiscountDict, SimpleCond
 from driver import Driver
 from test_data import users, shops, products, permissions, payment_details
 from test_utils import (
@@ -233,7 +234,7 @@ class ShopOwnerOperations(TestCase):
         expected_usernames = {u[Um.USERNAME] for u in users[:3]}
         self.assertEqual(len(shop_staff), len(expected_usernames))
         usernames_got = {u[Um.USERNAME] for u in shop_staff}
-        self.assertEquals(expected_usernames, usernames_got)
+        self.assertEqual(expected_usernames, usernames_got)
 
     def test_get_shop_staff_by_non_owner(self):
         non_owner = enter_register_and_login(self.commerce_system, users[1])
@@ -313,6 +314,54 @@ class ShopManagerOperations(TestCase):
             self.manager_session_id, self.shop_id, prod_id
         )['status'])
 
+    def test_add_discount_with_no_cond(self):
+        perm = ["add_product", "discount"]
+        self.assertTrue(self.commerce_system.edit_manager_permissions(
+            self.owner_session_id, self.shop_id, self.manager_username, perm)['status'])
+
+        product1_discount_dict1: DiscountDict = {'type': 'product', 'identifier': 1, 'percentage': 20}
+        self.assertTrue(self.commerce_system.add_discount(self.manager_session_id,
+                                                          self.shop_id, False, None, product1_discount_dict1)['status'])
+
+    def test_add_discount_with_cond(self):
+        perm = ["add_product", "discount"]
+        self.assertTrue(self.commerce_system.edit_manager_permissions(
+            self.owner_session_id, self.shop_id, self.manager_username, perm)['status'])
+
+        product1_discount_dict1: DiscountDict = {'type': 'product', 'identifier': 1, 'percentage': 20}
+        simple_cond: SimpleCond = {'condition': 'sum', 'type': 'shop', 'identifier': 'shop', 'num': 50}
+        condition = [simple_cond]
+        self.assertTrue(self.commerce_system.add_discount(self.manager_session_id,
+                                                          self.shop_id, True, condition, product1_discount_dict1)[
+                            'status'])
+
+    def test_delete_discount(self):
+        product1_discount_dict1: DiscountDict = {'type': 'product', 'identifier': 1, 'percentage': 20}
+        simple_cond: SimpleCond = {'condition': 'sum', 'type': 'shop', 'identifier': 'shop', 'num': 50}
+        condition = [simple_cond]
+
+        self.assertTrue(self.commerce_system.add_discount(self.owner_session_id,
+                                                          self.shop_id, True, condition, product1_discount_dict1)[
+                            'status'])
+        self.assertTrue(self.commerce_system.delete_discounts(self.owner_session_id, self.shop_id, [1])['status'])
+
+    def test_aggregate_discounts(self):
+        product1_discount_dict1: DiscountDict = {'type': 'product', 'identifier': 1, 'percentage': 20}
+        discount_dict2: DiscountDict = {'type': 'shop', 'identifier': 'shop', 'percentage': 15}
+
+        simple_cond: SimpleCond = {'condition': 'sum', 'type': 'shop', 'identifier': 'shop', 'num': 50}
+        condition = [simple_cond]
+        add1_dict = self.commerce_system.add_discount(self.owner_session_id,
+                                                      self.shop_id, False, None, product1_discount_dict1)
+        add2_dict = self.commerce_system.add_discount(self.owner_session_id,
+                                                      self.shop_id, True, condition, discount_dict2)
+        self.assertTrue(add1_dict['status'])
+        self.assertTrue(add2_dict['status'])
+        disc_id1 = add1_dict['result']
+        disc_id2 = add2_dict['result']
+        self.assertTrue(self.commerce_system.aggregate_discounts(self.owner_session_id, self.shop_id,
+                                                                 [disc_id1, disc_id2], 'max')['status'])
+
 
 class PurchasesTests(TestCase):
     NUM_USERS = len(users)
@@ -359,7 +408,8 @@ class PurchasesTests(TestCase):
         cart_info = self.commerce_system.get_cart_info(u1)['result']
         self.assertTrue(shop_id in cart_info["shopping_bags"])
         self.assertEqual(len(cart_info["shopping_bags"].items()), 1)
-        self.assertTrue(any(map(lambda p: p[Pm.PRODUCT_ID] == prod_id, cart_info["shopping_bags"][shop_id]["products"])))
+        self.assertTrue(
+            any(map(lambda p: p[Pm.PRODUCT_ID] == prod_id, cart_info["shopping_bags"][shop_id]["products"])))
 
     def test_purchase_product(self):
         u1 = self.sessions[self.U1]
@@ -394,9 +444,9 @@ class PurchasesTests(TestCase):
         self.assertEqual(len(transaction_history), NUM_PRODS)
         self.assertTrue(
             all(map(lambda pr:
-                any(map(lambda t: pr == t["products"][0]["product_id"],
-                    transaction_history)),
-                prods[:NUM_PRODS]))
+                    any(map(lambda t: pr == t["products"][0]["product_id"],
+                            transaction_history)),
+                    prods[:NUM_PRODS]))
         )
 
     def test_get_shop_transactions(self):
@@ -487,9 +537,9 @@ class GuestTestsWithData(TestCase):
         self.assertTrue(len(results) == len(products_in_range_indices))
         self.assertTrue(
             all(map(lambda p_i:
-                any(map(lambda r: products[p_i]["product_name"] == r["product_name"],
-                    results)),
-                products_in_range_indices))
+                    any(map(lambda r: products[p_i]["product_name"] == r["product_name"],
+                            results)),
+                    products_in_range_indices))
         )
 
     def test_search_products_by_name_and_filters(self):
