@@ -68,15 +68,15 @@ def create_app():
 
     @app.route(f'{API_BASE}/all_shops/', methods=["GET"])
     def get_all_shop_info() -> dict:
-        return apply_request_on_function(__system_service.get_all_shops_info)
+        return __system_service.get_all_shops_info(request.args.get("token"))
 
     @app.route(f'{API_BASE}/all_user_names/', methods=["GET"])
     def get_all_user_names() -> dict:
-        return apply_request_on_function(__system_service.get_all_user_names)
+        return __system_service.get_all_user_names(request.args.get("token"))
 
     @app.route(f'{API_BASE}/all_shops_ids_and_names/', methods=["GET"])
     def get_all_shops_ids_and_names() -> dict:
-        return apply_request_on_function(__system_service.get_all_ids_and_names)
+        return __system_service.get_all_ids_and_names(request.args.get("token"))
 
     # 2.6
     @app.route(f'{API_BASE}/search')
@@ -208,27 +208,27 @@ def create_app():
     # 4.9
     @app.route(f'{API_BASE}/shops/<int:shop_id>/appointments', methods=['GET'])
     def get_shop_staff_info(shop_id: int) -> List[dict]:
-        return apply_request_on_function(__system_service.get_shop_staff_info, shop_id=shop_id)
+        return __system_service.get_shop_staff_info(request.args.get("token"), shop_id=shop_id)
 
     # 4.11
     @app.route(f'{API_BASE}/shops/<int:shop_id>/transactions', methods=['GET'])
     def get_shop_transaction_history(shop_id: int) -> List[dict]:
-        return apply_request_on_function(__system_service.get_shop_transaction_history, shop_id=shop_id)
+        return __system_service.get_shop_transaction_history(request.args.get("token"), shop_id=shop_id)
 
     # 6. System Administrator Requirements
 
     # 6.4
     @app.route(f'{API_BASE}/system/transactions')
     def get_system_transactions():
-        return apply_request_on_function(__system_service.get_system_transactions)
+        return __system_service.get_system_transactions(request.args.get("token"))
 
-    @app.route(f'{API_BASE}/system/transactions/shops')
+    @app.route(f'{API_BASE}/system/transactions/shops/<int:shop_id>')
     def get_system_transactions_of_shop(shop_id):
-        return apply_request_on_function(__system_service.get_system_transactions_of_shop(shop_id))
+        return __system_service.get_system_transactions_of_shop(request.args.get("token"), shop_id)
 
-    @app.route(f'{API_BASE}/system/transactions/shops')
-    def get_system_transactions_of_user(username):
-        return apply_request_on_function(__system_service.get_system_transactions_of_user(username))
+    # @app.route(f'{API_BASE}/system/transactions/shops')
+    # def get_system_transactions_of_user(username):
+    #     return apply_request_on_function(__system_service.get_system_transactions_of_user(username))
 
     @app.route(f'{API_BASE}/shops/<int:shop_id>/products/<int:product_id>')
     def get_product_info(shop_id: int, product_id: int):

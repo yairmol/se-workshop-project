@@ -40,7 +40,9 @@ export const isValidToken = (token) => {
     params: {
       token: token
     }
-  }).then((res) => res.data.is_valid)
+  }).then((res) => {
+    return res.data.is_valid
+  })
     .catch((err) => alert(`failed to enter the system due to ${err}`))
 }
 

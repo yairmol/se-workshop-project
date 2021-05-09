@@ -295,7 +295,7 @@ export const Discounts = () => {
   const auth = useAuth();
   const forceUpdate = useForceUpdate();
   const {shop_id} = useParams();
-  alert(JSON.stringify(discounts))
+  // alert(JSON.stringify(discounts))
   useEffect(async () => {
     if (!loaded) {
       await get_shop_info(await auth.getToken(), shop_id).then((shopInfo) => {
