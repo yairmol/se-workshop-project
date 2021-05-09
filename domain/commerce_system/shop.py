@@ -179,9 +179,9 @@ class Shop:
     def get_discounts(self) -> List[Discount]:
         return self.discount.discounts
 
-    def add_discount(self, has_cond: bool, condition: [str or SimpleCond or []], discount: DiscountDict):
+    def add_discount(self, has_cond: bool, condition: [str or SimpleCond or []], discount: DiscountDict)-> int:
         with self.discount_lock:
-            DiscountManagement.add_discount(self.discount, has_cond, condition, discount)
+            return DiscountManagement.add_discount(self.discount, has_cond, condition, discount)
 
     def aggregate_discounts(self, discount_ids: [int], func: str):
         with self.discount_lock:

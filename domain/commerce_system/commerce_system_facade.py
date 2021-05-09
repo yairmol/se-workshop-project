@@ -321,11 +321,11 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         return list(map(lambda d: d.to_dict(), user.get_shop_discounts(shop)))
 
     def add_discount(self, user_id: int, shop_id: int, has_cond: bool, condition: List[Union[str, SimpleCond, List]],
-                     discount: DiscountDict):
+                     discount: DiscountDict) -> int:
 
         shop = self.get_shop(shop_id)
         subscribed = self.get_user(user_id).user_state
-        subscribed.add_discount(shop, has_cond, condition, discount)
+        return subscribed.add_discount(shop, has_cond, condition, discount)
 
     def delete_discounts(self, user_id: int, shop_id, discount_ids):
         shop = self.get_shop(shop_id)

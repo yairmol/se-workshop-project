@@ -272,11 +272,11 @@ class Subscribed(UserState):
 
     def add_discount(self, shop, has_cond, condition, discount):
         appointment = self.get_appointment(shop)
-        appointment.add_discount(has_cond, condition, discount)
+        return appointment.add_discount(has_cond, condition, discount)
 
     def delete_discounts(self, shop, discount_ids):
         appointment = self.get_appointment(shop)
-        appointment.delete_discount(discount_ids)
+        appointment.delete_discounts(discount_ids)
 
     def aggregate_discounts(self, shop, discount_ids, func):
         appointment = self.get_appointment(shop)

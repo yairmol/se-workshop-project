@@ -263,7 +263,7 @@ export const get_shop_transactions = (token, shop_id) =>
   axios({
     method: "get",
     url: `${base_route}/${urljoin(routes.shops, shop_id.toString(), routes.transactions)}`,
-    data: {
+    params: {
       token: token
     }
   }).then((res) => {
@@ -278,7 +278,7 @@ export const get_system_transactions = (token) =>
   axios({
     method: "get",
     url: `${base_route}/${urljoin(routes.system, routes.transactions)}`,
-    data: {
+    params: {
       token: token
     }
   }).then((res) => {
@@ -293,7 +293,7 @@ export const get_system_transactions_of_shops = (token, shop_id) =>
   axios({
     method: "get",
     url: `${base_route}/${urljoin(routes.system, routes.transactions, routes.shops)}`,
-    data: {
+    params: {
       token: token,
       shop_id: shop_id
     }
@@ -310,7 +310,7 @@ export const get_system_transactions_of_user = (token, username) =>
   axios({
     method: "get",
     url: `${base_route}/${urljoin(routes.system, routes.transactions, routes.user)}`,
-    data: {
+    params: {
       token: token,
       username: username
     }
@@ -343,7 +343,7 @@ export const get_all_shops_info = (token) =>
   axios({
     method: "get",
     url: `${base_route}/${urljoin(routes.all_shops)}`,
-    data: {
+    params: {
       token: token,
     }
   }).then((res) => {
@@ -358,7 +358,7 @@ export const get_all_shops_ids_and_names = (token) =>
   axios({
     method: "get",
     url: `${base_route}/${urljoin(routes.all_shops_ids_and_names)}`,
-    data: {
+    params: {
       token: token,
     }
   }).then((res) => {
@@ -374,7 +374,7 @@ export const get_all_user_names = (token) =>
   axios({
     method: "get",
     url: `${base_route}/${urljoin(routes.all_user_names)}`,
-    data: {
+    params: {
       token: token,
     }
   }).then((res) => res.data)
@@ -449,7 +449,7 @@ export const get_personal_purchase_history = (token) =>
   axios({
     method: "get",
     url: `${base_route}/${urljoin(routes.transactions)}`,
-    data: {
+    params: {
       token: token,
     }
   }).then((res) => {
@@ -593,7 +593,7 @@ export const get_shop_staff_info = (token, shop_id) =>
   axios({
     method: "GET",
     url: `${base_route}/${urljoin(routes.shops, shop_id.toString(), routes.appointments)}`,
-    data: {
+    params: {
       token: token,
     }
   }).then((res) => {

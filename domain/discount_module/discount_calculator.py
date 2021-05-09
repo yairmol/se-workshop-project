@@ -325,7 +325,7 @@ class AdditiveDiscount(CompositeDiscount):
         if func == "add":
             self.discounts.append(AdditiveDiscount(discounts_to_aggregate))
 
-    def delete_discounts(self, discount_ids):
+    def delete_discounts(self, discount_ids: List[int]):
         discounts_to_remove: [Discount] = []
         for discount in self.discounts:
             if discount.discount_id in discount_ids:

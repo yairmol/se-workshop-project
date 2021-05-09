@@ -66,7 +66,7 @@ class Appointment:
     def add_discount(self, has_cond, condition, discount):
         raise Exception("Cannot manage discounts")
 
-    def delete_discount(self, discount_ids):
+    def delete_discounts(self, discount_ids):
         raise Exception("Cannot manage discounts")
 
     def aggregate_discounts(self, discount_ids, func):
@@ -116,7 +116,7 @@ class ShopManager(Appointment):
         self.edit_product_permission = "edit_product" in permissions
         self.add_product_permission = "add_product" in permissions
         self.get_trans_history_permission = "get_transaction_history" in permissions
-        self.get_trans_history_permission = "discount" in permissions
+        self.discount_permission = "discount" in permissions
         self.get_staff_permission = "get_staff" in permissions
 
     def get_discounts(self) -> List[Discount]:
@@ -264,6 +264,5 @@ class ShopOwner(Appointment):
         assert self.shop.remove_purchase_condition(condition_id), "remove condition failed"
 
     def get_permissions(self):
-        print("here")
         return {'delete': True, 'edit': True, 'add': True, 'discount': True,
                 'transaction': True, 'get_staff': True, 'owner': True}
