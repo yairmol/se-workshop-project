@@ -11,7 +11,7 @@ from typing import Dict, List
 class Condition:
     _id_counter = 1
     counter_lock = threading.Lock()
-    
+
     def resolve(self, products: Dict[Product, int]) -> bool:
         raise NotImplementedError()
 
@@ -46,12 +46,14 @@ class MaxQuantityForProductCondition(ProductCondition):
             self.id = Condition._id_counter
             Condition._id_counter += 1
         self.max_quantity = condition_dict["max_quantity"]
-        self.product = condition_dict["product"]
+        self.product_id = condition_dict["product"]
 
     def resolve(self, products: Dict[Product, int]) -> bool:
-        return False if \
-            self.product in products and self.max_quantity < products[self.product] \
-            else True
+        for product in products:
+            if product.product_id == self.product_id:
+                if self.max_quantity < products[product]:
+                    return False
+        return True
 
 
 # class UserAgeMinForCategoryCondition(UserCondition):
@@ -67,8 +69,8 @@ class TimeWindowForCategoryCondition(CategoryCondition):
         with Condition.counter_lock:
             self.id = Condition._id_counter
             Condition._id_counter += 1
-        self.min_time = condition_dict["min_time"]
-        self.max_time = condition_dict["max_time"]
+        self.min_time = datetime.strptime(condition_dict["min_time"], '%H:%M').time()
+        self.max_time = datetime.strptime(condition_dict["max_time"], '%H:%M').time()
         self.category = condition_dict["category"]
 
     def resolve(self, products: Dict[Product, int]) -> bool:
@@ -85,15 +87,16 @@ class TimeWindowForProductCondition(CategoryCondition):
         with self.counter_lock:
             self.id = self._id_counter
             Condition._id_counter += 1
-        self.min_time = condition_dict["min_time"]
-        self.max_time = condition_dict["max_time"]
-        self.product = condition_dict["product"]
+        self.min_time = datetime.strptime(condition_dict["min_time"], '%H:%M').time()
+        self.max_time = datetime.strptime(condition_dict["max_time"], '%H:%M').time()
+        self.product_id = condition_dict["product"]
 
     def resolve(self, products: Dict[Product, int]) -> bool:
         cur_time = datetime.now().time()
-        if self.product in products:
-            if cur_time > self.max_time or cur_time < self.min_time:
-                return False
+        for product in products:
+            if product.product_id == self.product_id:
+                if cur_time > self.max_time or cur_time < self.min_time:
+                    return False
         return True
 
 
@@ -102,8 +105,8 @@ class DateWindowForCategoryCondition(CategoryCondition):
         with self.counter_lock:
             self.id = self._id_counter
             Condition._id_counter += 1
-        self.min_date = condition_dict["min_date"]
-        self.max_date = condition_dict["max_date"]
+        self.min_date = datetime.strptime(condition_dict["min_date"], '%d/%m/%Y')
+        self.max_date = datetime.strptime(condition_dict["max_date"], '%d/%m/%Y')
         self.category = condition_dict["category"]
 
     def resolve(self, products: Dict[Product, int]) -> bool:
@@ -120,15 +123,16 @@ class DateWindowForProductCondition(CategoryCondition):
         with self.counter_lock:
             self.id = self._id_counter
             Condition._id_counter += 1
-        self.min_date = condition_dict["min_date"]
-        self.max_date = condition_dict["max_date"]
-        self.product = condition_dict["product"]
+        self.min_date = datetime.strptime(condition_dict["min_date"], '%d/%m/%Y')
+        self.max_date = datetime.strptime(condition_dict["max_date"], '%d/%m/%Y')
+        self.product_id = condition_dict["product"]
 
     def resolve(self, products: Dict[Product, int]) -> bool:
         cur_date = datetime.now()
-        if self.product in products:
-            if cur_date > self.max_date or cur_date < self.min_date:
-                return False
+        for product in products:
+            if product.product_id == self.product_id:
+                if cur_date > self.max_date or cur_date < self.min_date:
+                    return False
         return True
 
 
@@ -160,7 +164,6 @@ class ORCondition(Condition):
             if cond.resolve(products):
                 return True
         return False
-
 
 # class ConditioningCondition(Condition):
 #     def __init__(self, conditions: List[Condition]):  # expecting 2 conditions
