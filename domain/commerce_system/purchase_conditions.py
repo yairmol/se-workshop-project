@@ -69,8 +69,8 @@ class TimeWindowForCategoryCondition(CategoryCondition):
         with Condition.counter_lock:
             self.id = Condition._id_counter
             Condition._id_counter += 1
-        self.min_time = condition_dict["min_time"]
-        self.max_time = condition_dict["max_time"]
+        self.min_time = datetime.strptime(condition_dict["min_time"], '%H:%M').time()
+        self.max_time = datetime.strptime(condition_dict["max_time"], '%H:%M').time()
         self.category = condition_dict["category"]
 
     def resolve(self, products: Dict[Product, int]) -> bool:
@@ -87,8 +87,8 @@ class TimeWindowForProductCondition(CategoryCondition):
         with self.counter_lock:
             self.id = self._id_counter
             Condition._id_counter += 1
-        self.min_time = condition_dict["min_time"]
-        self.max_time = condition_dict["max_time"]
+        self.min_time = datetime.strptime(condition_dict["min_time"], '%H:%M').time()
+        self.max_time = datetime.strptime(condition_dict["max_time"], '%H:%M').time()
         self.product_id = condition_dict["product"]
 
     def resolve(self, products: Dict[Product, int]) -> bool:
@@ -105,8 +105,8 @@ class DateWindowForCategoryCondition(CategoryCondition):
         with self.counter_lock:
             self.id = self._id_counter
             Condition._id_counter += 1
-        self.min_date = condition_dict["min_date"]
-        self.max_date = condition_dict["max_date"]
+        self.min_date = datetime.strptime(condition_dict["min_date"], '%d/%m/%Y')
+        self.max_date = datetime.strptime(condition_dict["max_date"], '%d/%m/%Y')
         self.category = condition_dict["category"]
 
     def resolve(self, products: Dict[Product, int]) -> bool:
@@ -123,8 +123,8 @@ class DateWindowForProductCondition(CategoryCondition):
         with self.counter_lock:
             self.id = self._id_counter
             Condition._id_counter += 1
-        self.min_date = condition_dict["min_date"]
-        self.max_date = condition_dict["max_date"]
+        self.min_date = datetime.strptime(condition_dict["min_date"], '%d/%m/%Y')
+        self.max_date = datetime.strptime(condition_dict["max_date"], '%d/%m/%Y')
         self.product_id = condition_dict["product"]
 
     def resolve(self, products: Dict[Product, int]) -> bool:

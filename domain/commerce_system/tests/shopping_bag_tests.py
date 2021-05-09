@@ -179,8 +179,8 @@ class BagTests(TestCase):
         self.product.categories += ["c1"]
         products_copy = self.bag.products.copy()
         condition_dict = {
-            "min_date": datetime(2021, 5, 1),
-            "max_date": datetime(2021, 5, 2),
+            "min_date": '1/5/2021',
+            "max_date": '2/5/2021',
             "category": "c1"
         }
         condition = DateWindowForCategoryCondition(condition_dict)
