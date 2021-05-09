@@ -1,5 +1,6 @@
 import React, {useState, useEffect, useContext, createContext} from "react";
 import {enter, exit, isValidToken, login, logout, register} from "../api";
+import notifs from "../notifs";
 
 const authContext = createContext();
 
@@ -74,6 +75,20 @@ function useProvideAuth() {
     // }
   }, []);
 
+  const notif = notifs(); //
+  notif.enlist(5);// Change to user id
+
+  const registerNotifHandler = (handler) =>{
+    notif.registerNotifHandler(handler);
+  }
+  const registerNotifErrorHandler = (handler) =>{
+     notif.registerNotifErrorHandler(handler);
+  }
+  const registerBroadcastHandler = (handler) =>{
+     notif.registerBroadcastHandler(handler);
+  }
+
+
   // Return the user object and auth methods
   return {
     getToken,
@@ -81,5 +96,8 @@ function useProvideAuth() {
     signin,
     signup,
     signout,
+    registerNotifHandler,
+    registerNotifErrorHandler,
+     registerBroadcastHandler,
   };
 }
