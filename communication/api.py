@@ -1,5 +1,5 @@
 import json
-from typing import List
+from typing import List, Union
 
 from flask import Flask, request, jsonify
 from flask_cors import CORS
@@ -69,6 +69,18 @@ def create_app():
     @app.route(f'{API_BASE}/shops/<int:shop_id>')
     def get_shop_info(shop_id: int) -> dict:
         return apply_request_on_function(__system_service.get_shop_info, shop_id=shop_id)
+
+    @app.route(f'{API_BASE}/all_shops/', methods=["GET"])
+    def get_all_shop_info() -> dict:
+        return apply_request_on_function(__system_service.get_all_shops_info)
+
+    @app.route(f'{API_BASE}/all_user_names/', methods=["GET"])
+    def get_all_user_names() -> dict:
+        return apply_request_on_function(__system_service.get_all_user_names)
+
+    @app.route(f'{API_BASE}/all_shops_ids_and_names/', methods=["GET"])
+    def get_all_shops_ids_and_names() -> dict:
+        return apply_request_on_function(__system_service.get_all_ids_and_names)
 
     # 2.6
     @app.route(f'{API_BASE}/search')
@@ -219,6 +231,43 @@ def create_app():
     @app.route(f'{API_BASE}/system/transactions')
     def get_system_transactions():
         return apply_request_on_function(__system_service.get_system_transactions)
+
+    @app.route(f'{API_BASE}/system/transactions/shops')
+    def get_system_transactions_of_shop(shop_id):
+        return apply_request_on_function(__system_service.get_system_transactions_of_shop(shop_id))
+
+    @app.route(f'{API_BASE}/system/transactions/shops')
+    def get_system_transactions_of_user(username):
+        return apply_request_on_function(__system_service.get_system_transactions_of_user(username))
+
+    @app.route(f'{API_BASE}/shops/<int:shop_id>/products/<int:product_id>')
+    def get_product_info(shop_id: int, product_id: int):
+        return __system_service.get_product_info(request.args.get("token"), shop_id, product_id)
+
+
+    @app.route(f'{API_BASE}/permissions/<int:shop_id>')
+    def get_permissions(shop_id: int):
+        print(__system_service.get_permissions(request.args.get("token"), shop_id))
+        return __system_service.get_permissions(request.args.get("token"), shop_id)
+
+
+    ''' NEED TO ADD TOKEN TO FUNCTIONS BELOW'''
+
+    # @app.route(f'{API_BASE}/shops/<int:shop_id>/discounts')
+    # def add_discount(self, token: str, shop_id: int, has_cond: bool, condition: List[Union[str, SimpleCond, List]],
+    #                  discount: DiscountDict):
+    #     return __system_service.add_discount(shop_id, has_cond, condition, discount)
+
+
+    @app.route(f'{API_BASE}/shops/<int:shop_id>/discounts')
+    def delete_discounts(self, token: str, shop_id: int, discount_ids: [int]):
+        return __system_service.delete_discounts(shop_id, discount_ids)
+
+
+    @app.route(f'{API_BASE}/shops/<int:shop_id>/discounts')
+    def aggregate_discounts(self, token: str, shop_id: int, discount_ids: [int], func: str):
+        return __system_service.aggregate_discounts(shop_id, discount_ids, func)
+
 
     @app.errorhandler(404)
     def server_error(e):

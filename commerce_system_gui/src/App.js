@@ -18,10 +18,11 @@ import {Product} from "./components/Product";
 import {Shop} from "./components/Shop";
 import {ShoppingBag} from "./components/ShoppingBag";
 import {Cart} from "./components/Cart";
-import { ProvideAuth } from "./components/use-auth.js";
+import {ProvideAuth} from "./components/use-auth.js";
 import {Main} from "./components/Main";
 import {Main_page} from "./components/Main_page";
 import {Discounts} from "./components/Discounts";
+import System_manager_transaction_history from "./components/system_manager_transaction_history";
 
 const useStyles = makeStyles((theme) => ({
   mainGrid: {
@@ -68,10 +69,12 @@ const transactions = [
       }
     ],
     "date": 1619448651.712134,
+    "username" : "Moshe",
     "price": 2.5
   },
   {
     id: 2,
+    "username" : "Moshe",
     "shop": {
       "shop_id": 2,
       "shop_name": "shop2",
@@ -91,6 +94,7 @@ const transactions = [
   },
   {
     id: 3,
+    "username" : "Moshe",
     "shop": {
       "shop_id": 2,
       "shop_name": "shop2",
@@ -174,8 +178,14 @@ export default function Blog() {
                   <Route path="/transactions">
                     <Transactions/>
                   </Route>
+                  <Route path="/products" exact>
+                    <Product shop_name={'Armani'}/>
+                  </Route>
                   <Route path="/" exact>
                     <Main_page searchQuery = {searchQuery}/>
+                  </Route>
+                  <Route path="/system_transactions" exact>
+                    <System_manager_transaction_history />
                   </Route>
                   }
                 </Switch>

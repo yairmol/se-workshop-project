@@ -121,6 +121,13 @@ export default function Header(props) {
                 inputProps={{'aria-label': 'search'}}
             />
           </div>
+
+           <RouteLink to="/products">
+              <Button variant="outlined" size="small" className={classes.toolbarButton}>
+                    Product Info
+                  </Button>
+          </RouteLink>
+
           <RouteLink to="/cart">
             <IconButton>
               <Badge badgeContent={0} color="secondary">
