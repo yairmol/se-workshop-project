@@ -14,7 +14,7 @@ SHOP_NAME = "shopName"
 SHOP_DESC = "shopDesc"
 SHOP_IMAGE = "shopImage"
 
-WORKER_NAME = "name"
+WORKER_NAME = "username"
 WORKER_TITLE = "title"
 WORKER_APPOINTER = "appointer"
 
@@ -145,22 +145,22 @@ class Shop:
         }
 
     def get_owner_info(self, sub):
+        appointer = sub.get_appointment(self).appointer
         return {
             WORKER_NAME: sub.username,
-            WORKER_TITLE: "manager" if sub != self.founder else "founder",
-            WORKER_APPOINTER: sub.get_appointment(self).appointer.username
+            WORKER_TITLE: "owner" if sub != self.founder else "founder",
+            WORKER_APPOINTER: appointer.username if appointer else "no appointer, this is the shop founder"
         }
 
     def get_managers_info(self):
         info_dicts = []
-        self.managers_lock.acquire()
-        for manager_sub in self.shop_managers.values():
-            info_dicts += [self.get_manager_info(manager_sub)]
-        self.managers_lock.release()
+        with self.managers_lock:
+            for manager_sub in self.shop_managers.values():
+                info_dicts += [self.get_manager_info(manager_sub)]
         return info_dicts
 
     def get_owners_info(self):
-        info_dicts = []
+        info_dicts = [self.get_owner_info(self.founder)]
         with self.owners_lock:
             for owner_sub in self.shop_owners.values():
                 info_dicts += [self.get_owner_info(owner_sub)]
@@ -176,20 +176,17 @@ class Shop:
         assert product_id in self.products, "product id doesn't exists"
         return self.products.get(product_id)
 
-    def add_discount(self, has_cond: bool, condition: [str or SimpleCond or []], discount: DiscountDict):
-        self.discount_lock.acquire()
-        DiscountManagement.add_discount(self.discount, has_cond, condition, discount)
-        self.discount_lock.release()
+    def add_discount(self, has_cond: bool, condition: [str or SimpleCond or []], discount: DiscountDict)-> int:
+        with self.discount_lock:
+            return DiscountManagement.add_discount(self.discount, has_cond, condition, discount)
 
     def aggregate_discounts(self, discount_ids: [int], func: str):
-        self.discount_lock.acquire()
-        self.discount.aggregate_discounts(discount_ids, func)
-        self.discount_lock.release()
+        with self.discount_lock:
+            self.discount.aggregate_discounts(discount_ids, func)
 
     def delete_discounts(self, discount_ids):
-        self.discount_lock.acquire()
-        self.discount.delete_discounts(discount_ids)
-        self.discount_lock.release()
+        with self.discount_lock:
+            self.discount.delete_discounts(discount_ids)
 
     def add_purchase_condition(self, condition: Condition):
         self.conditions.append(condition)

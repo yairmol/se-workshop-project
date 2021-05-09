@@ -25,7 +25,7 @@ class User:
         self.cart = ShoppingCart(self.id)
 
     def get_name(self):
-        raise NotImplementedError()
+        return self.user_state.get_name(self.id)
 
     def login(self, sub_user: Subscribed):
         self.user_state = sub_user
@@ -93,7 +93,7 @@ class User:
         raise NotImplementedError()
 
     def get_shop_staff_info(self, shop: Shop) -> List[Appointment]:
-        raise NotImplementedError()
+        return self.user_state.get_shop_staff_info(shop)
 
     def get_shop_transaction_history(self, shop: Shop) -> List[Transaction]:
         raise NotImplementedError()
@@ -106,8 +106,8 @@ class User:
 
 
 class UserState:
-    def get_name(self):
-        return "Guest"
+    def get_name(self, userid):
+        raise NotImplementedError()
 
     def register(self, username: str, **user_details):
         raise Exception("Logged-in User cannot register")
@@ -178,8 +178,14 @@ class UserState:
     def get_permissions(self, shop):
         return {'delete': False, 'edit': False, 'add': False, 'discount': False, 'transaction': False, 'owner': False}
 
+    def get_shop_staff_info(self, shop: Shop) -> List[Appointment]:
+        raise Exception("User doesn't have permission to see shop staff")
+
 
 class Guest(UserState):
+    def get_name(self, userid):
+        return f"Guest-{hash(userid)}"
+
     def register(self, username: str, **user_details):
         return Subscribed(username)
 
@@ -195,7 +201,8 @@ class Subscribed(UserState):
         pass
 
     """ calls personal appointment for the request. if doesnt have permission raises an exception"""
-    def get_name(self):
+
+    def get_name(self, userid):
         return self.username
 
     def appoint_manager(self, sub: Subscribed, shop: Shop, permissions: List[str]):
@@ -238,8 +245,8 @@ class Subscribed(UserState):
 
     def open_shop(self, shop_details):
         new_shop = Shop(**shop_details)
-        owner = ShopOwner(new_shop)
-        new_shop.founder = owner
+        owner = ShopOwner(new_shop, username=self.username)
+        new_shop.founder = self
         self.appointments[new_shop] = owner
         return new_shop
 
@@ -255,11 +262,11 @@ class Subscribed(UserState):
 
     def add_discount(self, shop, has_cond, condition, discount):
         appointment = self.get_appointment(shop)
-        appointment.add_discount(has_cond, condition, discount)
+        return appointment.add_discount(has_cond, condition, discount)
 
     def delete_discounts(self, shop, discount_ids):
         appointment = self.get_appointment(shop)
-        appointment.delete_discount(discount_ids)
+        appointment.delete_discounts(discount_ids)
 
     def aggregate_discounts(self, shop, discount_ids, func):
         appointment = self.get_appointment(shop)
@@ -276,11 +283,14 @@ class Subscribed(UserState):
     def get_permissions(self, shop):
         try:
             appointment = self.get_appointment(shop)
-            appointment.get_permissions()
+            return appointment.get_permissions()
         except:
-            print("!!!!!!!!!!!!!!!!!!!")
             return {'delete': False, 'edit': False, 'add': False, 'discount': False, 'transaction': False,
                     'owner': False}
+
+    def get_shop_staff_info(self, shop: Shop) -> List[Appointment]:
+        appointment = self.get_appointment(shop)
+        return appointment.get_shop_staff_info()
 
 
 class SystemManager(Subscribed):
@@ -291,8 +301,9 @@ class SystemManager(Subscribed):
     def get_system_transaction_history(self):
         return self.system_transactions.get_transactions()
 
-    def get_system_transaction_history_of_shop(self,shop_id):
+    def get_system_transaction_history_of_shop(self, shop_id):
         return self.system_transactions.get_transactions_of_shop(shop_id)
 
     def get_system_transaction_history_of_user(self, username):
         return self.system_transactions.get_transactions_of_user(username)
+
