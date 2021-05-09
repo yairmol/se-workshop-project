@@ -181,6 +181,7 @@ class ShopManager(Appointment):
         return self.shop.get_staff_info()
 
 
+
 class ShopOwner(Appointment):
     def __init__(self, shop: Shop, username: str = "default_username", appointer=None):
         super().__init__(shop, username, appointer)
