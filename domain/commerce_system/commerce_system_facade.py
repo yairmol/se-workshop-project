@@ -9,6 +9,7 @@ from domain.commerce_system.purchase_conditions import Condition, TimeWindowForC
     TimeWindowForProductCondition, DateWindowForCategoryCondition
 from domain.commerce_system.search_engine import search, Filter
 from domain.commerce_system.shop import Shop
+from domain.commerce_system.transaction import Transaction
 from domain.commerce_system.transaction_repo import TransactionRepo
 from domain.commerce_system.user import User, Subscribed, SystemManager
 
@@ -127,23 +128,24 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         return user.get_cart_info()
 
     # 2.9
-    def purchase_cart(self, user_id: int, payment_details: dict, do_what_you_can=False):
+    def purchase_cart(self, user_id: int, payment_details: dict, do_what_you_can=False)->List[Transaction]:
         user = self.get_user(user_id)
-        user.purchase_cart(payment_details, do_what_you_can)
+        return user.purchase_cart(payment_details, do_what_you_can)
 
     # 2.9
-    def purchase_shopping_bag(self, user_id: int, shop_id: int, payment_details: dict):
+    def purchase_shopping_bag(self, user_id: int, shop_id: int, payment_details: dict)->Transaction:
         user = self.get_user(user_id)
         shop = self.get_shop(shop_id)
-        user.purchase_shopping_bag(shop, payment_details)
+        return user.purchase_shopping_bag(shop, payment_details)
 
     # 2.9
     def purchase_product(self, user_id: int, shop_id: int, product_id: int, amount_to_buy: int,
-                         payment_details: dict):
+                         payment_details: dict)-> Transaction:
         user = self.get_user(user_id)
         shop = self.get_shop(shop_id)
         product = shop.products[product_id]
-        user.purchase_product(shop, product, amount_to_buy, payment_details)
+        return user.purchase_product(shop, product, amount_to_buy, payment_details)
+
 
     # 3.1
     def logout(self, user_id: int):

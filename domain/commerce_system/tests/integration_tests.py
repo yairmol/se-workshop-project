@@ -1,12 +1,17 @@
 import unittest
 from datetime import datetime
+from typing import List
+
 from domain.commerce_system.commerce_system_facade import CommerceSystemFacade
+from domain.commerce_system.transaction import Transaction
 from domain.commerce_system.user import User, Subscribed
 from domain.commerce_system.product import Product
 from domain.commerce_system.shop import Shop
 from domain.authentication_module.authenticator import Authenticator
+from domain.discount_module.discount_management import DiscountDict
 
 shop_dict = {"shop_name": "Armani", "description": "dudu faruk's favorite shop"}
+shop_dict2 = {"shop_name": "Galavanni", "description": "dudu faruk's second favorite shop"}
 product1_dict = {"product_name": "Armani shirt", "price": 299.9, "description": "black shirt", "quantity": 5,
                  "categories": ['gvarim', 'dokrim']}
 product2_dict = {"product_name": "Armani Belt", "price": 99.9, "description": "black belt", "quantity": 10,
@@ -78,7 +83,8 @@ class IntegrationTests(unittest.TestCase):
 
     def test_not_valid_register3(self):
         un_registered_id = self.facade.enter()
-        self.assertRaises(AssertionError, self.facade.register, un_registered_id, "new user12345678901234567890", "123456")
+        self.assertRaises(AssertionError, self.facade.register, un_registered_id, "new user12345678901234567890",
+                          "123456")
 
     def test_purchase_product1(self):  # tests purchase with username supplied
         self.facade.login(self.user_id1, self.username1, self.password)
@@ -92,13 +98,13 @@ class IntegrationTests(unittest.TestCase):
     def test_purchase_product2(self):  # tests purchase without username supplied
         self.facade.login(self.user_id1, self.username1, self.password)
         shop_id = self.facade.open_shop(self.user_id1, **shop_dict)
-        product_id1 = product_id = self.facade.add_product_to_shop(self.user_id1, shop_id, **product1_dict)
+        product_id1 = self.facade.add_product_to_shop(self.user_id1, shop_id, **product1_dict)
 
         self.facade.login(self.user_id2, self.username2, self.password)
         payment_dict = {"credit_card_number": 1234, "expiration_date": 25, "car_holder_name": "Dudu"}
         self.facade.purchase_product(self.user_id2, shop_id, product_id1, 1, payment_dict)
 
-    def test_purchase_product3(self):  # tests purchase more than 1 of the same product
+    def test_purchase_product_more_than_1(self):  # tests purchase more than 1 of the same product
         self.facade.login(self.user_id1, self.username1, self.password)
         shop_id = self.facade.open_shop(self.user_id1, **shop_dict)
         product_id1 = product_id = self.facade.add_product_to_shop(self.user_id1, shop_id, **product1_dict)
@@ -110,7 +116,7 @@ class IntegrationTests(unittest.TestCase):
         payment_dict = {"credit_card_number": 1234, "expiration_date": 25, "car_holder_name": "Dudu"}
         self.facade.purchase_product(self.user_id2, shop_id, product_id1, 2, payment_dict)
 
-    def test_purchase_product4(self):  # tests purchase 2 different products
+    def test_purchase_2_different_products(self):  # tests purchase 2 different products
         self.facade.login(self.user_id1, self.username1, self.password)
         shop_id = self.facade.open_shop(self.user_id1, **shop_dict)
         product_id1 = self.facade.add_product_to_shop(self.user_id1, shop_id, **product1_dict)
@@ -122,7 +128,7 @@ class IntegrationTests(unittest.TestCase):
         self.facade.purchase_product(self.user_id2, shop_id, product_id1, 1, payment_dict)
         self.facade.purchase_product(self.user_id2, shop_id, product_id2, 1, payment_dict)
 
-    def test_purchase_product5(self):  # tests purchase the same product few times
+    def test_purchase_product_multi_times(self):  # tests purchase the same product few times
         self.facade.login(self.user_id1, self.username1, self.password)
         shop_id = self.facade.open_shop(self.user_id1, **shop_dict)
         product_id1 = self.facade.add_product_to_shop(self.user_id1, shop_id, **product1_dict)
@@ -135,7 +141,7 @@ class IntegrationTests(unittest.TestCase):
         self.facade.purchase_product(self.user_id2, shop_id, product_id1, 1, payment_dict)
         self.facade.purchase_product(self.user_id2, shop_id, product_id1, 1, payment_dict)
 
-    def test_purchase_product6(self):  # tests purchase product with quantity too big
+    def test_purchase_product_too_large_quantity(self):  # tests purchase product with quantity too big
         self.facade.login(self.user_id1, self.username1, self.password)
         shop_id = self.facade.open_shop(self.user_id1, **shop_dict)
         product_id1 = self.facade.add_product_to_shop(self.user_id1, shop_id, **product1_dict)
@@ -146,3 +152,73 @@ class IntegrationTests(unittest.TestCase):
         payment_dict = {"credit_card_number": 1234, "expiration_date": 25, "car_holder_name": "Dudu"}
         self.assertRaises(AssertionError, self.facade.purchase_product, self.user_id2, shop_id, product_id1, 1000,
                           payment_dict)
+
+    def test_purchase_product_with_discount(self):
+        self.facade.login(self.user_id1, self.username1, self.password)
+        shop_id = self.facade.open_shop(self.user_id1, **shop_dict)
+        product_id1 = self.facade.add_product_to_shop(self.user_id1, shop_id, **product1_dict)
+        product_id2 = self.facade.add_product_to_shop(self.user_id1, shop_id, **product2_dict)
+        product1_discount_dict1: DiscountDict = {'type': 'product', 'identifier': product_id1, 'percentage': 20}
+        self.facade.add_discount(self.user_id1, shop_id, False, None, product1_discount_dict1)
+        # first user opened shop, added discount on product 1
+
+        self.facade.login(self.user_id2, self.username2, self.password)
+        payment_dict = {"credit_card_number": 1234, "expiration_date": 25, "car_holder_name": "Dudu"}
+        quantity = 2
+        transaction: Transaction = self.facade.purchase_product(self.user_id2, shop_id, product_id1, quantity, payment_dict)
+        assert transaction.price == (100 - product1_discount_dict1['percentage']) / 100 \
+               * quantity * product1_dict['price']
+
+    def test_purchase_bag_with_discount(self):
+        self.facade.login(self.user_id1, self.username1, self.password)
+        shop_id = self.facade.open_shop(self.user_id1, **shop_dict)
+        product_id1 = self.facade.add_product_to_shop(self.user_id1, shop_id, **product1_dict)
+        product_id2 = self.facade.add_product_to_shop(self.user_id1, shop_id, **product2_dict)
+        product1_discount_dict1: DiscountDict = {'type': 'product', 'identifier': product_id1, 'percentage': 20}
+        self.facade.add_discount(self.user_id1, shop_id, False, None, product1_discount_dict1)
+        # first user opened shop, added discount on product 1
+
+        self.facade.login(self.user_id2, self.username2, self.password)
+        payment_dict = {"credit_card_number": 1234, "expiration_date": 25, "car_holder_name": "Dudu"}
+        quantity1 = 1
+        quantity2 = 1
+        self.facade.save_product_to_cart(self.user_id2,shop_id,product_id1,1)
+        self.facade.save_product_to_cart(self.user_id2, shop_id, product_id2, 1)
+
+        transaction: Transaction = self.facade.purchase_shopping_bag(self.user_id2,shop_id,payment_dict)
+        trans_price = (round(transaction.price,2))
+        expected_price =(round((100 - product1_discount_dict1['percentage']) / 100 \
+               * quantity1 * product1_dict['price'] + product2_dict['price'] * quantity2, 2))
+
+        assert trans_price == expected_price
+
+    def test_purchase_cart_with_discount(self):
+        self.facade.login(self.user_id1, self.username1, self.password)
+        shop_id1 = self.facade.open_shop(self.user_id1, **shop_dict)
+        shop1_product_id1 = self.facade.add_product_to_shop(self.user_id1, shop_id1, **product1_dict)
+        shop1_product_id2 = self.facade.add_product_to_shop(self.user_id1, shop_id1, **product2_dict)
+        product1_discount_dict1: DiscountDict = {'type': 'product', 'identifier': shop1_product_id1, 'percentage': 20}
+        self.facade.add_discount(self.user_id1, shop_id1, False, None, product1_discount_dict1)
+        # first user opened shop1, added discount on product 1
+
+        shop_id2 = self.facade.open_shop(self.user_id1, **shop_dict2)
+        shop2_product_id1 = self.facade.add_product_to_shop(self.user_id1, shop_id2, **product1_dict)
+        shop2_product_id2 = self.facade.add_product_to_shop(self.user_id1, shop_id2, **product2_dict)
+        product2_discount_dict: DiscountDict = {'type': 'product', 'identifier': shop2_product_id2, 'percentage': 20}
+        self.facade.add_discount(self.user_id1, shop_id2, False, None, product2_discount_dict)
+        # first user opened shop2, added discount on product 2
+
+        self.facade.login(self.user_id2, self.username2, self.password)
+        payment_dict = {"credit_card_number": 1234, "expiration_date": 25, "car_holder_name": "Dudu"}
+        quantity1 = 2
+        quantity2 = 2
+        self.facade.save_product_to_cart(self.user_id2, shop_id1, shop1_product_id1, quantity1)
+        self.facade.save_product_to_cart(self.user_id2, shop_id2, shop2_product_id2, quantity2)
+
+        transactions: List[Transaction] = self.facade.purchase_cart(self.user_id2, payment_dict, True)
+        total_price = sum(t.price for t in transactions)
+        expected_price = (round((100 - product1_discount_dict1['percentage']) / 100 \
+                                * quantity1 * product1_dict['price'] +
+                                (100 - product2_discount_dict['percentage']) / 100 * product2_dict['price'] * quantity2, 2))
+
+        assert total_price == expected_price

@@ -6,7 +6,7 @@ from domain.commerce_system.productDTO import ProductDTO
 from domain.commerce_system.purchase_conditions import ANDCondition
 from domain.commerce_system.shop import Shop
 
-from typing import Dict
+from typing import Dict, List
 
 from domain.commerce_system.transaction import Transaction
 from domain.delivery_module.delivery_system import IDeliveryFacade
@@ -60,6 +60,7 @@ class ShoppingBag:
         total = 0
         for product, amount in self.products.items():
             total += amount * product.price
+        total = max(0, total - self.shop.discount.apply(self.products))
         return total
 
     def get_products_dtos(self):
@@ -163,12 +164,12 @@ class ShoppingCart:
         purchased_shops.append(bag.shop)
         return transaction
 
-    def purchase_cart(self, username: str, payment_details: dict, do_what_you_can: bool = False):
+    def purchase_cart(self, username: str, payment_details: dict, do_what_you_can: bool = False) -> List[Transaction]:
         purchased_shops = []
         actions = ActionPool([
-            Action(self._purchase_shopping_bag, username, bag, payment_details, purchased_shops)
-            .set_reverse(Action(ShoppingBag.cancel_transaction), use_return_value=True)
-            for shop, bag in self
-        ] + [Action(self.remove_shopping_bags, purchased_shops)])
+                                 Action(self._purchase_shopping_bag, username, bag, payment_details, purchased_shops)
+                             .set_reverse(Action(ShoppingBag.cancel_transaction), use_return_value=True)
+                                 for shop, bag in self
+                             ] + [Action(self.remove_shopping_bags, purchased_shops)])
         assert actions.execute_actions(do_what_you_can)
         return actions.get_return_values()[:-1]
