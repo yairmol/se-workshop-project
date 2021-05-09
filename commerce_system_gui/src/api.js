@@ -628,12 +628,8 @@ export const add_discount = (token, shop_id, has_cond, discount, condition) => {
     data: {
       token: token,
       has_cond: has_cond,
-      discount: {
-        type: discount.discountTarget,
-        identifier: discount.identifier,
-        percentage: discount.percentage,
-      },
-      condition: condition
+      discount: discount,
+      condition: condition,
     }
   }).then((res) => {
     if (res.data.status) {
@@ -641,7 +637,41 @@ export const add_discount = (token, shop_id, has_cond, discount, condition) => {
     } else {
       throw new Error(res.data.description)
     }
-  }).catch((err) => alert(`failed to get shop transaction history due to ${err}`));
+  }).catch((err) => alert(`failed to add discount due to ${err}`));
+}
+
+export const move_discount_to = (token, shop_id, src_discount_id, dst_discount_id) => {
+  return axios({
+    method: "PUT",
+    url: `${base_route}/${routes.shops}/${shop_id.toString()}/${routes.discounts}/${dst_discount_id}`,
+    data: {
+      token: token,
+      src_discount_id: src_discount_id
+    }
+  }).then((res) => {
+    if (res.data.status) {
+      return res.data.result
+    } else {
+      throw new Error(res.data.description)
+    }
+  }).catch((err) => alert(`failed to move discount due to ${err}`));
+}
+
+export const remove_discount = (token, shop_id, discount_id) => {
+  return axios({
+    method: "DELETE",
+    url: `${base_route}/${routes.shops}/${shop_id.toString()}/${routes.discounts}`,
+    data: {
+      token: token,
+      discount_ids: [discount_id],
+    }
+  }).then((res) => {
+    if (res.data.status) {
+      return res.data.status
+    } else {
+      throw new Error(res.data.description)
+    }
+  }).catch((err) => alert(`failed to delete discount due to ${err}`));
 }
 
 export const get_shop_discounts = (token, shop_id) => {

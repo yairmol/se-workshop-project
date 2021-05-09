@@ -211,12 +211,12 @@ class ProductDiscount(ConditionalDiscount):
 
     def to_dict(self):
         return {
+            "id": self.discount_id,
+            "composite": False,
             "condition": self.condition.to_dict() if self.condition else [],
-            "discount": {
-                "type": "product",
-                "identifier": self.product_id,
-                "percentage": self.percentage,
-            }
+            "type": "product",
+            "identifier": self.product_id,
+            "percentage": self.percentage,
         }
 
 
@@ -232,12 +232,12 @@ class CategoryDiscount(ConditionalDiscount):
 
     def to_dict(self):
         return {
+            "id": self.discount_id,
+            "composite": False,
             "condition": self.condition.to_dict() if self.condition else [],
-            "discount": {
-                "type": "category",
-                "identifier": self.category,
-                "percentage": self.percentage,
-            }
+            "type": "category",
+            "identifier": self.category,
+            "percentage": self.percentage,
         }
 
 
@@ -252,12 +252,12 @@ class StoreDiscount(ConditionalDiscount):
 
     def to_dict(self):
         return {
+            "id": self.discount_id,
+            "composite": False,
             "condition": self.condition.to_dict() if self.condition else [],
-            "discount": {
-                "type": "shop",
-                "identifier": None,
-                "percentage": self.percentage
-            }
+            "type": "shop",
+            "identifier": None,
+            "percentage": self.percentage
         }
 
 
@@ -271,6 +271,8 @@ class CompositeDiscount(Discount):
 
     def to_dict(self):
         return {
+            "id": self.discount_id,
+            "composite": True,
             "operator": self.get_operator(),
             "discounts": [d.to_dict() for d in self.discounts]
         }
@@ -324,14 +326,6 @@ class AdditiveDiscount(CompositeDiscount):
             self.discounts.append(XorDiscount(discounts_to_aggregate))
         if func == "add":
             self.discounts.append(AdditiveDiscount(discounts_to_aggregate))
-
-    def delete_discounts(self, discount_ids: List[int]):
-        discounts_to_remove: [Discount] = []
-        for discount in self.discounts:
-            if discount.discount_id in discount_ids:
-                discounts_to_remove.append(discount)
-        for discount in discounts_to_remove:
-            self.discounts.remove(discount)
 
     def get_operator(self):
         return "additive"
