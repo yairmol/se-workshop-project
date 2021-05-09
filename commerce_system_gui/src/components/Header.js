@@ -85,7 +85,7 @@ const useStyles = makeStyles((theme) => ({
 
 export default function Header(props) {
   const classes = useStyles();
-  const {categories, title, onSearchChange} = props;
+  const {categories, title} = props;
   const auth = useAuth();
   const history = useHistory();
 
@@ -128,20 +128,7 @@ export default function Header(props) {
           >
             {title}
           </Typography>
-          <div className={classes.search}>
-            <div className={classes.searchIcon}>
-              <SearchIcon/>
-            </div>
-            <InputBase
-                placeholder="Search…"
-                classes={{
-                  root: classes.inputRoot,
-                  input: classes.inputInput,
-                }}
-                onChange={onSearchChange}
-                inputProps={{'aria-label': 'search'}}
-            />
-          </div>
+
 
            <RouteLink to="/products">
               <Button variant="outlined" size="small" className={classes.toolbarButton}>

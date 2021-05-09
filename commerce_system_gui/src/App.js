@@ -23,6 +23,7 @@ import {Main} from "./components/Main";
 import {Main_page} from "./components/Main_page";
 import {Discounts} from "./components/Discounts";
 import System_manager_transaction_history from "./components/system_manager_transaction_history";
+import Search_products from "./components/search_products";
 
 const useStyles = makeStyles((theme) => ({
   mainGrid: {
@@ -32,6 +33,7 @@ const useStyles = makeStyles((theme) => ({
 
 const categories = [
   {title: 'Main page', url: ''},
+  {title: 'Search products', url: 'search'},
   {title: 'Technology', url: 'technology'},
   {title: 'Design', url: 'design'},
   {title: 'Culture', url: 'culture'},
@@ -133,16 +135,12 @@ const pages = {
 export default function Blog() {
   const classes = useStyles();
   const [selected, setSelected] = useState(pages.userTransactions);
-  const [searchQuery, setSearchQuery] = useState("");
+
   const setSelectedPage = (page) => {
     localStorage.setItem("page", page.name)
     setSelected(page)
   }
-  function onSearchChange(event){
-    // event.persist();
-    console.log( event.target.value);
-    setSearchQuery(event.target.value);
-  }
+
 
   return (
       <ProvideAuth>
@@ -150,7 +148,7 @@ export default function Blog() {
         <React.Fragment>
           <CssBaseline/>
           <Container maxWidth="lg" className={`site-layout-wrapper=modal-active`}>
-            <Header title={selected.name} categories={categories} onSearchChange = {onSearchChange}/>
+            <Header title={selected.name} categories={categories} />
             <main>
               <Grid container justify="center" spacing={5} className={classes.mainGrid}>
                 <Switch>
@@ -183,7 +181,10 @@ export default function Blog() {
                     <Product shop_name={'Armani'}/>
                   </Route>
                   <Route path="/" exact>
-                    <Main_page searchQuery = {searchQuery}/>
+                    <Main_page />
+                  </Route>
+                  <Route path="/search" exact>
+                    <Search_products/>
                   </Route>
                   <Route path="/system_transactions" exact>
                     <System_manager_transaction_history />

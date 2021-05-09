@@ -136,6 +136,10 @@ class SystemService:
                                 self.commerce_system_facade.search_products(product_name, keywords, categories,
                                                                             filters))
 
+    def get_all_categories(self) -> dict:
+        return make_status_dict(True, "",
+                                self.commerce_system_facade.get_all_categories())
+
     # 2.7
     def save_product_to_cart(self, token: str, shop_id: int, product_id: int, amount_to_buy: int) -> dict:
         if self.is_valid_token(token):

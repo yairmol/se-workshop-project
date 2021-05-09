@@ -79,9 +79,13 @@ def create_app():
         return __system_service.get_all_ids_and_names(request.args.get("token"))
 
     # 2.6
-    @app.route(f'{API_BASE}/search')
+    @app.route(f'{API_BASE}/search', methods=["GET"])
     def search_products() -> List[dict]:
-        pass
+        return __system_service.search_products(request.args.get("token"))
+
+    @app.route(f'{API_BASE}/allCategories', methods=["GET"])
+    def get_all_categories() -> List[str]:
+        return __system_service.get_all_categories(request.args.get("token"))
 
     # 2.7
     # TODO: decide on route
