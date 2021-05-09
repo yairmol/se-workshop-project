@@ -34,7 +34,7 @@ const base_route = `${host_port}/${routes.base}`;
 
 export const isValidToken = (token) => {
   const url = `${base_route}/validate_token`;
-  alert(url)
+  // alert(url)
   return axios({
     method: "get",
     url: url,
@@ -47,7 +47,7 @@ export const isValidToken = (token) => {
 
 export const enter = () => {
   const url = `${base_route}/enter`;
-  alert(url)
+  // alert(url)
   return axios({
     method: "post",
     url: url,
@@ -351,7 +351,8 @@ export const get_all_shops_info = (token) =>
     } else {
       throw new Error(res.data.description)
     }
-  }).catch((err) => alert(`failed to get all shops info due to ${err}`))
+  })
+        .catch((err) => alert(`failed to get all shops info due to ${err}`))
 
 export const get_all_shops_ids_and_names = (token) =>
     axios({

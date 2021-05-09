@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useState} from 'react';
 import PropTypes from 'prop-types';
 import {fade, makeStyles} from '@material-ui/core/styles';
 import Toolbar from '@material-ui/core/Toolbar';
@@ -8,11 +8,14 @@ import SearchIcon from '@material-ui/icons/Search';
 import Typography from '@material-ui/core/Typography';
 import {Link as RouteLink, useHistory} from 'react-router-dom';
 import Link from '@material-ui/core/Link'
-import {Badge, InputBase} from "@material-ui/core";
+import {Badge, InputBase, Snackbar} from "@material-ui/core";
 import AccountCircle from '@material-ui/icons/AccountCircle';
 import NotificationsIcon from '@material-ui/icons/Notifications';
 import {useAuth} from "./use-auth";
 import ShoppingCartIcon from '@material-ui/icons/ShoppingCart';
+import {Alert} from "@material-ui/lab";
+import EmailIcon from '@material-ui/icons/Email';
+import NotificationDrawer from "./notificationDrawer";
 
 const useStyles = makeStyles((theme) => ({
   empty: {
@@ -85,6 +88,24 @@ export default function Header(props) {
   const {categories, title, onSearchChange} = props;
   const auth = useAuth();
   const history = useHistory();
+
+  const [notifList, setNotifListData] = useState(["Hello", "Is this working ? ", "Maybe"]);
+  const [notifSnackBarOpen, setNotifSnackBarOpen] = useState(false);
+  const [notifDrawerOpen, setNotifDrawerOpen] = useState(false);
+
+  const onNotifReceived = (msg) => {
+        notifList.push(msg)
+        setNotifListData(notifList);
+        setNotifSnackBarOpen(true);
+  }
+  const handleCloseNotif = () => {
+      setNotifSnackBarOpen(false);
+  }
+  const handleNotifClick = () => {
+      setNotifDrawerOpen(true);
+  }
+
+  auth.registerNotifHandler(onNotifReceived);
 
   const signout = () => {
     auth.signout().then((res) => {
@@ -163,7 +184,14 @@ export default function Header(props) {
                     Sign in
                   </Button>
                 </RouteLink>
-              </div>}
+              </div>
+
+          }
+      <IconButton onClick={handleNotifClick}>
+          <Badge badgeContent={notifList.length} color="secondary">
+            <EmailIcon/>
+          </Badge>
+        </IconButton>
         </Toolbar>
         <Toolbar component="nav" variant="dense" className={classes.toolbarSecondary}>
           {categories.map((category) => (
@@ -178,10 +206,14 @@ export default function Header(props) {
                 <RouteLink className={classes.toolbarLink} to={`/${category.url}`}>
                   {category.title}
                 </RouteLink>
-              </Link>
+          </Link>
 
           ))}
         </Toolbar>
+          <Snackbar open={notifSnackBarOpen} autoHideDuration={5000} onClose={handleCloseNotif}>
+            <Alert severity="info">Received a new message</Alert>
+          </Snackbar>
+        <NotificationDrawer open={notifDrawerOpen} setOpen = {setNotifDrawerOpen} msgs = {notifList} setMsgs = {setNotifListData} />
       </React.Fragment>
   );
 }
