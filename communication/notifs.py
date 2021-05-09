@@ -61,6 +61,8 @@ def send_error(client_id, error):
 @io.on('broadcast')
 def send_broadcast(msg):
     emit('broadcast', msg, broadcast=True)
+
+
 # If you are running it using python <filename> then below command will be used
 if __name__ == '__main__':
     print("Server starting")
