@@ -198,8 +198,8 @@ class SystemService:
                 return make_status_dict(True, "", "")
             except AssertionError as e:
                 return handle_assertion(e)
-            except Exception as e:
-                return handle_exception(e)
+            # except Exception as e:
+            #     return handle_exception(e)
         return make_status_dict(False, "Invalid Token", "")
 
     # 2.9
