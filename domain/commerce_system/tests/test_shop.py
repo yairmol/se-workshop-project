@@ -17,12 +17,12 @@ class ShopTests(TestCase):
     def test_get_shop_dict(self):
         my_shop_dict = shop_dict.copy()
         shop = Shop(**shop_dict)
-        shop.add_product(Product(self.PROD_ID, **product_dict))
+        p = shop.add_product(**product_dict)
         my_product_dict = product_dict.copy()
-        my_product_dict["product_id"] = self.PROD_ID
-        my_shop_dict["shop_id"] = self.SHOP_ID
+        my_product_dict["product_id"] = p.product_id
+        my_shop_dict["shop_id"] = shop.shop_id
         my_shop_dict["products"] = [my_product_dict]
-        self.assertEquals(my_shop_dict, shop.to_dict())
+        self.assertEqual(my_shop_dict, shop.to_dict())
 
     def test_get_shop_info(self):
         facade = CommerceSystemFacade()

@@ -35,10 +35,14 @@ class DiscountManagementTests(unittest.TestCase):
         self.And_cond1 = ['and', self.simple_cond1, self.simple_cond2]
         self.Or_cond1 = ['or', self.simple_cond1, self.simple_cond2]
 
-        self.product1_discount_dict1: DiscountDict = {'type': 'product', 'identifier': p1.product_id, 'percentage': 20}
+        self.product1_discount_dict1: DiscountDict = {
+            'composite': False, 'type': 'product', 'identifier': p1.product_id, 'percentage': 20
+        }
         self.product1_discount1 = ProductDiscount(False, None, 20, p1.product_id)
 
-        self.product1_discount_dict2: DiscountDict = {'type': 'product', 'identifier': p1.product_id, 'percentage': 10}
+        self.product1_discount_dict2: DiscountDict = {
+            'composite': False, 'type': 'product', 'identifier': p1.product_id, 'percentage': 10
+        }
         self.product1_discount2 = ProductDiscount(False, None, 10, p1.product_id)
 
     # condition: [str or SimpleCond or []]
