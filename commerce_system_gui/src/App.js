@@ -4,7 +4,7 @@ import CssBaseline from '@material-ui/core/CssBaseline';
 import Grid from '@material-ui/core/Grid';
 import Container from '@material-ui/core/Container';
 import Header from './components/Header';
-import Transactions from "./components/Transactions";
+import {UserTransactions} from "./components/Transactions";
 import {Typography} from "@material-ui/core";
 import SignIn from "./components/SignIn";
 import {
@@ -24,6 +24,7 @@ import {Main_page} from "./components/Main_page";
 import {Discounts} from "./components/Discounts";
 import System_manager_transaction_history from "./components/system_manager_transaction_history";
 import Search_products from "./components/search_products";
+import {ShopForCustomer} from "./components/ShopForCustomer";
 
 const useStyles = makeStyles((theme) => ({
   mainGrid: {
@@ -168,6 +169,9 @@ export default function Blog() {
                   <Route path="/shops/:shop_id">
                     <Shop/>
                   </Route>
+                  <Route path="/Cshops/:shop_id">
+                    <ShopForCustomer/>
+                  </Route>
                   <Route path="/shops/:shop_id/products/:product_id">
                     <Product/>
                   </Route>
@@ -175,7 +179,7 @@ export default function Blog() {
                     <SignIn />
                   </Route>
                   <Route path="/transactions">
-                    <Transactions/>
+                    <UserTransactions/>
                   </Route>
                   <Route path="/products" exact>
                     <Product shop_name={'Armani'}/>

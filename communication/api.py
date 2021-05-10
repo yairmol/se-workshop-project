@@ -244,7 +244,7 @@ def create_app():
 
     @app.route(f'{API_BASE}/permissions/<int:shop_id>')
     def get_permissions(shop_id: int):
-        print(__system_service.get_permissions(request.args.get("token"), shop_id))
+        # print(__system_service.get_permissions(request.args.get("token"), shop_id))
         return __system_service.get_permissions(request.args.get("token"), shop_id)
 
     @app.route(f'{API_BASE}/shops/<int:shop_id>/discounts', methods=["GET"])
