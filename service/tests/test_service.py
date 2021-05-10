@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import MagicMock
 
-from domain.auth.authenticator import Authenticator
+from domain.authentication_module.authenticator import Authenticator
 from domain.commerce_system.commerce_system_facade import CommerceSystemFacade
 from service.system_service import SystemService
 
