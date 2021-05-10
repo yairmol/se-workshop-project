@@ -61,6 +61,10 @@ def create_app():
         print("login", request.remote_user, "addr", request.remote_addr, request.environ.get('REMOTE_PORT'))
         return apply_request_on_function(__system_service.login)
 
+    @app.route(f'{API_BASE}/userData', methods=["GET"])
+    def get_user_data() -> dict:
+        return apply_request_on_function(__system_service.get_user_data)
+
     # 2.5
     @app.route(f'{API_BASE}/shops/<int:shop_id>')
     def get_shop_info(shop_id: int) -> dict:
@@ -240,7 +244,7 @@ def create_app():
 
     @app.route(f'{API_BASE}/permissions/<int:shop_id>')
     def get_permissions(shop_id: int):
-        print(__system_service.get_permissions(request.args.get("token"), shop_id))
+        # print(__system_service.get_permissions(request.args.get("token"), shop_id))
         return __system_service.get_permissions(request.args.get("token"), shop_id)
 
     @app.route(f'{API_BASE}/shops/<int:shop_id>/discounts', methods=["GET"])

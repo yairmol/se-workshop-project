@@ -70,6 +70,9 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         with self.active_users_lock:
             self.active_users.get(user_id).login(sub_user)
 
+    def get_user_info(self, user_id: int) -> dict:
+        return self.active_users[user_id].to_dict()
+
     # 2.5
     def get_shop_info(self, shop_id: int) -> dict:
         shop: Shop = self.shops[shop_id]

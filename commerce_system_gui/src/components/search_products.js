@@ -1,5 +1,15 @@
 import {Transaction} from "./Transaction";
-import {FormControl, InputLabel, Select, TextField, Typography} from "@material-ui/core";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardMedia,
+  FormControl,
+  InputLabel,
+  Select,
+  TextField,
+  Typography
+} from "@material-ui/core";
 import React, {useEffect, useState} from 'react';
 import {makeStyles} from '@material-ui/core/styles';
 import Autocomplete from '@material-ui/lab/Autocomplete';
@@ -21,7 +31,24 @@ import Divider from "@material-ui/core/Divider";
 
 const useStyles = makeStyles((theme) => ({
   root: {
-    flexGrow: 1,
+    maxWidth: 345,
+  },
+  media: {
+    height: 0,
+    paddingTop: '56.25%', // 16:9
+  },
+  expand: {
+    transform: 'rotate(0deg)',
+    marginLeft: 'auto',
+    transition: theme.transitions.create('transform', {
+      duration: theme.transitions.duration.shortest,
+    }),
+  },
+  expandOpen: {
+    transform: 'rotate(180deg)',
+  },
+  avatar: {
+    backgroundColor: red[500],
   },
   paper: {
     padding: theme.spacing(2),
@@ -140,7 +167,25 @@ export default function Search_products() {
           </Grid>
         </Grid>
         <Divider />
-
+        {searchProducts.map((product) => (
+        <Card className={classes.root}>
+          <CardHeader
+            title={product.product_name}
+          />
+          <CardMedia
+            className={classes.media}
+            image="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR-X2ZRp_vz2_Tg55J3pKupby0yJT-zG_xTw6cjjQ1ywFZ2j68_C3m1l-SCN4be_io4Vqw&usqp=CAU"
+          />
+          <CardContent>
+            <Typography variant="body2" color="textSecondary" component="p">
+              Product Price: {product.price}
+              Product Description: {product.description}
+              Product Quantity: {product.quantity}
+              Product Categories: {product.categories}
+            </Typography>
+          </CardContent>
+      </Card>
+        ))}
       </div>
   );
 }

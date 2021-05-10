@@ -21,13 +21,15 @@ export const useAuth = () => {
 function useProvideAuth() {
   const [token, setToken] = useState(localStorage.getItem("token"));
   const [user, setUser] = useState(localStorage.getItem("user"));
-
+  const [userId, setUserId] = useState(localStorage.getItem("userId"));
   const getToken = async () => {
     if (!token || !(await isValidToken(token))) {
       localStorage.clear();
-      await enter().then((new_token) => {
-        localStorage.setItem("token", new_token)
-        setToken(new_token);
+      await enter().then((data) => {
+        localStorage.setItem("token", data.result)
+        setToken(data.result);
+        localStorage.setItem("userId", data.id)
+        setUserId(data.id);
       })
     }
     return token;
@@ -74,8 +76,8 @@ function useProvideAuth() {
   }, []);
 
   const notif = notifs(); //
-  notif.enlist(5);// Change to user id
-
+  notif.enlist(userId, user);// Change to user id
+  
   const registerNotifHandler = (handler) =>{
     notif.registerNotifHandler(handler);
   }
@@ -91,6 +93,7 @@ function useProvideAuth() {
   return {
     getToken,
     user,
+    userId,
     signin,
     signup,
     signout,
