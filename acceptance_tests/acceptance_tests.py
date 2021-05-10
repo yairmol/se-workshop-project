@@ -360,7 +360,7 @@ class ShopManagerOperations(TestCase):
         self.assertTrue(self.commerce_system.edit_manager_permissions(
             self.owner_session_id, self.shop_id, self.manager_username, perm)['status'])
 
-        product1_discount_dict1: DiscountDict = {'type': 'product', 'identifier': 1, 'percentage': 20}
+        product1_discount_dict1: DiscountDict = {'type': 'product', 'identifier': 1, 'percentage': 20, "composite": False}
         self.assertTrue(self.commerce_system.add_discount(self.manager_session_id,
                                                           self.shop_id, False, None, product1_discount_dict1)['status'])
 
@@ -370,7 +370,7 @@ class ShopManagerOperations(TestCase):
         self.assertTrue(self.commerce_system.edit_manager_permissions(
             self.owner_session_id, self.shop_id, self.manager_username, perm)['status'])
 
-        product1_discount_dict1: DiscountDict = {'type': 'product', 'identifier': 1, 'percentage': 20}
+        product1_discount_dict1: DiscountDict = {'type': 'product', 'identifier': 1, 'percentage': 20, "composite": False}
         simple_cond: SimpleCond = {'condition': 'sum', 'type': 'shop', 'identifier': 'shop', 'num': 50}
         condition = [simple_cond]
         self.assertTrue(self.commerce_system.add_discount(self.manager_session_id,
@@ -379,7 +379,7 @@ class ShopManagerOperations(TestCase):
 
     # 4.2.1 manage discounts
     def test_delete_discount(self):
-        product1_discount_dict1: DiscountDict = {'type': 'product', 'identifier': 1, 'percentage': 20}
+        product1_discount_dict1: DiscountDict = {'type': 'product', 'identifier': 1, 'percentage': 20, "composite": False}
         simple_cond: SimpleCond = {'condition': 'sum', 'type': 'shop', 'identifier': 'shop', 'num': 50}
         condition = [simple_cond]
 
@@ -390,8 +390,8 @@ class ShopManagerOperations(TestCase):
 
     # 4.2.1 manage discounts
     def test_aggregate_discounts(self):
-        product1_discount_dict1: DiscountDict = {'type': 'product', 'identifier': 1, 'percentage': 20}
-        discount_dict2: DiscountDict = {'type': 'shop', 'identifier': 'shop', 'percentage': 15}
+        product1_discount_dict1: DiscountDict = {'type': 'product', 'identifier': 1, 'percentage': 20, "composite": False}
+        discount_dict2: DiscountDict = {'type': 'shop', 'identifier': 'shop', 'percentage': 15, "composite": False}
 
         simple_cond: SimpleCond = {'condition': 'sum', 'type': 'shop', 'identifier': 'shop', 'num': 50}
         condition = [simple_cond]
@@ -845,59 +845,53 @@ class ParallelismTests(TestCase):
         t1.join(), t2.join()
 
     def test_parallel_purchase_of_last_product(self):
+        num_runs = 10
         p = products[0].copy()
         p["quantity"] = 1
         sid = self.sids[0]
         u_opener = self.sid_to_sess[sid]
-        pid = add_product(
-            u_opener, self.commerce_system, sid, p
-        )
         u_buyer1, u_buyer2 = tuple([u for u in self.sessions if u != u_opener])[:2]
-        results = []
 
-        def buyer1():
-            results.append(self.commerce_system.purchase_product(u_buyer1, sid, pid, 1, payment_details[0])["status"])
+        for i in range(num_runs):
+            pid = add_product(
+                u_opener, self.commerce_system, sid, p
+            )
+            results = []
 
-        def buyer2():
-            results.append(self.commerce_system.purchase_product(u_buyer2, sid, pid, 1, payment_details[0])["status"])
+            def buyer1():
+                results.append(self.commerce_system.purchase_product(u_buyer1, sid, pid, 1, payment_details[0])["status"])
 
-        self.run_parallel_test(buyer1, buyer2)
-        self.assertTrue(any(results))
-        self.assertFalse(all(results))
+            def buyer2():
+                results.append(self.commerce_system.purchase_product(u_buyer2, sid, pid, 1, payment_details[0])["status"])
+
+            self.run_parallel_test(buyer1, buyer2)
+            self.assertTrue(any(results))
+            self.assertFalse(all(results))
+            results.clear()
+            self.commerce_system.delete_product(u_opener, sid, pid)
 
     def test_parallel_purchase_and_delete_of_product(self):
+        num_runs = 10
         p = products[0].copy()
         sid = self.sids[0]
         u_opener = self.sid_to_sess[sid]
-        pid = add_product(
-            u_opener, self.commerce_system, sid, p
-        )
         u_buyer = [u for u in self.sessions if u != u_opener][0]
-        results = {}
 
-        def buyer():
-            results[u_buyer] = self.commerce_system.purchase_product(u_buyer, sid, pid, 1, payment_details)
+        for i in range(num_runs):
+            pid = add_product(
+                u_opener, self.commerce_system, sid, p
+            )
+            results = {}
 
-        def opener():
-            results[u_opener] = self.commerce_system.delete_product(u_opener, sid, pid)
+            def buyer():
+                results[u_buyer] = self.commerce_system.purchase_product(u_buyer, sid, pid, 1, payment_details)
 
-        self.run_parallel_test(buyer, opener)
-        self.assertTrue(any(results.values()))
+            def opener():
+                results[u_opener] = self.commerce_system.delete_product(u_opener, sid, pid)
 
-    def test_parallel_product_purchase_and_price_change(self):
-        pass
-
-    def test_parallel_edit_and_delete_of_product(self):
-        # product should be deleted, regardless of whether it was edited or not
-        pass
-
-    def test_parallel_appointment_of_user(self):
-        # the first one of them will succeed and the other will fail
-        pass
-
-    def test_parallel_login_of_same_user(self):
-        pass
-        # self.assertTrue(self.commerce_system.register())
+            self.run_parallel_test(buyer, opener)
+            self.assertTrue(any(results.values()))
+            self.commerce_system.remove_product_from_cart(u_opener, sid, pid, 1)
 
     def test_parallel_registration_of_users_with_the_same_name(self):
         results = []
