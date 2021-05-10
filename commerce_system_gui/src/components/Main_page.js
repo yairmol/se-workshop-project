@@ -1,16 +1,55 @@
-import {Input} from "@material-ui/core";
+import {Input, InputBase} from "@material-ui/core";
 import React, {useEffect, useState} from "react";
 import Button from "@material-ui/core/Button";
 import ButtonBase from '@material-ui/core/ButtonBase';
 import Typography from '@material-ui/core/Typography';
-import {makeStyles} from '@material-ui/core/styles';
+import {fade, makeStyles} from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
 
 import {useAuth} from "./use-auth";
 import {get_all_shops_info, get_user_transactions} from "../api";
 import {Link} from "react-router-dom";
+import SearchIcon from "@material-ui/icons/Search";
+import Toolbar from "@material-ui/core/Toolbar";
 
 const useStyles = makeStyles((theme) => ({
+  search: {
+    position: 'relative',
+    borderRadius: theme.shape.borderRadius,
+    backgroundColor: fade(theme.palette.common.white, 0.15),
+    '&:hover': {
+      backgroundColor: fade(theme.palette.common.white, 0.25),
+    },
+    marginRight: theme.spacing(2),
+    marginLeft: 0,
+    width: '100%',
+    [theme.breakpoints.up('sm')]: {
+      marginLeft: theme.spacing(3),
+      width: 'auto',
+    },
+  },
+  searchIcon: {
+    padding: theme.spacing(0, 2),
+    height: '100%',
+    position: 'absolute',
+    pointerEvents: 'none',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  inputRoot: {
+    color: 'inherit',
+  },
+  inputInput: {
+    padding: theme.spacing(1, 1, 1, 0),
+    // vertical padding + font size from searchIcon
+    paddingLeft: `calc(1em + ${theme.spacing(4)}px)`,
+    transition: theme.transitions.create('width'),
+    width: '100%',
+    [theme.breakpoints.up('md')]: {
+      width: '20ch',
+    },
+  },
   root: {
     display: 'flex',
     flexWrap: 'wrap',
@@ -99,12 +138,19 @@ const shopData = [{
   description: "desc",
   shop_id: "3",
   shopImage: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQVocyW9xaVWyWJKH1IF9VOQDqXCyK6wTdB0Q&usqp=CAU",
-},];
+},
+];
 export const Main_page = (props) => {
-  const {searchQuery} = props;
+  const classes = useStyles();
   const [shops, setShops] = useState(shopData);
   const auth = useAuth();
+  const [searchQuery, setSearchQuery] = useState("");
 
+  function onSearchChange(event){
+    // event.persist();
+    console.log( event.target.value);
+    setSearchQuery(event.target.value);
+  }
   useEffect(async () => {
     await get_all_shops_info(await auth.getToken())
         .then((res) => {
@@ -115,26 +161,45 @@ export const Main_page = (props) => {
   const filteredShops = shops.filter((shop) => shop.shop_name.toLowerCase().includes(searchQuery.toLowerCase()));
   console.log(filteredShops);
   return (
-      <div>
+      <>
+
         <Grid
         container
-        spacing = {3}
+        spacing = {4}
         xl
           >
+          <Grid item>
+           <div className={classes.search}>
+            <div className={classes.searchIcon}>
+              <SearchIcon/>
+            </div>
+            <InputBase
+                placeholder="Search…"
+                fullWidth
+                classes={{
+                  root: classes.inputRoot,
+                  input: classes.inputInput,
+                }}
+                onChange={onSearchChange}
+                inputProps={{'aria-label': 'search'}}
+            />
+          </div>
+            </Grid>
           {filteredShops.length > 0 ?  <ButtonBases shops ={filteredShops} /> :
            <Typography  color = "secondary" align="center" variant= "h3">There are no open shops  <br /> :( </Typography>}
         </Grid>
-      </div>
+      </>
   );
 }
 export default function ButtonBases({shops}){
   const classes = useStyles();
   const defaultImageUrl = "https://p1.hiclipart.com/preview/33/96/19/shopping-cart-red-line-material-property-logo-circle-vehicle-rectangle-png-clipart.jpg";
-  console.log(shops[0].shopImage === "" ? defaultImageUrl : shops[0].shopImage);
   return (
     <div className={classes.root}>
-      {shops.map((shop) =>
-      <Grid item xs = {12} >
+      {shops.map((shop,ind) =>
+       (
+           <>
+             <Grid item xs >
         <ButtonBase
           focusRipple
           key={shop.shop_id}
@@ -165,7 +230,8 @@ export default function ButtonBases({shops}){
             </Typography>
           </span>
         </ButtonBase>
-      </Grid>
+     </Grid></>)
+
       )}
     </div>
   );
