@@ -76,8 +76,8 @@ function useProvideAuth() {
   }, []);
 
   const notif = notifs(); //
-  notif.enlist(userId);// Change to user id
-
+  notif.enlist(userId, user);// Change to user id
+  
   const registerNotifHandler = (handler) =>{
     notif.registerNotifHandler(handler);
   }

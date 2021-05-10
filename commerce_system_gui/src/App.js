@@ -136,16 +136,12 @@ const pages = {
 export default function Blog() {
   const classes = useStyles();
   const [selected, setSelected] = useState(pages.userTransactions);
-  const [searchQuery, setSearchQuery] = useState("");
+
   const setSelectedPage = (page) => {
     localStorage.setItem("page", page.name)
     setSelected(page)
   }
-  function onSearchChange(event){
-    // event.persist();
-    console.log( event.target.value);
-    setSearchQuery(event.target.value);
-  }
+
 
   return (
       <ProvideAuth>
@@ -153,7 +149,7 @@ export default function Blog() {
         <React.Fragment>
           <CssBaseline/>
           <Container maxWidth="lg" className={`site-layout-wrapper=modal-active`}>
-            <Header title={selected.name} categories={categories} onSearchChange = {onSearchChange}/>
+            <Header title={selected.name} categories={categories} />
             <main>
               <Grid container justify="center" spacing={5} className={classes.mainGrid}>
                 <Switch>

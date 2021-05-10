@@ -24,16 +24,23 @@ io = SocketIO(app, cors_allowed_origins='*')
 # app.config['SECRET_CERT'] = '../secrets/cert.pem'
 
 clients = {}
+subscribed_clients = {}
 
 @io.on('connect')
 def connect():
     print("%s connected" % request.namespace)
 
+
 @io.on('enlist')
 def enlist(data):
     print("client id %s enlisting " % data["client_id"])
-    print("%s sid"  % request.sid)
+    print("%s sid" % request.sid)
     clients[data["client_id"]] = request.sid
+    if data["username"] not in subscribed_clients.keys():
+        subscribed_clients[data["username"]] = {"client_id": data["client_id"], "msgs": []}
+    elif data["username"]:
+        for msg in subscribed_clients["msgs"]:
+            send_notif(data["client_id"], msg)
 
 @io.on('disconnect')
 def disconnect():
@@ -44,12 +51,17 @@ def disconnect():
 
 
 @io.on('send_notif')
-def send_notif(client_id, msg):
+def send_notif(client_id, msg, username=""):
     print(clients)
     if client_id in clients.keys():
         emit('notification', msg, room=clients[client_id])
+    elif username in subscribed_clients.keys() and username != "":
+        subscribed_clients[username]["msgs"] += msg
+    elif username != "":
+        subscribed_clients[username] = {"client_id": client_id, "msgs": []}
     else:
-        print("client id not enlisted");
+        print("Guest is not enlisted")
+
 
 @io.on('send_error')
 def send_error(client_id, error):
@@ -57,6 +69,7 @@ def send_error(client_id, error):
         emit('error', error, room=clients[client_id])
     else:
         print("client id not enlisted");
+
 
 @io.on('broadcast')
 def send_broadcast(msg):
