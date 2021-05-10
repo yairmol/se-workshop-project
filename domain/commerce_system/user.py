@@ -36,6 +36,7 @@ class User:
 
     def logout(self):
         self.user_state.logout()
+        self.user_state = Guest()
 
     def purchase_product(self, shop: Shop, product: Product, amount_to_buy: int, payment_details: dict) -> Transaction:
         bag = ShoppingBag(shop)

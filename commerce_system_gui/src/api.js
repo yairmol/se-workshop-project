@@ -41,6 +41,7 @@ export const isValidToken = (token) => {
       token: token
     }
   }).then((res) => {
+    // alert(JSON.stringify(res.data))
     return res.data.is_valid
   })
     // .catch((err) => alert(`failed to enter the system due to ${err}`))
@@ -57,8 +58,7 @@ export const enter = () => {
     } else {
       throw new Error(res.data.description)
     }
-  })
-      // .catch((err) => alert(`failed to enter the system due to ${err}`))
+  }).catch((err) => alert(`failed to enter the system due to ${err}`))
 }
 
 export const exit = (token) => {
@@ -201,7 +201,7 @@ export const search_products = (token, product_name, keywords, categories, filte
     },
   }).then((res) => {
     if (res.data.status) {
-      return res.data.status
+      return res.data.result
     } else {
       throw new Error(res.data.description)
     }
@@ -210,9 +210,12 @@ export const search_products = (token, product_name, keywords, categories, filte
 
 export const get_all_categories = (token) => {
   const url = `${base_route}/allCategories`;
-  axios({
+  return axios({
     method: "get",
     url: url,
+    params: {
+      token: token
+    }
   }).then((res) => {
     if (res.data.status) {
       return res.data.result
@@ -271,7 +274,6 @@ export const get_permissions = (token, shop_id) => {
 }
 export const edit_product = (token, shop_id, product_id, name, price, description, categories) => {
   const details = `shop id: ${shop_id} product id: ${product_id} name: ${name} price: ${price} description: ${description} categories: ${categories}`
-  alert(details)
   const url = `http://127.0.0.1:5000/api/shops/${shop_id}/products/${product_id}`;
   return axios({
     method: "put",
@@ -378,8 +380,8 @@ export const get_shop_info = (token, shop_id) =>
     }
   }).catch((err) => alert(`failed to get shop info due to ${err}`));
 
-export const get_all_shops_info = (token) =>
-  axios({
+export const get_all_shops_info = (token) => {
+  return axios({
     method: "get",
     url: `${base_route}/${urljoin(routes.all_shops)}`,
     params: {
@@ -392,6 +394,7 @@ export const get_all_shops_info = (token) =>
       throw new Error(res.data.description)
     }
   }).catch((err) => alert(`failed to get all shops info due to ${err}`))
+}
 
 export const get_all_shops_ids_and_names = (token) =>
   axios({

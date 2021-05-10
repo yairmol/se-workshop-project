@@ -20,6 +20,7 @@ class ProductModel:
     QUANTITY = "quantity"
     CATEGORIES = "categories"
     AMOUNT = "amount"  # for ShoppingBag
+    SHOP_ID = "shop_id"
 
 
 class TransactionModel:

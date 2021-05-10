@@ -70,7 +70,7 @@ def create_app():
     def get_shop_info(shop_id: int) -> dict:
         return __system_service.get_shop_info(token=request.args.get("token"), shop_id=shop_id)
 
-    @app.route(f'{API_BASE}/all_shops/', methods=["GET"])
+    @app.route(f'{API_BASE}/all_shops', methods=["GET"])
     def get_all_shop_info() -> dict:
         return __system_service.get_all_shops_info(request.args.get("token"))
 

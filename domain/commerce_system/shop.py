@@ -56,7 +56,7 @@ class Shop:
         with self.products_lock:
             assert not self.has_product(product_info["product_name"]), \
                 f"product name {product_info['product_name']} is not unique"
-            product = Product(**product_info)
+            product = Product(**product_info, shop_id=self.shop_id)
             self.products[product.product_id] = product
             return product
 

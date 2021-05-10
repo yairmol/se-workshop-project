@@ -156,13 +156,6 @@ export default function Header(props) {
           {title}
         </Typography>
 
-
-        <RouteLink to="/products">
-          <Button variant="outlined" size="small" className={classes.toolbarButton}>
-            Product Info
-          </Button>
-        </RouteLink>
-
         <RouteLink to="/cart">
           <IconButton>
             <Badge badgeContent={0} color="secondary">
@@ -170,20 +163,10 @@ export default function Header(props) {
             </Badge>
           </IconButton>
         </RouteLink>
-        <RouteLink to="/shops/:shop_id/discounts">
-          <Button variant="outlined" size="small" className={classes.toolbarButton}>
-            discounts
-          </Button>
-        </RouteLink>
         {auth.user ? <>
             <Button variant="outlined" size="small" onClick={signout} className={classes.toolbarButton}>
               Sign out
             </Button>
-            <IconButton aria-label="show 17 new notifications" color="inherit">
-              <Badge badgeContent={0} color="secondary">
-                <NotificationsIcon/>
-              </Badge>
-            </IconButton>
             <IconButton
               edge="end"
               aria-label="account of current user"

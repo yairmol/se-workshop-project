@@ -2,6 +2,7 @@ from typing import List, Union
 
 from domain.authentication_module.authenticator import Authenticator
 from domain.discount_module.discount_management import SimpleCond, DiscountDict, CompositeDiscountDict
+from domain.notifications.notifications import Notifications
 from domain.token_module.tokenizer import Tokenizer
 from domain.commerce_system.commerce_system_facade import CommerceSystemFacade
 from domain.logger.log import event_logger, error_logger
@@ -33,7 +34,7 @@ class SystemService:
     def get_system_service(cls):
         if not SystemService.__instance:
             SystemService.__instance = SystemService(
-                CommerceSystemFacade(Authenticator()), Tokenizer()
+                CommerceSystemFacade(Authenticator(), Notifications()), Tokenizer()
             )
         return SystemService.__instance
 
@@ -151,9 +152,8 @@ class SystemService:
                                 self.commerce_system_facade.search_products(product_name, keywords, categories,
                                                                             filters))
 
-    def get_all_categories(self) -> dict:
-        return make_status_dict(True, "",
-                                self.commerce_system_facade.get_all_categories())
+    def get_all_categories(self, token) -> dict:
+        return make_status_dict(True, "", self.commerce_system_facade.get_all_categories())
 
     # 2.7
     def save_product_to_cart(self, token: str, shop_id: int, product_id: int, amount_to_buy: int) -> dict:
