@@ -18,8 +18,8 @@ export default function start () {
         handler(msg);
     })
   }
-  function enlist(client_id) {
-    socket.emit('enlist', {client_id: client_id})
+  function enlist(client_id, username) {
+    socket.emit('enlist', {client_id: client_id, username: username})
   }
 
   function unregisterHandler() {
