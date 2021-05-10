@@ -2,7 +2,7 @@
 const axios = require("axios");
 const urljoin = require('url-join');
 
-const host = "127.0.0.1"
+const host = "https://127.0.0.1"
 const port = 5000
 
 const host_port = `${host}:${port}`
@@ -15,41 +15,54 @@ const routes = {
   login: "login",
   logout: "logout",
   shops: "shops",
+  user: "user",
+  all_shops: "all_shops",
+  all_user_names: "all_user_names",
+  all_shops_ids_and_names: "all_shops_ids_and_names",
   search: "search",
   cart: "cart",
   transactions: "transactions",
   system: "system",
-    appointments: "appointments",
-    managers:"managers",
-    owners:"owners",
-    promotions: "promotions"
+  appointments: "appointments",
+  managers: "managers",
+  owners: "owners",
+  promotions: "promotions",
+  discounts: "discounts",
 }
 
 const base_route = `${host_port}/${routes.base}`;
 
 export const isValidToken = (token) => {
-  const url = "http://127.0.0.1:5000/api/validate_token";
+  const url = `${base_route}/validate_token`;
   return axios({
     method: "get",
     url: url,
     params: {
       token: token
     }
-  }).then((res) => res.data.is_valid)
-      .catch((err) => alert(`failed to enter the system due to ${err}`))
+  }).then((res) => {
+    // alert(JSON.stringify(res.data))
+    return res.data.is_valid
+  })
+    // .catch((err) => alert(`failed to enter the system due to ${err}`))
 }
 
 export const enter = () => {
-  const url = "http://127.0.0.1:5000/api/enter";
+  const url = `${base_route}/enter`;
   return axios({
     method: "post",
     url: url,
-  }).then((res) => res.data)
-      .catch((err) => alert(`failed to enter the system due to ${err}`))
+  }).then((res) => {
+    if (res.data.status) {
+      return res.data
+    } else {
+      throw new Error(res.data.description)
+    }
+  }).catch((err) => alert(`failed to enter the system due to ${err}`))
 }
 
 export const exit = (token) => {
-  const url = "http://127.0.0.1:5000/api/exit";
+  const url = `${base_route}/exit`;
   return axios({
     method: "delete",
     url: url,
@@ -64,7 +77,7 @@ export const exit = (token) => {
 
 export const register = (token, user_data) => {
   // const url = `${base_route}/${routes.login}`;
-  const url = "http://127.0.0.1:5000/api/register";
+  const url = `${base_route}/register`;
   return axios({
     method: "post",
     url: url,
@@ -72,13 +85,18 @@ export const register = (token, user_data) => {
       token: token,
       ...user_data
     }
-  }).then((res) => res.data.status)
-      .catch((err) => alert(err))
+  }).then((res) => {
+    if (res.data.status) {
+      return res.data.status
+    } else {
+      throw new Error(res.data.description)
+    }
+  }).catch((err) => alert(err))
 }
 
 export const login = (token, username, password) => {
   // const url = `${base_route}/${routes.login}`;
-  const url = "http://127.0.0.1:5000/api/login";
+  const url = `${base_route}/login`;
 
   return axios({
     method: "post",
@@ -88,13 +106,18 @@ export const login = (token, username, password) => {
       username: username,
       password: password,
     }
-  }).then((result) => result.data.status)
-      .catch((err) => alert(`failed to login due to ${err}`))
+  }).then((res) => {
+    if (res.data.status) {
+      return res.data.status
+    } else {
+      throw new Error(res.data.description)
+    }
+  }).catch((err) => alert(`failed to login due to ${err}`))
 }
 
 export const logout = (token) => {
   // const url = `${base_route}/${routes.login}`;
-  const url = "http://127.0.0.1:5000/api/logout";
+  const url = `${base_route}/logout`;
 
   return axios({
     method: "put",
@@ -102,23 +125,34 @@ export const logout = (token) => {
     data: {
       token: token,
     }
-  }).then((res) => res.data.status).catch((err) => alert(err))
+  }).then((res) => {
+    if (res.data.status) {
+      return res.data.status
+    } else {
+      throw new Error(res.data.description)
+    }
+  }).catch((err) => alert(err))
 }
 
 export const get_cart_info = (token) => {
-  const url = "http://127.0.0.1:5000/api/cart";
+  const url = `${base_route}/cart`;
   return axios({
     url: url,
     method: "get",
     params: {
       token: token
     },
-  }).then((res) => res.data)
-      .catch((err) => alert(`failed to get cart info due to ${err}`))
+  }).then((res) => {
+    if (res.data.status) {
+      return res.data.result
+    } else {
+      throw new Error(res.data.description)
+    }
+  }).catch((err) => alert(`failed to get cart info due to ${err}`))
 }
 
 export const save_product_to_cart = (token, shop_id, product_id, amount_to_buy) => {
-  const url = `http://127.0.0.1:5000/api/cart/${shop_id}/${product_id}`;
+  const url = `${base_route}/cart/${shop_id}/${product_id}`;
   return axios({
     url: url,
     method: "post",
@@ -126,12 +160,17 @@ export const save_product_to_cart = (token, shop_id, product_id, amount_to_buy) 
       token: token,
       amount_to_buy: amount_to_buy
     },
-  }).then((res) => res.data)
-      .catch((err) => alert(`failed to get cart info due to ${err}`))
+  }).then((res) => {
+    if (res.data.status) {
+      return res.data.status
+    } else {
+      throw new Error(res.data.description)
+    }
+  }).catch((err) => alert(`failed to get cart info due to ${err}`))
 }
 
 export const remove_product_from_cart = (token, shop_id, product_id, amount) => {
-  const url = `http://127.0.0.1:5000/api/cart/${shop_id}/${product_id}`;
+  const url = `${base_route}/cart/${shop_id}/${product_id}`;
   return axios({
     url: url,
     method: "delete",
@@ -139,212 +178,570 @@ export const remove_product_from_cart = (token, shop_id, product_id, amount) => 
       token: token,
       amount: amount,
     },
-  }).then((res) => res.data)
-      .catch((err) => alert(`failed to remove from cart info due to ${err}`))
+  }).then((res) => {
+    if (res.data.status) {
+      return res.data.status
+    } else {
+      throw new Error(res.data.description)
+    }
+  }).catch((err) => alert(`failed to remove from cart info due to ${err}`))
 }
 
-export const get_user_transactions = (token) =>
-    axios({
-      method: "get",
-      url: `http://127.0.0.1:5000/api/transactions?token=${token}`,
-    }).then((res) => res.data)
-        .catch((err) => alert(`can't find user transactions due to ${err}`));
+export const search_products = (token, product_name, keywords, categories, filters) => {
+  const url = `${base_route}/search`;
+  return axios({
+    url: url,
+    method: "get",
+    data: {
+      token: token,
+      product_name: product_name,
+      keywords: keywords,
+      categories: categories,
+      filters: filters,
+    },
+  }).then((res) => {
+    if (res.data.status) {
+      return res.data.result
+    } else {
+      throw new Error(res.data.description)
+    }
+  }).catch((err) => alert(`failed to search products due to ${err}`))
+}
 
+export const get_all_categories = (token) => {
+  const url = `${base_route}/allCategories`;
+  return axios({
+    method: "get",
+    url: url,
+    params: {
+      token: token
+    }
+  }).then((res) => {
+    if (res.data.status) {
+      return res.data.result
+    } else {
+      throw new Error(res.data.description)
+    }
+  }).catch((err) => alert(`can't find all categories due to ${err}`))
+};
+
+export const get_user_transactions = (token) =>
+  axios({
+    method: "get",
+    url: `${base_route}/transactions?token=${token}`,
+  }).then((res) => {
+    if (res.data.status) {
+      return res.data.result
+    } else {
+      throw new Error(res.data.description)
+    }
+  }).catch((err) => alert(`can't find user transactions due to ${err}`));
+
+
+export const get_product_info = (token, shop_id, product_id) => {
+  // const url = `${base_route}/${routes.login}`;
+  const url = `${base_route}/shops/${shop_id}/products/${product_id}`;
+  return axios({
+    params: {
+      token: token
+    },
+    method: "get",
+    url: url,
+  }).then((res) => {
+    if (res.data.status) {
+      return res.data.result
+    } else {
+      throw new Error(res.data.description)
+    }
+  })
+      // .catch((err) => alert(`failed to get product info ${err}`))
+}
+export const get_permissions = (token, shop_id) => {
+  const url = `${base_route}/permissions/${shop_id}`;
+  return axios({
+    params: {
+      token: token
+    },
+    method: "get",
+    url: url,
+  }).then((res) => {
+    if (res.data.status) {
+      return res.data.result
+    } else {
+      throw new Error(res.data.description)
+    }
+  }).catch((err) => alert(err))
+}
+export const edit_product = (token, shop_id, product_id, name, price, description, categories) => {
+  const details = `shop id: ${shop_id} product id: ${product_id} name: ${name} price: ${price} description: ${description} categories: ${categories}`
+  const url = `http://127.0.0.1:5000/api/shops/${shop_id}/products/${product_id}`;
+  return axios({
+    method: "put",
+    url: url,
+    data: {
+      token: token,
+      product_name: name,
+      price: price,
+      description: description,
+      categories: categories
+    }
+  }).then((res) => {
+    if (res.data.status) {
+      return res.data.status
+    } else {
+      throw new Error(res.data.description)
+    }
+  }).catch((err) => alert(`failed to edit product info due to ${err}`))
+}
+
+// export const delete_product = (token, shop_id, product_id) =>
+// {
+//   const details = `shop id: ${shop_id} product id: ${product_id} `
+//   alert(details)
+// }
 
 export const get_shop_transactions = (token, shop_id) =>
-    axios({
-      method: "get",
-      url: `${base_route}/${urljoin(routes.shops, shop_id.toString(), routes.transactions)}`,
-      data: {
-        token: token
-      }
-    });
+  axios({
+    method: "get",
+    url: `${base_route}/${urljoin(routes.shops, shop_id.toString(), routes.transactions)}`,
+    params: {
+      token: token
+    }
+  }).then((res) => {
+    if (res.data.status) {
+      return res.data.result
+    } else {
+      throw new Error(res.data.description)
+    }
+  }).catch((err) => alert(`failed to get shop transactions due to ${err}`));
 
 export const get_system_transactions = (token) =>
-    axios({
-      method: "get",
-      url: `${base_route}/${urljoin(routes.system, routes.transactions)}`,
-      data: {
-        token: token
-      }
-    });
+  axios({
+    method: "get",
+    url: `${base_route}/${urljoin(routes.system, routes.transactions)}`,
+    params: {
+      token: token
+    }
+  }).then((res) => {
+    if (res.data.status) {
+      return res.data.result
+    } else {
+      throw new Error(res.data.description)
+    }
+  }).catch((err) => alert(`failed to get system transactions due to ${err}`));
+
+export const get_system_transactions_of_shops = (token, shop_id) =>
+  axios({
+    method: "get",
+    url: `${base_route}/${urljoin(routes.system, routes.transactions, routes.shops)}`,
+    params: {
+      token: token,
+      shop_id: shop_id
+    }
+  }).then((res) => {
+    if (res.data.status) {
+      return res.data.result
+    } else {
+      throw new Error(res.data.description)
+    }
+  }).catch((err) => alert(`failed to get system transactions of shop due to ${err}`));
+;
+
+export const get_system_transactions_of_user = (token, username) =>
+  axios({
+    method: "get",
+    url: `${base_route}/${urljoin(routes.system, routes.transactions, routes.user)}`,
+    params: {
+      token: token,
+      username: username
+    }
+  }).then((res) => {
+    if (res.data.status) {
+      return res.data.result
+    } else {
+      throw new Error(res.data.description)
+    }
+  }).catch((err) => alert(`failed to get system transactions of user due to ${err}`));
+;
+
+
 export const get_shop_info = (token, shop_id) =>
-    axios({
-      method: "get",
-      url: `${base_route}/${urljoin(routes.shops, shop_id.toString())}`,
-      data: {
-        token: token,
-      }
-    });
-export const get_all_shops_info = (token) =>
-    axios({
-      method: "get",
-      url: `${base_route}/${urljoin(routes.shops)}`,
-      data: {
-        token: token,
-      }
-    });
+  axios({
+    method: "get",
+    url: `${base_route}/${routes.shops}/${shop_id.toString()}`,
+    params: {
+      token: token
+    }
+  }).then((res) => {
+    if (res.data.status) {
+      return res.data.result
+    } else {
+      throw new Error(res.data.description)
+    }
+  }).catch((err) => alert(`failed to get shop info due to ${err}`));
+
+export const get_all_shops_info = (token) => {
+  return axios({
+    method: "get",
+    url: `${base_route}/${urljoin(routes.all_shops)}`,
+    params: {
+      token: token,
+    }
+  }).then((res) => {
+    if (res.data.status) {
+      return res.data.result
+    } else {
+      throw new Error(res.data.description)
+    }
+  }).catch((err) => alert(`failed to get all shops info due to ${err}`))
+}
+
+export const get_all_shops_ids_and_names = (token) =>
+  axios({
+    method: "get",
+    url: `${base_route}/${urljoin(routes.all_shops_ids_and_names)}`,
+    params: {
+      token: token,
+    }
+  }).then((res) => {
+    if (res.data.status) {
+      return res.data.result
+    } else {
+      throw new Error(res.data.description)
+    }
+  }).catch((err) => alert(`failed to get shops ids and names due to ${err}`));
+
+
+export const get_all_user_names = (token) =>
+  axios({
+    method: "get",
+    url: `${base_route}/${urljoin(routes.all_user_names)}`,
+    params: {
+      token: token,
+    }
+  }).then((res) => res.data)
 
 export const purchase_product = (token, shop_id, product_id, amount, details) =>
-    axios({
-      method: "POST",
-      url: `${base_route}/${urljoin(routes.cart, shop_id.toString(), product_id.toString())}`,
-      data: {
-          token: token,
-          amount : amount,
-          details : details
+  axios({
+    method: "POST",
+    url: `${base_route}/${urljoin(routes.cart, shop_id.toString(), product_id.toString())}`,
+    data: {
+      token: token,
+      amount: amount,
+      details: details
 
-      }
-    });
+    }
+  }).then((res) => {
+    if (res.data.status) {
+      return res.data.status
+    } else {
+      throw new Error(res.data.description)
+    }
+  }).catch((err) => alert(`failed to purchase product due to ${err}`));
 
 export const purchase_shopping_bag = (token, shop_id, details) =>
-    axios({
-      method: "POST",
-      url: `${base_route}/${urljoin(routes.cart, shop_id.toString())}`,
-      data: {
-          token: token,
-          details : details
-      }
-    });
+  axios({
+    method: "POST",
+    url: `${base_route}/${urljoin(routes.cart, shop_id.toString())}`,
+    data: {
+      token: token,
+      details: details
+    }
+  }).then((res) => {
+    if (res.data.status) {
+      return res.data.status
+    } else {
+      throw new Error(res.data.description)
+    }
+  }).catch((err) => alert(`failed to purchase shopping bag due to ${err}`));
 
-export const purchase_cart = (token,details) =>
-    axios({
-      method: "POST",
-      url: `${base_route}/${urljoin(routes.cart)}`,
-      data: {
-          token: token,
-          details: details
-      }
-    });
+export const purchase_cart = (token, details) =>
+  axios({
+    method: "POST",
+    url: `${base_route}/${urljoin(routes.cart)}`,
+    data: {
+      token: token,
+      details: details
+    }
+  }).then((res) => {
+    if (res.data.status) {
+      return res.data.status
+    } else {
+      throw new Error(res.data.description)
+    }
+  }).catch((err) => alert(`failed to purchase cart due to ${err}`));
 
 export const open_shop = (token, details) =>
-    axios({
-      method: "POST",
-      url: `${base_route}/${urljoin(routes.shop)}`,
-      data: {
-          token: token,
-          details: details
-      }
-    });
+  axios({
+    method: "POST",
+    url: `${base_route}/${urljoin(routes.shops)}`,
+    data: {
+      token: token,
+      ...details
+    }
+  }).then((res) => {
+    if (res.data.status) {
+      return res.data.result
+    } else {
+      throw new Error(res.data.description)
+    }
+  }).catch((err) => alert(`failed to open shop due to ${err}`));
 
 export const get_personal_purchase_history = (token) =>
-    axios({
-      method: "get",
-      url: `${base_route}/${urljoin(routes.transactions)}`,
-      data: {
-          token: token,
-      }
-    });
+  axios({
+    method: "get",
+    url: `${base_route}/${urljoin(routes.transactions)}`,
+    params: {
+      token: token,
+    }
+  }).then((res) => {
+    if (res.data.status) {
+      return res.data.result
+    } else {
+      throw new Error(res.data.description)
+    }
+  }).catch((err) => alert(`failed to get personal purchase history due to ${err}`));
 
 export const add_product_to_shop = (token, shop_id, info) =>
-    axios({
-      method: "POST",
-      url: `${base_route}/${urljoin(routes.shop, shop_id.toString(), routes.products)}`,
-      data: {
-          token: token,
-          info:info
-      }
-    });
-
-export const edit_product_info = (token, shop_id, product_id, product_name, description, price, quantity, categories) =>
-    axios({
-      method: "PUT",
-      url: `${base_route}/${urljoin(routes.shops, shop_id.toString(), routes.products, product_id.toString())}`,
-      data: {
-          token: token,
-          product_name : product_name,
-          description : description,
-          price: price,
-          quantity: quantity,
-          categories: categories
-      }
-    });
+  axios({
+    method: "POST",
+    url: `${base_route}/${urljoin(routes.shop, shop_id.toString(), routes.products)}`,
+    data: {
+      token: token,
+      info: info
+    }
+  }).then((res) => {
+    if (res.data.status) {
+      return res.data.status
+    } else {
+      throw new Error(res.data.description)
+    }
+  }).catch((err) => alert(`failed to add product due to ${err}`));
 
 export const delete_product = (token, shop_id, product_id) =>
-    axios({
-      method: "DELETE",
-      url: `${base_route}/${urljoin(routes.shops, shop_id.toString(), routes.products, product_id.toString())}`,
-      data: {
-          token: token,
-      }
-    });
+  axios({
+    method: "DELETE",
+    url: `${base_route}/${urljoin(routes.shops, shop_id.toString(), routes.products, product_id.toString())}`,
+    data: {
+      token: token,
+    }
+  }).then((res) => {
+    if (res.data.status) {
+      return res.data.status
+    } else {
+      throw new Error(res.data.description)
+    }
+  }).catch((err) => alert(`failed to delete product due to ${err}`));
 
 export const appoint_shop_manager = (token, shop_id, username, permissions) =>
-    axios({
-      method: "POST",
-      url: `${base_route}/${urljoin(routes.shops, shop_id.toString(), routes.appointments, routes.promotions)}`,
-      data: {
-          token: token,
-          username: username,
-          permissions: permissions
-      }
-    });
+  axios({
+    method: "POST",
+    url: `${base_route}/${urljoin(routes.shops, shop_id.toString(), routes.appointments, routes.promotions)}`,
+    data: {
+      token: token,
+      username: username,
+      permissions: permissions
+    }
+  }).then((res) => {
+    if (res.data.status) {
+      return res.data.status
+    } else {
+      throw new Error(res.data.description)
+    }
+  }).catch((err) => alert(`failed to appoint manager due to ${err}`));
 
 export const appoint_shop_owner = (token, shop_id, username) =>
-    axios({
-      method: "POST",
-      url: `${base_route}/${urljoin(routes.shops, shop_id.toString(), routes.appointments, routes.owners)}`,
-      data: {
-          token: token,
-          username: username
-      }
-    });
+  axios({
+    method: "POST",
+    url: `${base_route}/${urljoin(routes.shops, shop_id.toString(), routes.appointments, routes.owners)}`,
+    data: {
+      token: token,
+      username: username
+    }
+  }).then((res) => {
+    if (res.data.status) {
+      return res.data.status
+    } else {
+      throw new Error(res.data.description)
+    }
+  }).catch((err) => alert(`failed to appoint shop owner due to ${err}`));
 
 export const promote_shop_owner = (token, shop_id, username) =>
-    axios({
-      method: "POST",
-      url: `${base_route}/${urljoin(routes.shops, shop_id.toString(), routes.appointments, routes.promotions)}`,
-      data: {
-          token: token,
-          username: username
-      }
-    });
+  axios({
+    method: "POST",
+    url: `${base_route}/${urljoin(routes.shops, shop_id.toString(), routes.appointments, routes.promotions)}`,
+    data: {
+      token: token,
+      username: username
+    }
+  }).then((res) => {
+    if (res.data.status) {
+      return res.data.status
+    } else {
+      throw new Error(res.data.description)
+    }
+  }).catch((err) => alert(`failed to promote shop manager due to ${err}`));
 
 export const edit_manager_permissions = (token, shop_id, username, permissions) =>
-    axios({
-      method: "PUT",
-      url: `${base_route}/${urljoin(routes.shops, shop_id.toString(), routes.appointments, routes.managers)}`,
-      data: {
-          token: token,
-          username: username,
-          permissions: permissions
-      }
-    });
+  axios({
+    method: "PUT",
+    url: `${base_route}/${urljoin(routes.shops, shop_id.toString(), routes.appointments, routes.managers)}`,
+    data: {
+      token: token,
+      username: username,
+      permissions: permissions
+    }
+  }).then((res) => {
+    if (res.data.status) {
+      return res.data.status
+    } else {
+      throw new Error(res.data.description)
+    }
+  }).catch((err) => alert(`failed to edit manager permissions due to ${err}`));
 
 export const unappoint_manager = (token, shop_id, username) =>
-    axios({
-      method: "DELETE",
-      url: `${base_route}/${urljoin(routes.shops, shop_id.toString(), routes.appointments, routes.managers)}`,
-      data: {
-          token: token,
-          username: username
-      }
-    });
+  axios({
+    method: "DELETE",
+    url: `${base_route}/${urljoin(routes.shops, shop_id.toString(), routes.appointments, routes.managers)}`,
+    data: {
+      token: token,
+      username: username
+    }
+  }).then((res) => {
+    if (res.data.status) {
+      return res.data.status
+    } else {
+      throw new Error(res.data.description)
+    }
+  }).catch((err) => alert(`failed to un appoint manager due to ${err}`));
 
 export const unappoint_shop_owner = (token, shop_id, username) =>
-    axios({
-      method: "DELETE",
-      url: `${base_route}/${urljoin(routes.shops, shop_id.toString(), routes.appointments, routes.owners)}`,
-      data: {
-          token: token,
-          username: username
-      }
-    });
+  axios({
+    method: "DELETE",
+    url: `${base_route}/${urljoin(routes.shops, shop_id.toString(), routes.appointments, routes.owners)}`,
+    data: {
+      token: token,
+      username: username
+    }
+  }).then((res) => {
+    if (res.data.status) {
+      return res.data.status
+    } else {
+      throw new Error(res.data.description)
+    }
+  }).catch((err) => alert(`failed to un appoint shop owner due to ${err}`));
 
 export const get_shop_staff_info = (token, shop_id) =>
-    axios({
-      method: "GET",
-      url: `${base_route}/${urljoin(routes.shops, shop_id.toString(), routes.appointments)}`,
-      data: {
-          token: token,
-      }
-    });
+  axios({
+    method: "GET",
+    url: `${base_route}/${urljoin(routes.shops, shop_id.toString(), routes.appointments)}`,
+    params: {
+      token: token,
+    }
+  }).then((res) => {
+    if (res.data.status) {
+      return res.data.result
+    } else {
+      throw new Error(res.data.description)
+    }
+  }).catch((err) => alert(`failed to get shop staff info due to ${err}`));
 
 export const get_shop_transaction_history = (token, shop_id) =>
-    axios({
-      method: "GET",
-      url: `${base_route}/${urljoin(routes.shops, shop_id.toString(), routes.transactions)}`,
-      data: {
-          token: token,
-      }
-    });
+  axios({
+    method: "GET",
+    url: `${base_route}/${urljoin(routes.shops, shop_id.toString(), routes.transactions)}`,
+    data: {
+      token: token,
+    }
+  }).then((res) => {
+    if (res.data.status) {
+      return res.data.result
+    } else {
+      throw new Error(res.data.description)
+    }
+  }).catch((err) => alert(`failed to get shop transaction history due to ${err}`));
+
+export const add_discount = (token, shop_id, has_cond, discount, condition) => {
+  return axios({
+    method: "POST",
+    url: `${base_route}/${routes.shops}/${shop_id.toString()}/${routes.discounts}`,
+    data: {
+      token: token,
+      has_cond: has_cond,
+      discount: discount,
+      condition: condition,
+    }
+  }).then((res) => {
+    if (res.data.status) {
+      return res.data.result
+    } else {
+      throw new Error(res.data.description)
+    }
+  }).catch((err) => alert(`failed to add discount due to ${err}`));
+}
+
+export const move_discount_to = (token, shop_id, src_discount_id, dst_discount_id) => {
+  return axios({
+    method: "PUT",
+    url: `${base_route}/${routes.shops}/${shop_id.toString()}/${routes.discounts}/${dst_discount_id}`,
+    data: {
+      token: token,
+      src_discount_id: src_discount_id
+    }
+  }).then((res) => {
+    if (res.data.status) {
+      return res.data.result
+    } else {
+      throw new Error(res.data.description)
+    }
+  }).catch((err) => alert(`failed to move discount due to ${err}`));
+}
+
+export const remove_discount = (token, shop_id, discount_id) => {
+  return axios({
+    method: "DELETE",
+    url: `${base_route}/${routes.shops}/${shop_id.toString()}/${routes.discounts}`,
+    data: {
+      token: token,
+      discount_ids: [discount_id],
+    }
+  }).then((res) => {
+    if (res.data.status) {
+      return res.data.status
+    } else {
+      throw new Error(res.data.description)
+    }
+  }).catch((err) => alert(`failed to delete discount due to ${err}`));
+}
+
+export const get_shop_discounts = (token, shop_id) => {
+  return axios({
+    method: "GET",
+    url: `${base_route}/${urljoin(routes.shops, shop_id.toString(), routes.discounts)}`,
+    params: {
+      token: token,
+    }
+  }).then((res) => {
+    if (res.data.status) {
+      return res.data.result
+    } else {
+      throw new Error(res.data.description)
+    }
+  }).catch((err) => alert(`failed to get shop discounts due to ${err}`));
+}
+
+export const get_appointments = (token) => {
+  return axios({
+    method: "GET",
+    url: `${base_route}/appointments`,
+    params: {
+      token: token,
+    }
+  }).then((res) => {
+    if (res.data.status) {
+      return res.data.result
+    } else {
+      throw new Error(res.data.description)
+    }
+  }).catch((err) => alert(`failed to get shop discounts due to ${err}`));
+}

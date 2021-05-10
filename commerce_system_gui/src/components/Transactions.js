@@ -3,7 +3,7 @@ import {Typography} from "@material-ui/core";
 import React, {useEffect, useState} from 'react';
 import {makeStyles} from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
-import {get_user_transactions} from "../api";
+import {get_user_transactions, get_shop_transactions} from "../api";
 import {useAuth} from "./use-auth";
 import {Link} from "react-router-dom";
 
@@ -35,15 +35,22 @@ const useStyles = makeStyles((theme) => ({
       paddingRight: 0,
     },
   },
+  heading: {
+      fontSize: theme.typography.pxToRem(20),
+      flexBasis: '33.33%',
+      flexShrink: 0,
+      fontWeight: 530,
+      padding: theme.spacing(1)
+  },
 }));
 
-export default function Transactions() {
+function Transactions({transactions_getter, width}) {
   const classes = useStyles();
   const [transactions, setTransactions] = useState([]);
   const auth = useAuth();
 
   useEffect(() => {
-    get_user_transactions(auth.token)
+    auth.getToken().then(transactions_getter)
         .then((res) => {
           setTransactions(res || [])
         })
@@ -52,11 +59,20 @@ export default function Transactions() {
 
   return (
       <>
-        <Grid item lg={6}>
+        <Grid item xs={6} >
+          <Typography className={classes.heading}>Transactions</Typography>
           {(transactions && transactions.length > 0) ?
-              transactions.map((transaction, index) => <Transaction key={index} transaction={transaction}/>)
+              transactions.map((transaction, index) => <div style={{width:width}}><Transaction key={index} transaction={transaction}/></div>)
               : <Typography align="center">You currently have no transactions, start shopping <Link to="/">here</Link></Typography>
           }
         </Grid></>
   );
+}
+
+export function UserTransactions() {
+  return <Transactions transactions_getter={(res) => get_user_transactions(res)} widht="100%"/>
+}
+
+export function ShopTransactions({shop_id}) {
+  return <Transactions transactions_getter={(res) => get_shop_transactions(res)} width="200%"/>
 }

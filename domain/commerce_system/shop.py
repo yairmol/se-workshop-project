@@ -2,11 +2,19 @@ import threading
 from typing import Dict, List
 
 from domain.commerce_system.action import Action, ActionPool
+from domain.commerce_system.purchase_conditions import Condition
+from domain.discount_module.discount_calculator import AdditiveDiscount, Discount
 from domain.commerce_system.product import Product
 from domain.commerce_system.transaction import Transaction
 from data_model import ShopModel as Sm
+from domain.discount_module.discount_management import SimpleCond, DiscountManagement, DiscountDict
 
-WORKER_NAME = "name"
+SHOP_ID = "shopId"
+SHOP_NAME = "shopName"
+SHOP_DESC = "shopDesc"
+SHOP_IMAGE = "shopImage"
+
+WORKER_NAME = "username"
 WORKER_TITLE = "title"
 WORKER_APPOINTER = "appointer"
 
@@ -14,7 +22,7 @@ WORKER_APPOINTER = "appointer"
 class Shop:
     __shop_id = 1
 
-    def __init__(self, shop_name: str, description=""):
+    def __init__(self, shop_name: str, description="", image_url=""):
         self.founder = None
         self.shop_id = Shop.__shop_id
         Shop.__shop_id += 1
@@ -25,14 +33,19 @@ class Shop:
         self.products_lock = threading.Lock()
         self.managers_lock = threading.Lock()
         self.owners_lock = threading.Lock()
+        self.discount_lock = threading.Lock()
         self.shop_managers = {}
         self.shop_owners = {}
+        self.discount = AdditiveDiscount([])
+        self.image_url = image_url
+        self.conditions = []
 
     def to_dict(self, include_products=True):
         ret = {
             Sm.SHOP_ID: self.shop_id,
             Sm.SHOP_NAME: self.name,
             Sm.SHOP_DESC: self.description,
+            Sm.SHOP_IMAGE: self.image_url,
         }
         if include_products:
             ret[Sm.SHOP_PRODS] = list(map(lambda p: p.to_dict(), self.products.values()))
@@ -41,9 +54,9 @@ class Shop:
     def add_product(self, **product_info) -> Product:
         """ returns product_id if successful"""
         with self.products_lock:
-            assert not self.has_product(product_info["product_name"]),\
+            assert not self.has_product(product_info["product_name"]), \
                 f"product name {product_info['product_name']} is not unique"
-            product = Product(**product_info)
+            product = Product(**product_info, shop_id=self.shop_id)
             self.products[product.product_id] = product
             return product
 
@@ -95,7 +108,7 @@ class Shop:
         with self.products_lock:
             product_update_actions = ActionPool([
                 Action(product.set_quantity, product.get_quantity() - amount)
-                .set_reverse(Action(product.set_quantity, product.get_quantity()))
+                    .set_reverse(Action(product.set_quantity, product.get_quantity()))
                 for product, amount in bag
             ])
             product_update_actions.execute_actions()
@@ -132,22 +145,22 @@ class Shop:
         }
 
     def get_owner_info(self, sub):
+        appointer = sub.get_appointment(self).appointer
         return {
             WORKER_NAME: sub.username,
-            WORKER_TITLE: "manager" if sub != self.founder else "founder",
-            WORKER_APPOINTER: sub.get_appointment(self).appointer.username
+            WORKER_TITLE: "owner" if sub != self.founder else "founder",
+            WORKER_APPOINTER: appointer.username if appointer else "no appointer, this is the shop founder"
         }
 
     def get_managers_info(self):
         info_dicts = []
-        self.managers_lock.acquire()
-        for manager_sub in self.shop_managers.values():
-            info_dicts += [self.get_manager_info(manager_sub)]
-        self.managers_lock.release()
+        with self.managers_lock:
+            for manager_sub in self.shop_managers.values():
+                info_dicts += [self.get_manager_info(manager_sub)]
         return info_dicts
 
     def get_owners_info(self):
-        info_dicts = []
+        info_dicts = [self.get_owner_info(self.founder)]
         with self.owners_lock:
             for owner_sub in self.shop_owners.values():
                 info_dicts += [self.get_owner_info(owner_sub)]
@@ -158,3 +171,38 @@ class Shop:
 
     def get_shop_transaction_history(self):
         return list(map(lambda x: x.to_dict(), self.transaction_history))
+
+    def get_product_info(self, product_id):
+        assert product_id in self.products, "product id doesn't exists"
+        return self.products.get(product_id)
+
+    def get_discounts(self) -> List[Discount]:
+        return self.discount.discounts
+
+    def add_discount(self, has_cond: bool, condition: [str or SimpleCond or []], discount: DiscountDict)-> int:
+        with self.discount_lock:
+            return DiscountManagement.add_discount(self.discount, has_cond, condition, discount)
+
+    def aggregate_discounts(self, discount_ids: [int], func: str):
+        with self.discount_lock:
+            self.discount.aggregate_discounts(discount_ids, func)
+
+    def move_discount_to(self, src_discount_id: int, dst_discount_id: int):
+        with self.discount_lock:
+            discount = DiscountManagement.remove(self.discount, src_discount_id)
+            DiscountManagement.add(self.discount, dst_discount_id, discount)
+
+    def delete_discounts(self, discount_ids):
+        with self.discount_lock:
+            for d_id in discount_ids:
+                DiscountManagement.remove(self.discount, d_id)
+
+    def add_purchase_condition(self, condition: Condition):
+        self.conditions.append(condition)
+
+    def remove_purchase_condition(self, condition_id: int) -> bool:
+        for condition in self.conditions:
+            if condition.id == condition_id:
+                self.conditions.remove(condition)
+                return True
+        return False

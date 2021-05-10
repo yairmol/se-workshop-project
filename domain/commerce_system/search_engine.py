@@ -32,13 +32,13 @@ def search(
 ) -> List[Product]:
     filtered_products = products
     if filters:
-        filtered_products = search_by_filters(products, filters)
+        filtered_products = search_by_filters(filtered_products, filters)
     if product_name:
         filtered_products = search_by_product_name(filtered_products, product_name)
     if keywords:
-        filtered_products = search_by_keywords(products, keywords)
+        filtered_products = search_by_keywords(filtered_products, keywords)
     if categories:
-        filtered_products = search_by_categories(products, categories)
+        filtered_products = search_by_categories(filtered_products, categories)
     return filtered_products
 
 

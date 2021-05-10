@@ -4,7 +4,7 @@ import CssBaseline from '@material-ui/core/CssBaseline';
 import Grid from '@material-ui/core/Grid';
 import Container from '@material-ui/core/Container';
 import Header from './components/Header';
-import Transactions from "./components/Transactions";
+import {UserTransactions} from "./components/Transactions";
 import {Typography} from "@material-ui/core";
 import SignIn from "./components/SignIn";
 import {
@@ -18,9 +18,14 @@ import {Product} from "./components/Product";
 import {Shop} from "./components/Shop";
 import {ShoppingBag} from "./components/ShoppingBag";
 import {Cart} from "./components/Cart";
-import { ProvideAuth } from "./components/use-auth.js";
+import {ProvideAuth} from "./components/use-auth.js";
 import {Main} from "./components/Main";
-import {Checkout} from "./components/Checkout";
+import {Main_page} from "./components/Main_page";
+import {Discounts} from "./components/Discounts";
+import System_manager_transaction_history from "./components/system_manager_transaction_history";
+import Search_products from "./components/search_products";
+import {ShopForCustomer} from "./components/ShopForCustomer";
+import ProfilePage from "./components/ProfilePage";
 
 const useStyles = makeStyles((theme) => ({
   mainGrid: {
@@ -29,16 +34,8 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 const categories = [
-  {title: 'Technology', url: 'technology'},
-  {title: 'Design', url: 'design'},
-  {title: 'Culture', url: 'culture'},
-  {title: 'Business', url: 'business'},
-  {title: 'Politics', url: 'political'},
-  {title: 'Opinion', url: 'opinion'},
-  {title: 'Science', url: 'science'},
-  {title: 'Health', url: 'health'},
-  {title: 'Style', url: 'style'},
-  {title: 'Travel', url: 'travel'},
+  {title: 'Main page', url: ''},
+  {title: 'Search products', url: 'search'},
 ];
 
 const transactions = [
@@ -66,10 +63,12 @@ const transactions = [
       }
     ],
     "date": 1619448651.712134,
+    "username" : "Moshe",
     "price": 2.5
   },
   {
     id: 2,
+    "username" : "Moshe",
     "shop": {
       "shop_id": 2,
       "shop_name": "shop2",
@@ -89,6 +88,7 @@ const transactions = [
   },
   {
     id: 3,
+    "username" : "Moshe",
     "shop": {
       "shop_id": 2,
       "shop_name": "shop2",
@@ -118,6 +118,9 @@ const pages = {
   signUp: {
     name: "Sign Up",
   },
+  mainPage: {
+    name: "Main Page",
+  },
 }
 
 
@@ -130,6 +133,7 @@ export default function Blog() {
     setSelected(page)
   }
 
+
   return (
       <ProvideAuth>
       <Router>
@@ -141,6 +145,9 @@ export default function Blog() {
               <Grid container justify="center" spacing={5} className={classes.mainGrid}>
                 <Switch>
                   {/* Guest routes */}
+                  <Route path="/shops/:shop_id/products/:product_id" exact>
+                    <Product/>
+                  </Route>
                   <Route path="/register">
                     <Register />
                   </Route>
@@ -150,31 +157,35 @@ export default function Blog() {
                   <Route path="/cart/:shop_id">
                     <ShoppingBag/> {/* This means shopping bag of shop shop_id*/}
                   </Route>
-                  <Route path="/checkout/:shop_id">
-                    <Checkout />
+                  <Route path="/shops/:shop_id/discounts">
+                    <Discounts/>
                   </Route>
-                  <Route path="/checkout/">
-                    <Checkout />
+                  <Route path="/shops/:shop_id">
+                    <Shop/>
                   </Route>
-                  <Route path="/shops">
-                    <Route path="/:shop_id">  {/* this means that in the shop component we can use UseParams()*/}
-                      <Shop/>                 {/* to get the shop_id param and then get the proper shop info */}
-                    </Route>
-                    <Route path="/products">
-                      <Route path="/:product_id">
-                        <Product/>
-                      </Route>
-                    </Route>
+                  <Route path="/Cshops/:shop_id">
+                    <ShopForCustomer/>
+                  </Route>
+                  <Route path="/shops/:shop_id/products/:product_id">
+                    <Product/>
+                  </Route>
+                  <Route path="/profile">
+                    <ProfilePage/>
                   </Route>
                   <Route path="/login" exact>
                     <SignIn />
                   </Route>
                   <Route path="/transactions">
-                    <Transactions/>
+                    <UserTransactions/>
                   </Route>
                   <Route path="/" exact>
-                    <Main />
-                    <Typography>nothing to see here</Typography>
+                    <Main_page />
+                  </Route>
+                  <Route path="/search" exact>
+                    <Search_products/>
+                  </Route>
+                  <Route path="/system_transactions" exact>
+                    <System_manager_transaction_history />
                   </Route>
                   }
                 </Switch>

@@ -1,5 +1,6 @@
 import React, {useState, useEffect, useContext, createContext} from "react";
 import {enter, exit, isValidToken, login, logout, register} from "../api";
+import notifs from "../notifs";
 
 const authContext = createContext();
 
@@ -20,47 +21,71 @@ export const useAuth = () => {
 function useProvideAuth() {
   const [token, setToken] = useState(localStorage.getItem("token"));
   const [user, setUser] = useState(localStorage.getItem("user"));
+  const [userId, setUserId] = useState(localStorage.getItem("userId"));
 
-  const getToken = async () => {
-    if (!token || !(await isValidToken(token))) {
-      await enter().then((new_token) => {
-        localStorage.setItem("token", new_token)
-        setToken(new_token);
+  const refresh = () => {
+    localStorage.clear();
+    return enter().then((data) => {
+      localStorage.setItem("token", data.result)
+      setToken(data.result);
+      localStorage.setItem("userId", data.id)
+      setUserId(data.id);
+      return data.result;
+    })
+  }
+  const getToken = () => {
+    if (token) {
+      return isValidToken(token).then((res) => {
+        if (res) {
+          return token
+        } else {
+          return refresh()
+        }
       })
+    } else {
+      return refresh()
     }
-    alert(`user token ${token}`);
-    return token;
+    // if (!token || !(await isValidToken(token))) {
+    //   localStorage.clear();
+    //   await enter().then((data) => {
+    //     localStorage.setItem("token", data.result)
+    //     setToken(data.result);
+    //     localStorage.setItem("userId", data.id)
+    //     setUserId(data.id);
+    //     alert(`here ${data.result}`)
+    //     return data.result;
+    //   })
+    // }
+    // return token;
   }
 
   const signin = async (username, password) => {
     return login(await getToken(), username, password)
-        .then((response) => {
-          if (response) {
-            setUser(username);
-            localStorage.setItem("user", username)
-            return username;
-          }
-        });
+      .then((response) => {
+        if (response) {
+          setUser(username);
+          localStorage.setItem("user", username)
+          return username;
+        }
+      });
   };
 
   const signup = async (userData) => {
     return register(await getToken(), userData)
-        .then((response) => {
-          return response;
-        });
+      .then((response) => {
+        return response;
+      });
   };
 
   const signout = () =>
-      logout(token).then((res) => {
-        if (res) {
-          localStorage.removeItem("user")
-          setUser(null);
-          return true
-        }
-        return false
-      });
+    logout(token).then((res) => {
+      localStorage.removeItem("user")
+      setUser(null);
+      return res
+    });
 
   useEffect(async () => {
+    // localStorage.clear();
     await getToken();
 
     if (user) {
@@ -74,12 +99,30 @@ function useProvideAuth() {
     // }
   }, []);
 
+  const notif = notifs(); //
+  notif.enlist(userId, user);// Change to user id
+
+  const registerNotifHandler = (handler) => {
+    notif.registerNotifHandler(handler);
+  }
+  const registerNotifErrorHandler = (handler) => {
+    notif.registerNotifErrorHandler(handler);
+  }
+  const registerBroadcastHandler = (handler) => {
+    notif.registerBroadcastHandler(handler);
+  }
+
+
   // Return the user object and auth methods
   return {
     getToken,
     user,
+    userId,
     signin,
     signup,
     signout,
+    registerNotifHandler,
+    registerNotifErrorHandler,
+    registerBroadcastHandler,
   };
 }

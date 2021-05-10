@@ -83,6 +83,7 @@ export function Transaction({transaction}) {
                     <Typography className={classes.secondaryHeading}>bought from shop: {transaction.shop.shop_name}</Typography>
                     <Typography className={classes.secondaryHeading}>total: {transaction.price}</Typography>
                     <Typography className={classes.secondaryHeading}>date: {date.toString()}</Typography>
+                    <Typography className={classes.secondaryHeading}>username: {transaction.username}</Typography>
                 </Grid>
             </AccordionSummary>
             <AccordionDetails>
