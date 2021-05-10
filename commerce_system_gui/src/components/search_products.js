@@ -1,5 +1,15 @@
 import {Transaction} from "./Transaction";
-import {FormControl, InputLabel, Select, TextField, Typography} from "@material-ui/core";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardMedia,
+  FormControl,
+  InputLabel,
+  Select,
+  TextField,
+  Typography
+} from "@material-ui/core";
 import React, {useEffect, useState} from 'react';
 import {makeStyles} from '@material-ui/core/styles';
 import Autocomplete from '@material-ui/lab/Autocomplete';
@@ -21,8 +31,23 @@ import Divider from "@material-ui/core/Divider";
 
 const useStyles = makeStyles((theme) => ({
   root: {
-    flexGrow: 1,
+    maxWidth: 345,
   },
+  media: {
+    height: 0,
+    paddingTop: '56.25%', // 16:9
+  },
+  expand: {
+    transform: 'rotate(0deg)',
+    marginLeft: 'auto',
+    transition: theme.transitions.create('transform', {
+      duration: theme.transitions.duration.shortest,
+    }),
+  },
+  expandOpen: {
+    transform: 'rotate(180deg)',
+  },
+
   paper: {
     padding: theme.spacing(2),
     textAlign: 'center',
@@ -73,8 +98,11 @@ export default function Search_products() {
   const [fromPrice, setFromPrice] = useState(0);
   const [toPrice, setToPrice] = useState(0);
   const [searchProducts, setSearchProducts] = useState([]);
+    //   useState([{product_name: "p1",description: "a product", price: 1, quantity: 10, categories:[0,1]},
+    // {product_name: "p2",description: "a product", price: 2.5, quantity: 10,
+    // categories: [1,2]},]);
   const [categories, setCategories] = useState([]);
-  const [allCategories, setAllCategories] = useState(["!","@","#"]);
+  const [allCategories, setAllCategories] = useState([]);
   const [keywords, setKeywords] = useState("");
   const auth = useAuth();
 
@@ -111,7 +139,7 @@ export default function Search_products() {
   }, [])
 
   return (
-      <div className={classes.root}>
+      <>
         <Grid container spacing = {4}>
           <Grid item xs = {12}>
               <TextField id="standard-basic" label="Product Name" value = {searchVal} onChange={handleSearchChange} fullWidth/>
@@ -140,7 +168,31 @@ export default function Search_products() {
           </Grid>
         </Grid>
         <Divider />
-
-      </div>
+        {searchProducts.map((product) => (
+        <Card className={classes.root}>
+          <CardHeader
+            title={product.product_name}
+          />
+          <CardMedia
+            className={classes.media}
+            image="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR-X2ZRp_vz2_Tg55J3pKupby0yJT-zG_xTw6cjjQ1ywFZ2j68_C3m1l-SCN4be_io4Vqw&usqp=CAU"
+          />
+          <CardContent>
+            <Typography variant="body2" color="textSecondary" component="p">
+              Product Price: {product.price}
+              </Typography>
+            <Typography variant="body2" color="textSecondary" component="p">
+              Product Description: {product.description}
+            </Typography>
+          <Typography variant="body2" color="textSecondary" component="p">
+              Product Quantity: {product.quantity}
+          </Typography>
+          <Typography variant="body2" color="textSecondary" component="p">
+              Product Categories: {product.categories}
+            </Typography>
+          </CardContent>
+      </Card>
+        ))}
+      </>
   );
 }
