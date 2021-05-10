@@ -4,7 +4,7 @@ import CssBaseline from '@material-ui/core/CssBaseline';
 import Grid from '@material-ui/core/Grid';
 import Container from '@material-ui/core/Container';
 import Header from './components/Header';
-import Transactions from "./components/Transactions";
+import {UserTransactions} from "./components/Transactions";
 import {Typography} from "@material-ui/core";
 import SignIn from "./components/SignIn";
 import {
@@ -24,6 +24,7 @@ import {Main_page} from "./components/Main_page";
 import {Discounts} from "./components/Discounts";
 import System_manager_transaction_history from "./components/system_manager_transaction_history";
 import Search_products from "./components/search_products";
+import {ShopForCustomer} from "./components/ShopForCustomer";
 
 const useStyles = makeStyles((theme) => ({
   mainGrid: {
@@ -135,12 +136,16 @@ const pages = {
 export default function Blog() {
   const classes = useStyles();
   const [selected, setSelected] = useState(pages.userTransactions);
-
+  const [searchQuery, setSearchQuery] = useState("");
   const setSelectedPage = (page) => {
     localStorage.setItem("page", page.name)
     setSelected(page)
   }
-
+  function onSearchChange(event){
+    // event.persist();
+    console.log( event.target.value);
+    setSearchQuery(event.target.value);
+  }
 
   return (
       <ProvideAuth>
@@ -148,7 +153,7 @@ export default function Blog() {
         <React.Fragment>
           <CssBaseline/>
           <Container maxWidth="lg" className={`site-layout-wrapper=modal-active`}>
-            <Header title={selected.name} categories={categories} />
+            <Header title={selected.name} categories={categories} onSearchChange = {onSearchChange}/>
             <main>
               <Grid container justify="center" spacing={5} className={classes.mainGrid}>
                 <Switch>
@@ -168,6 +173,9 @@ export default function Blog() {
                   <Route path="/shops/:shop_id">
                     <Shop/>
                   </Route>
+                  <Route path="/Cshops/:shop_id">
+                    <ShopForCustomer/>
+                  </Route>
                   <Route path="/shops/:shop_id/products/:product_id">
                     <Product/>
                   </Route>
@@ -175,7 +183,7 @@ export default function Blog() {
                     <SignIn />
                   </Route>
                   <Route path="/transactions">
-                    <Transactions/>
+                    <UserTransactions/>
                   </Route>
                   <Route path="/products" exact>
                     <Product shop_name={'Armani'}/>
