@@ -72,6 +72,9 @@ class Appointment:
     def aggregate_discounts(self, discount_ids, func):
         raise Exception("Cannot manage discounts")
 
+    def move_discount_to(self, src_discount_id, dst_discount_id):
+        raise Exception("Cannot manage discounts")
+
     def add_purchase_condition(self, condition: Condition):
         raise Exception("Cannot manage conditions")
 
@@ -135,6 +138,10 @@ class ShopManager(Appointment):
         assert self.discount_permission, "manager user does not have permission to manage discounts"
         return self.shop.aggregate_discounts(discount_ids, func)
 
+    def move_discount_to(self, src_discount_id: int, dst_discount_id: int):
+        assert self.discount_permission, "manager user does not have permission to manage discounts"
+        return self.shop.move_discount_to(src_discount_id, dst_discount_id)
+
     def add_purchase_condition(self, condition: Condition):
         assert self.purchase_condition_permission, "manager user does not have permission to" \
                                                    " manage purchase conditions"
@@ -156,6 +163,7 @@ class ShopManager(Appointment):
     def get_shop_staff_info(self):
         assert self.get_staff_permission, "manager user does not have permission to see shop staff"
         return self.shop.get_staff_info()
+
 
 
 class ShopOwner(Appointment):
@@ -256,6 +264,9 @@ class ShopOwner(Appointment):
 
     def aggregate_discounts(self, discount_ids, func):
         return self.shop.aggregate_discounts(discount_ids, func)
+
+    def move_discount_to(self, src_discount_id, dst_discount_id):
+        self.shop.move_discount_to(src_discount_id, dst_discount_id)
 
     def add_purchase_condition(self, condition: Condition):
         return self.shop.add_purchase_condition(condition)

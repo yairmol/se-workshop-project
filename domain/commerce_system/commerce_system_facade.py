@@ -9,11 +9,12 @@ from domain.commerce_system.purchase_conditions import Condition, TimeWindowForC
     TimeWindowForProductCondition, DateWindowForCategoryCondition
 from domain.commerce_system.search_engine import search, Filter
 from domain.commerce_system.shop import Shop
+from domain.commerce_system.transaction import Transaction
 from domain.commerce_system.transaction_repo import TransactionRepo
 from domain.commerce_system.user import User, Subscribed, SystemManager
 
 # import domain.commerce_system.valdiation as validate
-from domain.discount_module.discount_management import SimpleCond, DiscountDict
+from domain.discount_module.discount_management import SimpleCond, DiscountDict, CompositeDiscountDict
 
 condition_map = {
     "MaxQuantityForProductCondition": MaxQuantityForProductCondition,
@@ -136,23 +137,24 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         return user.get_cart_info()
 
     # 2.9
-    def purchase_cart(self, user_id: int, payment_details: dict, do_what_you_can=False):
+    def purchase_cart(self, user_id: int, payment_details: dict, do_what_you_can=False)->List[Transaction]:
         user = self.get_user(user_id)
-        user.purchase_cart(payment_details, do_what_you_can)
+        return user.purchase_cart(payment_details, do_what_you_can)
 
     # 2.9
-    def purchase_shopping_bag(self, user_id: int, shop_id: int, payment_details: dict):
+    def purchase_shopping_bag(self, user_id: int, shop_id: int, payment_details: dict)->Transaction:
         user = self.get_user(user_id)
         shop = self.get_shop(shop_id)
-        user.purchase_shopping_bag(shop, payment_details)
+        return user.purchase_shopping_bag(shop, payment_details)
 
     # 2.9
     def purchase_product(self, user_id: int, shop_id: int, product_id: int, amount_to_buy: int,
-                         payment_details: dict):
+                         payment_details: dict)-> Transaction:
         user = self.get_user(user_id)
         shop = self.get_shop(shop_id)
         product = shop.products[product_id]
-        user.purchase_product(shop, product, amount_to_buy, payment_details)
+        return user.purchase_product(shop, product, amount_to_buy, payment_details)
+
 
     # 3.1
     def logout(self, user_id: int):
@@ -330,7 +332,7 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         return list(map(lambda d: d.to_dict(), user.get_shop_discounts(shop)))
 
     def add_discount(self, user_id: int, shop_id: int, has_cond: bool, condition: List[Union[str, SimpleCond, List]],
-                     discount: DiscountDict) -> int:
+                     discount: Union[DiscountDict, CompositeDiscountDict]) -> int:
 
         shop = self.get_shop(shop_id)
         subscribed = self.get_user(user_id).user_state
@@ -345,6 +347,11 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         shop = self.get_shop(shop_id)
         subscribed = self.get_user(user_id).user_state
         subscribed.aggregate_discounts(shop, discount_ids, func)
+
+    def move_discount_to(self, user_id, shop_id, src_discount_id, dst_discount_id):
+        shop = self.get_shop(shop_id)
+        subscribed = self.get_user(user_id).user_state
+        subscribed.move_discount_to(shop, src_discount_id, dst_discount_id)
 
     def get_product_info(self, shop_id, product_id):
         return self.shops.get(shop_id).get_product_info(product_id).to_dict()
