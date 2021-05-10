@@ -21,9 +21,10 @@ import {useDrag, useDrop} from "react-dnd";
 import {HTML5Backend} from 'react-dnd-html5-backend'
 import {DndProvider} from 'react-dnd'
 import DeleteIcon from '@material-ui/icons/Delete';
-import {add_discount, get_shop_discounts, get_shop_info} from "../api";
+import {add_discount, get_shop_discounts, get_shop_info, move_discount_to, remove_discount} from "../api";
 import {useAuth} from "./use-auth";
 import {useParams} from "react-router-dom";
+import {instanceOf} from "prop-types";
 
 const conditionTypes = {
   "sum": "Total Price",
@@ -208,27 +209,44 @@ const useStyles = makeStyles((theme) => ({
 function SimpleDiscount({discount, classname}) {
   const classes = useStyles();
   // alert(`identifier ${JSON.stringify(discount.target_identifier)}`)
+
+  const parseCond = (cond) => {
+    return `the ${conditionTypes[cond.condition] || "__"} of ${
+      cond.type === "category" ? `all products of category ${cond.identifier || "__"}` :
+        cond.type === "product" ? `product ${cond.identifier || "__"}` :
+          cond.type === "shop" ? "the entire shopping bag" : "__"
+    } is more then ${cond.num || "__"}`
+  }
+
+  const parseList = (list) => {
+    const operator = list[0];
+    return list.slice(1).map((condition, i) =>
+      `${i > 0 ? `${operator} ` : ""}${condition instanceof Array ? `(${parseList(condition)})` :
+        condition instanceof Object ? parseCond(condition) : ""}`)
+  };
+
+  const has_cond = (discount.condition instanceof Array && discount.condition.length > 0) ||
+    (!(discount.condition instanceof Array) && discount.condition !== {})
+
+  // alert(JSON.stringify(discount))
+
   return (
     <>
       <Typography variant="h6" className={classes[classname]}>
         {discount.percentage || "__"}% discount on
-        {discount.target_type === "product" ? ` ${discount.target_identifier || "__"}` :
-          discount.target_type === "category" ? ` all products from ${discount.target_identifier || "__"}` :
-            discount.target_type === "shop" ? " on the entire shop!" : "__"}
+        {discount.type === "product" ? ` ${discount.identifier || "__"}` :
+          discount.type === "category" ? ` all products from ${discount.identifier || "__"}` :
+            discount.type === "shop" ? " on the entire shop!" : "__"}
       </Typography>
       <Typography>
-        {discount.conditions && discount.conditions.map((condition, i) =>
-          `${i === 0 ? "if" : discount.rators[i - 1]} the ${conditionTypes[condition.condition] || "__"} of ${
-            condition.type === "category" ? `all products of category ${condition.identifier || "__"}` :
-              condition.type === "product" ? `product ${condition.identifier || "__"}` :
-                condition.type === "shop" ? "the entire shopping bag" : "__"
-          } is more then ${condition.num || "__"} `)}
+        {has_cond && `if ${discount.condition instanceof Array ? parseList(discount.condition) :
+          discount.condition instanceof Object ? parseCond(discount.condition) : ""}`}
       </Typography>
     </>
   )
 }
 
-function CompositeDiscount({discount, onDrop}) {
+function CompositeDiscount({discount, onDrop, removeDiscount}) {
   const classes = useStyles();
 
   const [collected, drop] = useDrop(() => ({
@@ -242,7 +260,7 @@ function CompositeDiscount({discount, onDrop}) {
       <List>
         {discount.discounts.map((discount, index) => (
           <ListItem>
-            <DiscountView discount={discount} index={index} key={discount.id}/>
+            <DiscountView onDrop={onDrop} removeDiscount={removeDiscount} discount={discount} index={index} key={discount.id}/>
           </ListItem>
         ))}
       </List>
@@ -268,12 +286,11 @@ function DiscountView({discount, index, onDrop, removeDiscount}) {
     <div className={classes.root2} role="Handle" ref={drag} style={{opacity: 1}}>
       <Paper style={{maxHeight: 500, overflow: 'auto'}} className={classes.discount} elevation={2}>
         {/*<DragHandleIcon/>*/}
-        {discount.type === "simple" ?
+        {!discount.composite ?
           <SimpleDiscount discount={discount} classname={"discountText"}/> :
-          discount.type === "composite" ?
-            <CompositeDiscount discount={discount} onDrop={onDrop}/> : <Typography>Not a valid discount</Typography>}
+            <CompositeDiscount removeDiscount={removeDiscount} discount={discount} onDrop={onDrop}/>}
         <IconButton onClick={() => removeDiscount(discount)}>
-        <DeleteIcon/>
+          <DeleteIcon/>
         </IconButton>
       </Paper>
     </div>
@@ -285,6 +302,17 @@ function useForceUpdate() {
   return () => setValue(value => value + 1); // update the state to force render
 }
 
+const parseCondition = (conditions, rators, sendToApi) => {
+  if (conditions.length === 0) {
+    return []
+  }
+  if (conditions.length === 1) {
+    return sendToApi ? [conditions[0]] : conditions[0]
+  }
+  return [
+    rators[0], conditions[0], parseCondition(conditions.slice(1), rators.slice(1))
+  ]
+}
 
 export const Discounts = () => {
   const classes = useStyles();
@@ -302,52 +330,48 @@ export const Discounts = () => {
         setShop(shopInfo);
       })
       await get_shop_discounts(await auth.getToken(), shop_id).then((discounts) => {
+        // alert(`discounts ${JSON.stringify(discounts)}`)
         setDiscounts(discounts);
       })
       setLoaded(true);
     }
   })
 
-  const parseCondition = (conditions, rators) => {
-    if (conditions.length === 0) {
-      return []
-    }
-    if (conditions.length === 1){
-      return conditions[0]
-    }
-    return [
-      rators[0], conditions[0], parseCondition(conditions.slice(1), rators.slice(1))
-    ]
-  }
-
   const saveDiscount = async (discount) => {
     // alert(`saving discount ${JSON.stringify(discount)}`);
-    const has_cond = discount.conditions.length > 0;
-    alert(JSON.stringify(parseCondition(discount.conditions, discount.rators)))
+    const has_cond = !!(discount.conditions && discount.conditions.length > 0);
+    // alert(JSON.stringify(parseCondition(discount.conditions, discount.rators)))
 
     add_discount(
       await auth.getToken(), shop.shop_id, has_cond, discount,
-      parseCondition(discount.conditions, discount.rators)
+      discount.conditions ? parseCondition(discount.conditions, discount.rators, true) : null
     ).then((res) => {
-      if (res) {
-        discounts.push(discount)
-        setDiscounts(discounts);
-        forceUpdate();
-      }
+      discounts.push(discount)
+      setDiscounts(discounts);
+      setLoaded(false);
+      // forceUpdate();
     })
   }
 
-  const removeDiscount = (discount) => {
-    remove(discounts, getDiscountPath(discounts, discount.id))
-    setDiscounts(discounts)
-    forceUpdate();
+  const removeDiscount = async (discount) => {
+    remove_discount(
+      await auth.getToken(), shop.shop_id, discount.id,
+    ).then((res) => {
+      setLoaded(false);
+      // forceUpdate();
+    })
+    // forceUpdate();
   }
 
-  const onDrop = (droppableId, item, monitor) => {
+  const onDrop = async (droppableId, item, monitor) => {
     // alert(`discounts ${JSON.stringify(discounts)}`)
-    const newDiscounts = moveItem(discounts, item.id, droppableId)
-    setDiscounts(newDiscounts)
-    forceUpdate();
+    move_discount_to(await auth.getToken(), shop_id, item.id, droppableId).then((res) => {
+      setLoaded(false)
+    })
+
+    // const newDiscounts = moveItem(discounts, item.id, droppableId)
+    // setDiscounts(newDiscounts)
+    // forceUpdate();
     // move(path)
   }
 
@@ -390,7 +414,7 @@ export const Discounts = () => {
                   </Grid>
                   <Grid item>
                     <Button onClick={() => {
-                      saveDiscount({id: `id-${nextid}`, type: "composite", operator: addComp, discounts: []});
+                      saveDiscount({composite: true, operator: addComp, discounts: []});
                       nextid++;
                       setAddComp(null);
                     }} variant="outlined" color="primary" className={classes.submit}>Add</Button>
@@ -416,18 +440,19 @@ function DiscountForm({shop, saveDiscount}) {
   const [rators, setRators] = useState([]);
   const formik = useFormik({
     initialValues: {
-      discountTarget: '',
+      type: '',
       percentage: '',
       identifier: '',
+      composite: false,
     },
     onSubmit: values => {
-      alert(JSON.stringify(values))
+      // alert(JSON.stringify(values))
       saveDiscount({
-        id: nextid, type: "simple", ...values, target_type: values.discountTarget,
+        id: nextid, ...values,
         conditions: conditions, rators: rators,
       })
       formik.setValues({
-        discountTarget: '',
+        type: '',
         percentage: '',
         identifier: '',
       })
@@ -462,17 +487,6 @@ function DiscountForm({shop, saveDiscount}) {
     setRators([...rators, 'and'])
   }
 
-  const conditionPreview = (conditions) => {
-    return <Typography>
-      {conditions && conditions.map((condition, i) =>
-        `${i === 0 ? "if" : rators[i - 1]} the ${conditionTypes[condition.condition] || "__"} of ${
-          condition.type === "category" ? `all products of category ${condition.identifier || "__"}` :
-            condition.type === "product" ? `product ${condition.identifier || "__"}` :
-              condition.type === "shop" ? "the entire shopping bag" : "__"
-        } is more then ${condition.num || "__"} `)}
-    </Typography>
-  }
-
   const removeCondition = (i) => {
     setConditions([
       ...conditions.slice(0, i),
@@ -500,8 +514,8 @@ function DiscountForm({shop, saveDiscount}) {
               <FormControl variant="outlined" required className={classes.formControl}>
                 <InputLabel id="discount-target-label">Discount Target</InputLabel>
                 <Select labelId="discount-target-label"
-                        id="discountTarget" label="Discount Target" name="discountTarget" autoFocus
-                        onChange={formik.handleChange} value={formik.values.discountTarget}>
+                        id="type" label="Discount Target" name="type" autoFocus
+                        onChange={formik.handleChange} value={formik.values.type}>
                   <MenuItem value={"category"}>Category</MenuItem>
                   <MenuItem value={"product"}>Product</MenuItem>
                   <MenuItem value={"shop"}>Entire shop</MenuItem>
@@ -509,16 +523,16 @@ function DiscountForm({shop, saveDiscount}) {
               </FormControl>
             </Grid>
             <Grid item>
-              <FormControl disabled={formik.values.discountTarget === ''}
+              <FormControl disabled={formik.values.type === ''}
                            variant="outlined" required className={classes.formControl}>
-                <InputLabel id="discount-target-identifier-label">{formik.values.discountTarget}</InputLabel>
+                <InputLabel id="discount-target-identifier-label">{formik.values.type}</InputLabel>
                 <Select
                   labelId="discount-target-identifier-label"
-                  id="identifier" label={formik.values.discountTarget} name="identifier"
+                  id="identifier" label={formik.values.type} name="identifier"
                   onChange={formik.handleChange}
                   value={formik.values.identifier}
                 >
-                  {getItems(formik.values.discountTarget)}
+                  {getItems(formik.values.type)}
                 </Select>
               </FormControl>
             </Grid>
@@ -559,9 +573,9 @@ function DiscountForm({shop, saveDiscount}) {
                     <Select labelId={`${i}-condition-target-label`}
                             id={`${i}-conditionTarget`} label="Condition Target" name={`${i}-type`}
                             onChange={onConditionChange} value={cond.type}>
-                      <MenuItem value={"product"}>Product</MenuItem>
+                      {cond.condition === "sum" || <MenuItem value={"product"}>Product</MenuItem>}
                       <MenuItem value={"category"}>Category</MenuItem>
-                      <MenuItem value={"shop"}>Entire Shopping bag</MenuItem>
+                      {cond.condition === "quantity" || <MenuItem value={"shop"}>Entire Shopping bag</MenuItem>}
                     </Select>
                   </FormControl>
                 </Grid>
@@ -623,14 +637,10 @@ function DiscountForm({shop, saveDiscount}) {
             <Paper className={classes.discount} elevation={2}>
               <Grid item>
                 Preview: <SimpleDiscount classname={"discountText2"} discount={{
-                target_type: formik.values.discountTarget,
-                target_identifier: formik.values.identifier, ...formik.values
+                ...formik.values, condition: parseCondition(conditions, rators)
               }}/>
               </Grid>
               <div style={{width: "100%"}}/>
-              <Grid item>
-                {conditionPreview(conditions)}
-              </Grid>
             </Paper>
           </Grid>
         </Grid>

@@ -38,21 +38,24 @@ class User:
     def logout(self):
         self.user_state.logout()
 
-    def purchase_product(self, shop: Shop, product: Product, amount_to_buy: int, payment_details: dict):
+    def purchase_product(self, shop: Shop, product: Product, amount_to_buy: int, payment_details: dict)-> Transaction:
         bag = ShoppingBag(shop)
         bag.add_product(product, amount_to_buy)
         transaction = bag.purchase_bag(self.get_name(), payment_details)
         self._add_transaction(transaction)
+        return transaction
 
-    def purchase_shopping_bag(self, shop: Shop, payment_details: dict):
+    def purchase_shopping_bag(self, shop: Shop, payment_details: dict) -> Transaction:
         bag = self.cart[shop]
         transaction = bag.purchase_bag(self.get_name(), payment_details)
         self._add_transaction(transaction)
+        return transaction
 
-    def purchase_cart(self, payment_details: dict, do_what_you_can=False):
+    def purchase_cart(self, payment_details: dict, do_what_you_can=False)-> List[Transaction]:
         transactions = self.cart.purchase_cart(self.get_name(), payment_details, do_what_you_can)
         for transaction in transactions:
             self._add_transaction(transaction)
+        return transactions
 
     def _add_transaction(self, transaction: Transaction):
         TransactionRepo.get_transaction_repo().add_transaction(transaction)
@@ -179,6 +182,9 @@ class UserState:
     def aggregate_discounts(self, shop, discount_ids, func):
         raise Exception("User doesnt have permissions to manage discounts")
 
+    def move_discount_to(self, shop: Shop, src_discount_id: int, dst_discount_id: int):
+        raise Exception("User doesnt have permissions to manage discounts")
+
     def add_purchase_condition(self, shop: Shop, condition: Condition):
         raise Exception("User cannot perform this action")
 
@@ -292,6 +298,10 @@ class Subscribed(UserState):
     def aggregate_discounts(self, shop, discount_ids, func):
         appointment = self.get_appointment(shop)
         appointment.aggregate_discounts(discount_ids, func)
+
+    def move_discount_to(self, shop: Shop, src_discount_id: int, dst_discount_id: int):
+        appointment = self.get_appointment(shop)
+        appointment.move_discount_to(src_discount_id, dst_discount_id)
 
     def add_purchase_condition(self, shop: Shop, condition: Condition):
         appointment = self.get_appointment(shop)

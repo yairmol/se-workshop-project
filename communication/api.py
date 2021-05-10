@@ -265,6 +265,12 @@ def create_app():
     def aggregate_discounts(shop_id: int):
         return apply_request_on_function(__system_service.aggregate_discounts, shop_id=shop_id)
 
+    @app.route(f'{API_BASE}/shops/<int:shop_id>/discounts/<int:dst_discount_id>', methods=["PUT"])
+    def move_discount_to(shop_id: int, dst_discount_id: int):
+        return apply_request_on_function(
+            __system_service.move_discount_to, shop_id=shop_id, dst_discount_id=dst_discount_id
+        )
+
     @app.errorhandler(404)
     def server_error(e):
         return jsonify(error=str(e)), 404
