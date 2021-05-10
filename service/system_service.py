@@ -613,5 +613,19 @@ class SystemService:
                 return handle_exception(e)
         return make_status_dict(False, "Invalid Token", "")
 
+    def get_user_appointemnts(self, token):
+        if self.is_valid_token(token):
+            try:
+                user_id = self.tokenizer.get_id_by_token(token)
+                event_logger.info(f"User: {user_id} tries to get his appointments")
+                res = self.commerce_system_facade.get_user_appointments(user_id)
+                event_logger.info(f"User: {user_id} got his appointments successfully")
+                return make_status_dict(True, "", res)
+            except AssertionError as e:
+                return handle_assertion(e)
+            except Exception as e:
+                return handle_exception(e)
+        return make_status_dict(False, "Invalid Token", "")
+
     def cleanup(self):
         self.commerce_system_facade.clean_up()

@@ -50,6 +50,11 @@ class ConditionsModel:
     DATE_WINDOW_FOR_PRODUCT = "DateWindowForProductCondition"
 
 
+class AppointmentModel:
+    WORKER_NAME = "username"
+    WORKER_TITLE = "title"
+    WORKER_APPOINTER = "appointer"
+
 admin_credentials = {
     UserModel.USERNAME: "admin",
     UserModel.PASSWORD: "admin-password",

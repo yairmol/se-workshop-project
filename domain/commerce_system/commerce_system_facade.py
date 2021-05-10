@@ -366,3 +366,7 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         subscribed = self.get_user(user_id).user_state
         ret = subscribed.get_permissions(shop)
         return ret
+
+    def get_user_appointments(self, user_id):
+        user = self.get_user(user_id)
+        return [a.to_dict() for a in user.user_state.get_appointments()]

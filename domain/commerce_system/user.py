@@ -25,7 +25,6 @@ class User:
         self.counter_lock.release()
         self.cart = ShoppingCart(self.id)
 
-
     def get_name(self):
         return self.user_state.get_name(self.id)
 
@@ -38,7 +37,7 @@ class User:
     def logout(self):
         self.user_state.logout()
 
-    def purchase_product(self, shop: Shop, product: Product, amount_to_buy: int, payment_details: dict)-> Transaction:
+    def purchase_product(self, shop: Shop, product: Product, amount_to_buy: int, payment_details: dict) -> Transaction:
         bag = ShoppingBag(shop)
         bag.add_product(product, amount_to_buy)
         transaction = bag.purchase_bag(self.get_name(), payment_details)
@@ -51,7 +50,7 @@ class User:
         self._add_transaction(transaction)
         return transaction
 
-    def purchase_cart(self, payment_details: dict, do_what_you_can=False)-> List[Transaction]:
+    def purchase_cart(self, payment_details: dict, do_what_you_can=False) -> List[Transaction]:
         transactions = self.cart.purchase_cart(self.get_name(), payment_details, do_what_you_can)
         for transaction in transactions:
             self._add_transaction(transaction)
@@ -114,6 +113,7 @@ class User:
 
     def to_dict(self):
         raise NotImplementedError()
+
 
 class UserState:
     def get_name(self, userid):
@@ -197,6 +197,9 @@ class UserState:
     def get_shop_staff_info(self, shop: Shop) -> List[Appointment]:
         raise Exception("User doesn't have permission to see shop staff")
 
+    def get_appointments(self):
+        raise Exception("User doesn't have permission to get appointments")
+
     def to_dict(self):
         raise NotImplementedError()
 
@@ -211,6 +214,7 @@ class Guest(UserState):
     def to_dict(self):
         return {"username": "Guest"}
 
+
 class Subscribed(UserState):
 
     def __init__(self, username: str):
@@ -219,7 +223,7 @@ class Subscribed(UserState):
         self.transactions: List[Transaction] = []
 
     def to_dict(self):
-        return {"username": username, }
+        return {"username": self.username, }
 
     def logout(self):
         pass
@@ -319,6 +323,9 @@ class Subscribed(UserState):
         appointment = self.get_appointment(shop)
         return appointment.get_shop_staff_info()
 
+    def get_appointments(self):
+        return list(self.appointments.values())
+
 
 class SystemManager(Subscribed):
     def __init__(self, username: str, system_transactions: TransactionRepo):
@@ -333,4 +340,3 @@ class SystemManager(Subscribed):
 
     def get_system_transaction_history_of_user(self, username):
         return self.system_transactions.get_transactions_of_user(username)
-

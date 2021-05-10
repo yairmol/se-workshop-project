@@ -471,14 +471,14 @@ export const purchase_cart = (token, details) =>
 export const open_shop = (token, details) =>
   axios({
     method: "POST",
-    url: `${base_route}/${urljoin(routes.shop)}`,
+    url: `${base_route}/${urljoin(routes.shops)}`,
     data: {
       token: token,
-      details: details
+      ...details
     }
   }).then((res) => {
     if (res.data.status) {
-      return res.data.result // @todo: need to return shop id?
+      return res.data.result
     } else {
       throw new Error(res.data.description)
     }
@@ -715,6 +715,22 @@ export const get_shop_discounts = (token, shop_id) => {
   return axios({
     method: "GET",
     url: `${base_route}/${urljoin(routes.shops, shop_id.toString(), routes.discounts)}`,
+    params: {
+      token: token,
+    }
+  }).then((res) => {
+    if (res.data.status) {
+      return res.data.result
+    } else {
+      throw new Error(res.data.description)
+    }
+  }).catch((err) => alert(`failed to get shop discounts due to ${err}`));
+}
+
+export const get_appointments = (token) => {
+  return axios({
+    method: "GET",
+    url: `${base_route}/appointments`,
     params: {
       token: token,
     }

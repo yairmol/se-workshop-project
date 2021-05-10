@@ -271,6 +271,10 @@ def create_app():
             __system_service.move_discount_to, shop_id=shop_id, dst_discount_id=dst_discount_id
         )
 
+    @app.route(f'{API_BASE}/appointments', methods=["GET"])
+    def get_user_appointments():
+        return __system_service.get_user_appointemnts(request.args.get("token"))
+
     @app.errorhandler(404)
     def server_error(e):
         return jsonify(error=str(e)), 404

@@ -25,6 +25,7 @@ import {Discounts} from "./components/Discounts";
 import System_manager_transaction_history from "./components/system_manager_transaction_history";
 import Search_products from "./components/search_products";
 import {ShopForCustomer} from "./components/ShopForCustomer";
+import ProfilePage from "./components/ProfilePage";
 
 const useStyles = makeStyles((theme) => ({
   mainGrid: {
@@ -178,6 +179,9 @@ export default function Blog() {
                   </Route>
                   <Route path="/shops/:shop_id/products/:product_id">
                     <Product/>
+                  </Route>
+                  <Route path="/profile">
+                    <ProfilePage/>
                   </Route>
                   <Route path="/login" exact>
                     <SignIn />
