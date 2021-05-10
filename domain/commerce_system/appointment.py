@@ -7,7 +7,7 @@ from domain.commerce_system.product import Product
 from domain.commerce_system.purchase_conditions import Condition
 from domain.commerce_system.shop import Shop
 from domain.discount_module.discount_calculator import Discount
-
+from data_model import AppointmentModel as Am
 
 class Appointment:
 
@@ -15,6 +15,9 @@ class Appointment:
         self.username = username
         self.shop = shop
         self.appointer = appointer
+
+    def to_dict(self):
+        raise NotImplementedError()
 
     def appoint_manager(self, sub, permissions: List[str]):
         raise Exception("The Subscribed User doesn't have the permission to appoint manager")
@@ -98,6 +101,15 @@ class ShopManager(Appointment):
         self.get_staff_permission = False
         self.set_permissions(permissions)
 
+    def to_dict(self):
+        ret = {
+            Am.WORKER_NAME: self.username,
+            Am.WORKER_TITLE: "manager",
+            Am.WORKER_APPOINTER: self.appointer.username
+        }
+        ret.update(self.shop.to_dict(include_products=False))
+        return ret
+
     def add_product(self, **product_info) -> Product:
         assert self.add_product_permission, "manager does not have permission to add product"
         return self.shop.add_product(**product_info)
@@ -165,7 +177,6 @@ class ShopManager(Appointment):
         return self.shop.get_staff_info()
 
 
-
 class ShopOwner(Appointment):
     def __init__(self, shop: Shop, username: str = "default_username", appointer=None):
         super().__init__(shop, username, appointer)
@@ -173,6 +184,15 @@ class ShopOwner(Appointment):
         self.manager_appointees = []
         self.manager_appointees_lock = threading.Lock()
         self.owner_appointees_lock = threading.Lock()
+
+    def to_dict(self):
+        ret = {
+            Am.WORKER_NAME: self.username,
+            Am.WORKER_TITLE: "owner" if self != self.shop.founder else "founder",
+            Am.WORKER_APPOINTER: self.appointer.username if self.appointer else "no appointer, this is the shop founder"
+        }
+        ret.update(self.shop.to_dict(include_products=False))
+        return ret
 
     def appoint_manager(self, sub, permissions: List[str]):
         """ adds manager appointment to selected subscribed user"""

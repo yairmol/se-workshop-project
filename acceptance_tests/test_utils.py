@@ -1,6 +1,6 @@
 from typing import Tuple, List, Dict
 
-from test_data import users, shops, permissions, products, payment_details
+from .test_data import users, shops, permissions, products, payment_details
 from service.system_service import SystemService
 from data_model import UserModel as Um, ShopModel as Sm, ProductModel as Pm, admin_credentials
 

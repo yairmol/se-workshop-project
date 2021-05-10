@@ -151,12 +151,13 @@ export const Main_page = (props) => {
     console.log( event.target.value);
     setSearchQuery(event.target.value);
   }
-  useEffect(async () => {
-    await get_all_shops_info(await auth.getToken())
-        .then((res) => {
-          setShops(res.data || shopData)
-        })
-        .catch((err) => setShops(shopData))
+  useEffect(() => {
+     auth.getToken().then((token) => {
+         get_all_shops_info(token).then((res) => {
+           setShops(res)
+         }).catch((err) => setShops(shopData))
+       }
+     )
   }, [])
   const filteredShops = shops.filter((shop) => shop.shop_name.toLowerCase().includes(searchQuery.toLowerCase()));
   console.log(filteredShops);
@@ -205,7 +206,7 @@ export default function ButtonBases({shops}){
           key={shop.shop_id}
           className={classes.shopImage}
           focusVisibleClassName={classes.focusVisible}
-          href={`/shop/${shop.shop_name}`}
+          href={`/shops/${shop.shop_id}`}
           style={{
             width: '100%',
           }}

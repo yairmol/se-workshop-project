@@ -28,6 +28,7 @@ import {Link} from "react-router-dom";
 import IconButton from "@material-ui/core/IconButton";
 import SearchIcon from "@material-ui/icons/Search";
 import Divider from "@material-ui/core/Divider";
+import {Link as RouteLink} from "react-router-dom";
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -87,9 +88,9 @@ const useStyles = makeStyles((theme) => ({
   selectEmpty: {
     marginTop: theme.spacing(2),
   },
-    searchButton: {
-      margin: theme.spacing(3),
-    },
+  searchButton: {
+    margin: theme.spacing(3),
+  },
 }));
 
 export default function Search_products() {
@@ -98,101 +99,113 @@ export default function Search_products() {
   const [fromPrice, setFromPrice] = useState(0);
   const [toPrice, setToPrice] = useState(0);
   const [searchProducts, setSearchProducts] = useState([]);
-    //   useState([{product_name: "p1",description: "a product", price: 1, quantity: 10, categories:[0,1]},
-    // {product_name: "p2",description: "a product", price: 2.5, quantity: 10,
-    // categories: [1,2]},]);
+  //   useState([{product_name: "p1",description: "a product", price: 1, quantity: 10, categories:[0,1]},
+  // {product_name: "p2",description: "a product", price: 2.5, quantity: 10,
+  // categories: [1,2]},]);
   const [categories, setCategories] = useState([]);
   const [allCategories, setAllCategories] = useState([]);
   const [keywords, setKeywords] = useState("");
   const auth = useAuth();
 
-  const onCategoriesChange = (event, value ) => {
-     console.log(value);
-     setCategories(value);
+  const onCategoriesChange = (event, value) => {
+    console.log(value);
+    setCategories(value);
   }
   const handleSearchChange = (event) => {
     setSearchVal(event.target.value);
+    auth.getToken().then((token) => {
+      search_products(token, searchVal, keywords, categories, [{"from": fromPrice, "to": toPrice}])
+        .then((res) => {
+          // alert(JSON.stringify(res))
+          setSearchProducts(res)
+        })
+        .catch((err) => setSearchProducts(searchProducts))
+    })
   }
   const handleFromChange = (event) => {
-    const val = event.target.value ;
-    if(val === "") setFromPrice(0);
-    else if (!Number.isNaN(val) ) setFromPrice(parseInt(val));
+    const val = event.target.value;
+    if (val === "") setFromPrice(0);
+    else if (!Number.isNaN(val)) setFromPrice(parseInt(val));
   }
   const handleToChange = (event) => {
-    const val = event.target.value ;
-    if(val === "") setToPrice(0);
-    else if (!Number.isNaN(val) ) setToPrice(parseInt(val));
+    const val = event.target.value;
+    if (val === "") setToPrice(0);
+    else if (!Number.isNaN(val)) setToPrice(parseInt(val));
   }
 
   useEffect(async () => {
-    await search_products(await auth.getToken(), searchVal, keywords, categories,[{"from": fromPrice, "to":toPrice}] )
-        .then((res) => {
-          setSearchProducts(res || searchProducts)
-        })
-        .catch((err) => setSearchProducts(searchProducts))
+    // await search_products(await auth.getToken(), searchVal, keywords, categories,[{"from": fromPrice, "to":toPrice}] )
+    //     .then((res) => {
+    //       alert(JSON.stringify(res))
+    //       setSearchProducts(res || searchProducts)
+    //     })
+    //     .catch((err) => setSearchProducts(searchProducts))
 
     await get_all_categories(await auth.getToken())
-        .then((res) => {
-          setAllCategories(res || allCategories)
-        })
-        .catch((err) => setAllCategories(allCategories))
+      .then((res) => {
+        setAllCategories(res || allCategories)
+      })
+      .catch((err) => setAllCategories(allCategories))
   }, [])
 
   return (
-      <>
-        <Grid container spacing = {4}>
-          <Grid item xs = {12}>
-              <TextField id="standard-basic" label="Product Name" value = {searchVal} onChange={handleSearchChange} fullWidth/>
-          </Grid>
+    <>
+      <Grid container spacing={4}>
+        <Grid item xs={12}>
+          <TextField id="standard-basic" label="Product Name" value={searchVal} onChange={handleSearchChange}
+                     fullWidth/>
+        </Grid>
         {/*</Grid>*/}
         {/*<Grid spacing = {4}container xs >*/}
-          <Grid item xs = {3}>
-            <TextField id="from price" label="from" variant="outlined" value = {fromPrice} onChange={handleFromChange}/>
-            <TextField id="to price" label="to" variant="outlined" value = {toPrice} onChange={handleToChange}/>
-          </Grid>
-          <Grid item xs >
-              <Autocomplete
-              multiple
-              id="tags-standard"
-              options={allCategories}
-              onChange={onCategoriesChange}
-              renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    variant="standard"
-                    label="Multiple values"
-                    placeholder="Categories"
-                  />
-                )}
-              />
-          </Grid>
+        <Grid item xs={3}>
+          <TextField id="from price" label="from" variant="outlined" value={fromPrice} onChange={handleFromChange}/>
+          <TextField id="to price" label="to" variant="outlined" value={toPrice} onChange={handleToChange}/>
         </Grid>
-        <Divider />
-        {searchProducts.map((product) => (
-        <Card className={classes.root}>
-          <CardHeader
-            title={product.product_name}
+        <Grid item xs>
+          <Autocomplete
+            multiple
+            id="tags-standard"
+            options={allCategories}
+            onChange={onCategoriesChange}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                variant="standard"
+                label="Multiple values"
+                placeholder="Categories"
+              />
+            )}
           />
-          <CardMedia
-            className={classes.media}
-            image="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR-X2ZRp_vz2_Tg55J3pKupby0yJT-zG_xTw6cjjQ1ywFZ2j68_C3m1l-SCN4be_io4Vqw&usqp=CAU"
-          />
-          <CardContent>
-            <Typography variant="body2" color="textSecondary" component="p">
-              Product Price: {product.price}
+        </Grid>
+      </Grid>
+      <Divider/>
+      {searchProducts.map((product) => (
+        <RouteLink to={`/shops/${product.shop_id}/products/${product.product_id}`}>
+          <Card className={classes.root}>
+            <CardHeader
+              title={product.product_name}
+            />
+            <CardMedia
+              className={classes.media}
+              image="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR-X2ZRp_vz2_Tg55J3pKupby0yJT-zG_xTw6cjjQ1ywFZ2j68_C3m1l-SCN4be_io4Vqw&usqp=CAU"
+            />
+            <CardContent>
+              <Typography variant="body2" color="textSecondary" component="p">
+                Product Price: {product.price}
               </Typography>
-            <Typography variant="body2" color="textSecondary" component="p">
-              Product Description: {product.description}
-            </Typography>
-          <Typography variant="body2" color="textSecondary" component="p">
-              Product Quantity: {product.quantity}
-          </Typography>
-          <Typography variant="body2" color="textSecondary" component="p">
-              Product Categories: {product.categories}
-            </Typography>
-          </CardContent>
-      </Card>
-        ))}
-      </>
+              <Typography variant="body2" color="textSecondary" component="p">
+                Product Description: {product.description}
+              </Typography>
+              <Typography variant="body2" color="textSecondary" component="p">
+                Product Quantity: {product.quantity}
+              </Typography>
+              <Typography variant="body2" color="textSecondary" component="p">
+                Product Categories: {product.categories}
+              </Typography>
+            </CardContent>
+          </Card>
+        </RouteLink>
+      ))}
+    </>
   );
 }

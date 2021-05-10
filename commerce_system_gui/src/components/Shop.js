@@ -38,7 +38,7 @@ import RemoveProductPopup from "./PopUps/RemoveProductPopup";
 import EditProductPopup from "./PopUps/EditProductPopup";
 import AddProductPopup from "./PopUps/AddProductPopup";
 import AddAppointmentPopup from "./PopUps/AddApointmentPopup";
-import {useParams} from "react-router-dom";
+import {useParams, Link as RouteLink} from "react-router-dom";
 
 const useStyles = makeStyles((theme) => ({
     root: {
@@ -266,6 +266,13 @@ export const Shop = () => {
             </Grid>
             <Grid item className="Grid" >
               <div className={classes.grid_window}><ShopTransactions shop_id={shop_id}/></div>
+            </Grid>
+            <Grid item className="Grid" >
+              <RouteLink to={`/shops/${shop_id}/discounts`}>
+                <Button variant="outlined" size="small" color="primary">
+                  discounts
+                </Button>
+              </RouteLink>
             </Grid>
           </Grid>
         </Grid>

@@ -200,7 +200,7 @@ const ProductView = () => {
   )
 }
 
-const ShoppingBagView = ({shopId, shoppingBag}) => {
+const ShoppingBagView = ({shopId, shoppingBag, refresh}) => {
   const classes = useStyles();
   const auth = useAuth();
   const [productsState, setProducts] = useState(JSON.parse(JSON.stringify(shoppingBag.products)));
@@ -223,17 +223,18 @@ const ShoppingBagView = ({shopId, shoppingBag}) => {
           i++;
         }
         let func = (x) => x;
-        const additional_amount = parseInt(products[i].amount) - parseInt(shoppingBag.products[i].amount);
+        const additional_amount = parseInt(products[j].amount) - parseInt(shoppingBag.products[i].amount);
         if (additional_amount > 0) {
           func = save_product_to_cart;
         } else if (additional_amount < 0) {
           func = remove_product_from_cart;
         }
-        await func(await auth.getToken(), shopId, products[i].product_id, Math.abs(additional_amount));
+        await func(await auth.getToken(), shopId, products[j].product_id, Math.abs(additional_amount));
         j++
       }
     }
     setEdited(false);
+    refresh();
   }
 
   const onProductChange = (prod_id, val) => {
@@ -316,6 +317,15 @@ export const Cart = () => {
   const [loaded, setLoaded] = useState(false);
   const [cart, setCart] = useState({shopping_bags: {}});
 
+  const refresh = () => {
+     auth.getToken().then((token) => get_cart_info(token).then((res) => {
+       if (res) {
+         setCart(res);
+       }
+       setLoaded(true)
+     }))
+  }
+
   useEffect(async () => {
     if (!loaded) {
       await get_cart_info(await auth.getToken()).then((res) => {
@@ -331,7 +341,7 @@ export const Cart = () => {
       <div className={classes.root}>
         {
           loaded ? Object.keys(cart.shopping_bags).map((sid) =>
-                  <ShoppingBagView shopId={sid} shoppingBag={cart.shopping_bags[sid]}/>)
+                  <ShoppingBagView shopId={sid} shoppingBag={cart.shopping_bags[sid]} refresh={refresh}/>)
               : <CircularProgress/>
         }
       </div>

@@ -70,7 +70,7 @@ def create_app():
     def get_shop_info(shop_id: int) -> dict:
         return __system_service.get_shop_info(token=request.args.get("token"), shop_id=shop_id)
 
-    @app.route(f'{API_BASE}/all_shops/', methods=["GET"])
+    @app.route(f'{API_BASE}/all_shops', methods=["GET"])
     def get_all_shop_info() -> dict:
         return __system_service.get_all_shops_info(request.args.get("token"))
 
@@ -270,6 +270,10 @@ def create_app():
         return apply_request_on_function(
             __system_service.move_discount_to, shop_id=shop_id, dst_discount_id=dst_discount_id
         )
+
+    @app.route(f'{API_BASE}/appointments', methods=["GET"])
+    def get_user_appointments():
+        return __system_service.get_user_appointemnts(request.args.get("token"))
 
     @app.errorhandler(404)
     def server_error(e):
