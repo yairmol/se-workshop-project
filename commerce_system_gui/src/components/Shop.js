@@ -143,7 +143,7 @@ export const Shop = () => {
 
   const load_perms_func = async () => {
     await auth.getToken().then((token) =>
-              get_permissions(token)).then((permissions) =>
+              get_permissions(token, shop_id)).then((permissions) =>
               set_perms(permissions))
   }
 

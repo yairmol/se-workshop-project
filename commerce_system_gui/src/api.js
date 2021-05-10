@@ -43,7 +43,7 @@ export const isValidToken = (token) => {
   }).then((res) => {
     return res.data.is_valid
   })
-    .catch((err) => alert(`failed to enter the system due to ${err}`))
+    // .catch((err) => alert(`failed to enter the system due to ${err}`))
 }
 
 export const enter = () => {
@@ -53,11 +53,12 @@ export const enter = () => {
     url: url,
   }).then((res) => {
     if (res.data.status) {
-      return res.data.result
+      return res.data
     } else {
       throw new Error(res.data.description)
     }
-  }).catch((err) => alert(`failed to enter the system due to ${err}`))
+  })
+      // .catch((err) => alert(`failed to enter the system due to ${err}`))
 }
 
 export const exit = (token) => {
@@ -186,6 +187,41 @@ export const remove_product_from_cart = (token, shop_id, product_id, amount) => 
   }).catch((err) => alert(`failed to remove from cart info due to ${err}`))
 }
 
+export const search_products = (token, product_name, keywords, categories, filters) => {
+  const url = `${base_route}/search`;
+  return axios({
+    url: url,
+    method: "get",
+    data: {
+      token: token,
+      product_name: product_name,
+      keywords: keywords,
+      categories: categories,
+      filters: filters,
+    },
+  }).then((res) => {
+    if (res.data.status) {
+      return res.data.status
+    } else {
+      throw new Error(res.data.description)
+    }
+  }).catch((err) => alert(`failed to search products due to ${err}`))
+}
+
+export const get_all_categories = (token) => {
+  const url = `${base_route}/allCategories`;
+  axios({
+    method: "get",
+    url: url,
+  }).then((res) => {
+    if (res.data.status) {
+      return res.data.result
+    } else {
+      throw new Error(res.data.description)
+    }
+  }).catch((err) => alert(`can't find all categories due to ${err}`))
+};
+
 export const get_user_transactions = (token) =>
   axios({
     method: "get",
@@ -214,7 +250,8 @@ export const get_product_info = (token, shop_id, product_id) => {
     } else {
       throw new Error(res.data.description)
     }
-  }).catch((err) => alert(`failed to get product info ${err}`))
+  })
+      // .catch((err) => alert(`failed to get product info ${err}`))
 }
 export const get_permissions = (token, shop_id) => {
   const url = `${base_route}/permissions/${shop_id}`;

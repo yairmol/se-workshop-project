@@ -51,7 +51,9 @@ class SystemService:
             new_user_id = self.commerce_system_facade.enter()
             event_logger.info(f"A User entered the system, got id: {new_user_id}")
             token = self.tokenizer.add_new_user_token(new_user_id)
-            return make_status_dict(True, "", token)
+            withId = make_status_dict(True, "", token)
+            withId["id"] = new_user_id
+            return withId
         except Exception as e:
             return handle_exception(e)
 
@@ -102,6 +104,19 @@ class SystemService:
                 return handle_exception(e)
         return make_status_dict(False, "Invalid Token", "")
 
+    def get_user_data(self, token: str) -> dict:
+        if self.is_valid_token(token):
+            try:
+                user_id = self.tokenizer.get_id_by_token(token)
+                event_logger.info(f"User: {user_id} tries to get user data")
+                data = self.commerce_system_facade.get_user_data(user_id)
+                return make_status_dict(True, "", data)
+            except AssertionError as e:
+                return handle_assertion(e)
+            except Exception as e:
+                return handle_exception(e)
+        return make_status_dict(False, "Invalid Token", "")
+
     # 2.5
     def get_shop_info(self, token: str, shop_id: int) -> dict:
         if self.is_valid_token(token):
@@ -135,6 +150,10 @@ class SystemService:
         return make_status_dict(True, "",
                                 self.commerce_system_facade.search_products(product_name, keywords, categories,
                                                                             filters))
+
+    def get_all_categories(self) -> dict:
+        return make_status_dict(True, "",
+                                self.commerce_system_facade.get_all_categories())
 
     # 2.7
     def save_product_to_cart(self, token: str, shop_id: int, product_id: int, amount_to_buy: int) -> dict:

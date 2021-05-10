@@ -44,7 +44,7 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         new_user = User()
         with self.active_users_lock:
             self.active_users[new_user.id] = new_user
-        
+
         return new_user.id
 
     # 2.2
@@ -70,6 +70,9 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         with self.active_users_lock:
             self.active_users.get(user_id).login(sub_user)
 
+    def get_user_info(self, user_id: int) -> dict:
+        return self.active_users[user_id].to_dict()
+
     # 2.5
     def get_shop_info(self, shop_id: int) -> dict:
         shop: Shop = self.shops[shop_id]
@@ -88,6 +91,15 @@ class CommerceSystemFacade(ICommerceSystemFacade):
     def get_all_user_names(self) -> dict:
         names: List[str] = self.registered_users.keys()
         return names
+
+    def get_all_categories(self) -> dict:
+        cats = []
+        for shop in self.shops:
+            for prod in shop.products.values():
+                for cat in prod.categories:
+                    if cat not in cats:
+                        cats.append(cat)
+        return cats
 
     # 2.6
     def search_products(
@@ -283,7 +295,7 @@ class CommerceSystemFacade(ICommerceSystemFacade):
     def get_user(self, user_id) -> User:
         with self.active_users_lock:
             ret = self.active_users[user_id]
-        
+
         return ret
 
     def get_subscribed(self, username) -> Subscribed:
