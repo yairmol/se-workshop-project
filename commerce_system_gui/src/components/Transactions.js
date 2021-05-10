@@ -59,7 +59,7 @@ function Transactions({transactions_getter, width}) {
 
   return (
       <>
-        <Grid item lg={6} >
+        <Grid item xs={6} >
           <Typography className={classes.heading}>Transactions</Typography>
           {(transactions && transactions.length > 0) ?
               transactions.map((transaction, index) => <div style={{width:width}}><Transaction key={index} transaction={transaction}/></div>)

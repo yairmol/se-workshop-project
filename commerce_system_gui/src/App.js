@@ -25,6 +25,7 @@ import {Discounts} from "./components/Discounts";
 import System_manager_transaction_history from "./components/system_manager_transaction_history";
 import Search_products from "./components/search_products";
 import {ShopForCustomer} from "./components/ShopForCustomer";
+import ProfilePage from "./components/ProfilePage";
 
 const useStyles = makeStyles((theme) => ({
   mainGrid: {
@@ -35,16 +36,6 @@ const useStyles = makeStyles((theme) => ({
 const categories = [
   {title: 'Main page', url: ''},
   {title: 'Search products', url: 'search'},
-  {title: 'Technology', url: 'technology'},
-  {title: 'Design', url: 'design'},
-  {title: 'Culture', url: 'culture'},
-  {title: 'Business', url: 'business'},
-  {title: 'Politics', url: 'political'},
-  {title: 'Opinion', url: 'opinion'},
-  {title: 'Science', url: 'science'},
-  {title: 'Health', url: 'health'},
-  {title: 'Style', url: 'style'},
-  {title: 'Travel', url: 'travel'},
 ];
 
 const transactions = [
@@ -136,16 +127,12 @@ const pages = {
 export default function Blog() {
   const classes = useStyles();
   const [selected, setSelected] = useState(pages.userTransactions);
-  const [searchQuery, setSearchQuery] = useState("");
+
   const setSelectedPage = (page) => {
     localStorage.setItem("page", page.name)
     setSelected(page)
   }
-  function onSearchChange(event){
-    // event.persist();
-    console.log( event.target.value);
-    setSearchQuery(event.target.value);
-  }
+
 
   return (
       <ProvideAuth>
@@ -153,11 +140,14 @@ export default function Blog() {
         <React.Fragment>
           <CssBaseline/>
           <Container maxWidth="lg" className={`site-layout-wrapper=modal-active`}>
-            <Header title={selected.name} categories={categories} onSearchChange = {onSearchChange}/>
+            <Header title={selected.name} categories={categories} />
             <main>
               <Grid container justify="center" spacing={5} className={classes.mainGrid}>
                 <Switch>
                   {/* Guest routes */}
+                  <Route path="/shops/:shop_id/products/:product_id" exact>
+                    <Product/>
+                  </Route>
                   <Route path="/register">
                     <Register />
                   </Route>
@@ -179,14 +169,14 @@ export default function Blog() {
                   <Route path="/shops/:shop_id/products/:product_id">
                     <Product/>
                   </Route>
+                  <Route path="/profile">
+                    <ProfilePage/>
+                  </Route>
                   <Route path="/login" exact>
                     <SignIn />
                   </Route>
                   <Route path="/transactions">
                     <UserTransactions/>
-                  </Route>
-                  <Route path="/products" exact>
-                    <Product shop_name={'Armani'}/>
                   </Route>
                   <Route path="/" exact>
                     <Main_page />

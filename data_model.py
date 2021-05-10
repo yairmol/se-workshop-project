@@ -20,6 +20,7 @@ class ProductModel:
     QUANTITY = "quantity"
     CATEGORIES = "categories"
     AMOUNT = "amount"  # for ShoppingBag
+    SHOP_ID = "shop_id"
 
 
 class TransactionModel:
@@ -49,6 +50,11 @@ class ConditionsModel:
     DATE_WINDOW_FOR_CATEGORY = "DateWindowForCategoryCondition"
     DATE_WINDOW_FOR_PRODUCT = "DateWindowForProductCondition"
 
+
+class AppointmentModel:
+    WORKER_NAME = "username"
+    WORKER_TITLE = "title"
+    WORKER_APPOINTER = "appointer"
 
 admin_credentials = {
     UserModel.USERNAME: "admin",
