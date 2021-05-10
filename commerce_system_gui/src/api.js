@@ -53,7 +53,7 @@ export const enter = () => {
     url: url,
   }).then((res) => {
     if (res.data.status) {
-      return res.data.result
+      return res.data
     } else {
       throw new Error(res.data.description)
     }

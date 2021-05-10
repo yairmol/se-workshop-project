@@ -25,6 +25,7 @@ class User:
         self.counter_lock.release()
         self.cart = ShoppingCart(self.id)
 
+
     def get_name(self):
         return self.user_state.get_name(self.id)
 
@@ -108,6 +109,8 @@ class User:
     def get_shop_discounts(self, shop: Shop) -> List[Discount]:
         return self.user_state.get_shop_discounts(shop)
 
+    def to_dict(self):
+        raise NotImplementedError()
 
 class UserState:
     def get_name(self, userid):
@@ -188,6 +191,9 @@ class UserState:
     def get_shop_staff_info(self, shop: Shop) -> List[Appointment]:
         raise Exception("User doesn't have permission to see shop staff")
 
+    def to_dict(self):
+        raise NotImplementedError()
+
 
 class Guest(UserState):
     def get_name(self, userid):
@@ -196,6 +202,8 @@ class Guest(UserState):
     def register(self, username: str, **user_details):
         return Subscribed(username)
 
+    def to_dict(self):
+        return {"username": "Guest"}
 
 class Subscribed(UserState):
 
@@ -203,6 +211,9 @@ class Subscribed(UserState):
         self.appointments: Dict[Shop, Appointment] = {}
         self.username = username
         self.transactions: List[Transaction] = []
+
+    def to_dict(self):
+        return {"username": username, }
 
     def logout(self):
         pass
