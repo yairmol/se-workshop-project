@@ -25,15 +25,18 @@ io = SocketIO(app, cors_allowed_origins='*')
 
 clients = {}
 
+
 @io.on('connect')
 def connect():
     print("%s connected" % request.namespace)
 
+
 @io.on('enlist')
 def enlist(data):
     print("client id %s enlisting " % data["client_id"])
-    print("%s sid"  % request.sid)
+    print("%s sid" % request.sid)
     clients[data["client_id"]] = request.sid
+
 
 @io.on('disconnect')
 def disconnect():
@@ -51,12 +54,14 @@ def send_notif(client_id, msg):
     else:
         print("client id not enlisted");
 
+
 @io.on('send_error')
 def send_error(client_id, error):
     if client_id in clients.keys():
         emit('error', error, room=clients[client_id])
     else:
         print("client id not enlisted");
+
 
 @io.on('broadcast')
 def send_broadcast(msg):

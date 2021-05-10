@@ -1,3 +1,4 @@
+from acceptance_tests.mocks import NotificationsMock
 from domain.token_module.tokenizer import Tokenizer
 from domain.authentication_module.authenticator import Authenticator
 from domain.commerce_system.commerce_system_facade import CommerceSystemFacade
@@ -19,8 +20,13 @@ class Driver:
         return Tokenizer()
 
     @staticmethod
+    def get_notifications():
+        return NotificationsMock()
+
+    @staticmethod
     def get_system_service():
         return SystemService(
             Driver.get_commerce_system_facade(),
-            Driver.get_tokenizer()
+            Driver.get_tokenizer(),
+            Driver.get_notifications()
         )

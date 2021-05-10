@@ -3,6 +3,7 @@ from datetime import time, datetime
 from unittest import TestCase
 import threading as th
 
+from acceptance_tests.mocks import NotificationsMock
 from domain.discount_module.discount_management import DiscountDict, SimpleCond
 from driver import Driver
 from test_data import users, shops, products, permissions, payment_details
@@ -844,6 +845,24 @@ class ParallelismTests(TestCase):
         self.run_parallel_test(u1, u2)
         self.assertTrue(any(results))
         self.assertFalse(all(results))
+
+
+class NotificationsTests(TestCase):
+
+    def setUp(self) -> None:
+        self.commerce_system = Driver.get_system_service()
+
+    def test_get_notification_while_logged_in(self):
+        user1 = enter_register_and_login(self.commerce_system, users[0])
+        shop1 = open_shops(self.commerce_system, [user1], 1)
+        user2 = enter_register_and_login(self.commerce_system, users[1])
+        mock = NotificationsMock()
+        self.commerce_system.notifications = mock
+        self.commerce_system.appoint_shop_owner(user1, shop1, users[1]["username"])
+        self.assertTrue(mock.send_notif_called)
+
+    def test_get_notification_while_not_logged_in_and_then_login(self):
+        pass
 
 
 if __name__ == "__main__":

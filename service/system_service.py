@@ -2,6 +2,7 @@ from typing import List, Union
 
 from domain.authentication_module.authenticator import Authenticator
 from domain.discount_module.discount_management import SimpleCond, DiscountDict, CompositeDiscountDict
+from domain.notifications.notifications import INotifications, Notifications
 from domain.token_module.tokenizer import Tokenizer
 from domain.commerce_system.commerce_system_facade import CommerceSystemFacade
 from domain.logger.log import event_logger, error_logger
@@ -24,16 +25,20 @@ def handle_exception(e: Exception):
 class SystemService:
     __instance = None
 
-    def __init__(self, commerce_system_facade: CommerceSystemFacade, tokenizer: Tokenizer):
+    def __init__(
+            self, commerce_system_facade: CommerceSystemFacade, tokenizer: Tokenizer,
+            notifications: INotifications
+    ):
         self.commerce_system_facade = commerce_system_facade
         self.tokenizer = tokenizer
         self.commerce_system_facade.create_admin_user()
+        self.notifications = notifications
 
     @classmethod
     def get_system_service(cls):
         if not SystemService.__instance:
             SystemService.__instance = SystemService(
-                CommerceSystemFacade(Authenticator()), Tokenizer()
+                CommerceSystemFacade(Authenticator()), Tokenizer(), Notifications()
             )
         return SystemService.__instance
 
