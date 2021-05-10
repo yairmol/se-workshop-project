@@ -14,6 +14,7 @@ from test_utils import (
 from data_model import UserModel as Um, ShopModel as Sm, ProductModel as Pm, ConditionsModel as Cm
 
 
+# 2. Guest Functional Requirements tests
 class GuestTests(TestCase):
 
     def setUp(self) -> None:
@@ -27,43 +28,53 @@ class GuestTests(TestCase):
         self.assertTrue(status)
         self.commerce_system.cleanup()
 
+    # 2.1 enter + 2.2 exit
     def test_enter_exit(self):
         self.assertTrue(True)
 
+    # 2.3 register
     def test_registration_simple(self):
         self.assertTrue(self.commerce_system.register(self.session_id, **users[0])['status'])
 
+    # 2.3 register
     def test_registration_with_empty_credentials(self):
         u = {Um.USERNAME: "", Um.EMAIL: "", Um.PASSWORD: "password24tgf"}
         self.assertFalse(self.commerce_system.register(self.session_id, **u)['status'])
 
+    # 2.3 register
     def test_registration_with_existing_email_or_username(self):
         self.assertTrue(self.commerce_system.register(self.session_id, **users[0])['status'])
         user2 = users[0].copy()
         user2[Um.USERNAME] = users[0][Um.USERNAME]
         self.assertFalse(self.commerce_system.register(self.session_id, **user2)['status'])
 
+    # 2.4 login
     def test_login_successful(self):
         self.assertTrue(self.commerce_system.register(self.session_id, **users[0])['status'])
         self.assertTrue(self.commerce_system.login(self.session_id, **get_credentials(users[0]))['status'])
 
+    # 2.4 login
     def test_login_failed(self):
         # user hasn't registered yet
         self.assertFalse(self.commerce_system.login(self.session_id, **get_credentials(users[0]))['status'])
 
+    # 2.4 login
     def test_login_failed_bad_credentials(self):
         user = users[0].copy()
         self.assertTrue(self.commerce_system.register(self.session_id, **user)['status'])
         user[Um.PASSWORD] = "pasSwordd"
         self.assertFalse(self.commerce_system.login(self.session_id, **get_credentials(user))['status'])
 
+    # 2.4 login
     def test_logout_without_login(self):
         self.assertFalse(self.commerce_system.logout(self.session_id)['status'])
 
+    # 3.2 open shop
     def test_guest_cant_open_shop(self):
         # try to open shop as guest
         self.assertFalse(self.commerce_system.open_shop(self.session_id, **shops[0])['status'])
 
+    # 3.7 get transactions
     def test_guest_cant_get_transactions(self):
         self.assertFalse(self.commerce_system.get_personal_purchase_history(self.session_id)['status'])
 
@@ -80,22 +91,27 @@ class SubscribedTests(TestCase):
         self.assertTrue(status)
         self.commerce_system.cleanup()
 
+    # 3.1 logout
     def test_logout(self):
         # setUp and tearDown will perform the login and logout
         self.assertTrue(True)
 
+    # 3.1 logout
     def test_logout_bad_session_id(self):
         self.commerce_system.logout("non_existing_session_id")
 
+    # 3.2 open shop
     def test_open_shop(self):
         shop_id = self.commerce_system.open_shop(self.session_id, **shops[0])['result']
         self.assertIsInstance(shop_id, int)
         self.assertGreater(shop_id, 0)
 
+    # 3.2 open shop
     def test_open_shop_with_existing_name(self):
         self.assertGreater(self.commerce_system.open_shop(self.session_id, **shops[0])['result'], 0)
         self.assertFalse(self.commerce_system.open_shop(self.session_id, **shops[0])['status'])
 
+    # 2.3 register
     def test_register_when_logged_in(self):
         self.assertFalse(self.commerce_system.register(
             self.session_id, **users[2]
@@ -114,10 +130,12 @@ class ShopOwnerOperations(TestCase):
     def tearDown(self) -> None:
         self.commerce_system.cleanup()
 
+    # 4.1 add product to shop
     def test_add_product_to_shop(self):
         self.assertGreater(
             add_product(self.session_id, self.commerce_system, self.shop_id, products[0]), 0)
 
+    # 4.1 edit product in shop
     def test_edit_product_in_shop(self):
         prod_id = add_product(
             self.session_id, self.commerce_system, self.shop_id, products[0]
@@ -126,6 +144,7 @@ class ShopOwnerOperations(TestCase):
         p[Pm.PRODUCT_ID] = prod_id
         self.assertTrue(self.commerce_system.edit_product_info(self.session_id, self.shop_id, **p)['status'])
 
+    # 4.1 edit product in shop
     def test_edit_non_existing_product_in_shop(self):
         p = products[0].copy()
         p[Pm.PRODUCT_ID] = "some_non_existing_id"
@@ -133,6 +152,7 @@ class ShopOwnerOperations(TestCase):
             self.session_id, self.shop_id, **p
         )['status'])
 
+    # 4.1 delete product from shop
     def test_delete_product_from_shop(self):
         prod_id = add_product(
             self.session_id, self.commerce_system, self.shop_id, products[0]
@@ -141,23 +161,27 @@ class ShopOwnerOperations(TestCase):
             self.session_id, self.shop_id, prod_id
         )['status'])
 
+    # 4.1 delete product from shop
     def test_delete_non_existing_product(self):
         self.assertFalse(self.commerce_system.delete_product(
             self.session_id, self.shop_id, "39r3jrn"
         )['status'])
 
+    # 4.3 appoint shop owner
     def test_appoint_shop_owner(self):
         enter_register_and_login(self.commerce_system, users[1])
         self.assertTrue(self.commerce_system.appoint_shop_owner(
             self.session_id, self.shop_id, users[1][Um.USERNAME]
         )['status'])
 
+    # 4.3 appoint shop owner
     def test_appoint_owner_by_non_owner(self):
         other_session_id = enter_register_and_login(self.commerce_system, users[1])
         self.assertFalse(self.commerce_system.appoint_shop_owner(
             other_session_id, self.shop_id, users[0][Um.USERNAME]
         )['status'])
 
+    # 4.3 appoint shop owner
     def test_appoint_owner_already_appointed(self):
         enter_register_and_login(self.commerce_system, users[1])
         self.assertTrue(self.commerce_system.appoint_shop_owner(
@@ -167,18 +191,21 @@ class ShopOwnerOperations(TestCase):
             self.session_id, self.shop_id, users[1][Um.USERNAME]
         )['status'])
 
+    # 4.5 appoint shop manager
     def test_appoint_shop_manager(self):
         enter_register_and_login(self.commerce_system, users[1])
         self.assertTrue(self.commerce_system.appoint_shop_manager(
             self.session_id, self.shop_id, users[1][Um.USERNAME], permissions[0]
         )['status'])
 
+    # 4.5 appoint shop manager
     def test_appoint_manager_by_non_owner(self):
         other_session_id = enter_register_and_login(self.commerce_system, users[1])
         self.assertFalse(self.commerce_system.appoint_shop_manager(
             other_session_id, self.shop_id, users[0][Um.USERNAME], permissions[0]
         )['status'])
 
+    # 4.7 unappoint shop manager
     def test_unappoint_shop_manager(self):
         enter_register_and_login(self.commerce_system, users[1])
         self.assertTrue(self.commerce_system.appoint_shop_manager(
@@ -188,6 +215,7 @@ class ShopOwnerOperations(TestCase):
             self.session_id, self.shop_id, users[1][Um.USERNAME]
         )['status'])
 
+    # 4.7 appoint shop manager
     def test_unappoint_shop_manager_by_non_appointer(self):
         enter_register_and_login(self.commerce_system, users[1])
         self.assertTrue(self.commerce_system.appoint_shop_manager(
@@ -203,6 +231,7 @@ class ShopOwnerOperations(TestCase):
             u2_session_id, self.shop_id, users[1][Um.USERNAME]
         )['status'])
 
+    # 4.3 appoint shop owner
     def test_unappoint_shop_owner_by_non_owner(self):
         # the user trying to unappoint the worker is not a shop owner/manager
         u_session_id = enter_register_and_login(self.commerce_system, users[1])
@@ -211,6 +240,7 @@ class ShopOwnerOperations(TestCase):
             u_session_id, self.shop_id, users[2][Um.USERNAME]
         )['status'])
 
+    # 4.3 appoint shop owner
     def test_appoint_manager_to_owner(self):
         enter_register_and_login(self.commerce_system, users[1])
         self.assertTrue(self.commerce_system.appoint_shop_manager(
@@ -220,6 +250,7 @@ class ShopOwnerOperations(TestCase):
             self.session_id, self.shop_id, users[1][Um.USERNAME]
         )['status'])
 
+    # 4.9 get staff
     def test_get_shop_staff(self):
         enter_register_and_login(self.commerce_system, users[1])
         self.assertTrue(self.commerce_system.appoint_shop_manager(
@@ -237,6 +268,7 @@ class ShopOwnerOperations(TestCase):
         usernames_got = {u[Um.USERNAME] for u in shop_staff}
         self.assertEqual(expected_usernames, usernames_got)
 
+    # 4.9 get staff
     def test_get_shop_staff_by_non_owner(self):
         non_owner = enter_register_and_login(self.commerce_system, users[1])
         self.assertFalse(self.commerce_system.get_shop_staff_info(non_owner, self.shop_id)['status'])
@@ -257,17 +289,20 @@ class ShopManagerOperations(TestCase):
     def tearDown(self) -> None:
         self.commerce_system.cleanup()
 
+    # 4.6 edit manager permissions
     def edit_manager_permissions(self, m_permissions):
         self.assertTrue(self.commerce_system.edit_manager_permissions(
             self.owner_session_id, self.shop_id, self.manager_username, m_permissions
         )['status'])
 
+    # 4.1 add product to shop
     def test_add_product_to_shop(self):
         self.assertGreater(
             add_product(self.manager_session_id, self.commerce_system, self.shop_id, products[0]),
             0
         )
 
+    # 4.1 add product to shop + 5.1 manager permissions
     def test_add_product_to_shop_no_permissions(self):
         self.edit_manager_permissions([])
         self.assertRaises(
@@ -275,6 +310,7 @@ class ShopManagerOperations(TestCase):
             self.manager_session_id, self.commerce_system, self.shop_id, products[0]
         )
 
+    # 4.1 edit product in shop + 5.1 manager permissions
     def test_edit_product_in_shop(self):
         prod_id = add_product(
             self.manager_session_id, self.commerce_system, self.shop_id, products[0]
@@ -286,6 +322,7 @@ class ShopManagerOperations(TestCase):
             self.manager_session_id, self.shop_id, **p
         )['status'])
 
+    # 4.1 edit product in shop + 5.1 manager permissions
     def test_edit_product_in_shop_no_permission(self):
         prod_id = add_product(
             self.owner_session_id, self.commerce_system, self.shop_id, products[0]
@@ -298,6 +335,7 @@ class ShopManagerOperations(TestCase):
             self.manager_session_id, self.shop_id, **p
         )['status'])
 
+    # 4.1 delete product from shop + 5.1 manager permissions
     def test_delete_product_from_shop(self):
         prod_id = add_product(
             self.manager_session_id, self.commerce_system, self.shop_id, products[0]
@@ -306,6 +344,7 @@ class ShopManagerOperations(TestCase):
             self.manager_session_id, self.shop_id, prod_id
         )['status'])
 
+    # 4.1 delete product from shop + 5.1 manager permissions
     def test_delete_product_from_shop_no_permission(self):
         prod_id = add_product(
             self.manager_session_id, self.commerce_system, self.shop_id, products[0]
@@ -315,6 +354,7 @@ class ShopManagerOperations(TestCase):
             self.manager_session_id, self.shop_id, prod_id
         )['status'])
 
+    # 4.2.1 manage discounts
     def test_add_discount_with_no_cond(self):
         perm = ["add_product", "discount"]
         self.assertTrue(self.commerce_system.edit_manager_permissions(
@@ -324,6 +364,7 @@ class ShopManagerOperations(TestCase):
         self.assertTrue(self.commerce_system.add_discount(self.manager_session_id,
                                                           self.shop_id, False, None, product1_discount_dict1)['status'])
 
+    # 4.2.1 manage discounts
     def test_add_discount_with_cond(self):
         perm = ["add_product", "discount"]
         self.assertTrue(self.commerce_system.edit_manager_permissions(
@@ -336,6 +377,7 @@ class ShopManagerOperations(TestCase):
                                                           self.shop_id, True, condition, product1_discount_dict1)[
                             'status'])
 
+    # 4.2.1 manage discounts
     def test_delete_discount(self):
         product1_discount_dict1: DiscountDict = {'type': 'product', 'identifier': 1, 'percentage': 20}
         simple_cond: SimpleCond = {'condition': 'sum', 'type': 'shop', 'identifier': 'shop', 'num': 50}
@@ -346,6 +388,7 @@ class ShopManagerOperations(TestCase):
                             'status'])
         self.assertTrue(self.commerce_system.delete_discounts(self.owner_session_id, self.shop_id, [1])['status'])
 
+    # 4.2.1 manage discounts
     def test_aggregate_discounts(self):
         product1_discount_dict1: DiscountDict = {'type': 'product', 'identifier': 1, 'percentage': 20}
         discount_dict2: DiscountDict = {'type': 'shop', 'identifier': 'shop', 'percentage': 15}
@@ -388,12 +431,14 @@ class PurchasesTests(TestCase):
     def tearDown(self) -> None:
         self.commerce_system.cleanup()
 
+    # 2.7 save product to cart
     def test_save_product_to_cart(self):
         user_session = self.sessions[self.U1]
         shop_id = get_shops_not_owned_by_user(user_session, self.shop_ids, self.shop_to_staff)[0]
         product_id = self.shops_to_products[shop_id][0]
         self.assertTrue(self.commerce_system.save_product_to_cart(user_session, shop_id, product_id, 1)['status'])
 
+    # 2.7 save product to cart
     def test_save_non_existing_product_to_cart(self):
         user = self.sessions[self.U1]
         shop_id = get_shops_not_owned_by_user(user, self.shop_ids, self.shop_to_staff)[0]
@@ -401,6 +446,7 @@ class PurchasesTests(TestCase):
             self.sessions[self.U1], shop_id, "some_non_existing_product_id", 1
         )['status'])
 
+    # 2.8 get cart info
     def test_get_cart_info(self):
         u1 = self.sessions[self.U1]
         shop_id = get_shops_not_owned_by_user(u1, self.shop_ids, self.shop_to_staff)[0]
@@ -412,6 +458,7 @@ class PurchasesTests(TestCase):
         self.assertTrue(
             any(map(lambda p: p[Pm.PRODUCT_ID] == prod_id, cart_info["shopping_bags"][shop_id]["products"])))
 
+    # 2.9 purchase product
     def test_purchase_product(self):
         u1 = self.sessions[self.U1]
         shop_id = get_shops_not_owned_by_user(u1, self.shop_ids, self.shop_to_staff)[0]
@@ -421,6 +468,7 @@ class PurchasesTests(TestCase):
         )
         self.assertTrue(transaction_status["status"])
 
+    # 2.9 purchase cart
     def test_purchase_cart(self):
         NUM_PRODS = 4
         u1 = self.sessions[self.U1]
@@ -433,6 +481,7 @@ class PurchasesTests(TestCase):
         ), prods[:NUM_PRODS])))
         self.assertTrue(self.commerce_system.purchase_cart(u1, payment_details[0])['status'])
 
+    # 3.7 get transaction
     def test_get_user_transactions(self):
         NUM_PRODS = 3
         u1 = self.sessions[self.U1]
@@ -450,6 +499,7 @@ class PurchasesTests(TestCase):
                     prods[:NUM_PRODS]))
         )
 
+    # 4.9 get shop transactions
     def test_get_shop_transactions(self):
         NUM_PRODS = 3
         u1 = self.sessions[self.U1]
@@ -472,6 +522,7 @@ class PurchasesTests(TestCase):
                     prods[:NUM_PRODS]))
         )
 
+    # 6.4 get system transaction
     def test_get_system_transactions(self):
         products_purchased = []
         for i in range(self.NUM_USERS):
@@ -515,6 +566,7 @@ class PurchasesWithConditionsTests(TestCase):
     def tearDown(self) -> None:
         self.commerce_system.cleanup()
 
+    # 4.2.2 manage purchase policies + 2.9 purchase product
     def test_purchase_product_with_max_quantity_condition(self):
         u1 = self.sessions[self.U1]
         shop_id = get_shops_not_owned_by_user(u1, self.shop_ids, self.shop_to_staff)[0]
@@ -528,6 +580,7 @@ class PurchasesWithConditionsTests(TestCase):
         )
         self.assertTrue(transaction_status["status"])
 
+    # 4.2.2 manage purchase policies + 2.9 purchase product
     def test_purchase_product_that_fails_max_quantity_condition(self):
         u1 = self.sessions[self.U1]
         shop_id = get_shops_not_owned_by_user(u1, self.shop_ids, self.shop_to_staff)[0]
@@ -541,6 +594,7 @@ class PurchasesWithConditionsTests(TestCase):
         )
         self.assertFalse(transaction_status["status"])
 
+    # 4.2.2 manage purchase policies + 2.9 purchase product
     def test_purchase_product_with_time_window_for_product_condition(self):
         u1 = self.sessions[self.U1]
         shop_id = get_shops_not_owned_by_user(u1, self.shop_ids, self.shop_to_staff)[0]
@@ -554,6 +608,7 @@ class PurchasesWithConditionsTests(TestCase):
         )
         self.assertTrue(transaction_status["status"])
 
+    # 4.2.2 manage purchase policies + 2.9 purchase product
     def test_purchase_product_that_fails_time_window_for_product_condition(self):
         u1 = self.sessions[self.U1]
         shop_id = get_shops_not_owned_by_user(u1, self.shop_ids, self.shop_to_staff)[0]
@@ -567,6 +622,7 @@ class PurchasesWithConditionsTests(TestCase):
         )
         self.assertFalse(transaction_status["status"])
 
+    # 4.2.2 manage purchase policies + 2.9 purchase product
     def test_purchase_product_with_date_window_for_product_condition(self):
         u1 = self.sessions[self.U1]
         shop_id = get_shops_not_owned_by_user(u1, self.shop_ids, self.shop_to_staff)[0]
@@ -580,6 +636,7 @@ class PurchasesWithConditionsTests(TestCase):
         )
         self.assertTrue(transaction_status["status"])
 
+    # 4.2.2 manage purchase policies + 2.9 purchase product
     def test_purchase_product_that_fails_date_window_for_product_condition(self):
         u1 = self.sessions[self.U1]
         shop_id = get_shops_not_owned_by_user(u1, self.shop_ids, self.shop_to_staff)[0]
@@ -593,6 +650,7 @@ class PurchasesWithConditionsTests(TestCase):
         )
         self.assertFalse(transaction_status["status"])
 
+    # 4.2.2 manage purchase policies + 2.9 purchase product
     def test_purchase_product_with_time_window_for_category_condition(self):
         u1 = self.sessions[self.U1]
         shop_id = get_shops_not_owned_by_user(u1, self.shop_ids, self.shop_to_staff)[0]
@@ -606,6 +664,7 @@ class PurchasesWithConditionsTests(TestCase):
         )
         self.assertTrue(transaction_status["status"])
 
+    # 4.2.2 manage purchase policies + 2.9 purchase product
     def test_purchase_product_that_fails_time_window_for_category_condition(self):
         u1 = self.sessions[self.U1]
         shop_id = get_shops_not_owned_by_user(u1, self.shop_ids, self.shop_to_staff)[0]
@@ -619,6 +678,7 @@ class PurchasesWithConditionsTests(TestCase):
         )
         self.assertFalse(transaction_status["status"])
 
+    # 4.2.2 manage purchase policies + 2.9 purchase product
     def test_purchase_product_with_date_window_for_category_condition(self):
         u1 = self.sessions[self.U1]
         shop_id = get_shops_not_owned_by_user(u1, self.shop_ids, self.shop_to_staff)[0]
@@ -632,6 +692,7 @@ class PurchasesWithConditionsTests(TestCase):
         )
         self.assertTrue(transaction_status["status"])
 
+    # 4.2.2 manage purchase policies + 2.9 purchase product
     def test_purchase_product_that_fails_date_window_for_category_condition(self):
         u1 = self.sessions[self.U1]
         shop_id = get_shops_not_owned_by_user(u1, self.shop_ids, self.shop_to_staff)[0]
@@ -645,6 +706,7 @@ class PurchasesWithConditionsTests(TestCase):
         )
         self.assertFalse(transaction_status["status"])
 
+    # 4.2.2 manage purchase policies + 2.9 purchase product
     def test_purchase_cart_with_condition(self):
         NUM_PRODS = 4
         u1 = self.sessions[self.U1]
@@ -661,6 +723,7 @@ class PurchasesWithConditionsTests(TestCase):
         ), prods[:NUM_PRODS])))
         self.assertTrue(self.commerce_system.purchase_cart(u1, payment_details[0])['status'])
 
+    # 3.7 get transactions
     def test_get_user_transactions_with_condition(self):
         NUM_PRODS = 3
         u1 = self.sessions[self.U1]
@@ -703,6 +766,7 @@ class GuestTestsWithData(TestCase):
     def tearDown(self) -> None:
         self.commerce_system.cleanup()
 
+    # 2.5 get shop info
     def test_get_shop_info(self):
         s1 = self.sids[self.S1]
         shop_info = self.commerce_system.get_shop_info(self.guest_sess[self.U1], s1)['result']
@@ -710,18 +774,22 @@ class GuestTestsWithData(TestCase):
         self.assertEqual(shop_info["shop_name"], self.sids_to_shop[s1]["shop_name"])
         self.assertEqual(len(shop_info["products"]), len([pid for pid, sid in self.pid_to_sid.items() if sid == s1]))
 
+    # 2.5 get shop info
     def test_get_shop_info_bad_shop_id(self):
         self.assertFalse(self.commerce_system.get_shop_info(self.subs_sess[0], "non_existing_shop_id")['status'])
 
+    # 2.6 search products
     def test_search_products_by_name_simple(self):
         results = self.commerce_system.search_products(product_name=products[0]["product_name"])['result']
         self.assertTrue(len(results) == 1)
         self.assertTrue(results[0]["product_name"] == products[0]["product_name"])
 
+    # 2.6 search products
     def test_search_product_by_name_general(self):
         results = self.commerce_system.search_products(product_name="p")['result']
         self.assertTrue(len(results) == 0)
 
+    # 2.6 search products
     def test_search_products_by_filters(self):
         results = self.commerce_system.search_products(filters=[
             {"type": "price_range", "from": 0, "to": 100}
@@ -735,6 +803,7 @@ class GuestTestsWithData(TestCase):
                     products_in_range_indices))
         )
 
+    # 2.6 search products
     def test_search_products_by_name_and_filters(self):
         other_products = [
             {Pm.PRODUCT_NAME: "bamba", Pm.PRODUCT_DESC: "peanuts snack", Pm.PRICE: 5, Pm.QUANTITY: 10},

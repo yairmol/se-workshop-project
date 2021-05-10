@@ -164,10 +164,18 @@ class IntegrationTests(unittest.TestCase):
 
         self.facade.login(self.user_id2, self.username2, self.password)
         payment_dict = {"credit_card_number": 1234, "expiration_date": 25, "car_holder_name": "Dudu"}
-        quantity = 2
-        transaction: Transaction = self.facade.purchase_product(self.user_id2, shop_id, product_id1, quantity, payment_dict)
-        assert transaction.price == (100 - product1_discount_dict1['percentage']) / 100 \
-               * quantity * product1_dict['price']
+        buy_quantity1 = 2
+        transaction: Transaction = self.facade.purchase_product(self.user_id2, shop_id, product_id1, buy_quantity1, payment_dict)
+
+        # checks the discount
+        self.assertTrue(transaction.price == (100 - product1_discount_dict1['percentage']) / 100 \
+               * buy_quantity1 * product1_dict['price'])
+        # checks removing products from shops stocks
+        self.assertTrue(self.facade.get_shop(shop_id).products[product_id1].get_quantity() ==
+                        product1_dict['quantity'] - buy_quantity1)
+        # checks transaction added
+        self.assertTrue(len(self.facade.get_shop(shop_id).transaction_history) == 1)
+
 
     def test_purchase_bag_with_discount(self):
         self.facade.login(self.user_id1, self.username1, self.password)
@@ -180,17 +188,25 @@ class IntegrationTests(unittest.TestCase):
 
         self.facade.login(self.user_id2, self.username2, self.password)
         payment_dict = {"credit_card_number": 1234, "expiration_date": 25, "car_holder_name": "Dudu"}
-        quantity1 = 1
-        quantity2 = 1
-        self.facade.save_product_to_cart(self.user_id2,shop_id,product_id1,1)
-        self.facade.save_product_to_cart(self.user_id2, shop_id, product_id2, 1)
+        buy_quantity1 = 1
+        buy_quantity2 = 1
+        self.facade.save_product_to_cart(self.user_id2,shop_id,product_id1,buy_quantity1)
+        self.facade.save_product_to_cart(self.user_id2, shop_id, product_id2, buy_quantity2)
 
         transaction: Transaction = self.facade.purchase_shopping_bag(self.user_id2,shop_id,payment_dict)
         trans_price = (round(transaction.price,2))
         expected_price =(round((100 - product1_discount_dict1['percentage']) / 100 \
-               * quantity1 * product1_dict['price'] + product2_dict['price'] * quantity2, 2))
+               * buy_quantity1 * product1_dict['price'] + product2_dict['price'] * buy_quantity2, 2))
 
-        assert trans_price == expected_price
+        # checks the discount
+        self.assertTrue(trans_price == expected_price)
+        # checks removing products from shops stocks
+        self.assertTrue(self.facade.get_shop(shop_id).products[product_id1].get_quantity() ==
+                        product1_dict['quantity'] - buy_quantity1)
+        self.assertTrue(self.facade.get_shop(shop_id).products[product_id2].get_quantity() ==
+                        product2_dict['quantity'] - buy_quantity2)
+        # checks transaction added
+        self.assertTrue(len(self.facade.get_shop(shop_id).transaction_history) == 1)
 
     def test_purchase_cart_with_discount(self):
         self.facade.login(self.user_id1, self.username1, self.password)
@@ -210,15 +226,23 @@ class IntegrationTests(unittest.TestCase):
 
         self.facade.login(self.user_id2, self.username2, self.password)
         payment_dict = {"credit_card_number": 1234, "expiration_date": 25, "car_holder_name": "Dudu"}
-        quantity1 = 2
-        quantity2 = 2
-        self.facade.save_product_to_cart(self.user_id2, shop_id1, shop1_product_id1, quantity1)
-        self.facade.save_product_to_cart(self.user_id2, shop_id2, shop2_product_id2, quantity2)
+        buy_quantity1 = 2
+        buy_quantity2 = 2
+        self.facade.save_product_to_cart(self.user_id2, shop_id1, shop1_product_id1, buy_quantity1)
+        self.facade.save_product_to_cart(self.user_id2, shop_id2, shop2_product_id2, buy_quantity2)
 
         transactions: List[Transaction] = self.facade.purchase_cart(self.user_id2, payment_dict, True)
         total_price = sum(t.price for t in transactions)
         expected_price = (round((100 - product1_discount_dict1['percentage']) / 100 \
-                                * quantity1 * product1_dict['price'] +
-                                (100 - product2_discount_dict['percentage']) / 100 * product2_dict['price'] * quantity2, 2))
-
-        assert total_price == expected_price
+                                * buy_quantity1 * product1_dict['price'] +
+                                (100 - product2_discount_dict['percentage']) / 100 * product2_dict['price'] * buy_quantity2, 2))
+        # checks the discount
+        self.assertTrue(total_price == expected_price)
+        # checks removing products from shops stocks
+        self.assertTrue(self.facade.get_shop(shop_id1).products[shop1_product_id1].get_quantity() ==
+                        product1_dict['quantity'] - buy_quantity1)
+        self.assertTrue(self.facade.get_shop(shop_id2).products[shop2_product_id2].get_quantity() ==
+                        product2_dict['quantity'] - buy_quantity2)
+        # checks transaction added
+        self.assertTrue(len(self.facade.get_shop(shop_id1).transaction_history) == 1)
+        self.assertTrue(len(self.facade.get_shop(shop_id2).transaction_history) == 1)
