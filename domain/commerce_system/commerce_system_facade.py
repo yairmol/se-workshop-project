@@ -14,7 +14,7 @@ from domain.commerce_system.transaction_repo import TransactionRepo
 from domain.commerce_system.user import User, Subscribed, SystemManager
 
 # import domain.commerce_system.valdiation as validate
-from domain.discount_module.discount_management import SimpleCond, DiscountDict
+from domain.discount_module.discount_management import SimpleCond, DiscountDict, CompositeDiscountDict
 
 condition_map = {
     "MaxQuantityForProductCondition": MaxQuantityForProductCondition,
@@ -323,7 +323,7 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         return list(map(lambda d: d.to_dict(), user.get_shop_discounts(shop)))
 
     def add_discount(self, user_id: int, shop_id: int, has_cond: bool, condition: List[Union[str, SimpleCond, List]],
-                     discount: DiscountDict) -> int:
+                     discount: Union[DiscountDict, CompositeDiscountDict]) -> int:
 
         shop = self.get_shop(shop_id)
         subscribed = self.get_user(user_id).user_state
@@ -338,6 +338,11 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         shop = self.get_shop(shop_id)
         subscribed = self.get_user(user_id).user_state
         subscribed.aggregate_discounts(shop, discount_ids, func)
+
+    def move_discount_to(self, user_id, shop_id, src_discount_id, dst_discount_id):
+        shop = self.get_shop(shop_id)
+        subscribed = self.get_user(user_id).user_state
+        subscribed.move_discount_to(shop, src_discount_id, dst_discount_id)
 
     def get_product_info(self, shop_id, product_id):
         return self.shops.get(shop_id).get_product_info(product_id).to_dict()

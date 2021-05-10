@@ -1,7 +1,7 @@
 from typing import List, Union
 
 from domain.authentication_module.authenticator import Authenticator
-from domain.discount_module.discount_management import SimpleCond, DiscountDict
+from domain.discount_module.discount_management import SimpleCond, DiscountDict, CompositeDiscountDict
 from domain.token_module.tokenizer import Tokenizer
 from domain.commerce_system.commerce_system_facade import CommerceSystemFacade
 from domain.logger.log import event_logger, error_logger
@@ -341,7 +341,7 @@ class SystemService:
                 user_id = self.tokenizer.get_id_by_token(token)
                 event_logger.info(f"User: {user_id} tries to add purchase condition "
                                   f"shop_id: {shop_id}")
-                self.commerce_system_facade.add_purchase_condition(user_id, shop_id, condition_type, condition_dict)
+                self.commerce_system_facade.add_purchase_condition(user_id, shop_id, condition_type, **condition_dict)
                 event_logger.info("User: " + str(user_id) + " added condition successfully")
                 return make_status_dict(True, "", "")
             except AssertionError as e:
@@ -538,7 +538,7 @@ class SystemService:
         return make_status_dict(False, "Invalid Token", [])
 
     def add_discount(self, token: str, shop_id: int, has_cond: bool, condition: List[Union[str, SimpleCond, List]],
-                     discount: DiscountDict) -> dict:
+                     discount: Union[DiscountDict, CompositeDiscountDict]) -> dict:
         if self.is_valid_token(token):
             try:
                 user_id = self.tokenizer.get_id_by_token(token)
@@ -552,13 +552,27 @@ class SystemService:
                 return handle_exception(e)
         return make_status_dict(False, "Invalid Token", "")
 
-    def aggregate_discounts(self, token: str, shop_id: int, discount_ids: [int], func: str):
+    def aggregate_discounts(self, token: str, shop_id: int, discount_ids: List[int], operator: str):
         if self.is_valid_token(token):
             try:
                 user_id = self.tokenizer.get_id_by_token(token)
                 event_logger.info(f"User: {user_id} tries to aggregate discounts to shop: {shop_id}")
-                self.commerce_system_facade.aggregate_discounts(user_id, shop_id, discount_ids, func)
+                self.commerce_system_facade.aggregate_discounts(user_id, shop_id, discount_ids, operator)
                 event_logger.info(f"User: {user_id} aggregated discounts to shop: {shop_id} successfully")
+                return make_status_dict(True, "", "")
+            except AssertionError as e:
+                return handle_assertion(e)
+            except Exception as e:
+                return handle_exception(e)
+        return make_status_dict(False, "Invalid Token", "")
+
+    def move_discount_to(self, token: str, shop_id: int, src_discount_id: int, dst_discount_id: int):
+        if self.is_valid_token(token):
+            try:
+                user_id = self.tokenizer.get_id_by_token(token)
+                event_logger.info(f"User: {user_id} tries to move discounts in shop: {shop_id}")
+                self.commerce_system_facade.move_discount_to(user_id, shop_id, src_discount_id, dst_discount_id)
+                event_logger.info(f"User: {user_id} moved discounts in shop: {shop_id} successfully")
                 return make_status_dict(True, "", "")
             except AssertionError as e:
                 return handle_assertion(e)
