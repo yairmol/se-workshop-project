@@ -6,6 +6,7 @@ import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Checkbox from '@material-ui/core/Checkbox';
 
 export default function AddressForm({formik}) {
+  const x = false;
   return (
     <React.Fragment>
       <Typography variant="h6" gutterBottom>
@@ -22,6 +23,8 @@ export default function AddressForm({formik}) {
             autoComplete="given-name"
             value={formik.values.firstName}
             onChange={formik.handleChange}
+            error={formik.errors.firstName}
+            helperText={formik.errors.firstName}
           />
         </Grid>
         <Grid item xs={12} sm={6}>
@@ -34,6 +37,8 @@ export default function AddressForm({formik}) {
             autoComplete="family-name"
             value={formik.values.lastName}
             onChange={formik.handleChange}
+            error={formik.errors.lastName}
+            helperText={formik.errors.lastName}
           />
         </Grid>
         <Grid item xs={12}>
@@ -46,6 +51,8 @@ export default function AddressForm({formik}) {
             autoComplete="shipping address-line1"
             value={formik.values.address1}
             onChange={formik.handleChange}
+            error={formik.errors.address1}
+            helperText={formik.errors.address1}
           />
         </Grid>
         <Grid item xs={12}>
@@ -57,6 +64,8 @@ export default function AddressForm({formik}) {
             autoComplete="shipping address-line2"
             value={formik.values.address2}
             onChange={formik.handleChange}
+            error={formik.errors.address2}
+            helperText={formik.errors.address2}
           />
         </Grid>
         <Grid item xs={12} sm={6}>
@@ -69,6 +78,8 @@ export default function AddressForm({formik}) {
             value={formik.values.city}
             onChange={formik.handleChange}
             autoComplete="shipping address-level2"
+            error={formik.errors.city}
+            helperText={formik.errors.city}
           />
         </Grid>
         <Grid item xs={12} sm={6}>
@@ -83,6 +94,8 @@ export default function AddressForm({formik}) {
             fullWidth
             value={formik.values.zip}
             onChange={formik.handleChange}
+            error={formik.errors.zip}
+            helperText={formik.errors.zip}
             autoComplete="shipping postal-code"
           />
         </Grid>
@@ -96,6 +109,8 @@ export default function AddressForm({formik}) {
             autoComplete="shipping country"
             value={formik.values.country}
             onChange={formik.handleChange}
+            error={formik.errors.country}
+            helperText={formik.errors.country}
           />
         </Grid>
         <Grid item xs={12}>

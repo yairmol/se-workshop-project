@@ -302,9 +302,14 @@ const ShoppingBagView = ({shopId, shoppingBag, refresh}) => {
               <MUILink className={classes.heading}>Shopping Bag for {shoppingBag.shop_name}</MUILink>
             <Typography className={classes.secondaryHeading}>total: {shoppingBag.total}</Typography>
               {productsState.length > 0 &&
-              <Link to={`/checkout/${shopId}`}>
+              <RouteLink to={{
+                pathname: "/checkout",
+                shop_id: shopId,
+                from: "cart",
+                header: "Checkout"
+              }}>
                 <Button color="primary" variant="outlined" className={classes.checkoutButton}>Checkout</Button>
-              </Link>}
+              </RouteLink>}
           </div>
           <div className={classes.column}>
             {edited ? <Typography className={classes.secondaryHeading}>edited</Typography> : <></>}
@@ -364,9 +369,14 @@ export const Cart = () => {
       {
         Object.keys(cart.shopping_bags).length === 0 ?
           <Typography align="center">
-            You currently have no shopping bags, start shopping <Link to="/">here</Link>
+            You currently have no shopping bags, start shopping <RouteLink to={{pathname: "/", header: "Main"}}>here</RouteLink>
           </Typography> :
-          <RouteLink to={'/checkout/'}>
+          <RouteLink to={{
+            pathname: "/checkout",
+            cart: true,
+            from: "cart",
+            header: "Checkout"
+          }}>
             <Button className={classes.cartCheckoutButton} variant="contained" color="primary">Checkout Cart</Button>
           </RouteLink>
       }

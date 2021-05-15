@@ -33,15 +33,15 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-export default function Review({formik, cart, shop_id}) {
+export default function Review({formik, cart, shoppingBag}) {
   const classes = useStyles();
-  const products =
-      shop_id ?
-          cart.shopping_bags[shop_id].products :
+  const products = cart ?
           Object.keys(cart.shopping_bags).reduce(
               (prev, cur, i) => prev.concat(cart.shopping_bags[cur].products),
               []
-          );
+          ) :
+          shoppingBag.products;
+
   return (
     <React.Fragment>
       <Typography variant="h6" gutterBottom>
@@ -57,7 +57,7 @@ export default function Review({formik, cart, shop_id}) {
         <ListItem className={classes.listItem}>
           <ListItemText primary="Total" />
           <Typography variant="subtitle1" className={classes.total}>
-            {shop_id ? cart.shopping_bags[shop_id.total] : cart.total}₪
+            {cart ? cart.total : shoppingBag.total}₪
           </Typography>
         </ListItem>
       </List>

@@ -14,7 +14,8 @@ export default function PaymentForm({formik}) {
       <Grid container spacing={3}>
         <Grid item xs={12} md={6}>
           <TextField required id="cardName" value={formik.values.cardName} onChange={formik.handleChange}
-                     label="Name on card" fullWidth autoComplete="cc-name" />
+                     label="Name on card" fullWidth autoComplete="cc-name"
+                     error={formik.errors.cardName} helperText={formik.errors.cardName}/>
         </Grid>
         <Grid item xs={12} md={6}>
           <TextField
@@ -25,27 +26,29 @@ export default function PaymentForm({formik}) {
             autoComplete="cc-number"
             value={formik.values.cardNumber}
             onChange={formik.handleChange}
+            error={formik.errors.cardNumber} helperText={formik.errors.cardNumber}
           />
         </Grid>
         <Grid item xs={12} md={6}>
           <TextField required id="expDate" value={formik.values.expDate} onChange={formik.handleChange}
-                     label="Expiry date" fullWidth autoComplete="cc-exp" />
+                     label="Expiry date" fullWidth autoComplete="cc-exp"
+                     error={formik.errors.expDate} helperText={formik.errors.expDate}/>
         </Grid>
         <Grid item xs={12} md={6}>
           <TextField
             required
             id="cvv"
             label="CVV"
-            helperText="Last three digits on signature strip"
             fullWidth
             autoComplete="cc-csc"
             value={formik.values.cvv}
             onChange={formik.handleChange}
+            error={formik.errors.cvv} helperText={formik.errors.cvv}
           />
         </Grid>
         <Grid item xs={12}>
           <FormControlLabel
-            control={<Checkbox color="secondary" name="saveCard" value="yes" />}
+            control={<Checkbox color="secondary" name="saveCard" value="yes"/>}
             label="Remember credit card details for next time"
           />
         </Grid>

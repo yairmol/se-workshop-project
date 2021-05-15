@@ -34,6 +34,9 @@ class PermissionsModel:
     EDIT_PRODUCT_PERM = "edit_product"
     ADD_PRODUCT_PERM = "add_product"
     DELETE_PRODUCT_PERM = "delete_product"
+    MANAGE_DISCOUNT_PERM = "manage_discounts"
+    WATCH_TRANSACTIONS_PERM = "watch_transactions"
+    WATCH_STAFF_PERM = "watch_staff"
 
 
 class ConditionsModel:
@@ -55,6 +58,8 @@ class AppointmentModel:
     WORKER_NAME = "username"
     WORKER_TITLE = "title"
     WORKER_APPOINTER = "appointer"
+    PERMISSIONS = "permissions"
+
 
 admin_credentials = {
     UserModel.USERNAME: "admin",

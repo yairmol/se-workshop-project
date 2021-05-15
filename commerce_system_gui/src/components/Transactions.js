@@ -36,11 +36,11 @@ const useStyles = makeStyles((theme) => ({
     },
   },
   heading: {
-      fontSize: theme.typography.pxToRem(20),
-      flexBasis: '33.33%',
-      flexShrink: 0,
-      fontWeight: 530,
-      padding: theme.spacing(1)
+    fontSize: theme.typography.pxToRem(20),
+    flexBasis: '33.33%',
+    flexShrink: 0,
+    fontWeight: 530,
+    padding: theme.spacing(1)
   },
 }));
 
@@ -51,21 +51,27 @@ function Transactions({transactions_getter, width}) {
 
   useEffect(() => {
     auth.getToken().then(transactions_getter)
-        .then((res) => {
-          setTransactions(res || [])
-        })
-        .catch((err) => setTransactions([]))
+      .then((res) => {
+        setTransactions(res || [])
+      })
+      .catch((err) => setTransactions([]))
   }, [])
 
   return (
-      <>
-        <Grid item xs={6} >
-          <Typography className={classes.heading}>Transactions</Typography>
-          {(transactions && transactions.length > 0) ?
-              transactions.map((transaction, index) => <div style={{width:width}}><Transaction key={index} transaction={transaction}/></div>)
-              : <Typography align="center">You currently have no transactions, start shopping <Link to="/">here</Link></Typography>
-          }
-        </Grid></>
+    <>
+      <Grid item xs={6}>
+        <Typography className={classes.heading}>Transactions</Typography>
+        {(transactions && transactions.length > 0) ?
+          transactions.sort((t1, t2) => t1.date > t2.date ? -1 : t1.date === t2.date ? 0 : 1).map((transaction, index) =>
+            <div style={{width: width}}><Transaction key={index} transaction={transaction}/></div>
+          )
+          :
+          <Typography align="center">
+            You currently have no transactions, start shopping <Link to={{pathname: "/", header: "Main"}}>
+            here</Link>
+          </Typography>
+        }
+      </Grid></>
   );
 }
 

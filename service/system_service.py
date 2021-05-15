@@ -145,12 +145,23 @@ class SystemService:
 
     # 2.6
     def search_products(
-            self, product_name: str = None, keywords: List[str] = None,
+            self, token, product_name: str = None, keywords: List[str] = None,
             categories: List[str] = None, filters: List[dict] = None
     ) -> dict:
-        return make_status_dict(True, "",
-                                self.commerce_system_facade.search_products(product_name, keywords, categories,
-                                                                            filters))
+        if self.is_valid_token(token):
+            try:
+                user_id = self.tokenizer.get_id_by_token(token)
+                event_logger.info(f"user_sess {user_id} requested for all shops information")
+                return make_status_dict(
+                    True, "", self.commerce_system_facade.search_products(
+                        product_name, keywords, categories, filters
+                    )
+                )
+            except AssertionError as e:
+                return handle_assertion(e)
+            except Exception as e:
+                return handle_exception(e)
+        return make_status_dict(False, "Invalid Token", "")
 
     def get_all_categories(self, token) -> dict:
         return make_status_dict(True, "", self.commerce_system_facade.get_all_categories())
@@ -204,14 +215,14 @@ class SystemService:
 
     # 2.9
     def purchase_product(self, token: str, shop_id: int, product_id: int,
-                         amount_to_buy: int, payment_details: dict) -> dict:
+                         amount_to_buy: int, payment_details: dict, delivery_details: dict) -> dict:
         if self.is_valid_token(token):
             try:
                 user_id = self.tokenizer.get_id_by_token(token)
                 event_logger.info(f"User: {str(user_id)} tries to purchase {str(amount_to_buy)}"
                                   f" products: {str(product_id)} of shop_id: {str(shop_id)}")
                 self.commerce_system_facade.purchase_product(
-                    user_id, shop_id, product_id, amount_to_buy, payment_details
+                    user_id, shop_id, product_id, amount_to_buy, payment_details, delivery_details
                 )
                 event_logger.info(f"User: {str(user_id)} successfully purchased the product {str(product_id)}")
                 return make_status_dict(True, "", "")
@@ -222,12 +233,12 @@ class SystemService:
         return make_status_dict(False, "Invalid Token", "")
 
     # 2.9
-    def purchase_shopping_bag(self, token: str, shop_id: int, payment_details: dict) -> dict:
+    def purchase_shopping_bag(self, token: str, shop_id: int, payment_details: dict, delivery_details: dict) -> dict:
         if self.is_valid_token(token):
             try:
                 user_id = self.tokenizer.get_id_by_token(token)
                 event_logger.info(f"User: {str(user_id)} tries to purchase {str(shop_id)} bag")
-                self.commerce_system_facade.purchase_shopping_bag(user_id, shop_id, payment_details)
+                self.commerce_system_facade.purchase_shopping_bag(user_id, shop_id, payment_details, delivery_details)
                 event_logger.info(f"User: {user_id} successfully purchased the bag of the shop {str(shop_id)}")
                 return make_status_dict(True, "", "")
             except AssertionError as e:
@@ -237,12 +248,13 @@ class SystemService:
         return make_status_dict(False, "Invalid Token", "")
 
     # 2.9
-    def purchase_cart(self, token: str, payment_details: dict, all_or_nothing: bool = False) -> dict:
+    def purchase_cart(self, token: str, payment_details: dict, delivery_details: dict,
+                      all_or_nothing: bool = False) -> dict:
         if self.is_valid_token(token):
             try:
                 user_id = self.tokenizer.get_id_by_token(token)
                 event_logger.info(f"User: {str(user_id)} tries to purchase his cart")
-                self.commerce_system_facade.purchase_cart(user_id, payment_details, all_or_nothing)
+                self.commerce_system_facade.purchase_cart(user_id, payment_details, delivery_details, all_or_nothing)
                 event_logger.info(f"User: {user_id} successfully purchased his cart")
                 return make_status_dict(True, "", "")
             except AssertionError as e:

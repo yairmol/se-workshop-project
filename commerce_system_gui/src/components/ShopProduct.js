@@ -95,7 +95,7 @@ export default function Product({product, remove_product_func, edit_product_func
                               )}
                           </Grid>
                     </Grid>
-                    {permissions.delete ?
+                    {permissions.delete_product ?
                     <Grid item align="center" style={{padding:'5px'}}>
                           <Button onClick={() => {remove_product_func(product)}}
                                   size="small" className={classes.button} variant="contained" color="primary">
@@ -113,7 +113,7 @@ export default function Product({product, remove_product_func, edit_product_func
                          </Tooltip>
                     </Grid>
                         }
-                    {permissions.edit ?
+                    {permissions.edit_product ?
                         <Grid item align="center" style={{padding: '5px'}}>
                             <Button onClick={() => {
                                 edit_product_func(product)

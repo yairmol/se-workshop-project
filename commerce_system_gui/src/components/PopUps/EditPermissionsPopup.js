@@ -9,18 +9,19 @@ import {
   FormGroup
 } from "@material-ui/core";
 import Button from "@material-ui/core/Button";
+import {edit_product} from "../../api";
 
 export default function EditWorkerPermissions({worker, close_window_func, edit_perms_func, promote_manager}) {
   const permissions = worker.permissions
-
   const [open, setOpen] = useState(true)
 
   const [state, setState] = useState({
-    delete_p: permissions.delete,
-    edit: permissions.edit,
-    add: permissions.add,
-    discount: permissions.discount,
-    transaction: permissions["transaction"],
+    delete_product: permissions.delete_product,
+    edit_product: permissions.edit_product,
+    add_product: permissions.add_product,
+    manage_discounts: permissions.manage_discounts,
+    watch_transactions: permissions.watch_transactions,
+    watch_staff: permissions.watch_staff,
   });
 
   const handleClose = () => {
@@ -33,8 +34,11 @@ export default function EditWorkerPermissions({worker, close_window_func, edit_p
     CALL FOR SET PERMISSIONS
      */
       // ADD MANAGER
-    const perms =
-        [[delete_p, "delete"], [edit, "edit"], [add, "add"], [discount, "discount"], [transaction, "transaction"]]
+    const perms = [
+      [delete_product, "delete_product"], [edit_product, "edit_product"],
+      [add_product, "add_product"], [manage_discounts, "manage_discounts"],
+      [watch_transactions, "watch_transactions"], [watch_staff, "watch_staff"]
+    ]
     let perms_lst = []
     for (let i =0; i<perms.length; i++) {
       if (perms[i][0]) {
@@ -54,7 +58,7 @@ export default function EditWorkerPermissions({worker, close_window_func, edit_p
     setState({ ...state, [event.target.name]: event.target.checked });
   };
 
-  const { delete_p, edit, add, discount, transaction } = state;
+  const { delete_product, edit_product, add_product, manage_discounts, watch_transactions, watch_staff } = state;
 
   return (
     <div>
@@ -70,24 +74,28 @@ export default function EditWorkerPermissions({worker, close_window_func, edit_p
         <DialogContent>
           <FormGroup>
             <FormControlLabel
-              control={<Checkbox checked={delete_p} onChange={handleChange} name="delete_p" />}
+              control={<Checkbox checked={delete_product} onChange={handleChange} name="delete_product" />}
               label="Delete product"
             />
             <FormControlLabel
-              control={<Checkbox checked={edit} onChange={handleChange} name="edit" />}
+              control={<Checkbox checked={edit_product} onChange={handleChange} name="edit_product" />}
               label="Edit product"
             />
             <FormControlLabel
-              control={<Checkbox checked={add} onChange={handleChange} name="add" />}
+              control={<Checkbox checked={add_product} onChange={handleChange} name="add_product" />}
               label="Add product"
             />
             <FormControlLabel
-              control={<Checkbox checked={discount} onChange={handleChange} name="discount" />}
+              control={<Checkbox checked={manage_discounts} onChange={handleChange} name="manage_discounts" />}
               label="Edit discounts"
             />
             <FormControlLabel
-              control={<Checkbox checked={transaction} onChange={handleChange} name="transaction" />}
+              control={<Checkbox checked={watch_transactions} onChange={handleChange} name="watch_transactions" />}
               label="View transactions"
+            />
+            <FormControlLabel
+              control={<Checkbox checked={watch_staff} onChange={handleChange} name="watch_staff" />}
+              label="View Shop Staff"
             />
         </FormGroup>
         </DialogContent>

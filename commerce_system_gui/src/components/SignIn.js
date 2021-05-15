@@ -42,7 +42,7 @@ export default function SignIn({}) {
   let history = useHistory();
   let location = useLocation();
 
-  let { from } = location.state || { from: { pathname: "/transactions" } };
+  let { from } = location.state || { from: { pathname: "/", header: "Main Page"} };
 
   const formik = useFormik({
      initialValues: {
@@ -51,12 +51,11 @@ export default function SignIn({}) {
      },
      onSubmit: values => {
        auth.signin(values.username, values.password).then((res) => {
-         history.replace(from);
+         if (res) {
+           alert("login succeeded");
+           history.replace(from);
+         }
        });
-       // login(localStorage.getItem('token'), values.username, values.password)
-       //     .then((res) => {
-       //       return res.data.status ? setLoggedIn(values.username) : res.data
-       //     }).catch((error) => alert(error))
      },
    });
 
@@ -113,7 +112,7 @@ export default function SignIn({}) {
             </Grid>
             <Grid item>
                 <Link variant="body2">
-                  <RouteLink to="/register" style={{textDecoration: "none"}}>
+                  <RouteLink to={{pathname: "/register", header: "Registration"}} style={{textDecoration: "none"}}>
                 {"Don't have an account? Sign Up"}
                   </RouteLink>
                 </Link>

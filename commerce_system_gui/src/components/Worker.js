@@ -72,7 +72,7 @@ export default function Worker({worker, user, edit_permissions_func, remove_appo
                 expandIcon={<ExpandMoreIcon/>}
             >
                 <Grid container direction="column">
-                    <Typography className={classes.heading}>{worker.name}</Typography>
+                    <Typography className={classes.heading}>{worker.username}</Typography>
                     <Typography className={classes.secondaryHeading}>title: {worker.title}</Typography>
                     <Typography className={classes.secondaryHeading}>appointer: {worker.appointer}</Typography>
                 </Grid>

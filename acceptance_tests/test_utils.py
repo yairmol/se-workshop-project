@@ -112,7 +112,7 @@ def make_purchases(
         product_to_shop: Dict[int, int], products: List[int]
 ):
     return all(map(lambda p: commerce_system.purchase_product(
-        session, product_to_shop[p], p, 1, payment_details[0]
+        session, product_to_shop[p], p, 1, payment_details[0], {}
     )["status"], products))
 
 

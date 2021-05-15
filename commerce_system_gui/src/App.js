@@ -19,13 +19,13 @@ import {Shop} from "./components/Shop";
 import {ShoppingBag} from "./components/ShoppingBag";
 import {Cart} from "./components/Cart";
 import {ProvideAuth} from "./components/use-auth.js";
-import {Main} from "./components/Main";
-import {Main_page} from "./components/Main_page";
+import {MainPage} from "./components/MainPage";
 import {Discounts} from "./components/Discounts";
 import System_manager_transaction_history from "./components/system_manager_transaction_history";
-import Search_products from "./components/search_products";
+import SearchProducts from "./components/SearchProducts";
 import {ShopForCustomer} from "./components/ShopForCustomer";
 import ProfilePage from "./components/ProfilePage";
+import {Checkout} from "./components/Checkout";
 
 const useStyles = makeStyles((theme) => ({
   mainGrid: {
@@ -148,6 +148,9 @@ export default function Blog() {
                   <Route path="/shops/:shop_id/products/:product_id" exact>
                     <Product/>
                   </Route>
+                  <Route path="/checkout">
+                    <Checkout />
+                  </Route>
                   <Route path="/register">
                     <Register />
                   </Route>
@@ -179,10 +182,10 @@ export default function Blog() {
                     <UserTransactions/>
                   </Route>
                   <Route path="/" exact>
-                    <Main_page />
+                    <MainPage />
                   </Route>
                   <Route path="/search" exact>
-                    <Search_products/>
+                    <SearchProducts/>
                   </Route>
                   <Route path="/system_transactions" exact>
                     <System_manager_transaction_history />

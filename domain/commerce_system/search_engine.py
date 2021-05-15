@@ -8,9 +8,12 @@ SIMILARITY_THRESHOLD = 0.3
 class Filter:
     @staticmethod
     def from_dict(prod_filter: dict):
-        return {
+        assert "type" in prod_filter, "missing filter type in search"
+        filters = {
             "price_range": PriceRangeFilter
-        }[prod_filter["type"]](prod_filter)
+        }
+        assert prod_filter["type"] in filters, f"invalid filter type {prod_filter['type']} in search"
+        return filters[prod_filter["type"]](prod_filter)
 
     def apply(self, product_list):
         raise NotImplementedError()

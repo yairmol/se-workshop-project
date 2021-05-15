@@ -1,6 +1,7 @@
 import React, {useState, useEffect, useContext, createContext} from "react";
 import {enter, exit, isValidToken, login, logout, register} from "../api";
 import notifs from "../notifs";
+import {useHistory} from "react-router-dom";
 
 const authContext = createContext();
 
@@ -22,6 +23,7 @@ function useProvideAuth() {
   const [token, setToken] = useState(localStorage.getItem("token"));
   const [user, setUser] = useState(localStorage.getItem("user"));
   const [userId, setUserId] = useState(localStorage.getItem("userId"));
+  const history = useHistory();
 
   const refresh = () => {
     localStorage.clear();
@@ -39,11 +41,11 @@ function useProvideAuth() {
         if (res) {
           return token
         } else {
-          return refresh()
+          return refresh().then(_ => history && history.replace({ pathname: "/", header: "Main Page"}))
         }
       })
     } else {
-      return refresh()
+      return refresh().then(_ => history && history.replace({ pathname: "/", header: "Main Page"}))
     }
     // if (!token || !(await isValidToken(token))) {
     //   localStorage.clear();

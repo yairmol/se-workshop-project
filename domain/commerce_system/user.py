@@ -38,21 +38,22 @@ class User:
         self.user_state.logout()
         self.user_state = Guest()
 
-    def purchase_product(self, shop: Shop, product: Product, amount_to_buy: int, payment_details: dict) -> Transaction:
+    def purchase_product(self, shop: Shop, product: Product, amount_to_buy: int, payment_details: dict,
+                         delivery_details: dict) -> Transaction:
         bag = ShoppingBag(shop)
         bag.add_product(product, amount_to_buy)
-        transaction = bag.purchase_bag(self.get_name(), payment_details)
+        transaction = bag.purchase_bag(self.get_name(), payment_details, delivery_details)
         self._add_transaction(transaction)
         return transaction
 
-    def purchase_shopping_bag(self, shop: Shop, payment_details: dict) -> Transaction:
+    def purchase_shopping_bag(self, shop: Shop, payment_details: dict, delivery_details: dict) -> Transaction:
         bag = self.cart[shop]
-        transaction = bag.purchase_bag(self.get_name(), payment_details)
+        transaction = bag.purchase_bag(self.get_name(), payment_details, delivery_details)
         self._add_transaction(transaction)
         return transaction
 
-    def purchase_cart(self, payment_details: dict, do_what_you_can=False) -> List[Transaction]:
-        transactions = self.cart.purchase_cart(self.get_name(), payment_details, do_what_you_can)
+    def purchase_cart(self, payment_details: dict, delivery_details: dict, do_what_you_can=False) -> List[Transaction]:
+        transactions = self.cart.purchase_cart(self.get_name(), payment_details, delivery_details, do_what_you_can)
         for transaction in transactions:
             self._add_transaction(transaction)
         return transactions
