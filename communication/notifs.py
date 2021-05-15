@@ -1,4 +1,5 @@
 import json
+import os
 
 from flask import Flask, request
 from flask_socketio import SocketIO, join_room, leave_room, emit
@@ -36,11 +37,16 @@ def enlist(data):
     print("client id %s enlisting " % data["client_id"])
     print("%s sid" % request.sid)
     clients[data["client_id"]] = request.sid
-    if data["username"] not in subscribed_clients.keys():
+    if data["username"] not in list(subscribed_clients.keys()):
         subscribed_clients[data["username"]] = {"client_id": data["client_id"], "msgs": []}
     elif data["username"]:
+        subscribed_clients[data["username"]].client_id = data["client_id"]
         for msg in subscribed_clients["msgs"]:
             send_notif(data["client_id"], msg)
+
+def enlist_sub(username):
+    if username not in list(subscribed_clients.keys()):
+        subscribed_clients[username] = {"client_id": -1, "msgs": []}
 
 @io.on('disconnect')
 def disconnect():
@@ -51,11 +57,11 @@ def disconnect():
 
 
 @io.on('send_notif')
-def send_notif(client_id, msg, username=""):
+def send_notif(msg, client_id, username=""):
     print(clients)
-    if client_id in clients.keys():
+    if client_id in list(clients.keys()):
         emit('notification', msg, room=clients[client_id])
-    elif username in subscribed_clients.keys() and username != "":
+    elif username in subscribed_clients and username != "":
         subscribed_clients[username]["msgs"] += msg
     elif username != "":
         subscribed_clients[username] = {"client_id": client_id, "msgs": []}
@@ -64,11 +70,15 @@ def send_notif(client_id, msg, username=""):
 
 
 @io.on('send_error')
-def send_error(client_id, error):
-    if client_id in clients.keys():
-        emit('error', error, room=clients[client_id])
+def send_error(msg, client_id, username):
+    if client_id in list(clients.keys()):
+        emit('error', msg, room=clients[client_id])
+    elif username in subscribed_clients.keys() and username != "":
+        subscribed_clients[username]["msgs"] += msg
+    elif username != "":
+        subscribed_clients[username] = {"client_id": client_id, "msgs": []}
     else:
-        print("client id not enlisted");
+        print("Guest is not enlisted")
 
 
 @io.on('broadcast')
@@ -79,4 +89,4 @@ def send_broadcast(msg):
 # If you are running it using python <filename> then below command will be used
 if __name__ == '__main__':
     print("Server starting")
-    io.run(app)
+    io.run(app, port=5000)

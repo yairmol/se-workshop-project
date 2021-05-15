@@ -319,6 +319,8 @@ class Subscribed(UserState):
 
     def get_permissions(self, shop):
         appointment = self.get_appointment(shop)
+        if not appointment:
+            return super().get_permissions(shop)
         return appointment.get_permissions()
 
     def get_shop_staff_info(self, shop: Shop) -> List[Appointment]:
