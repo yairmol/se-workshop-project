@@ -50,11 +50,10 @@ function Transactions({transactions_getter, width}) {
   const auth = useAuth();
 
   useEffect(() => {
-    auth.getToken().then(transactions_getter)
-      .then((res) => {
+    auth.getToken().then((token) =>
+      transactions_getter(token).then((res) => {
         setTransactions(res || [])
-      })
-      .catch((err) => setTransactions([]))
+      }).catch((err) => setTransactions([])))
   }, [])
 
   return (
@@ -76,9 +75,9 @@ function Transactions({transactions_getter, width}) {
 }
 
 export function UserTransactions() {
-  return <Transactions transactions_getter={(res) => get_user_transactions(res)} widht="100%"/>
+  return <Transactions transactions_getter={(token) => get_user_transactions(token)} widht="100%"/>
 }
 
 export function ShopTransactions({shop_id}) {
-  return <Transactions transactions_getter={(res) => get_shop_transactions(res)} width="200%"/>
+  return <Transactions transactions_getter={(token) => get_shop_transactions(token, shop_id)} width="200%"/>
 }

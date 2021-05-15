@@ -3,7 +3,7 @@ const axios = require("axios");
 const urljoin = require('url-join');
 
 const host = "https://127.0.0.1"
-const port = 5001
+const port = 5000
 
 const host_port = `${host}:${port}`
 
@@ -267,7 +267,7 @@ export const get_permissions = (token, shop_id) => {
     } else {
       throw new Error(res.data.description)
     }
-  }).catch((err) => alert(err))
+  }).catch((err) => alert(`failed to get user permissions due to ${err}`))
 }
 
 export const edit_product = (token, shop_id, product_id, name, price, description, categories) => {

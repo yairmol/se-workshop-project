@@ -284,4 +284,4 @@ def create_app():
 
 if __name__ == '__main__':
     app = create_app()
-    app.run(port=5001, debug=True, ssl_context=('../secrets/cert.pem', '../secrets/key.pem'))
+    app.run(port=5000, debug=True, ssl_context=('../secrets/cert.pem', '../secrets/key.pem'))

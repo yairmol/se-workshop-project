@@ -194,6 +194,7 @@ export default function Blog() {
                 </Switch>
               </Grid>
             </main>
+            <div style={{width: "100%", height: "10rem"}}/>
           </Container>
         </React.Fragment>
       </Router>
