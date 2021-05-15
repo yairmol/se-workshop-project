@@ -17,6 +17,7 @@ SHOP_IMAGE = "shopImage"
 WORKER_NAME = "username"
 WORKER_TITLE = "title"
 WORKER_APPOINTER = "appointer"
+PERMISSIONS = "permissions"
 
 
 class Shop:
@@ -141,7 +142,8 @@ class Shop:
         return {
             WORKER_NAME: sub.username,
             WORKER_TITLE: "manager",
-            WORKER_APPOINTER: sub.get_appointment(self).appointer.username
+            WORKER_APPOINTER: sub.get_appointment(self).appointer.username,
+            PERMISSIONS: sub.get_appointment(self).get_permissions()
         }
 
     def get_owner_info(self, sub):

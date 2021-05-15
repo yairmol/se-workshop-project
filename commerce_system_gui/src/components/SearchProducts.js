@@ -93,11 +93,11 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-export default function Search_products() {
+export default function SearchProducts() {
   const classes = useStyles();
   const [searchVal, setSearchVal] = useState("");
   const [fromPrice, setFromPrice] = useState(0);
-  const [toPrice, setToPrice] = useState(0);
+  const [toPrice, setToPrice] = useState(Infinity);
   const [searchProducts, setSearchProducts] = useState([]);
   //   useState([{product_name: "p1",description: "a product", price: 1, quantity: 10, categories:[0,1]},
   // {product_name: "p2",description: "a product", price: 2.5, quantity: 10,
@@ -114,7 +114,8 @@ export default function Search_products() {
   const handleSearchChange = (event) => {
     setSearchVal(event.target.value);
     auth.getToken().then((token) => {
-      search_products(token, searchVal, keywords, categories, [{"from": fromPrice, "to": toPrice}])
+      search_products(token, event.target.value, keywords, categories,
+        [{type: "price_range", "from": fromPrice, "to": toPrice === Infinity ? Number.MAX_SAFE_INTEGER : toPrice}])
         .then((res) => {
           // alert(JSON.stringify(res))
           setSearchProducts(res)
@@ -129,8 +130,8 @@ export default function Search_products() {
   }
   const handleToChange = (event) => {
     const val = event.target.value;
-    if (val === "") setToPrice(0);
-    else if (!Number.isNaN(val)) setToPrice(parseInt(val));
+    if (val === "" || Number.isNaN(parseInt(val))) setToPrice(0);
+    else if (!Number.isNaN(parseInt(val))) setToPrice(parseInt(val));
   }
 
   useEffect(async () => {
@@ -171,41 +172,48 @@ export default function Search_products() {
               <TextField
                 {...params}
                 variant="standard"
-                label="Multiple values"
+                label="Categories"
                 placeholder="Categories"
               />
             )}
           />
         </Grid>
       </Grid>
-      <Divider/>
-      {searchProducts.map((product) => (
-        <RouteLink to={`/shops/${product.shop_id}/products/${product.product_id}`}>
-          <Card className={classes.root}>
-            <CardHeader
-              title={product.product_name}
-            />
-            <CardMedia
-              className={classes.media}
-              image="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR-X2ZRp_vz2_Tg55J3pKupby0yJT-zG_xTw6cjjQ1ywFZ2j68_C3m1l-SCN4be_io4Vqw&usqp=CAU"
-            />
-            <CardContent>
-              <Typography variant="body2" color="textSecondary" component="p">
-                Product Price: {product.price}
-              </Typography>
-              <Typography variant="body2" color="textSecondary" component="p">
-                Product Description: {product.description}
-              </Typography>
-              <Typography variant="body2" color="textSecondary" component="p">
-                Product Quantity: {product.quantity}
-              </Typography>
-              <Typography variant="body2" color="textSecondary" component="p">
-                Product Categories: {product.categories}
-              </Typography>
-            </CardContent>
-          </Card>
-        </RouteLink>
-      ))}
+      <div style={{width: "100%", height: "2rem"}}/>
+      <Grid items xs={10}>
+        <Grid container justify="center" spacing={2}>
+          <Divider/>
+          {searchProducts.map((product) => (
+            <Grid item>
+              <RouteLink to={{pathname: `/shops/${product.shop_id}/products/${product.product_id}`, header: `Product: ${product.product_name}`}}>
+                <Card className={classes.root}>
+                  <CardHeader
+                    title={product.product_name}
+                  />
+                  <CardMedia
+                    className={classes.media}
+                    image="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR-X2ZRp_vz2_Tg55J3pKupby0yJT-zG_xTw6cjjQ1ywFZ2j68_C3m1l-SCN4be_io4Vqw&usqp=CAU"
+                  />
+                  <CardContent>
+                    <Typography variant="body2" color="textSecondary" component="p">
+                      Product Price: {product.price}
+                    </Typography>
+                    <Typography variant="body2" color="textSecondary" component="p">
+                      Product Description: {product.description}
+                    </Typography>
+                    <Typography variant="body2" color="textSecondary" component="p">
+                      Product Quantity: {product.quantity}
+                    </Typography>
+                    <Typography variant="body2" color="textSecondary" component="p">
+                      Product Categories: {product.categories}
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </RouteLink>
+            </Grid>
+          ))}
+        </Grid>
+      </Grid>
     </>
   );
 }

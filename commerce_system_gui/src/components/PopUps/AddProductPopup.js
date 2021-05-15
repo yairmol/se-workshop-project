@@ -88,11 +88,11 @@ export default function AddProductPopup({close_window_func, add_product_func}) {
         <form autoComplete="off">
             <TextField autoFocus margin="dense" id="name" label="product name" fullWidth
                        onChange={(e) => setName(e.target.value)} />
-            <TextField autoFocus margin="dense" id="name" label="description" fullWidth
-                       onChange={(e) => setPrice(e.target.value)} />
-            <TextField autoFocus margin="dense" id="name" label="price" fullWidth InputProps={{
+            <TextField autoFocus margin="dense" id="description" label="description" fullWidth
+                       onChange={(e) => setDescription(e.target.value)} />
+            <TextField autoFocus margin="dense" id="price" label="price" fullWidth InputProps={{
             startAdornment: <InputAdornment position="start">₪</InputAdornment>, inputComponent: NumberFormatCustom,
-          }}           onChange={(e) => setDescription(e.target.value)}/>
+          }}           onChange={(e) => setPrice(e.target.value)}/>
             <TextField autoFocus margin="dense" id="name" label="categories" fullWidth
                        onChange={(e) => set_categories(e.target.value)}/>
         </form>

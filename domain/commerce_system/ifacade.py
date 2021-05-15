@@ -102,7 +102,7 @@ class ICommerceSystemFacade:
         raise NotImplementedError()
 
     # 2.9
-    def purchase_cart(self, user_id: int, payment_details: dict, all_or_nothing: bool):
+    def purchase_cart(self, user_id: int, payment_details: dict, delivery_details: dict, all_or_nothing: bool):
         """
         make a purchase of the entire shopping cart of a user (i.e. all shopping bags)
         :param all_or_nothing: true if the user wants all the cart or nothing at all
@@ -113,18 +113,19 @@ class ICommerceSystemFacade:
         raise NotImplementedError()
 
     # 2.9
-    def purchase_shopping_bag(self, user_id: int, shop_id: int, payment_details: dict):
+    def purchase_shopping_bag(self, user_id: int, shop_id: int, payment_details: dict, delivery_details: dict):
         """
-                make a purchase of the entire shopping bag for the specified store of a user
-                :param shop_id: the shop that identifies the bag
-                :param payment_details: payment details of the user
-                :param user_id: identifies the user making the purchase
-                :return: true if the purchase was a success, false otherwise
-                """
+        make a purchase of the entire shopping bag for the specified store of a user
+        :param shop_id: the shop that identifies the bag
+        :param payment_details: payment details of the user
+        :param user_id: identifies the user making the purchase
+        :return: true if the purchase was a success, false otherwise
+        """
         raise NotImplementedError()
 
     # 2.9
-    def purchase_product(self, user_id: int, shop_id: int, product_id: int, amount_to_buy: int, payment_details: dict):
+    def purchase_product(self, user_id: int, shop_id: int, product_id: int, amount_to_buy: int, payment_details: dict,
+                         delivery_details: dict):
         """
         buy a single product
         :param payment_details: payment details of the user

@@ -8,9 +8,8 @@ import Grid from '@material-ui/core/Grid';
 
 import {useAuth} from "./use-auth";
 import {get_all_shops_info, get_user_transactions} from "../api";
-import {Link} from "react-router-dom";
 import SearchIcon from "@material-ui/icons/Search";
-import Toolbar from "@material-ui/core/Toolbar";
+import {Link as RouteLink} from "react-router-dom";
 
 const useStyles = makeStyles((theme) => ({
   search: {
@@ -140,7 +139,7 @@ const shopData = [{
   shopImage: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQVocyW9xaVWyWJKH1IF9VOQDqXCyK6wTdB0Q&usqp=CAU",
 },
 ];
-export const Main_page = (props) => {
+export const MainPage = (props) => {
   const classes = useStyles();
   const [shops, setShops] = useState(shopData);
   const auth = useAuth();
@@ -201,12 +200,12 @@ export default function ButtonBases({shops}){
        (
            <>
              <Grid item xs >
-        <ButtonBase
+        <RouteLink to={{pathname: `/shops/${shop.shop_id}`, header: `Shop: ${shop.shop_name}`}}>
+          <ButtonBase
           focusRipple
           key={shop.shop_id}
           className={classes.shopImage}
           focusVisibleClassName={classes.focusVisible}
-          href={`/shops/${shop.shop_id}`}
           style={{
             width: '100%',
           }}
@@ -231,6 +230,7 @@ export default function ButtonBases({shops}){
             </Typography>
           </span>
         </ButtonBase>
+        </RouteLink>
      </Grid></>)
 
       )}

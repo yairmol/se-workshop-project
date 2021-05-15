@@ -16,11 +16,12 @@ export default function AddAppointmentPopup({shop_id, close_window_func, appoint
 
   const [username, setName] = useState("")
   const [state, setState] = useState({
-    delete_p: false,
-    edit: false,
-    add: false,
-    discount: false,
-    transaction: false,
+    delete_product: false,
+    edit_product: false,
+    add_product: false,
+    manage_discounts: false,
+    watch_transactions: false,
+    watch_staff: false
   });
 
   const handleSelectChange = (event) => {
@@ -32,13 +33,16 @@ export default function AddAppointmentPopup({shop_id, close_window_func, appoint
     close_window_func()
   }
 
-  const { delete_p, edit, add, discount, transaction } = state;
+  const { delete_product, edit_product, add_product, manage_discounts, watch_transactions, watch_staff } = state;
 
   const done = () => {
     if (show_perms) {
       // ADD MANAGER
-      const perms =
-          [[delete_p, "delete"], [edit, "edit"], [add, "add"], [discount, "discount"], [transaction, "transaction"]]
+      const perms = [
+        [delete_product, "delete_product"], [edit_product, "edit_product"],
+        [add_product, "add_product"], [manage_discounts, "manage_discounts"],
+        [watch_transactions, "watch_transactions"], [watch_staff, "watch_staff"]
+      ]
       let perms_lst = []
       for (let i =0; i<perms.length; i++) {
         if (perms[i][0]) {
@@ -92,24 +96,28 @@ export default function AddAppointmentPopup({shop_id, close_window_func, appoint
           {show_perms ?
           <FormGroup>
             <FormControlLabel
-              control={<Checkbox checked={delete_p} onChange={handleChange} name="delete_p" />}
+              control={<Checkbox checked={delete_product} onChange={handleChange} name="delete_product" />}
               label="Delete product"
             />
             <FormControlLabel
-              control={<Checkbox checked={edit} onChange={handleChange} name="edit" />}
+              control={<Checkbox checked={edit_product} onChange={handleChange} name="edit_product" />}
               label="Edit product"
             />
             <FormControlLabel
-              control={<Checkbox checked={add} onChange={handleChange} name="add" />}
+              control={<Checkbox checked={add_product} onChange={handleChange} name="add_product" />}
               label="Add product"
             />
             <FormControlLabel
-              control={<Checkbox checked={discount} onChange={handleChange} name="discount" />}
+              control={<Checkbox checked={manage_discounts} onChange={handleChange} name="manage_discounts" />}
               label="Edit discounts"
             />
             <FormControlLabel
-              control={<Checkbox checked={transaction} onChange={handleChange} name="transaction" />}
+              control={<Checkbox checked={watch_transactions} onChange={handleChange} name="watch_transactions" />}
               label="View transactions"
+            />
+            <FormControlLabel
+              control={<Checkbox checked={watch_staff} onChange={handleChange} name="watch_staff" />}
+              label="View Shop Staff"
             />
         </FormGroup>
               :

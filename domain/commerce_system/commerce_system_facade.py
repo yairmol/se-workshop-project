@@ -140,23 +140,25 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         return user.get_cart_info()
 
     # 2.9
-    def purchase_cart(self, user_id: int, payment_details: dict, do_what_you_can=False) -> List[Transaction]:
+    def purchase_cart(self, user_id: int, payment_details: dict, delivery_details: dict,
+                      do_what_you_can=False) -> List[Transaction]:
         user = self.get_user(user_id)
-        return user.purchase_cart(payment_details, do_what_you_can)
+        return user.purchase_cart(payment_details, delivery_details, do_what_you_can)
 
     # 2.9
-    def purchase_shopping_bag(self, user_id: int, shop_id: int, payment_details: dict) -> Transaction:
+    def purchase_shopping_bag(self, user_id: int, shop_id: int, payment_details: dict,
+                              delivery_details: dict) -> Transaction:
         user = self.get_user(user_id)
         shop = self.get_shop(shop_id)
-        return user.purchase_shopping_bag(shop, payment_details)
+        return user.purchase_shopping_bag(shop, payment_details, delivery_details)
 
     # 2.9
     def purchase_product(self, user_id: int, shop_id: int, product_id: int, amount_to_buy: int,
-                         payment_details: dict) -> Transaction:
+                         payment_details: dict, delivery_details: dict) -> Transaction:
         user = self.get_user(user_id)
         shop = self.get_shop(shop_id)
         product = shop.products[product_id]
-        return user.purchase_product(shop, product, amount_to_buy, payment_details)
+        return user.purchase_product(shop, product, amount_to_buy, payment_details, delivery_details)
 
     # 3.1
     def logout(self, user_id: int):
@@ -372,8 +374,6 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         return self.shops.get(shop_id).get_product_info(product_id).to_dict()
 
     def get_permissions(self, user_id, shop_id) -> dict:
-        # return {'delete': False, 'edit': False, 'add': False, 'discount': False, 'transaction': False, 'owner': False}
-
         shop = self.get_shop(shop_id)
         subscribed = self.get_user(user_id).user_state
         ret = subscribed.get_permissions(shop)

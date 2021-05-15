@@ -6,7 +6,7 @@ import Button from '@material-ui/core/Button';
 import IconButton from '@material-ui/core/IconButton';
 import SearchIcon from '@material-ui/icons/Search';
 import Typography from '@material-ui/core/Typography';
-import {Link as RouteLink, useHistory} from 'react-router-dom';
+import {Link as RouteLink, useHistory, useLocation} from 'react-router-dom';
 import Link from '@material-ui/core/Link'
 import {Badge, InputBase, Menu, MenuItem, Snackbar} from "@material-ui/core";
 import AccountCircle from '@material-ui/icons/AccountCircle';
@@ -85,9 +85,14 @@ const useStyles = makeStyles((theme) => ({
 
 export default function Header(props) {
   const classes = useStyles();
-  const {categories, title} = props;
+  const {categories} = props;
   const auth = useAuth();
   const history = useHistory();
+  const location = useLocation();
+  if (location.header) {
+    localStorage.setItem("header", location.header || "Commerce System")
+  }
+  const header = localStorage.getItem("header")
 
   const [notifList, setNotifListData] = useState(["Hello", "Is this working ? ", "Maybe"]);
   const [notifSnackBarOpen, setNotifSnackBarOpen] = useState(false);
@@ -120,14 +125,18 @@ export default function Header(props) {
   const renderMenu = (
     <Menu
       anchorEl={anchorEl}
-      anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+      anchorOrigin={{vertical: 'top', horizontal: 'right'}}
       id={menuId}
       keepMounted
-      transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+      transformOrigin={{vertical: 'top', horizontal: 'right'}}
       open={isMenuOpen}
       onClose={handleMenuClose}
     >
-      <MenuItem onClick={handleMenuClose}><RouteLink to="/profile">Profile</RouteLink></MenuItem>
+      <MenuItem onClick={handleMenuClose}>
+        <RouteLink to={{pathname: "/profile", header: "Profile Page",}}>
+          Profile
+        </RouteLink>
+      </MenuItem>
       {/*<MenuItem onClick={handleMenuClose}></MenuItem>*/}
     </Menu>
   );
@@ -137,7 +146,7 @@ export default function Header(props) {
   const signout = () => {
     auth.signout().then((res) => {
       if (res) {
-        history.replace({pathname: "/login"})
+        history.replace({pathname: "/login", header: "Login"})
       }
     })
   }
@@ -153,10 +162,10 @@ export default function Header(props) {
           noWrap
           className={classes.toolbarTitle}
         >
-          {title}
+          {header || "Commerce System"}
         </Typography>
 
-        <RouteLink to="/cart">
+        <RouteLink to={{pathname: "/cart", header: "Shopping Cart"}}>
           <IconButton>
             <Badge badgeContent={0} color="secondary">
               <ShoppingCartIcon/>
@@ -165,7 +174,7 @@ export default function Header(props) {
         </RouteLink>
         {auth.user ? <>
             <Button variant="outlined" size="small" onClick={signout} className={classes.toolbarButton}>
-              Sign out
+              Logout
             </Button>
             <IconButton
               edge="end"
@@ -177,14 +186,14 @@ export default function Header(props) {
               <AccountCircle/>
             </IconButton></> :
           <div>
-            <RouteLink to="/register" style={{textDecoration: "none"}}>
+            <RouteLink to={{pathname: "/register", header: "Registration"}} style={{textDecoration: "none"}}>
               <Button variant="outlined" size="small" className={classes.toolbarButton}>
-                Sign up
+                Register
               </Button>
             </RouteLink>
-            <RouteLink to="/login" style={{textDecoration: "none"}}>
+            <RouteLink to={{pathname: "/login", header: "Login"}} style={{textDecoration: "none"}}>
               <Button variant="outlined" size="small" className={classes.toolbarButton}>
-                Sign in
+                Login
               </Button>
             </RouteLink>
           </div>
@@ -206,7 +215,7 @@ export default function Header(props) {
             href={category.url}
             className={classes.toolbarLink}
           >
-            <RouteLink className={classes.toolbarLink} to={`/${category.url}`}>
+            <RouteLink className={classes.toolbarLink} to={{pathname: `/${category.url}`, header: category.title}}>
               {category.title}
             </RouteLink>
           </Link>
@@ -222,8 +231,3 @@ export default function Header(props) {
     </React.Fragment>
   );
 }
-
-Header.propTypes = {
-  sections: PropTypes.array,
-  title: PropTypes.string,
-};

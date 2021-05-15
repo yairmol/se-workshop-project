@@ -77,7 +77,8 @@ export default function EditProductPopup({product, close_window_func, edit_produ
     /*
     CALL FOR SET PERMISSIONS
      */
-    edit_product_func(name, price, description, categories)
+    alert(`${[product.product_id, name, price, description, categories]}`)
+    edit_product_func(product.product_id, name, price, description, categories)
     handleClose()
   }
 
@@ -96,11 +97,11 @@ export default function EditProductPopup({product, close_window_func, edit_produ
         <form autoComplete="off">
             <TextField autoFocus margin="dense" id="name" label="product name" fullWidth defaultValue={name}
                        onChange={(e) => setName(e.target.value)} />
-            <TextField autoFocus margin="dense" id="name" label="description" fullWidth defaultValue={description}
-                       onChange={(e) => setPrice(e.target.value)} />
-            <TextField autoFocus margin="dense" id="name" label="price" fullWidth defaultValue={price} InputProps={{
+            <TextField autoFocus margin="dense" id="description" label="description" fullWidth defaultValue={description}
+                       onChange={(e) => setDescription(e.target.value)} />
+            <TextField autoFocus margin="dense" id="price" label="price" fullWidth defaultValue={price} InputProps={{
             startAdornment: <InputAdornment position="start">₪</InputAdornment>, inputComponent: NumberFormatCustom,
-          }}           onChange={(e) => setDescription(e.target.value)}/>
+          }}           onChange={(e) => setPrice(e.target.value)}/>
             <TextField autoFocus margin="dense" id="name" label="categories" fullWidth
                        defaultValue={get_categories()}
                        onChange={(e) => set_categories(e.target.value)}/>

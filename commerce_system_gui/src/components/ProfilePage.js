@@ -69,14 +69,18 @@ function UserAppointments({appointments}) {
           return (
             <Grid container direction="column">
               <Paper className={classes.paper}>
-                <RouteLink to={`/shops/${appointment.shop_id}`} style={{color: "black"}}><Link className={classes.heading}>Appointment for shop {appointment.shop_name}</Link></RouteLink>
+                <RouteLink to={{pathname: `/shops/${appointment.shop_id}`, header: appointment.shop_name}}
+                           style={{color: "black"}}>
+                  <Link className={classes.heading}>
+                    Appointment for shop {appointment.shop_name}
+                  </Link>
+                </RouteLink>
                 <Typography className={classes.secondaryHeading}>title: {appointment.title}</Typography>
                 <Typography className={classes.secondaryHeading}>appointer: {appointment.appointer}</Typography>
               </Paper>
             </Grid>
           )
-        })
-        : <Typography align="center">You are currently not an owner or manager of any shop</Typography>
+        }) : <Typography align="center">You are currently not an owner or manager of any shop</Typography>
       }
     </div>
   )

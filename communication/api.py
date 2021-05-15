@@ -25,7 +25,7 @@ def create_app():
     API_BASE = '/api'
 
     __system_service = SystemService.get_system_service()
-    guest_sess, subs_sess, sids_to_shop, sid_to_sess, pid_to_sid = fill_with_data(__system_service, 2, 2, 2, 6)
+    guest_sess, subs_sess, sids_to_shop, sid_to_sess, pid_to_sid = fill_with_data(__system_service, 0, 2, 2, 6)
     make_purchases(__system_service, subs_sess[0], pid_to_sid, list(pid_to_sid.keys())[:3])
 
     def apply_request_on_function(func, *args, **kwargs):
@@ -83,9 +83,9 @@ def create_app():
         return __system_service.get_all_ids_and_names(request.args.get("token"))
 
     # 2.6
-    @app.route(f'{API_BASE}/search', methods=["GET"])
+    @app.route(f'{API_BASE}/search', methods=["PUT"])
     def search_products() -> List[dict]:
-        return __system_service.search_products(request.args.get("token"))
+        return apply_request_on_function(__system_service.search_products)
 
     @app.route(f'{API_BASE}/allCategories', methods=["GET"])
     def get_all_categories() -> List[str]:
@@ -284,4 +284,4 @@ def create_app():
 
 if __name__ == '__main__':
     app = create_app()
-    app.run(port=5001, debug=True, ssl_context=('../secrets/cert.pem', '../secrets/key.pem'))
+    app.run(port=5000, debug=True, ssl_context=('../secrets/cert.pem', '../secrets/key.pem'))
