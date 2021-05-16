@@ -1,5 +1,5 @@
-import {Button, CircularProgress, IconButton, Link, TextField} from "@material-ui/core";
-import {useEffect, useState} from "react";
+import {Button, CircularProgress, IconButton, TextField, Link as MUILink} from "@material-ui/core";
+import React, {useEffect, useState} from "react";
 import {makeStyles} from '@material-ui/core/styles';
 import Accordion from '@material-ui/core/Accordion';
 import AccordionSummary from '@material-ui/core/AccordionSummary';
@@ -19,6 +19,7 @@ import TableRow from '@material-ui/core/TableRow';
 import {get_cart_info, remove_product_from_cart, save_product_to_cart} from "../api";
 import {useAuth} from "./use-auth";
 import RemoveCircleOutlineIcon from '@material-ui/icons/RemoveCircleOutline';
+import {Link as RouteLink} from "react-router-dom";
 
 const columns = [
   {id: 'product_name', label: 'Name'},
@@ -79,11 +80,21 @@ const useStyles = makeStyles((theme) => ({
   root: {
     width: '100%',
     marginTop: theme.spacing(3),
+    alignItems: "center",
   },
   accordion: {
     width: '80%',
     margin: "auto",
     marginBottom: theme.spacing(1.5),
+  },
+  checkoutButton: {
+    margin: 10,
+    // padding: "0"
+  },
+  cartCheckoutButton: {
+    marginLeft: "500px",
+    marginRight: "5%",
+    // padding: "0"
   },
   heading: {
     fontSize: theme.typography.pxToRem(19),
@@ -136,71 +147,71 @@ function StickyHeadProductsTable({products, onProductChange, onRemoveProduct}) {
   // alert(JSON.stringify(products));
 
   return (
-      <Paper className={classes.root}>
-        <TableContainer className={classes.container}>
-          <Table stickyHeader aria-label="sticky table">
-            <TableHead>
-              <TableRow>
-                {columns.map((column) => (
-                    <TableCell
-                        key={column.id}
-                        align={column.align}
-                        style={{minWidth: column.minWidth}}
-                    >
-                      {column.label}
-                    </TableCell>
-                ))}
-                <TableCell key="remove-product" align="left">Remove product</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {products.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((product) => {
-                return (
-                    <TableRow hover role="checkbox" tabIndex={-1} key={product.product_id}>
-                      {columns.map((column) => {
-                        const value = product[column.id];
-                        return (
-                            <TableCell key={column.id} align={column.align}>
-                              {column.id === "amount" ?
-                                  <TextField id="standard-number" label="Number" type="number" value={value}
-                                             onChange={(event) =>
-                                                 onProductChange(product.product_id, event.target.value)}/> :
-                                  column.format && typeof value === 'number' ? column.format(value) : value
-                              }
-                            </TableCell>
-                        );
-                      })}
-                      <TableCell key="remove-product">
-                        <IconButton onClick={() => onRemoveProduct(product.product_id)}>
-                          <RemoveCircleOutlineIcon/>
-                        </IconButton>
+    <Paper className={classes.root}>
+      <TableContainer className={classes.container}>
+        <Table stickyHeader aria-label="sticky table">
+          <TableHead>
+            <TableRow>
+              {columns.map((column) => (
+                <TableCell
+                  key={column.id}
+                  align={column.align}
+                  style={{minWidth: column.minWidth}}
+                >
+                  {column.label}
+                </TableCell>
+              ))}
+              <TableCell key="remove-product" align="left">Remove product</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {products.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((product) => {
+              return (
+                <TableRow hover role="checkbox" tabIndex={-1} key={product.product_id}>
+                  {columns.map((column) => {
+                    const value = product[column.id];
+                    return (
+                      <TableCell key={column.id} align={column.align}>
+                        {column.id === "amount" ?
+                          <TextField id="standard-number" label="Number" type="number" value={value}
+                                     onChange={(event) =>
+                                       onProductChange(product.product_id, event.target.value)}/> :
+                          column.format && typeof value === 'number' ? column.format(value) : value
+                        }
                       </TableCell>
-                    </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </TableContainer>
-        <TablePagination
-            rowsPerPageOptions={[10, 25, 100]}
-            component="div"
-            count={products.length}
-            rowsPerPage={rowsPerPage}
-            page={page}
-            onChangePage={handleChangePage}
-            onChangeRowsPerPage={handleChangeRowsPerPage}
-        />
-      </Paper>
+                    );
+                  })}
+                  <TableCell key="remove-product">
+                    <IconButton onClick={() => onRemoveProduct(product.product_id)}>
+                      <RemoveCircleOutlineIcon/>
+                    </IconButton>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </TableContainer>
+      <TablePagination
+        rowsPerPageOptions={[10, 25, 100]}
+        component="div"
+        count={products.length}
+        rowsPerPage={rowsPerPage}
+        page={page}
+        onChangePage={handleChangePage}
+        onChangeRowsPerPage={handleChangeRowsPerPage}
+      />
+    </Paper>
   );
 }
 
 const ProductView = () => {
   return (
-      <></>
+    <></>
   )
 }
 
-const ShoppingBagView = ({shopId, shoppingBag}) => {
+const ShoppingBagView = ({shopId, shoppingBag, refresh}) => {
   const classes = useStyles();
   const auth = useAuth();
   const [productsState, setProducts] = useState(JSON.parse(JSON.stringify(shoppingBag.products)));
@@ -210,7 +221,7 @@ const ShoppingBagView = ({shopId, shoppingBag}) => {
     if (products.length === 0) {
       shoppingBag.products.map(async (product) => {
         await remove_product_from_cart(
-            await auth.getToken(), shopId, product.product_id, product.amount
+          await auth.getToken(), shopId, product.product_id, product.amount
         )
       })
     } else {
@@ -218,22 +229,23 @@ const ShoppingBagView = ({shopId, shoppingBag}) => {
       for (let i = 0; i < shoppingBag.products.length; i++) {
         while (products[j].product_id !== shoppingBag.products[i].product_id) {
           await remove_product_from_cart(
-              await auth.getToken(), shopId, shoppingBag.products[i].product_id, shoppingBag.products[i].amount
+            await auth.getToken(), shopId, shoppingBag.products[i].product_id, shoppingBag.products[i].amount
           );
           i++;
         }
         let func = (x) => x;
-        const additional_amount = parseInt(products[i].amount) - parseInt(shoppingBag.products[i].amount);
+        const additional_amount = parseInt(products[j].amount) - parseInt(shoppingBag.products[i].amount);
         if (additional_amount > 0) {
           func = save_product_to_cart;
         } else if (additional_amount < 0) {
           func = remove_product_from_cart;
         }
-        await func(await auth.getToken(), shopId, products[i].product_id, Math.abs(additional_amount));
+        await func(await auth.getToken(), shopId, products[j].product_id, Math.abs(additional_amount));
         j++
       }
     }
     setEdited(false);
+    refresh();
   }
 
   const onProductChange = (prod_id, val) => {
@@ -279,34 +291,45 @@ const ShoppingBagView = ({shopId, shoppingBag}) => {
   }
 
   return (
-      <div className={classes.accordion}>
-        <Accordion defaultExpanded>
-          <AccordionSummary
-              expandIcon={<ExpandMoreIcon/>}
-              aria-controls="panel1c-content"
-              id="panel1c-header"
-          >
-            <div className={classes.column}>
-              <Link className={classes.heading}>Shopping Bag for {shoppingBag.shop_name}</Link>
-              <Typography className={classes.secondaryHeading}>total: {shoppingBag.total}</Typography>
-            </div>
-            <div className={classes.column}>
-              {edited ? <Typography className={classes.secondaryHeading}>edited</Typography> : <></>}
-            </div>
-          </AccordionSummary>
-          <AccordionDetails className={classes.details}>
-            <StickyHeadProductsTable products={productsState} onProductChange={onProductChange}
-                                     onRemoveProduct={onRemoveProduct}/>
-          </AccordionDetails>
-          <Divider/>
-          <AccordionActions>
-            <Button size="small" onClick={onCancel}>Cancel</Button>
-            <Button size="small" color="primary" onClick={() => onSaveChanges(productsState)}>
-              Save
-            </Button>
-          </AccordionActions>
-        </Accordion>
-      </div>
+    <div className={classes.accordion}>
+        <Accordion>
+        <AccordionSummary
+          expandIcon={<ExpandMoreIcon/>}
+          aria-controls="panel1c-content"
+          id="panel1c-header"
+        >
+          <div className={classes.column}>
+              <MUILink className={classes.heading}>Shopping Bag for {shoppingBag.shop_name}</MUILink>
+            <Typography className={classes.secondaryHeading}>total: {shoppingBag.total}</Typography>
+              {productsState.length > 0 &&
+              <RouteLink to={{
+                pathname: "/checkout",
+                shop_id: shopId,
+                from: "cart",
+                header: "Checkout"
+              }}>
+                <Button color="primary" variant="outlined" className={classes.checkoutButton}>Checkout</Button>
+              </RouteLink>}
+          </div>
+          <div className={classes.column}>
+            {edited ? <Typography className={classes.secondaryHeading}>edited</Typography> : <></>}
+          </div>
+        </AccordionSummary>
+        <AccordionDetails className={classes.details}>
+            {productsState.length > 0 ?
+                <StickyHeadProductsTable products={productsState} onProductChange={onProductChange}
+                                         onRemoveProduct={onRemoveProduct}/>
+                : <Typography>Shopping bag is empty</Typography>}
+        </AccordionDetails>
+        <Divider/>
+        <AccordionActions>
+          <Button size="small" onClick={onCancel}>Cancel</Button>
+          <Button size="small" color="primary" onClick={() => onSaveChanges(productsState)}>
+            Save
+          </Button>
+        </AccordionActions>
+      </Accordion>
+    </div>
   )
 }
 
@@ -315,6 +338,15 @@ export const Cart = () => {
   const auth = useAuth();
   const [loaded, setLoaded] = useState(false);
   const [cart, setCart] = useState({shopping_bags: {}});
+
+  const refresh = () => {
+    auth.getToken().then((token) => get_cart_info(token).then((res) => {
+      if (res) {
+        setCart(res);
+      }
+      setLoaded(true)
+    }))
+  }
 
   useEffect(async () => {
     if (!loaded) {
@@ -328,12 +360,26 @@ export const Cart = () => {
   }, []);
 
   return (
-      <div className={classes.root}>
-        {
-          loaded ? Object.keys(cart.shopping_bags).map((sid) =>
-                  <ShoppingBagView shopId={sid} shoppingBag={cart.shopping_bags[sid]}/>)
-              : <CircularProgress/>
-        }
-      </div>
+    <div className={classes.root}>
+      {
+        loaded ? Object.keys(cart.shopping_bags).map((sid) =>
+            <ShoppingBagView shopId={sid} shoppingBag={cart.shopping_bags[sid]} refresh={refresh}/>)
+          : <CircularProgress/>
+      }
+      {
+        Object.keys(cart.shopping_bags).length === 0 ?
+          <Typography align="center">
+            You currently have no shopping bags, start shopping <RouteLink to={{pathname: "/", header: "Main"}}>here</RouteLink>
+          </Typography> :
+          <RouteLink to={{
+            pathname: "/checkout",
+            cart: true,
+            from: "cart",
+            header: "Checkout"
+          }}>
+            <Button className={classes.cartCheckoutButton} variant="contained" color="primary">Checkout Cart</Button>
+          </RouteLink>
+      }
+    </div>
   );
 };

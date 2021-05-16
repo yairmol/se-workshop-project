@@ -25,7 +25,7 @@ def create_app():
     API_BASE = '/api'
 
     __system_service = SystemService.get_system_service()
-    guest_sess, subs_sess, sids_to_shop, sid_to_sess, pid_to_sid = fill_with_data(__system_service, 2, 2, 2, 6)
+    guest_sess, subs_sess, sids_to_shop, sid_to_sess, pid_to_sid = fill_with_data(__system_service, 0, 2, 2, 6)
     make_purchases(__system_service, subs_sess[0], pid_to_sid, list(pid_to_sid.keys())[:3])
 
     def apply_request_on_function(func, *args, **kwargs):
@@ -61,12 +61,16 @@ def create_app():
         print("login", request.remote_user, "addr", request.remote_addr, request.environ.get('REMOTE_PORT'))
         return apply_request_on_function(__system_service.login)
 
+    @app.route(f'{API_BASE}/userData', methods=["GET"])
+    def get_user_data() -> dict:
+        return apply_request_on_function(__system_service.get_user_data)
+
     # 2.5
     @app.route(f'{API_BASE}/shops/<int:shop_id>')
     def get_shop_info(shop_id: int) -> dict:
         return __system_service.get_shop_info(token=request.args.get("token"), shop_id=shop_id)
 
-    @app.route(f'{API_BASE}/all_shops/', methods=["GET"])
+    @app.route(f'{API_BASE}/all_shops', methods=["GET"])
     def get_all_shop_info() -> dict:
         return __system_service.get_all_shops_info(request.args.get("token"))
 
@@ -79,9 +83,13 @@ def create_app():
         return __system_service.get_all_ids_and_names(request.args.get("token"))
 
     # 2.6
-    @app.route(f'{API_BASE}/search')
+    @app.route(f'{API_BASE}/search', methods=["PUT"])
     def search_products() -> List[dict]:
-        pass
+        return apply_request_on_function(__system_service.search_products)
+
+    @app.route(f'{API_BASE}/allCategories', methods=["GET"])
+    def get_all_categories() -> List[str]:
+        return __system_service.get_all_categories(request.args.get("token"))
 
     # 2.7
     # TODO: decide on route
@@ -236,7 +244,7 @@ def create_app():
 
     @app.route(f'{API_BASE}/permissions/<int:shop_id>')
     def get_permissions(shop_id: int):
-        print(__system_service.get_permissions(request.args.get("token"), shop_id))
+        # print(__system_service.get_permissions(request.args.get("token"), shop_id))
         return __system_service.get_permissions(request.args.get("token"), shop_id)
 
     @app.route(f'{API_BASE}/shops/<int:shop_id>/discounts', methods=["GET"])
@@ -256,6 +264,16 @@ def create_app():
     @app.route(f'{API_BASE}/shops/<int:shop_id>/discounts', methods=["PUT"])
     def aggregate_discounts(shop_id: int):
         return apply_request_on_function(__system_service.aggregate_discounts, shop_id=shop_id)
+
+    @app.route(f'{API_BASE}/shops/<int:shop_id>/discounts/<int:dst_discount_id>', methods=["PUT"])
+    def move_discount_to(shop_id: int, dst_discount_id: int):
+        return apply_request_on_function(
+            __system_service.move_discount_to, shop_id=shop_id, dst_discount_id=dst_discount_id
+        )
+
+    @app.route(f'{API_BASE}/appointments', methods=["GET"])
+    def get_user_appointments():
+        return __system_service.get_user_appointemnts(request.args.get("token"))
 
     @app.errorhandler(404)
     def server_error(e):

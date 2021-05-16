@@ -36,22 +36,27 @@ class User:
 
     def logout(self):
         self.user_state.logout()
+        self.user_state = Guest()
 
-    def purchase_product(self, shop: Shop, product: Product, amount_to_buy: int, payment_details: dict):
+    def purchase_product(self, shop: Shop, product: Product, amount_to_buy: int, payment_details: dict,
+                         delivery_details: dict) -> Transaction:
         bag = ShoppingBag(shop)
         bag.add_product(product, amount_to_buy)
-        transaction = bag.purchase_bag(self.get_name(), payment_details)
+        transaction = bag.purchase_bag(self.get_name(), payment_details, delivery_details)
         self._add_transaction(transaction)
+        return transaction
 
-    def purchase_shopping_bag(self, shop: Shop, payment_details: dict):
+    def purchase_shopping_bag(self, shop: Shop, payment_details: dict, delivery_details: dict) -> Transaction:
         bag = self.cart[shop]
-        transaction = bag.purchase_bag(self.get_name(), payment_details)
+        transaction = bag.purchase_bag(self.get_name(), payment_details, delivery_details)
         self._add_transaction(transaction)
+        return transaction
 
-    def purchase_cart(self, payment_details: dict, do_what_you_can=False):
-        transactions = self.cart.purchase_cart(self.get_name(), payment_details, do_what_you_can)
+    def purchase_cart(self, payment_details: dict, delivery_details: dict, do_what_you_can=False) -> List[Transaction]:
+        transactions = self.cart.purchase_cart(self.get_name(), payment_details, delivery_details, do_what_you_can)
         for transaction in transactions:
             self._add_transaction(transaction)
+        return transactions
 
     def _add_transaction(self, transaction: Transaction):
         TransactionRepo.get_transaction_repo().add_transaction(transaction)
@@ -107,6 +112,9 @@ class User:
 
     def get_shop_discounts(self, shop: Shop) -> List[Discount]:
         return self.user_state.get_shop_discounts(shop)
+
+    def to_dict(self):
+        raise NotImplementedError()
 
 
 class UserState:
@@ -176,6 +184,9 @@ class UserState:
     def aggregate_discounts(self, shop, discount_ids, func):
         raise Exception("User doesnt have permissions to manage discounts")
 
+    def move_discount_to(self, shop: Shop, src_discount_id: int, dst_discount_id: int):
+        raise Exception("User doesnt have permissions to manage discounts")
+
     def add_purchase_condition(self, shop: Shop, condition: Condition):
         raise Exception("User cannot perform this action")
 
@@ -188,6 +199,12 @@ class UserState:
     def get_shop_staff_info(self, shop: Shop) -> List[Appointment]:
         raise Exception("User doesn't have permission to see shop staff")
 
+    def get_appointments(self):
+        raise Exception("User doesn't have permission to get appointments")
+
+    def to_dict(self):
+        raise NotImplementedError()
+
 
 class Guest(UserState):
     def get_name(self, userid):
@@ -196,6 +213,9 @@ class Guest(UserState):
     def register(self, username: str, **user_details):
         return Subscribed(username)
 
+    def to_dict(self):
+        return {"username": "Guest"}
+
 
 class Subscribed(UserState):
 
@@ -203,6 +223,9 @@ class Subscribed(UserState):
         self.appointments: Dict[Shop, Appointment] = {}
         self.username = username
         self.transactions: List[Transaction] = []
+
+    def to_dict(self):
+        return {"username": self.username, }
 
     def logout(self):
         pass
@@ -282,6 +305,10 @@ class Subscribed(UserState):
         appointment = self.get_appointment(shop)
         appointment.aggregate_discounts(discount_ids, func)
 
+    def move_discount_to(self, shop: Shop, src_discount_id: int, dst_discount_id: int):
+        appointment = self.get_appointment(shop)
+        appointment.move_discount_to(src_discount_id, dst_discount_id)
+
     def add_purchase_condition(self, shop: Shop, condition: Condition):
         appointment = self.get_appointment(shop)
         appointment.add_purchase_condition(condition)
@@ -292,11 +319,16 @@ class Subscribed(UserState):
 
     def get_permissions(self, shop):
         appointment = self.get_appointment(shop)
+        if not appointment:
+            return super().get_permissions(shop)
         return appointment.get_permissions()
 
     def get_shop_staff_info(self, shop: Shop) -> List[Appointment]:
         appointment = self.get_appointment(shop)
         return appointment.get_shop_staff_info()
+
+    def get_appointments(self):
+        return list(self.appointments.values())
 
 
 class SystemManager(Subscribed):
@@ -312,4 +344,3 @@ class SystemManager(Subscribed):
 
     def get_system_transaction_history_of_user(self, username):
         return self.system_transactions.get_transactions_of_user(username)
-

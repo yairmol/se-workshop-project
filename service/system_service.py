@@ -1,7 +1,8 @@
 from typing import List, Union
 
 from domain.authentication_module.authenticator import Authenticator
-from domain.discount_module.discount_management import SimpleCond, DiscountDict
+from domain.discount_module.discount_management import SimpleCond, DiscountDict, CompositeDiscountDict
+from domain.notifications.notifications import Notifications
 from domain.token_module.tokenizer import Tokenizer
 from domain.commerce_system.commerce_system_facade import CommerceSystemFacade
 from domain.logger.log import event_logger, error_logger
@@ -33,7 +34,7 @@ class SystemService:
     def get_system_service(cls):
         if not SystemService.__instance:
             SystemService.__instance = SystemService(
-                CommerceSystemFacade(Authenticator()), Tokenizer()
+                CommerceSystemFacade(Authenticator(), Notifications()), Tokenizer()
             )
         return SystemService.__instance
 
@@ -51,7 +52,9 @@ class SystemService:
             new_user_id = self.commerce_system_facade.enter()
             event_logger.info(f"A User entered the system, got id: {new_user_id}")
             token = self.tokenizer.add_new_user_token(new_user_id)
-            return make_status_dict(True, "", token)
+            withId = make_status_dict(True, "", token)
+            withId["id"] = new_user_id
+            return withId
         except Exception as e:
             return handle_exception(e)
 
@@ -102,6 +105,19 @@ class SystemService:
                 return handle_exception(e)
         return make_status_dict(False, "Invalid Token", "")
 
+    def get_user_data(self, token: str) -> dict:
+        if self.is_valid_token(token):
+            try:
+                user_id = self.tokenizer.get_id_by_token(token)
+                event_logger.info(f"User: {user_id} tries to get user data")
+                data = self.commerce_system_facade.get_user_data(user_id)
+                return make_status_dict(True, "", data)
+            except AssertionError as e:
+                return handle_assertion(e)
+            except Exception as e:
+                return handle_exception(e)
+        return make_status_dict(False, "Invalid Token", "")
+
     # 2.5
     def get_shop_info(self, token: str, shop_id: int) -> dict:
         if self.is_valid_token(token):
@@ -129,12 +145,26 @@ class SystemService:
 
     # 2.6
     def search_products(
-            self, product_name: str = None, keywords: List[str] = None,
+            self, token, product_name: str = None, keywords: List[str] = None,
             categories: List[str] = None, filters: List[dict] = None
     ) -> dict:
-        return make_status_dict(True, "",
-                                self.commerce_system_facade.search_products(product_name, keywords, categories,
-                                                                            filters))
+        if self.is_valid_token(token):
+            try:
+                user_id = self.tokenizer.get_id_by_token(token)
+                event_logger.info(f"user_sess {user_id} requested for all shops information")
+                return make_status_dict(
+                    True, "", self.commerce_system_facade.search_products(
+                        product_name, keywords, categories, filters
+                    )
+                )
+            except AssertionError as e:
+                return handle_assertion(e)
+            except Exception as e:
+                return handle_exception(e)
+        return make_status_dict(False, "Invalid Token", "")
+
+    def get_all_categories(self, token) -> dict:
+        return make_status_dict(True, "", self.commerce_system_facade.get_all_categories())
 
     # 2.7
     def save_product_to_cart(self, token: str, shop_id: int, product_id: int, amount_to_buy: int) -> dict:
@@ -185,14 +215,14 @@ class SystemService:
 
     # 2.9
     def purchase_product(self, token: str, shop_id: int, product_id: int,
-                         amount_to_buy: int, payment_details: dict) -> dict:
+                         amount_to_buy: int, payment_details: dict, delivery_details: dict) -> dict:
         if self.is_valid_token(token):
             try:
                 user_id = self.tokenizer.get_id_by_token(token)
                 event_logger.info(f"User: {str(user_id)} tries to purchase {str(amount_to_buy)}"
                                   f" products: {str(product_id)} of shop_id: {str(shop_id)}")
                 self.commerce_system_facade.purchase_product(
-                    user_id, shop_id, product_id, amount_to_buy, payment_details
+                    user_id, shop_id, product_id, amount_to_buy, payment_details, delivery_details
                 )
                 event_logger.info(f"User: {str(user_id)} successfully purchased the product {str(product_id)}")
                 return make_status_dict(True, "", "")
@@ -203,12 +233,12 @@ class SystemService:
         return make_status_dict(False, "Invalid Token", "")
 
     # 2.9
-    def purchase_shopping_bag(self, token: str, shop_id: int, payment_details: dict) -> dict:
+    def purchase_shopping_bag(self, token: str, shop_id: int, payment_details: dict, delivery_details: dict) -> dict:
         if self.is_valid_token(token):
             try:
                 user_id = self.tokenizer.get_id_by_token(token)
                 event_logger.info(f"User: {str(user_id)} tries to purchase {str(shop_id)} bag")
-                self.commerce_system_facade.purchase_shopping_bag(user_id, shop_id, payment_details)
+                self.commerce_system_facade.purchase_shopping_bag(user_id, shop_id, payment_details, delivery_details)
                 event_logger.info(f"User: {user_id} successfully purchased the bag of the shop {str(shop_id)}")
                 return make_status_dict(True, "", "")
             except AssertionError as e:
@@ -218,12 +248,13 @@ class SystemService:
         return make_status_dict(False, "Invalid Token", "")
 
     # 2.9
-    def purchase_cart(self, token: str, payment_details: dict, all_or_nothing: bool = False) -> dict:
+    def purchase_cart(self, token: str, payment_details: dict, delivery_details: dict,
+                      all_or_nothing: bool = False) -> dict:
         if self.is_valid_token(token):
             try:
                 user_id = self.tokenizer.get_id_by_token(token)
                 event_logger.info(f"User: {str(user_id)} tries to purchase his cart")
-                self.commerce_system_facade.purchase_cart(user_id, payment_details, all_or_nothing)
+                self.commerce_system_facade.purchase_cart(user_id, payment_details, delivery_details, all_or_nothing)
                 event_logger.info(f"User: {user_id} successfully purchased his cart")
                 return make_status_dict(True, "", "")
             except AssertionError as e:
@@ -538,7 +569,7 @@ class SystemService:
         return make_status_dict(False, "Invalid Token", [])
 
     def add_discount(self, token: str, shop_id: int, has_cond: bool, condition: List[Union[str, SimpleCond, List]],
-                     discount: DiscountDict) -> dict:
+                     discount: Union[DiscountDict, CompositeDiscountDict]) -> dict:
         if self.is_valid_token(token):
             try:
                 user_id = self.tokenizer.get_id_by_token(token)
@@ -552,13 +583,27 @@ class SystemService:
                 return handle_exception(e)
         return make_status_dict(False, "Invalid Token", "")
 
-    def aggregate_discounts(self, token: str, shop_id: int, discount_ids: [int], func: str):
+    def aggregate_discounts(self, token: str, shop_id: int, discount_ids: List[int], operator: str):
         if self.is_valid_token(token):
             try:
                 user_id = self.tokenizer.get_id_by_token(token)
                 event_logger.info(f"User: {user_id} tries to aggregate discounts to shop: {shop_id}")
-                self.commerce_system_facade.aggregate_discounts(user_id, shop_id, discount_ids, func)
+                self.commerce_system_facade.aggregate_discounts(user_id, shop_id, discount_ids, operator)
                 event_logger.info(f"User: {user_id} aggregated discounts to shop: {shop_id} successfully")
+                return make_status_dict(True, "", "")
+            except AssertionError as e:
+                return handle_assertion(e)
+            except Exception as e:
+                return handle_exception(e)
+        return make_status_dict(False, "Invalid Token", "")
+
+    def move_discount_to(self, token: str, shop_id: int, src_discount_id: int, dst_discount_id: int):
+        if self.is_valid_token(token):
+            try:
+                user_id = self.tokenizer.get_id_by_token(token)
+                event_logger.info(f"User: {user_id} tries to move discounts in shop: {shop_id}")
+                self.commerce_system_facade.move_discount_to(user_id, shop_id, src_discount_id, dst_discount_id)
+                event_logger.info(f"User: {user_id} moved discounts in shop: {shop_id} successfully")
                 return make_status_dict(True, "", "")
             except AssertionError as e:
                 return handle_assertion(e)
@@ -574,6 +619,20 @@ class SystemService:
                 self.commerce_system_facade.delete_discounts(user_id, shop_id, discount_ids)
                 event_logger.info(f"User: {user_id} deleted discounts to shop: {shop_id} successfully")
                 return make_status_dict(True, "", "")
+            except AssertionError as e:
+                return handle_assertion(e)
+            except Exception as e:
+                return handle_exception(e)
+        return make_status_dict(False, "Invalid Token", "")
+
+    def get_user_appointemnts(self, token):
+        if self.is_valid_token(token):
+            try:
+                user_id = self.tokenizer.get_id_by_token(token)
+                event_logger.info(f"User: {user_id} tries to get his appointments")
+                res = self.commerce_system_facade.get_user_appointments(user_id)
+                event_logger.info(f"User: {user_id} got his appointments successfully")
+                return make_status_dict(True, "", res)
             except AssertionError as e:
                 return handle_assertion(e)
             except Exception as e:

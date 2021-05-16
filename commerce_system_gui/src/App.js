@@ -4,7 +4,7 @@ import CssBaseline from '@material-ui/core/CssBaseline';
 import Grid from '@material-ui/core/Grid';
 import Container from '@material-ui/core/Container';
 import Header from './components/Header';
-import Transactions from "./components/Transactions";
+import {UserTransactions} from "./components/Transactions";
 import {Typography} from "@material-ui/core";
 import SignIn from "./components/SignIn";
 import {
@@ -19,10 +19,13 @@ import {Shop} from "./components/Shop";
 import {ShoppingBag} from "./components/ShoppingBag";
 import {Cart} from "./components/Cart";
 import {ProvideAuth} from "./components/use-auth.js";
-import {Main} from "./components/Main";
-import {Main_page} from "./components/Main_page";
+import {MainPage} from "./components/MainPage";
 import {Discounts} from "./components/Discounts";
 import System_manager_transaction_history from "./components/system_manager_transaction_history";
+import SearchProducts from "./components/SearchProducts";
+import {ShopForCustomer} from "./components/ShopForCustomer";
+import ProfilePage from "./components/ProfilePage";
+import {Checkout} from "./components/Checkout";
 
 const useStyles = makeStyles((theme) => ({
   mainGrid: {
@@ -32,16 +35,7 @@ const useStyles = makeStyles((theme) => ({
 
 const categories = [
   {title: 'Main page', url: ''},
-  {title: 'Technology', url: 'technology'},
-  {title: 'Design', url: 'design'},
-  {title: 'Culture', url: 'culture'},
-  {title: 'Business', url: 'business'},
-  {title: 'Politics', url: 'political'},
-  {title: 'Opinion', url: 'opinion'},
-  {title: 'Science', url: 'science'},
-  {title: 'Health', url: 'health'},
-  {title: 'Style', url: 'style'},
-  {title: 'Travel', url: 'travel'},
+  {title: 'Search products', url: 'search'},
 ];
 
 const transactions = [
@@ -133,16 +127,12 @@ const pages = {
 export default function Blog() {
   const classes = useStyles();
   const [selected, setSelected] = useState(pages.userTransactions);
-  const [searchQuery, setSearchQuery] = useState("");
+
   const setSelectedPage = (page) => {
     localStorage.setItem("page", page.name)
     setSelected(page)
   }
-  function onSearchChange(event){
-    // event.persist();
-    console.log( event.target.value);
-    setSearchQuery(event.target.value);
-  }
+
 
   return (
       <ProvideAuth>
@@ -150,11 +140,17 @@ export default function Blog() {
         <React.Fragment>
           <CssBaseline/>
           <Container maxWidth="lg" className={`site-layout-wrapper=modal-active`}>
-            <Header title={selected.name} categories={categories} onSearchChange = {onSearchChange}/>
+            <Header title={selected.name} categories={categories} />
             <main>
               <Grid container justify="center" spacing={5} className={classes.mainGrid}>
                 <Switch>
                   {/* Guest routes */}
+                  <Route path="/shops/:shop_id/products/:product_id" exact>
+                    <Product/>
+                  </Route>
+                  <Route path="/checkout">
+                    <Checkout />
+                  </Route>
                   <Route path="/register">
                     <Register />
                   </Route>
@@ -170,20 +166,26 @@ export default function Blog() {
                   <Route path="/shops/:shop_id">
                     <Shop/>
                   </Route>
+                  <Route path="/Cshops/:shop_id">
+                    <ShopForCustomer/>
+                  </Route>
                   <Route path="/shops/:shop_id/products/:product_id">
                     <Product/>
+                  </Route>
+                  <Route path="/profile">
+                    <ProfilePage/>
                   </Route>
                   <Route path="/login" exact>
                     <SignIn />
                   </Route>
                   <Route path="/transactions">
-                    <Transactions/>
-                  </Route>
-                  <Route path="/products" exact>
-                    <Product shop_name={'Armani'}/>
+                    <UserTransactions/>
                   </Route>
                   <Route path="/" exact>
-                    <Main_page searchQuery = {searchQuery}/>
+                    <MainPage />
+                  </Route>
+                  <Route path="/search" exact>
+                    <SearchProducts/>
                   </Route>
                   <Route path="/system_transactions" exact>
                     <System_manager_transaction_history />
@@ -192,6 +194,7 @@ export default function Blog() {
                 </Switch>
               </Grid>
             </main>
+            <div style={{width: "100%", height: "10rem"}}/>
           </Container>
         </React.Fragment>
       </Router>

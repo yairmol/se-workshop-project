@@ -1,3 +1,4 @@
+from domain.notifications.notifications import Notifications
 from domain.token_module.tokenizer import Tokenizer
 from domain.authentication_module.authenticator import Authenticator
 from domain.commerce_system.commerce_system_facade import CommerceSystemFacade
@@ -8,7 +9,7 @@ from service.system_service import SystemService
 class Driver:
     @staticmethod
     def get_commerce_system_facade() -> CommerceSystemFacade:
-        return CommerceSystemFacade(Driver.get_authenticator())
+        return CommerceSystemFacade(Driver.get_authenticator(), Notifications())
 
     @staticmethod
     def get_authenticator():

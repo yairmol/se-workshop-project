@@ -6,9 +6,9 @@ import Button from '@material-ui/core/Button';
 import IconButton from '@material-ui/core/IconButton';
 import SearchIcon from '@material-ui/icons/Search';
 import Typography from '@material-ui/core/Typography';
-import {Link as RouteLink, useHistory} from 'react-router-dom';
+import {Link as RouteLink, useHistory, useLocation} from 'react-router-dom';
 import Link from '@material-ui/core/Link'
-import {Badge, InputBase, Snackbar} from "@material-ui/core";
+import {Badge, InputBase, Menu, MenuItem, Snackbar} from "@material-ui/core";
 import AccountCircle from '@material-ui/icons/AccountCircle';
 import NotificationsIcon from '@material-ui/icons/Notifications';
 import {useAuth} from "./use-auth";
@@ -85,145 +85,149 @@ const useStyles = makeStyles((theme) => ({
 
 export default function Header(props) {
   const classes = useStyles();
-  const {categories, title, onSearchChange} = props;
+  const {categories} = props;
   const auth = useAuth();
   const history = useHistory();
+  const location = useLocation();
+  if (location.header) {
+    localStorage.setItem("header", location.header || "Commerce System")
+  }
+  const header = localStorage.getItem("header")
 
   const [notifList, setNotifListData] = useState(["Hello", "Is this working ? ", "Maybe"]);
   const [notifSnackBarOpen, setNotifSnackBarOpen] = useState(false);
   const [notifDrawerOpen, setNotifDrawerOpen] = useState(false);
+  const [anchorEl, setAnchorEl] = React.useState(null);
+
+  const isMenuOpen = Boolean(anchorEl);
+
+  const handleProfileMenuOpen = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
 
   const onNotifReceived = (msg) => {
-        notifList.push(msg)
-        setNotifListData(notifList);
-        setNotifSnackBarOpen(true);
+    notifList.push(msg)
+    setNotifListData(notifList);
+    setNotifSnackBarOpen(true);
   }
   const handleCloseNotif = () => {
-      setNotifSnackBarOpen(false);
+    setNotifSnackBarOpen(false);
   }
   const handleNotifClick = () => {
-      setNotifDrawerOpen(true);
+    setNotifDrawerOpen(true);
   }
+
+  const menuId = 'primary-search-account-menu';
+  const renderMenu = (
+    <Menu
+      anchorEl={anchorEl}
+      anchorOrigin={{vertical: 'top', horizontal: 'right'}}
+      id={menuId}
+      keepMounted
+      transformOrigin={{vertical: 'top', horizontal: 'right'}}
+      open={isMenuOpen}
+      onClose={handleMenuClose}
+    >
+      <MenuItem onClick={handleMenuClose}>
+        <RouteLink to={{pathname: "/profile", header: "Profile Page",}}>
+          Profile
+        </RouteLink>
+      </MenuItem>
+      {/*<MenuItem onClick={handleMenuClose}></MenuItem>*/}
+    </Menu>
+  );
 
   auth.registerNotifHandler(onNotifReceived);
 
   const signout = () => {
     auth.signout().then((res) => {
       if (res) {
-        history.replace({pathname: "/login"})
+        history.replace({pathname: "/login", header: "Login"})
       }
     })
   }
   return (
-      <React.Fragment>
-        <Toolbar className={classes.toolbar}>
-          {/*<Button variant="outlined" size="small">Subscribe</Button>*/}
-          <Typography
-              component="h2"
-              variant="h5"
+    <React.Fragment>
+      <Toolbar className={classes.toolbar}>
+        {/*<Button variant="outlined" size="small">Subscribe</Button>*/}
+        <Typography
+          component="h2"
+          variant="h5"
+          color="inherit"
+          align="left"
+          noWrap
+          className={classes.toolbarTitle}
+        >
+          {header || "Commerce System"}
+        </Typography>
+
+        <RouteLink to={{pathname: "/cart", header: "Shopping Cart"}}>
+          <IconButton>
+            <Badge badgeContent={0} color="secondary">
+              <ShoppingCartIcon/>
+            </Badge>
+          </IconButton>
+        </RouteLink>
+        {auth.user ? <>
+            <Button variant="outlined" size="small" onClick={signout} className={classes.toolbarButton}>
+              Logout
+            </Button>
+            <IconButton
+              edge="end"
+              aria-label="account of current user"
+              aria-haspopup="true"
               color="inherit"
-              align="left"
-              noWrap
-              className={classes.toolbarTitle}
-          >
-            {title}
-          </Typography>
-          <div className={classes.search}>
-            <div className={classes.searchIcon}>
-              <SearchIcon/>
-            </div>
-            <InputBase
-                placeholder="Search…"
-                classes={{
-                  root: classes.inputRoot,
-                  input: classes.inputInput,
-                }}
-                onChange={onSearchChange}
-                inputProps={{'aria-label': 'search'}}
-            />
+              onClick={handleProfileMenuOpen}
+            >
+              <AccountCircle/>
+            </IconButton></> :
+          <div>
+            <RouteLink to={{pathname: "/register", header: "Registration"}} style={{textDecoration: "none"}}>
+              <Button variant="outlined" size="small" className={classes.toolbarButton}>
+                Register
+              </Button>
+            </RouteLink>
+            <RouteLink to={{pathname: "/login", header: "Login"}} style={{textDecoration: "none"}}>
+              <Button variant="outlined" size="small" className={classes.toolbarButton}>
+                Login
+              </Button>
+            </RouteLink>
           </div>
 
-           <RouteLink to="/products">
-              <Button variant="outlined" size="small" className={classes.toolbarButton}>
-                    Product Info
-                  </Button>
-          </RouteLink>
-
-          <RouteLink to="/cart">
-            <IconButton>
-              <Badge badgeContent={0} color="secondary">
-                <ShoppingCartIcon/>
-              </Badge>
-            </IconButton>
-          </RouteLink>
-          <RouteLink to="/shops/:shop_id/discounts">
-            <Button variant="outlined" size="small" className={classes.toolbarButton}>
-              discounts
-            </Button>
-          </RouteLink>
-          {auth.user ? <>
-                <Button variant="outlined" size="small" onClick={signout} className={classes.toolbarButton}>
-                  Sign out
-                </Button>
-                <IconButton aria-label="show 17 new notifications" color="inherit">
-                  <Badge badgeContent={0} color="secondary">
-                    <NotificationsIcon/>
-                  </Badge>
-                </IconButton>
-                <IconButton
-                    edge="end"
-                    aria-label="account of current user"
-                    aria-haspopup="true"
-                    color="inherit"
-                >
-                  <AccountCircle/>
-                </IconButton></> :
-              <div>
-                <RouteLink to="/register" style={{textDecoration: "none"}}>
-                  <Button variant="outlined" size="small" className={classes.toolbarButton}>
-                    Sign up
-                  </Button>
-                </RouteLink>
-                <RouteLink to="/login" style={{textDecoration: "none"}}>
-                  <Button variant="outlined" size="small" className={classes.toolbarButton}>
-                    Sign in
-                  </Button>
-                </RouteLink>
-              </div>
-
-          }
-      <IconButton onClick={handleNotifClick}>
+        }
+        <IconButton onClick={handleNotifClick}>
           <Badge badgeContent={notifList.length} color="secondary">
             <EmailIcon/>
           </Badge>
         </IconButton>
-        </Toolbar>
-        <Toolbar component="nav" variant="dense" className={classes.toolbarSecondary}>
-          {categories.map((category) => (
-              <Link
-                  color="inherit"
-                  noWrap
-                  key={category.title}
-                  variant="body2"
-                  href={category.url}
-                  className={classes.toolbarLink}
-              >
-                <RouteLink className={classes.toolbarLink} to={`/${category.url}`}>
-                  {category.title}
-                </RouteLink>
+      </Toolbar>
+      <Toolbar component="nav" variant="dense" className={classes.toolbarSecondary}>
+        {categories.map((category) => (
+          <Link
+            color="inherit"
+            noWrap
+            key={category.title}
+            variant="body2"
+            href={category.url}
+            className={classes.toolbarLink}
+          >
+            <RouteLink className={classes.toolbarLink} to={{pathname: `/${category.url}`, header: category.title}}>
+              {category.title}
+            </RouteLink>
           </Link>
 
-          ))}
-        </Toolbar>
-          <Snackbar open={notifSnackBarOpen} autoHideDuration={5000} onClose={handleCloseNotif}>
-            <Alert severity="info">Received a new message</Alert>
-          </Snackbar>
-        <NotificationDrawer open={notifDrawerOpen} setOpen = {setNotifDrawerOpen} msgs = {notifList} setMsgs = {setNotifListData} />
-      </React.Fragment>
+        ))}
+      </Toolbar>
+      <Snackbar open={notifSnackBarOpen} autoHideDuration={5000} onClose={handleCloseNotif}>
+        <Alert severity="info">Received a new message</Alert>
+      </Snackbar>
+      <NotificationDrawer open={notifDrawerOpen} setOpen={setNotifDrawerOpen} msgs={notifList}
+                          setMsgs={setNotifListData}/>
+      {renderMenu}
+    </React.Fragment>
   );
 }
-
-Header.propTypes = {
-  sections: PropTypes.array,
-  title: PropTypes.string,
-};

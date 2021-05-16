@@ -94,11 +94,8 @@ export default function Register() {
             value={formik.values.password}
           />
           <KeyboardDatePicker
-          disableToolbar
-          fullWidth
-          variant="contained"
-          format="MM/dd/yyyy"
           margin="normal"
+          format="MM/dd/yyyy"
           id="birthDate"
           name="birthDate"
           label="Date picker inline"
@@ -107,7 +104,8 @@ export default function Register() {
           KeyboardButtonProps={{
             'aria-label': 'change date',
           }}
-          />
+          variant="contained"
+          fullWidth/>
           <Button
             type="submit"
             fullWidth

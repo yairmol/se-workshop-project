@@ -17,12 +17,13 @@ SHOP_IMAGE = "shopImage"
 WORKER_NAME = "username"
 WORKER_TITLE = "title"
 WORKER_APPOINTER = "appointer"
+PERMISSIONS = "permissions"
 
 
 class Shop:
     __shop_id = 1
 
-    def __init__(self, shop_name: str, description=""):
+    def __init__(self, shop_name: str, description="", image_url=""):
         self.founder = None
         self.shop_id = Shop.__shop_id
         Shop.__shop_id += 1
@@ -37,7 +38,7 @@ class Shop:
         self.shop_managers = {}
         self.shop_owners = {}
         self.discount = AdditiveDiscount([])
-        self.imageUrl = ""
+        self.image_url = image_url
         self.conditions = []
 
     def to_dict(self, include_products=True):
@@ -45,7 +46,7 @@ class Shop:
             Sm.SHOP_ID: self.shop_id,
             Sm.SHOP_NAME: self.name,
             Sm.SHOP_DESC: self.description,
-            Sm.SHOP_IMAGE: self.imageUrl,
+            Sm.SHOP_IMAGE: self.image_url,
         }
         if include_products:
             ret[Sm.SHOP_PRODS] = list(map(lambda p: p.to_dict(), self.products.values()))
@@ -56,7 +57,7 @@ class Shop:
         with self.products_lock:
             assert not self.has_product(product_info["product_name"]), \
                 f"product name {product_info['product_name']} is not unique"
-            product = Product(**product_info)
+            product = Product(**product_info, shop_id=self.shop_id)
             self.products[product.product_id] = product
             return product
 
@@ -141,7 +142,8 @@ class Shop:
         return {
             WORKER_NAME: sub.username,
             WORKER_TITLE: "manager",
-            WORKER_APPOINTER: sub.get_appointment(self).appointer.username
+            WORKER_APPOINTER: sub.get_appointment(self).appointer.username,
+            PERMISSIONS: sub.get_appointment(self).get_permissions()
         }
 
     def get_owner_info(self, sub):
@@ -187,9 +189,15 @@ class Shop:
         with self.discount_lock:
             self.discount.aggregate_discounts(discount_ids, func)
 
+    def move_discount_to(self, src_discount_id: int, dst_discount_id: int):
+        with self.discount_lock:
+            discount = DiscountManagement.remove(self.discount, src_discount_id)
+            DiscountManagement.add(self.discount, dst_discount_id, discount)
+
     def delete_discounts(self, discount_ids):
         with self.discount_lock:
-            self.discount.delete_discounts(discount_ids)
+            for d_id in discount_ids:
+                DiscountManagement.remove(self.discount, d_id)
 
     def add_purchase_condition(self, condition: Condition):
         self.conditions.append(condition)

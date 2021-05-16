@@ -7,7 +7,7 @@ from domain.commerce_system.product import Product
 from domain.commerce_system.purchase_conditions import Condition
 from domain.commerce_system.shop import Shop
 from domain.discount_module.discount_calculator import Discount
-
+from data_model import AppointmentModel as Am, PermissionsModel as Perms
 
 class Appointment:
 
@@ -15,6 +15,9 @@ class Appointment:
         self.username = username
         self.shop = shop
         self.appointer = appointer
+
+    def to_dict(self):
+        raise NotImplementedError()
 
     def appoint_manager(self, sub, permissions: List[str]):
         raise Exception("The Subscribed User doesn't have the permission to appoint manager")
@@ -72,6 +75,9 @@ class Appointment:
     def aggregate_discounts(self, discount_ids, func):
         raise Exception("Cannot manage discounts")
 
+    def move_discount_to(self, src_discount_id, dst_discount_id):
+        raise Exception("Cannot manage discounts")
+
     def add_purchase_condition(self, condition: Condition):
         raise Exception("Cannot manage conditions")
 
@@ -95,6 +101,16 @@ class ShopManager(Appointment):
         self.get_staff_permission = False
         self.set_permissions(permissions)
 
+    def to_dict(self):
+        ret = {
+            Am.WORKER_NAME: self.username,
+            Am.WORKER_TITLE: "manager",
+            Am.WORKER_APPOINTER: self.appointer.username,
+            Am.PERMISSIONS: self.get_permissions()
+        }
+        ret.update(self.shop.to_dict(include_products=False))
+        return ret
+
     def add_product(self, **product_info) -> Product:
         assert self.add_product_permission, "manager does not have permission to add product"
         return self.shop.add_product(**product_info)
@@ -112,12 +128,12 @@ class ShopManager(Appointment):
         return self.shop.get_shop_transaction_history()
 
     def set_permissions(self, permissions: List[str]):
-        self.delete_product_permission = "delete_product" in permissions
-        self.edit_product_permission = "edit_product" in permissions
-        self.add_product_permission = "add_product" in permissions
-        self.get_trans_history_permission = "get_transaction_history" in permissions
-        self.discount_permission = "discount" in permissions
-        self.get_staff_permission = "get_staff" in permissions
+        self.delete_product_permission = Perms.DELETE_PRODUCT_PERM in permissions
+        self.edit_product_permission = Perms.EDIT_PRODUCT_PERM in permissions
+        self.add_product_permission = Perms.ADD_PRODUCT_PERM in permissions
+        self.get_trans_history_permission = Perms.WATCH_TRANSACTIONS_PERM in permissions
+        self.discount_permission = Perms.MANAGE_DISCOUNT_PERM in permissions
+        self.get_staff_permission = Perms.WATCH_STAFF_PERM in permissions
 
     def get_discounts(self) -> List[Discount]:
         assert self.discount_permission, "manager user does not have permission to manage discounts"
@@ -135,6 +151,10 @@ class ShopManager(Appointment):
         assert self.discount_permission, "manager user does not have permission to manage discounts"
         return self.shop.aggregate_discounts(discount_ids, func)
 
+    def move_discount_to(self, src_discount_id: int, dst_discount_id: int):
+        assert self.discount_permission, "manager user does not have permission to manage discounts"
+        return self.shop.move_discount_to(src_discount_id, dst_discount_id)
+
     def add_purchase_condition(self, condition: Condition):
         assert self.purchase_condition_permission, "manager user does not have permission to" \
                                                    " manage purchase conditions"
@@ -147,9 +167,12 @@ class ShopManager(Appointment):
 
     def get_permissions(self):
         return {
-            'delete': self.delete_product_permission, 'edit': self.edit_product_permission,
-            'add': self.add_product_permission, 'discount': self.discount_permission,
-            'transaction': self.get_trans_history_permission, 'get_staff': self.get_staff_permission,
+            Perms.ADD_PRODUCT_PERM: self.add_product_permission,
+            Perms.EDIT_PRODUCT_PERM: self.edit_product_permission,
+            Perms.DELETE_PRODUCT_PERM: self.delete_product_permission,
+            Perms.MANAGE_DISCOUNT_PERM: self.discount_permission,
+            Perms.WATCH_TRANSACTIONS_PERM: self.get_trans_history_permission,
+            Perms.WATCH_STAFF_PERM: self.get_staff_permission,
             'owner': False
         }
 
@@ -165,6 +188,15 @@ class ShopOwner(Appointment):
         self.manager_appointees = []
         self.manager_appointees_lock = threading.Lock()
         self.owner_appointees_lock = threading.Lock()
+
+    def to_dict(self):
+        ret = {
+            Am.WORKER_NAME: self.username,
+            Am.WORKER_TITLE: "owner" if self != self.shop.founder else "founder",
+            Am.WORKER_APPOINTER: self.appointer.username if self.appointer else "no appointer, this is the shop founder"
+        }
+        ret.update(self.shop.to_dict(include_products=False))
+        return ret
 
     def appoint_manager(self, sub, permissions: List[str]):
         """ adds manager appointment to selected subscribed user"""
@@ -257,6 +289,9 @@ class ShopOwner(Appointment):
     def aggregate_discounts(self, discount_ids, func):
         return self.shop.aggregate_discounts(discount_ids, func)
 
+    def move_discount_to(self, src_discount_id, dst_discount_id):
+        self.shop.move_discount_to(src_discount_id, dst_discount_id)
+
     def add_purchase_condition(self, condition: Condition):
         return self.shop.add_purchase_condition(condition)
 
@@ -264,5 +299,14 @@ class ShopOwner(Appointment):
         assert self.shop.remove_purchase_condition(condition_id), "remove condition failed"
 
     def get_permissions(self):
-        return {'delete': True, 'edit': True, 'add': True, 'discount': True,
-                'transaction': True, 'get_staff': True, 'owner': True}
+        ret = {
+            Perms.ADD_PRODUCT_PERM: True,
+            Perms.EDIT_PRODUCT_PERM: True,
+            Perms.DELETE_PRODUCT_PERM: True,
+            Perms.MANAGE_DISCOUNT_PERM: True,
+            Perms.WATCH_TRANSACTIONS_PERM: True,
+            Perms.WATCH_STAFF_PERM: True,
+            'owner': True
+        }
+        return ret
+

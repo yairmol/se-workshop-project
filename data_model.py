@@ -20,6 +20,7 @@ class ProductModel:
     QUANTITY = "quantity"
     CATEGORIES = "categories"
     AMOUNT = "amount"  # for ShoppingBag
+    SHOP_ID = "shop_id"
 
 
 class TransactionModel:
@@ -33,6 +34,9 @@ class PermissionsModel:
     EDIT_PRODUCT_PERM = "edit_product"
     ADD_PRODUCT_PERM = "add_product"
     DELETE_PRODUCT_PERM = "delete_product"
+    MANAGE_DISCOUNT_PERM = "manage_discounts"
+    WATCH_TRANSACTIONS_PERM = "watch_transactions"
+    WATCH_STAFF_PERM = "watch_staff"
 
 
 class ConditionsModel:
@@ -52,6 +56,13 @@ class ConditionsModel:
     TIME_WINDOW_FOR_PRODUCT = "TimeWindowForProductCondition"
     DATE_WINDOW_FOR_CATEGORY = "DateWindowForCategoryCondition"
     DATE_WINDOW_FOR_PRODUCT = "DateWindowForProductCondition"
+
+
+class AppointmentModel:
+    WORKER_NAME = "username"
+    WORKER_TITLE = "title"
+    WORKER_APPOINTER = "appointer"
+    PERMISSIONS = "permissions"
 
 
 admin_credentials = {

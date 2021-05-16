@@ -1,6 +1,6 @@
 from typing import Tuple, List, Dict
 
-from test_data import users, shops, permissions, products, payment_details
+from .test_data import users, shops, permissions, products, payment_details
 from service.system_service import SystemService
 from data_model import UserModel as Um, ShopModel as Sm, ProductModel as Pm, admin_credentials
 
@@ -112,7 +112,7 @@ def make_purchases(
         product_to_shop: Dict[int, int], products: List[int]
 ):
     return all(map(lambda p: commerce_system.purchase_product(
-        session, product_to_shop[p], p, 1, payment_details[0]
+        session, product_to_shop[p], p, 1, payment_details[0], {}
     )["status"], products))
 
 

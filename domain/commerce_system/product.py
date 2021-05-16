@@ -10,7 +10,7 @@ class Product:
 
     def __init__(
             self, product_name: str, price: float, description: str = "",
-            quantity: int = 0, categories: List[str] = None
+            quantity: int = 0, categories: List[str] = None, shop_id=None
     ):
         if categories is None:
             categories = []
@@ -21,8 +21,9 @@ class Product:
         self.product_name = product_name
         self.price = price
         self.description = description
-        self._quantity = quantity
+        self.set_quantity(quantity)
         self.categories = categories
+        self.shop_id = shop_id
 
     def to_dict(self):
         return {
@@ -32,6 +33,7 @@ class Product:
             Pm.PRICE: self.price,
             Pm.QUANTITY: self._quantity,
             Pm.CATEGORIES: self.categories,
+            Pm.SHOP_ID: self.shop_id
         }
 
     def set_quantity(self, new_quantity):

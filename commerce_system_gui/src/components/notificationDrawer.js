@@ -110,7 +110,7 @@ export default function NotificationDrawer(props) {
           {console.log(`msgs ${msgs}`)}
           {msgs.map((text, index) => (
             <ListItem button key={text}>
-              <ListItemIcon> <InboxIcon /> </ListItemIcon>
+              {/*<ListItemIcon> <InboxIcon /> </ListItemIcon>*/}
               <ListItemText primary={text} />
             </ListItem>
           ))}
