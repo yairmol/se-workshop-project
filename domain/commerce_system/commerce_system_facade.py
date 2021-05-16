@@ -205,6 +205,12 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         return worker.delete_product(shop, product_id)
 
     # 4.2
+    def get_purchase_conditions(self, user_id: int, shop_id: int) -> List[dict]:
+        user = self.get_user(user_id)
+        shop = self.get_shop(shop_id)
+        return list(map(lambda d: d.to_dict(), user.get_shop_purchase_conditions(shop)))
+
+    # 4.2
     def add_purchase_condition(self, user_id: int, shop_id: int, condition_type, **condition_dict):
         worker = self.get_user(user_id).user_state
         shop = self.get_shop(shop_id)

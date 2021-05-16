@@ -29,6 +29,7 @@ const routes = {
   owners: "owners",
   promotions: "promotions",
   discounts: "discounts",
+  purchase_policies: "purchase_policies",
 }
 
 const base_route = `${host_port}/${routes.base}`;

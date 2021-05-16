@@ -1,9 +1,10 @@
+from abc import ABC
 from datetime import datetime, time
 import threading
 
 from domain.commerce_system.product import Product
 from typing import Dict, List
-
+from data_model import ConditionsModel as CondM
 
 # from domain.commerce_system.user import User
 
@@ -11,24 +12,33 @@ from typing import Dict, List
 class Condition:
     _id_counter = 1
     counter_lock = threading.Lock()
+    type = None
+
+    def __init__(self):
+        with Condition.counter_lock:
+            self.id = Condition._id_counter
+            Condition._id_counter += 1
+
+    def resolve(self, products: Dict[Product, int]) -> bool:
+        raise NotImplementedError()
+
+    def to_dict(self):
+        raise NotImplementedError()
+
+
+class ProductCondition(Condition, ABC):
 
     def resolve(self, products: Dict[Product, int]) -> bool:
         raise NotImplementedError()
 
 
-class ProductCondition(Condition):
+class CategoryCondition(Condition, ABC):
 
     def resolve(self, products: Dict[Product, int]) -> bool:
         raise NotImplementedError()
 
 
-class CategoryCondition(Condition):
-
-    def resolve(self, products: Dict[Product, int]) -> bool:
-        raise NotImplementedError()
-
-
-class ShoppingBagCondition(Condition):
+class ShoppingBagCondition(Condition, ABC):
 
     def resolve(self, products: Dict[Product, int]) -> bool:
         raise NotImplementedError()
@@ -41,10 +51,10 @@ class ShoppingBagCondition(Condition):
 
 
 class MaxQuantityForProductCondition(ProductCondition):
+    type = CondM.MAX_QUANTITY_FOR_PRODUCT
+
     def __init__(self, condition_dict: dict):
-        with Condition.counter_lock:
-            self.id = Condition._id_counter
-            Condition._id_counter += 1
+        super().__init__()
         self.max_quantity = condition_dict["max_quantity"]
         self.product_id = condition_dict["product"]
 
@@ -54,6 +64,9 @@ class MaxQuantityForProductCondition(ProductCondition):
                 if self.max_quantity < products[product]:
                     return False
         return True
+
+    def to_dict(self):
+        return {}
 
 
 # class UserAgeMinForCategoryCondition(UserCondition):
@@ -65,10 +78,10 @@ class MaxQuantityForProductCondition(ProductCondition):
 
 
 class TimeWindowForCategoryCondition(CategoryCondition):
+    type = CondM.TIME_WINDOW_FOR_CATEGORY
+
     def __init__(self, condition_dict: dict):
-        with Condition.counter_lock:
-            self.id = Condition._id_counter
-            Condition._id_counter += 1
+        super().__init__()
         self.min_time = datetime.strptime(condition_dict["min_time"], '%H:%M').time()
         self.max_time = datetime.strptime(condition_dict["max_time"], '%H:%M').time()
         self.category = condition_dict["category"]
@@ -80,13 +93,16 @@ class TimeWindowForCategoryCondition(CategoryCondition):
                 if cur_time > self.max_time or cur_time < self.min_time:
                     return False
         return True
+
+    def to_dict(self):
+        return {}
 
 
 class TimeWindowForProductCondition(CategoryCondition):
+    type = CondM.TIME_WINDOW_FOR_PRODUCT
+
     def __init__(self, condition_dict: dict):
-        with self.counter_lock:
-            self.id = self._id_counter
-            Condition._id_counter += 1
+        super().__init__()
         self.min_time = datetime.strptime(condition_dict["min_time"], '%H:%M').time()
         self.max_time = datetime.strptime(condition_dict["max_time"], '%H:%M').time()
         self.product_id = condition_dict["product"]
@@ -99,12 +115,15 @@ class TimeWindowForProductCondition(CategoryCondition):
                     return False
         return True
 
+    def to_dict(self):
+        return {}
+
 
 class DateWindowForCategoryCondition(CategoryCondition):
+    type = CondM.DATE_WINDOW_FOR_CATEGORY
+
     def __init__(self, condition_dict: dict):
-        with self.counter_lock:
-            self.id = self._id_counter
-            Condition._id_counter += 1
+        super().__init__()
         self.min_date = datetime.strptime(condition_dict["min_date"], '%d/%m/%Y')
         self.max_date = datetime.strptime(condition_dict["max_date"], '%d/%m/%Y')
         self.category = condition_dict["category"]
@@ -117,12 +136,15 @@ class DateWindowForCategoryCondition(CategoryCondition):
                     return False
         return True
 
+    def to_dict(self):
+        return {}
+
 
 class DateWindowForProductCondition(CategoryCondition):
+    type = CondM.DATE_WINDOW_FOR_PRODUCT
+
     def __init__(self, condition_dict: dict):
-        with self.counter_lock:
-            self.id = self._id_counter
-            Condition._id_counter += 1
+        super().__init__()
         self.min_date = datetime.strptime(condition_dict["min_date"], '%d/%m/%Y')
         self.max_date = datetime.strptime(condition_dict["max_date"], '%d/%m/%Y')
         self.product_id = condition_dict["product"]
@@ -135,13 +157,23 @@ class DateWindowForProductCondition(CategoryCondition):
                     return False
         return True
 
+    def to_dict(self):
+        return {}
 
-class ANDCondition(Condition):
+
+class CompositePurchaseCondition(Condition, ABC):
     def __init__(self, condition_dict: dict):
-        with self.counter_lock:
-            self.id = self._id_counter
-            Condition._id_counter += 1
+        super().__init__()
         self.conditions = condition_dict["conditions"]
+
+    def to_dict(self):
+        return {
+            "conditions": [c.to_dict() for c in self.conditions]
+        }
+
+
+class ANDCondition(CompositePurchaseCondition):
+    type = CondM.AND_CONDITION
 
     # returns AND between all conditions
     def resolve(self, products: Dict[Product, int]) -> bool:
@@ -151,13 +183,8 @@ class ANDCondition(Condition):
         return True
 
 
-class ORCondition(Condition):
-    def __init__(self, condition_dict: dict):
-        with self.counter_lock:
-            self.id = self._id_counter
-            Condition._id_counter += 1
-        self.conditions = condition_dict["conditions"]
-
+class ORCondition(CompositePurchaseCondition):
+    type = CondM.OR_CONDITION
     # returns OR between all conditions
     def resolve(self, products: Dict[Product, int]) -> bool:
         for cond in self.conditions:

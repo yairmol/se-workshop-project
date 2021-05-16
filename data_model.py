@@ -37,6 +37,7 @@ class PermissionsModel:
     MANAGE_DISCOUNT_PERM = "manage_discounts"
     WATCH_TRANSACTIONS_PERM = "watch_transactions"
     WATCH_STAFF_PERM = "watch_staff"
+    MANAGE_PURCHASE_CONDITIONS = "manage_purchase_condition"
 
 
 class ConditionsModel:
@@ -52,6 +53,8 @@ class ConditionsModel:
     TIME_WINDOW_FOR_PRODUCT = "TimeWindowForProductCondition"
     DATE_WINDOW_FOR_CATEGORY = "DateWindowForCategoryCondition"
     DATE_WINDOW_FOR_PRODUCT = "DateWindowForProductCondition"
+    AND_CONDITION = "and"
+    OR_CONDITION = "or"
 
 
 class AppointmentModel:

@@ -78,6 +78,9 @@ class Appointment:
     def move_discount_to(self, src_discount_id, dst_discount_id):
         raise Exception("Cannot manage discounts")
 
+    def get_purchase_conditions(self) -> List[Condition]:
+        raise Exception("Cannot get purchase conditions")
+
     def add_purchase_condition(self, condition: Condition):
         raise Exception("Cannot manage conditions")
 
@@ -134,6 +137,7 @@ class ShopManager(Appointment):
         self.get_trans_history_permission = Perms.WATCH_TRANSACTIONS_PERM in permissions
         self.discount_permission = Perms.MANAGE_DISCOUNT_PERM in permissions
         self.get_staff_permission = Perms.WATCH_STAFF_PERM in permissions
+        self.purchase_condition_permission = Perms.MANAGE_PURCHASE_CONDITIONS in permissions
 
     def get_discounts(self) -> List[Discount]:
         assert self.discount_permission, "manager user does not have permission to manage discounts"
@@ -155,6 +159,10 @@ class ShopManager(Appointment):
         assert self.discount_permission, "manager user does not have permission to manage discounts"
         return self.shop.move_discount_to(src_discount_id, dst_discount_id)
 
+    def get_purchase_conditions(self):
+        assert self.purchase_condition_permission, "manager user does not have permission to manage purchase conditions"
+        return self.shop.get_purchase_conditions()
+
     def add_purchase_condition(self, condition: Condition):
         assert self.purchase_condition_permission, "manager user does not have permission to" \
                                                    " manage purchase conditions"
@@ -173,6 +181,7 @@ class ShopManager(Appointment):
             Perms.MANAGE_DISCOUNT_PERM: self.discount_permission,
             Perms.WATCH_TRANSACTIONS_PERM: self.get_trans_history_permission,
             Perms.WATCH_STAFF_PERM: self.get_staff_permission,
+            Perms.MANAGE_PURCHASE_CONDITIONS: self.purchase_condition_permission,
             'owner': False
         }
 
@@ -292,6 +301,9 @@ class ShopOwner(Appointment):
     def move_discount_to(self, src_discount_id, dst_discount_id):
         self.shop.move_discount_to(src_discount_id, dst_discount_id)
 
+    def get_purchase_conditions(self):
+        return self.shop.get_purchase_conditions()
+
     def add_purchase_condition(self, condition: Condition):
         return self.shop.add_purchase_condition(condition)
 
@@ -306,6 +318,7 @@ class ShopOwner(Appointment):
             Perms.MANAGE_DISCOUNT_PERM: True,
             Perms.WATCH_TRANSACTIONS_PERM: True,
             Perms.WATCH_STAFF_PERM: True,
+            Perms.MANAGE_PURCHASE_CONDITIONS: True,
             'owner': True
         }
         return ret

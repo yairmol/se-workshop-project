@@ -39,7 +39,7 @@ class Shop:
         self.shop_owners = {}
         self.discount = AdditiveDiscount([])
         self.image_url = image_url
-        self.conditions = []
+        self.conditions: List[Condition] = []
 
     def to_dict(self, include_products=True):
         ret = {
@@ -198,6 +198,9 @@ class Shop:
         with self.discount_lock:
             for d_id in discount_ids:
                 DiscountManagement.remove(self.discount, d_id)
+
+    def get_purchase_conditions(self) -> List[Condition]:
+        return self.conditions
 
     def add_purchase_condition(self, condition: Condition):
         self.conditions.append(condition)

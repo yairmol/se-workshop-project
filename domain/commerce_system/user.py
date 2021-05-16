@@ -11,6 +11,7 @@ from domain.commerce_system.transaction_repo import TransactionRepo
 from domain.commerce_system.transaction import Transaction
 from domain.commerce_system.shopping_cart import ShoppingCart
 from domain.discount_module.discount_calculator import Discount
+from data_model import UserModel as UserM
 
 
 class User:
@@ -75,50 +76,54 @@ class User:
         return self.cart.to_dict()
 
     def open_shop(self, **shop_details) -> Shop:
-        raise NotImplementedError()
+        return self.user_state.open_shop(**shop_details)
 
     def get_personal_transactions_history(self) -> List[Transaction]:
         return self.user_state.get_personal_transaction_history()
 
     def add_product(self, shop: Shop, **product_details) -> Product:
-        raise NotImplementedError()
+        return self.user_state.add_product(shop, **product_details)
 
     def edit_product(self, shop: Shop, **product_details) -> Product:
-        raise NotImplementedError()
+        return self.user_state.edit_product(shop, **product_details)
 
-    def delete_product(self, shop: Shop, product_id: str) -> Product:
-        raise NotImplementedError()
+    def delete_product(self, shop: Shop, product_id: int) -> bool:
+        return self.user_state.delete_product(shop, product_id)
 
-    def appoint_shop_owner(self, shop: Shop, user) -> Appointment:
-        raise NotImplementedError()
+    def appoint_shop_owner(self, shop: Shop, user: Subscribed) -> Appointment:
+        return self.user_state.appoint_owner(user, shop)
 
-    def appoint_shop_manager(self, shop: Shop, user, permissions: List[str]) -> bool:
-        raise NotImplementedError()
-
-    def unappoint_shop_worker(self, shop: Shop, user) -> bool:
-        raise NotImplementedError()
+    def appoint_shop_manager(self, shop: Shop, user: Subscribed, permissions: List[str]) -> bool:
+        return self.user_state.appoint_manager(user, shop, permissions)
 
     def get_shop_staff_info(self, shop: Shop) -> List[Appointment]:
         return self.user_state.get_shop_staff_info(shop)
 
     def get_shop_transaction_history(self, shop: Shop) -> List[Transaction]:
-        raise NotImplementedError()
+        return self.user_state.get_shop_transaction_history(shop)
 
     def add_purchase_condition(self, shop: Shop, condition: Condition):
-        raise NotImplementedError()
+        return self.user_state.add_purchase_condition(shop, condition)
 
     def remove_purchase_condition(self, shop: Shop, condition_id: int):
-        raise NotImplementedError()
+        return self.user_state.remove_purchase_condition(shop, condition_id)
 
     def get_shop_discounts(self, shop: Shop) -> List[Discount]:
         return self.user_state.get_shop_discounts(shop)
 
-    def to_dict(self):
-        raise NotImplementedError()
+    def get_shop_purchase_conditions(self, shop: Shop) -> List[Condition]:
+        return self.user_state.get_shop_purchase_conditions(shop)
+
+    def to_dict(self) -> dict:
+        ret = {
+            "id": self.id
+        }
+        ret.update(self.user_state.to_dict())
+        return ret
 
 
 class UserState:
-    def get_name(self, userid):
+    def get_name(self, userid=None):
         raise NotImplementedError()
 
     def register(self, username: str, **user_details):
@@ -173,7 +178,7 @@ class UserState:
         raise Exception("only system administrator can see the system transaction history")
 
     def get_shop_discounts(self, shop: Shop):
-        raise Exception("User doesn't have premissions to get shop transactions")
+        raise Exception("User doesn't have permissions to get shop discounts")
 
     def add_discount(self, shop, has_cond, condition, discount):
         raise Exception("User doesnt have permissions to manage discounts")
@@ -186,6 +191,9 @@ class UserState:
 
     def move_discount_to(self, shop: Shop, src_discount_id: int, dst_discount_id: int):
         raise Exception("User doesnt have permissions to manage discounts")
+
+    def get_shop_purchase_conditions(self, shop: Shop) -> List[Condition]:
+        raise Exception("User doesn't have permissions to get shop purchase conditions")
 
     def add_purchase_condition(self, shop: Shop, condition: Condition):
         raise Exception("User cannot perform this action")
@@ -202,19 +210,19 @@ class UserState:
     def get_appointments(self):
         raise Exception("User doesn't have permission to get appointments")
 
-    def to_dict(self):
+    def to_dict(self) -> dict:
         raise NotImplementedError()
 
 
 class Guest(UserState):
-    def get_name(self, userid):
-        return f"Guest-{hash(userid)}"
+    def get_name(self, userid=None):
+        return f"Guest-{hash(userid) if userid else 'None'}"
 
     def register(self, username: str, **user_details):
         return Subscribed(username)
 
     def to_dict(self):
-        return {"username": "Guest"}
+        return {UserM.USERNAME: self.get_name()}
 
 
 class Subscribed(UserState):
@@ -225,14 +233,14 @@ class Subscribed(UserState):
         self.transactions: List[Transaction] = []
 
     def to_dict(self):
-        return {"username": self.username, }
+        return {UserM.USERNAME: self.get_name()}
 
     def logout(self):
         pass
 
     """ calls personal appointment for the request. if doesnt have permission raises an exception"""
 
-    def get_name(self, userid):
+    def get_name(self, userid=None):
         return self.username
 
     def appoint_manager(self, sub: Subscribed, shop: Shop, permissions: List[str]):
@@ -308,6 +316,9 @@ class Subscribed(UserState):
     def move_discount_to(self, shop: Shop, src_discount_id: int, dst_discount_id: int):
         appointment = self.get_appointment(shop)
         appointment.move_discount_to(src_discount_id, dst_discount_id)
+
+    def get_shop_purchase_conditions(self, shop: Shop) -> List[Condition]:
+        return self.get_appointment(shop).get_purchase_conditions()
 
     def add_purchase_condition(self, shop: Shop, condition: Condition):
         appointment = self.get_appointment(shop)

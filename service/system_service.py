@@ -366,6 +366,21 @@ class SystemService:
         return make_status_dict(False, "Invalid Token", "")
 
     # 4.2
+    def get_purchase_conditions(self, token: str, shop_id: int) -> dict:
+        if self.is_valid_token(token):
+            try:
+                user_id = self.tokenizer.get_id_by_token(token)
+                event_logger.info(f"User: {user_id} tries to get the purchase policies of shop: {shop_id}")
+                ret = self.commerce_system_facade.get_purchase_conditions(user_id, shop_id)
+                event_logger.info(f"User: {user_id} got purcahse policies of shop: {shop_id} successfully")
+                return make_status_dict(True, "", ret)
+            except AssertionError as e:
+                return handle_assertion(e)
+            except Exception as e:
+                return handle_exception(e)
+        return make_status_dict(False, "Invalid Token", [])
+
+    # 4.2
     def add_purchase_condition(self, token: str, shop_id: int, condition_type: str, **condition_dict):
         if self.is_valid_token(token):
             try:
