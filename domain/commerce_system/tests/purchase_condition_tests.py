@@ -6,7 +6,8 @@ from data_model import ConditionsModel as Cm
 from domain.commerce_system.product import Product
 from domain.commerce_system.productDTO import ProductDTO
 from domain.commerce_system.purchase_conditions import MaxQuantityForProductCondition, TimeWindowForCategoryCondition, \
-    TimeWindowForProductCondition, DateWindowForCategoryCondition, DateWindowForProductCondition
+    TimeWindowForProductCondition, DateWindowForCategoryCondition, DateWindowForProductCondition, ANDCondition, \
+    ORCondition
 from domain.commerce_system.shop import Shop
 from domain.commerce_system.shopping_cart import ShoppingBag
 from domain.commerce_system.tests.mocks import DeliveryMock, PaymentMock
@@ -116,30 +117,47 @@ class PurchaseConditionTests(TestCase):
         self.bag.add_product(self.product, amount)
         self.assertFalse(self.bag.resolve_shop_conditions())
 
-    # def test_all_conditions(self):
-    #     condition1 = MaxQuantityForProductCondition(5, self.product)
-    #     condition2 = MaxQuantityForProductCondition(5, self.products[1])
-    #     condition3 = MaxQuantityForProductCondition(5, self.products[2])
-    #     condition4 = MaxQuantityForProductCondition(10, self.products[3])
-    #     condition5 = TimeWindowForCategoryCondition(time(0, 0), time(23, 0), category="aaa")
-    #     condition6 = TimeWindowForProductCondition(time(0, 0), time(23, 0), self.products[1])
-    #     condition7 = DateWindowForCategoryCondition(datetime(year=2021, month=5, day=1),
-    #                                                 datetime(year=2021, month=5, day=30), category="aaa")
-    #     condition8 = DateWindowForCategoryCondition(datetime(year=2021, month=5, day=1),
-    #                                                 datetime(year=2021, month=5, day=30), self.products[2])
-    #     self.shop.add_purchase_condition(condition1)
-    #     self.shop.add_purchase_condition(condition2)
-    #     self.shop.add_purchase_condition(condition3)
-    #     self.shop.add_purchase_condition(condition4)
-    #     self.shop.add_purchase_condition(condition5)
-    #     self.shop.add_purchase_condition(condition6)
-    #     self.shop.add_purchase_condition(condition7)
-    #     self.shop.add_purchase_condition(condition8)
-    #     self.bag.add_product(self.products[0], 4)
-    #     self.bag.add_product(self.products[1], 4)
-    #     self.bag.add_product(self.products[2], 1)
-    #     self.bag.add_product(self.products[3], 10)
-    #     self.assertTrue(self.bag.resolve_shop_conditions())
+    def test_all_conditions(self):
+        condition_dict1 = {Cm.MAX_QUANTITY: 5, Cm.PRODUCT: self.product.product_id}
+        condition1 = MaxQuantityForProductCondition(condition_dict1)
+        condition_dict2 = {Cm.MIN_TIME: '00:00', Cm.MAX_TIME: '23:00', Cm.CATEGORY: "aaa"}
+        condition2 = TimeWindowForCategoryCondition(condition_dict2)
+        condition_dict3 = {Cm.MIN_TIME: '00:00', Cm.MAX_TIME: '23:00', Cm.PRODUCT: self.product.product_id}
+        condition3 = TimeWindowForProductCondition(condition_dict3)
+        condition_dict4 = {Cm.MIN_DATE: '1/5/2021', Cm.MAX_DATE: '30/7/2021', Cm.CATEGORY: "aaa"}
+        condition4 = DateWindowForCategoryCondition(condition_dict4)
+        condition_dict5 = {Cm.MIN_DATE: '1/5/2021', Cm.MAX_DATE: '30/7/2021', Cm.PRODUCT: self.product.product_id}
+        condition5 = DateWindowForProductCondition(condition_dict5)
+        condition_dict6 = {Cm.MAX_QUANTITY: 3, Cm.PRODUCT: self.product.product_id}
+        condition6 = MaxQuantityForProductCondition(condition_dict6)
+        condition_dict7 = {Cm.MIN_TIME: '00:00', Cm.MAX_TIME: '00:01', Cm.CATEGORY: "aaa"}
+        condition7 = TimeWindowForCategoryCondition(condition_dict7)
+        condition_dict8 = {Cm.MIN_TIME: '00:00', Cm.MAX_TIME: '00:01', Cm.PRODUCT: self.product.product_id}
+        condition8 = TimeWindowForProductCondition(condition_dict8)
+        condition_dict9 = {Cm.MIN_DATE: '1/5/2021', Cm.MAX_DATE: '2/5/2021', Cm.CATEGORY: "aaa"}
+        condition9 = DateWindowForCategoryCondition(condition_dict9)
+        condition_dict10 = {Cm.MIN_DATE: '1/5/2021', Cm.MAX_DATE: '2/5/2021', Cm.PRODUCT: self.product.product_id}
+        condition10 = DateWindowForProductCondition(condition_dict10)
+
+        and_condition_dict = {Cm.CONDITIONS: [condition1, condition2, condition3, condition4, condition5]}
+        or_condition_dict = {Cm.CONDITIONS: [condition6, condition7, condition8, condition9, condition10, condition5]}
+
+        and_condition = ANDCondition(and_condition_dict)
+        or_condition = ORCondition(or_condition_dict)
+
+        self.shop.add_purchase_condition(condition1)
+        self.shop.add_purchase_condition(condition2)
+        self.shop.add_purchase_condition(condition3)
+        self.shop.add_purchase_condition(condition4)
+        self.shop.add_purchase_condition(condition5)
+        self.shop.add_purchase_condition(and_condition)
+        self.shop.add_purchase_condition(or_condition)
+
+        self.bag.add_product(self.products[0], 4)
+        self.bag.add_product(self.products[1], 4)
+        self.bag.add_product(self.products[2], 1)
+        self.bag.add_product(self.products[3], 10)
+        self.assertTrue(self.bag.resolve_shop_conditions())
 
 
 

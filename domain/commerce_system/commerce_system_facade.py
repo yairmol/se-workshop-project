@@ -1,6 +1,7 @@
 import threading
 from typing import Dict, List, Union
 
+from data_model import ConditionsModel as Cm
 from domain.authentication_module.authenticator import Authenticator
 from domain.commerce_system.ifacade import ICommerceSystemFacade
 from domain.commerce_system.product import Product
@@ -190,10 +191,15 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         return worker.delete_product(shop, product_id)
 
     # 4.2
-    def add_purchase_condition(self, user_id: int, shop_id: int, condition_type, **condition_dict):
+    def add_purchase_condition(self, user_id: int, shop_id: int, **condition_dict):
         worker = self.get_user(user_id).user_state
         shop = self.get_shop(shop_id)
-        condition = condition_map[condition_type](condition_dict)
+        if condition_dict[Cm.CONDITION_TYPE] == Cm.AND or condition_dict[Cm.CONDITION_TYPE] == Cm.OR:
+            conditions = []
+            for cond_dict in condition_dict[Cm.CONDITIONS]:
+                conditions += [condition_map[cond_dict[Cm.CONDITION_TYPE]](cond_dict)]
+            condition_dict[Cm.CONDITIONS] = conditions
+        condition = condition_map[condition_dict[Cm.CONDITION_TYPE]](condition_dict)
         worker.add_purchase_condition(shop, condition)
 
     # 4.2
