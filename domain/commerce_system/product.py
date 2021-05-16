@@ -21,7 +21,7 @@ class Product:
         self.product_name = product_name
         self.price = price
         self.description = description
-        self._quantity = quantity
+        self.set_quantity(quantity)
         self.categories = categories
         self.shop_id = shop_id
 
