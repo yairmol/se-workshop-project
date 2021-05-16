@@ -3,35 +3,24 @@ from datetime import datetime
 from unittest.mock import MagicMock
 from domain.authentication_module.authenticator import Authenticator
 from domain.commerce_system.commerce_system_facade import CommerceSystemFacade
+from domain.commerce_system.tests.mocks import NotificationsMock
 from domain.commerce_system.user import User, Subscribed
 
 
 class TestCommerceSystemFacade(unittest.TestCase):
 
-    def test_add_active_user1(self):
+    def setUp(self) -> None:
+        self.facade = CommerceSystemFacade(Authenticator(), NotificationsMock())
 
-        facade = CommerceSystemFacade()
-        facade.enter()
-        facade.enter()
-        assert len(facade.active_users) == 2
+    def test_add_active_user1(self):
+        self.facade.enter()
+        self.facade.enter()
+        assert len(self.facade.active_users) == 2
 
     def test_user_register1(self):
-        user = User()
-        try:
-            sub = user.register("aviv", "123456")
-            print(type(sub))
-            assert isinstance(sub, Subscribed)
-        except Exception as e:
-            assert False
-
-    def test_user_register2(self):
-        user = User()
-        user.user_state = Subscribed("aviv", "123456")
-        try:
-            sub = user.register("aviv", "123456")
-            assert False
-        except Exception as e:
-            assert True
+        uid = self.facade.enter()
+        sub = self.facade.register(uid, "aviv", "123456")
+        assert len(self.facade.registered_users) == 1
 
 
 class UserTests(unittest.TestCase):
@@ -53,17 +42,19 @@ class UserTests(unittest.TestCase):
         {"credit_number": "0000-0000-0000-0000", "cvv": 000, "expiration_date": datetime(year=2024, month=6, day=1)}
     ]
 
+    delivery_details = {}
+
     @staticmethod
     def register_and_login(username, password):
         user = User()
-        user.register(username, password)
-        user.login(username, password)
+        sub = user.register(username, password=password)
+        user.login(sub)
         return user
 
     def open_shop(self):
         u = self.register_and_login(*self.users[1])
-        shop = u.open_shop(**self.shops[0])
-        prod = u.add_product(shop, **self.products[0])
+        shop = u.user_state.open_shop(self.shops[0])
+        prod = u.user_state.add_product(shop, **self.products[0])
         return shop, prod
 
     def test_get_transactions_empty(self):
@@ -73,7 +64,7 @@ class UserTests(unittest.TestCase):
     def test_get_transactions(self):
         user = self.register_and_login(*self.users[0])
         shop, prod = self.open_shop()
-        self.assertTrue(user.buy_product(shop, prod, 1, **self.payment_details[0]))
+        self.assertTrue(user.purchase_product(shop, prod, 1, self.payment_details[0], self.delivery_details))
         transactions = user.get_personal_transactions_history()
         self.assertEquals(len(transactions), 1)
 

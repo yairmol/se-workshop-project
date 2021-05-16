@@ -24,6 +24,7 @@ products = [
 payment_details = {
     "credit_card_number": "4580-0000-1111-2222", "cvv": "012", "expiration_date": datetime(2024, 6, 1).timestamp()
 }
+delivery_details = {}
 
 username = "aviv"
 
@@ -117,7 +118,7 @@ class ShoppingCartTests(unittest.TestCase):
         amounts_bought = self.init_purchase_data()
         quantities = {p: p.get_quantity() for p in self.products}
         bags = list(self.user.cart.shopping_bags.values())
-        transactions = self.user.cart.purchase_cart(username, payment_details)
+        transactions = self.user.cart.purchase_cart(username, payment_details, delivery_details)
         self.assertEquals(len(transactions), len(bags))
         self.assertEquals(self.user.cart.shopping_bags, {})
         self.check_bags(bags)
@@ -127,7 +128,7 @@ class ShoppingCartTests(unittest.TestCase):
         quantities = {p: p.get_quantity() for p in self.products}
         bags = self.user.cart.shopping_bags.copy()
         bags_products = {shop: bag.products.copy() for shop, bag in bags.items()}
-        self.assertRaises(AssertionError, self.user.cart.purchase_cart, username, payment_details)
+        self.assertRaises(AssertionError, self.user.cart.purchase_cart, username, payment_details, delivery_details)
         # check that products quantities weren't changed
         amounts_bought = dict(zip(self.products, [0] * len(products)))
         self.check_updated_quantities(quantities, amounts_bought)
@@ -169,7 +170,7 @@ class ShoppingCartTests(unittest.TestCase):
         bags = self.user.cart.shopping_bags.copy()
         bag_fails = bags.pop(shop_fails)
         bag_fails_products = bag_fails.products.copy()
-        transactions = self.user.cart.purchase_cart(username, payment_details, do_what_you_can=True)
+        transactions = self.user.cart.purchase_cart(username, payment_details, delivery_details, do_what_you_can=True)
         # check that products quantities were changed except from the one in shop_fails
         self.check_updated_quantities(quantities, amounts_bought)
         self.assertEquals(len(self.user.cart.shopping_bags), 1)

@@ -21,6 +21,7 @@ amounts = [4, 2, 7, 5]
 payment_details = {
     "credit_card_number": "4580-0000-1111-2222", "cvv": "012", "expiration_date": datetime(2024, 6, 1).timestamp()
 }
+delivery_details = {}
 username = "aviv"
 
 assert len(products) == len(amounts) == len(prices), "data lengths must be equal"
@@ -76,7 +77,7 @@ class BagTests(TestCase):
         self.bag.delivery_facade = DeliveryMock(True)
         self.bag.add_product(self.product, amount_to_buy)
         product_quantity = self.product.get_quantity()
-        transaction = self.bag.purchase_bag(username, payment_details)
+        transaction = self.bag.purchase_bag(username, payment_details, delivery_details)
         self.assertNotEqual(transaction, None)
         self.assertEquals(self.bag.products, {})
         self.assertEquals(transaction.price, amount_to_buy * self.product.price)
@@ -94,7 +95,7 @@ class BagTests(TestCase):
         condition_dict = {"max_quantity": amount_to_buy + 1, "product": self.product.product_id}
         condition = MaxQuantityForProductCondition(condition_dict)
         self.bag.shop.add_purchase_condition(condition)
-        transaction = self.bag.purchase_bag(username, payment_details)
+        transaction = self.bag.purchase_bag(username, payment_details, delivery_details)
         self.assertNotEqual(transaction, None)
         self.assertEquals(self.bag.products, {})
         self.assertEquals(transaction.price, amount_to_buy * self.product.price)
@@ -114,7 +115,7 @@ class BagTests(TestCase):
         condition_dict = {"max_quantity": amount - 1, "product": self.product.product_id}
         condition = MaxQuantityForProductCondition(condition_dict)
         self.bag.shop.add_purchase_condition(condition)
-        self.assertRaises(AssertionError, self.bag.purchase_bag, username, payment_details)
+        self.assertRaises(AssertionError, self.bag.purchase_bag, username, payment_details, delivery_details)
         self.assertEquals(self.bag.products, products_copy)
         self.assertTrue(not pay_facade.pay_called or (pay_facade.pay_called and pay_facade.pay_cancelled))
         self.assertTrue(self.product.get_quantity(), product_quantity)
@@ -128,7 +129,7 @@ class BagTests(TestCase):
         self.bag.add_product(self.product, amount)
         product_quantity = self.product.get_quantity()
         products_copy = self.bag.products.copy()
-        self.assertRaises(AssertionError, self.bag.purchase_bag, username, payment_details)
+        self.assertRaises(AssertionError, self.bag.purchase_bag, username, payment_details, delivery_details)
         self.assertEquals(self.bag.products, products_copy)
         self.assertTrue(not pay_facade.pay_called or (pay_facade.pay_called and pay_facade.pay_cancelled))
         self.assertTrue(deliver_facade.delivery_called)
@@ -143,7 +144,7 @@ class BagTests(TestCase):
         self.bag.add_product(self.product, amount)
         product_quantity = self.product.get_quantity()
         products_copy = self.bag.products.copy()
-        self.assertRaises(AssertionError, self.bag.purchase_bag, username, payment_details)
+        self.assertRaises(AssertionError, self.bag.purchase_bag, username, payment_details, delivery_details)
         self.assertEquals(self.bag.products, products_copy)
         self.assertTrue(
             not deliver_facade.delivery_called
@@ -160,7 +161,7 @@ class BagTests(TestCase):
         self.bag.add_product(self.product, amount)
         product_quantity = self.product.get_quantity()
         products_copy = self.bag.products.copy()
-        self.assertRaises(AssertionError, self.bag.purchase_bag, username, payment_details)
+        self.assertRaises(AssertionError, self.bag.purchase_bag, username, payment_details, delivery_details)
         self.assertEquals(self.bag.products, products_copy)
         self.assertTrue(
             not deliver_facade.delivery_called
@@ -185,7 +186,7 @@ class BagTests(TestCase):
         }
         condition = DateWindowForCategoryCondition(condition_dict)
         self.bag.shop.add_purchase_condition(condition)
-        self.assertRaises(AssertionError, self.bag.purchase_bag, username, payment_details)
+        self.assertRaises(AssertionError, self.bag.purchase_bag, username, payment_details, delivery_details)
         self.assertEquals(self.bag.products, products_copy)
         self.assertTrue(
             not deliver_facade.delivery_called
@@ -204,7 +205,7 @@ class BagTests(TestCase):
         [self.bag.add_product(p, a) for p, a in zip(self.products, amounts_copy)]
         product_quantities = [p.get_quantity() for p in self.products]
         products_copy = self.bag.products.copy()
-        self.assertRaises(AssertionError, self.bag.purchase_bag, username, payment_details)
+        self.assertRaises(AssertionError, self.bag.purchase_bag, username, payment_details, delivery_details)
         self.assertEquals(self.bag.products, products_copy)
         self.assertTrue(
             not deliver_facade.delivery_called

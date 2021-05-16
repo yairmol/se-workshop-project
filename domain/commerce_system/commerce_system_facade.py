@@ -1,20 +1,19 @@
 import threading
-from typing import Dict, List, Union
+from typing import Dict, List, Union, Optional
 
 from data_model import ConditionsModel as Cm
 from domain.authentication_module.authenticator import Authenticator
 from domain.commerce_system.ifacade import ICommerceSystemFacade
 from domain.commerce_system.product import Product
-from domain.commerce_system.purchase_conditions import Condition, TimeWindowForCategoryCondition, \
-    MaxQuantityForProductCondition, ORCondition, ANDCondition, DateWindowForProductCondition, \
-    TimeWindowForProductCondition, DateWindowForCategoryCondition
+from domain.commerce_system.purchase_conditions import (
+    TimeWindowForCategoryCondition, MaxQuantityForProductCondition, ORCondition, ANDCondition,
+    DateWindowForProductCondition, TimeWindowForProductCondition, DateWindowForCategoryCondition,
+)
 from domain.commerce_system.search_engine import search, Filter
 from domain.commerce_system.shop import Shop
 from domain.commerce_system.transaction import Transaction
 from domain.commerce_system.transaction_repo import TransactionRepo
 from domain.commerce_system.user import User, Subscribed, SystemManager
-
-# import domain.commerce_system.valdiation as validate
 from domain.discount_module.discount_management import SimpleCond, DiscountDict, CompositeDiscountDict
 from domain.notifications.notifications import INotifications
 
@@ -55,16 +54,17 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         pass
 
     # 2.3
-    def register(self, user_id: int, username: str, password: str, **more):
+    def register(self, user_id: int, username: str, password: str, **more) -> bool:
         self.authenticator.register_new_user(username, password)
         user = self.get_user(user_id)
         new_subscribe = user.register(username)
         # saving registered user_sess's details
         with self.registered_users_lock:
             self.registered_users[username] = new_subscribe
+        return True
 
     # 2.4
-    def login(self, user_id: int, username: str, password: str):
+    def login(self, user_id: int, username: str, password: str) -> bool:
         self.authenticator.login(username, password)
         with self.registered_users_lock:
             sub_user = self.registered_users.get(username)
@@ -72,6 +72,7 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         # **************** NEED TO CHECK IF THE USER IS GUEST ?
         with self.active_users_lock:
             self.active_users.get(user_id).login(sub_user)
+        return True
 
     def get_user_info(self, user_id: int) -> dict:
         return self.active_users[user_id].to_dict()
@@ -81,21 +82,21 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         shop: Shop = self.shops[shop_id]
         return shop.to_dict()
 
-    def get_all_shop_info(self) -> list:
-        shops: List[Shop] = list(map(lambda shop: shop.to_dict(), self.shops.values()))
+    def get_all_shop_info(self) -> List[dict]:
+        shops = [shop.to_dict() for shop in self.shops.values()]
         return shops
 
-    def get_all_shop_ids_and_names(self) -> dict:
+    def get_all_shop_ids_and_names(self) -> Dict[int, str]:
         ret = {}
         for shopId in self.shops.keys():
             ret[shopId] = self.shops[shopId].name
         return ret
 
-    def get_all_user_names(self) -> list:
+    def get_all_user_names(self) -> List[str]:
         names: List[str] = list(self.registered_users.keys())
         return names
 
-    def get_all_categories(self) -> list:
+    def get_all_categories(self) -> List[str]:
         cats = set()
         for shop in self.shops.values():
             for prod in shop.products.values():
@@ -122,18 +123,18 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         return list(map(lambda p: p.to_dict(), search_results))
 
     # 2.7, 2.8
-    def save_product_to_cart(self, user_id: int, shop_id: int, product_id: int, amount_to_buy: int):
+    def save_product_to_cart(self, user_id: int, shop_id: int, product_id: int, amount_to_buy: int) -> bool:
         user = self.get_user(user_id)
         shop = self.get_shop(shop_id)
         product = shop.products[product_id]
-        assert user.save_product_to_cart(shop, product, amount_to_buy), "save product to cart failed"
+        return user.save_product_to_cart(shop, product, amount_to_buy)
 
     # 2.8
-    def remove_product_from_cart(self, user_id: int, shop_id: int, product_id: int, amount: int):
+    def remove_product_from_cart(self, user_id: int, shop_id: int, product_id: int, amount: int) -> bool:
         user = self.get_user(user_id)
         shop = self.get_shop(shop_id)
         product = shop.products[product_id]
-        user.remove_product_from_cart(shop, product, amount)
+        return user.remove_product_from_cart(shop, product, amount)
 
     # 2.8
     def get_cart_info(self, user_id: int) -> dict:
@@ -142,29 +143,29 @@ class CommerceSystemFacade(ICommerceSystemFacade):
 
     # 2.9
     def purchase_cart(self, user_id: int, payment_details: dict, delivery_details: dict,
-                      do_what_you_can=False) -> List[Transaction]:
+                      do_what_you_can=False) -> List[dict]:
         user = self.get_user(user_id)
-        return user.purchase_cart(payment_details, delivery_details, do_what_you_can)
+        return [t.to_dict() for t in user.purchase_cart(payment_details, delivery_details, do_what_you_can)]
 
     # 2.9
     def purchase_shopping_bag(self, user_id: int, shop_id: int, payment_details: dict,
-                              delivery_details: dict) -> Transaction:
+                              delivery_details: dict) -> dict:
         user = self.get_user(user_id)
         shop = self.get_shop(shop_id)
-        return user.purchase_shopping_bag(shop, payment_details, delivery_details)
+        return user.purchase_shopping_bag(shop, payment_details, delivery_details).to_dict()
 
     # 2.9
     def purchase_product(self, user_id: int, shop_id: int, product_id: int, amount_to_buy: int,
-                         payment_details: dict, delivery_details: dict) -> Transaction:
+                         payment_details: dict, delivery_details: dict) -> dict:
         user = self.get_user(user_id)
         shop = self.get_shop(shop_id)
         product = shop.products[product_id]
-        return user.purchase_product(shop, product, amount_to_buy, payment_details, delivery_details)
+        return user.purchase_product(shop, product, amount_to_buy, payment_details, delivery_details).to_dict()
 
     # 3.1
-    def logout(self, user_id: int):
+    def logout(self, user_id: int) -> bool:
         with self.active_users_lock:
-            self.active_users.get(user_id).logout()
+            return self.active_users.get(user_id).logout()
 
     # 3.2
     def open_shop(self, user_id: int, **shop_details) -> int:
@@ -176,8 +177,8 @@ class CommerceSystemFacade(ICommerceSystemFacade):
 
     # 3.7
     def get_personal_purchase_history(self, user_id: int) -> List[dict]:
-        transactions = self.get_user(user_id).get_personal_transactions_history()
-        return list(map(lambda t: t.to_dict(), transactions))
+        transactions: List[Transaction] = self.get_user(user_id).get_personal_transactions_history()
+        return [t.to_dict() for t in transactions]
 
     # 4.1
     def add_product_to_shop(self, user_id: int, shop_id: int, **product_info) -> int:
@@ -206,7 +207,41 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         return worker.delete_product(shop, product_id)
 
     # 4.2
-    def add_purchase_condition(self, user_id: int, shop_id: int, **condition_dict):
+    def get_discounts(self, user_id, shop_id) -> List[dict]:
+        user = self.get_user(user_id)
+        shop = self.get_shop(shop_id)
+        return [d.to_dict() for d in user.get_shop_discounts(shop)]
+
+    # 4.2
+    def add_discount(
+            self, user_id: int, shop_id: int, has_cond: bool, condition: Optional[List[Union[str, SimpleCond, List]]],
+            discount: Union[DiscountDict, CompositeDiscountDict]
+    ) -> int:
+
+        shop = self.get_shop(shop_id)
+        subscribed = self.get_user(user_id).user_state
+        return subscribed.add_discount(shop, has_cond, condition, discount).discount_id
+
+    # 4.2
+    def delete_discounts(self, user_id: int, shop_id, discount_ids) -> bool:
+        shop = self.get_shop(shop_id)
+        subscribed = self.get_user(user_id).user_state
+        return subscribed.delete_discounts(shop, discount_ids)
+
+    # 4.2
+    def aggregate_discounts(self, user_id: int, shop_id: int, discount_ids: [int], func: str) -> bool:
+        shop = self.get_shop(shop_id)
+        subscribed = self.get_user(user_id).user_state
+        return subscribed.aggregate_discounts(shop, discount_ids, func)
+
+    # 4.2
+    def move_discount_to(self, user_id: int, shop_id: int, src_discount_id: int, dst_discount_id: int) -> bool:
+        shop = self.get_shop(shop_id)
+        subscribed = self.get_user(user_id).user_state
+        return subscribed.move_discount_to(shop, src_discount_id, dst_discount_id)
+
+    # 4.2
+    def add_purchase_condition(self, user_id: int, shop_id: int, **condition_dict) -> bool:
         worker = self.get_user(user_id).user_state
         shop = self.get_shop(shop_id)
         if condition_dict[Cm.CONDITION_TYPE] == Cm.AND or condition_dict[Cm.CONDITION_TYPE] == Cm.OR:
@@ -215,77 +250,83 @@ class CommerceSystemFacade(ICommerceSystemFacade):
                 conditions += [condition_map[cond_dict[Cm.CONDITION_TYPE]](cond_dict)]
             condition_dict[Cm.CONDITIONS] = conditions
         condition = condition_map[condition_dict[Cm.CONDITION_TYPE]](condition_dict)
-        worker.add_purchase_condition(shop, condition)
+        return worker.add_purchase_condition(shop, condition)
 
     # 4.2
-    def remove_purchase_condition(self, user_id: int, shop_id: int, condition_id: int):
+    def remove_purchase_condition(self, user_id: int, shop_id: int, condition_id: int) -> bool:
         worker = self.get_user(user_id).user_state
         shop = self.get_shop(shop_id)
-        worker.remove_purchase_condition(shop, condition_id)
+        return worker.remove_purchase_condition(shop, condition_id)
 
     # 4.3
-    def appoint_shop_owner(self, user_id: int, shop_id: int, username: str):
+    def appoint_shop_owner(self, user_id: int, shop_id: int, username: str) -> dict:
         shop = self.get_shop(shop_id)
         owner = self.get_user(user_id)
         new_owner = self.get_subscribed(username)
-        owner.user_state.appoint_owner(new_owner, shop)
+        app = owner.user_state.appoint_owner(new_owner, shop)
         # TODO: change or delete value of userid here and below
-        self.notifications.send_notif( f"{owner.get_name()} appointed you as owner to {shop.name}",
+        self.notifications.send_notif(f"{owner.get_name()} appointed you as owner to {shop.name}",
                                       username=new_owner.username)
+        return app.to_dict()
 
     # 4.5
-    def appoint_shop_manager(self, user_id: int, shop_id: int, username: str, permissions: List[str]):
+    def appoint_shop_manager(self, user_id: int, shop_id: int, username: str, permissions: List[str]) -> dict:
         shop = self.get_shop(shop_id)
         owner = self.get_user(user_id)
         new_manager = self.get_subscribed(username)
-        owner.user_state.appoint_manager(new_manager, shop, permissions)
-        self.notifications.send_notif( f"{owner.get_name()} appointed you as owner to {shop.name}",
+        app = owner.user_state.appoint_manager(new_manager, shop, permissions)
+        self.notifications.send_notif(f"{owner.get_name()} appointed you as owner to {shop.name}",
                                       username=new_manager.username)
+        return app.to_dict()
 
     # 4.6
-    def edit_manager_permissions(self, user_id: int, shop_id: int, username: str, permissions: List[str]):
+    def edit_manager_permissions(self, user_id: int, shop_id: int, username: str, permissions: List[str]) -> bool:
         shop = self.get_shop(shop_id)
         owner = self.get_user(user_id)
         new_owner = self.get_subscribed(username)
-        owner.user_state.edit_manager_permissions(new_owner, shop, permissions)
-        self.notifications.send_notif( f"{owner.get_name()} edited your permissions in shop {shop.name}",
+        res = owner.user_state.edit_manager_permissions(new_owner, shop, permissions)
+        self.notifications.send_notif(f"{owner.get_name()} edited your permissions in shop {shop.name}",
                                       username=new_owner.username)
+        return res
 
     # 4.3
-    def promote_shop_owner(self, user_id: int, shop_id: int, username: str):
+    def promote_shop_owner(self, user_id: int, shop_id: int, username: str) -> dict:
         shop = self.get_shop(shop_id)
         owner = self.get_user(user_id)
         new_owner = self.get_subscribed(username)
-        owner.user_state.promote_manager_to_owner(new_owner, shop)
-        self.notifications.send_notif( f"{owner.get_name()} promoted you to owner in {shop.name}",
+        app = owner.user_state.promote_manager_to_owner(new_owner, shop)
+        self.notifications.send_notif(f"{owner.get_name()} promoted you to owner in {shop.name}",
                                       username=new_owner.username)
+        return app.to_dict()
 
-    def unappoint_shop_manager(self, user_id: int, shop_id: int, username: str):
+    def unappoint_shop_manager(self, user_id: int, shop_id: int, username: str) -> bool:
         shop = self.get_shop(shop_id)
         owner = self.get_user(user_id)
         old_owner = self.get_subscribed(username)
-        owner.user_state.un_appoint_manager(old_owner, shop)
+        res = owner.user_state.un_appoint_manager(old_owner, shop)
         self.notifications.send_notif(f"{owner.get_name()} unappointed you as manager in {shop.name}",
                                       username=old_owner.username)
+        return res
 
     # 4.7
-    def unappoint_shop_owner(self, user_id: int, shop_id: int, username: str):
+    def unappoint_shop_owner(self, user_id: int, shop_id: int, username: str) -> bool:
         shop = self.get_shop(shop_id)
         owner = self.get_user(user_id)
         old_owner = self.get_subscribed(username)
-        owner.user_state.un_appoint_owner(old_owner, shop)
-        self.notifications.send_notif( f"{owner.get_name()} unappointed you as owner in {shop.name}",
+        res = owner.user_state.un_appoint_owner(old_owner, shop)
+        self.notifications.send_notif(f"{owner.get_name()} unappointed you as owner in {shop.name}",
                                       username=old_owner.username)
+        return res
 
     # 4.9
     def get_shop_staff_info(self, user_id: int, shop_id: int) -> List[dict]:
-        return self.get_user(user_id).get_shop_staff_info(self.get_shop(shop_id))
+        return [a.to_dict() for a in self.get_user(user_id).get_shop_staff_info(self.get_shop(shop_id))]
 
     # 4.11
     def get_shop_transaction_history(self, user_id: int, shop_id: int) -> List[dict]:
         shop = self.get_shop(shop_id)
         user = self.get_user(user_id)
-        return user.user_state.get_shop_transaction_history(shop)
+        return [t.to_dict() for t in user.user_state.get_shop_transaction_history(shop)]
 
     # 6.4
     def get_system_transaction_history(self, user_id: int) -> List[dict]:
@@ -293,11 +334,13 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         transactions = user.user_state.get_system_transaction_history()
         return list(map(lambda t: t.to_dict(), transactions))
 
+    # 6.4
     def get_system_transaction_history_of_shop(self, user_id: int, shop_id: int) -> List[dict]:
         user = self.get_user(user_id)
         transactions = user.user_state.get_system_transaction_history_of_shop(shop_id)
-        return list(map(lambda t: t.to_dict(), transactions))
+        return [t.to_dict() for t in transactions]
 
+    # 6.4
     def get_system_transaction_history_of_user(self, user_id: int, username: str) -> List[dict]:
         user = self.get_user(user_id)
         transactions = user.user_state.get_system_transaction_history_of_user(username)
@@ -308,7 +351,7 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         with self.active_users_lock:
             self.active_users.pop(user_id)
 
-    def is_username_exists(self, username: str):
+    def is_username_exists(self, username: str) -> bool:
         with self.registered_users_lock:
             return username in self.registered_users
 
@@ -343,39 +386,6 @@ class CommerceSystemFacade(ICommerceSystemFacade):
             ac[Um.USERNAME], self.transaction_repo
         )
 
-    def clean_up(self):
-        self.transaction_repo = self.transaction_repo.cleanup()
-        self.shops.clear()
-        self.registered_users.clear()
-        self.active_users.clear()
-
-    def get_discounts(self, user_id, shop_id):
-        user = self.get_user(user_id)
-        shop = self.get_shop(shop_id)
-        return list(map(lambda d: d.to_dict(), user.get_shop_discounts(shop)))
-
-    def add_discount(self, user_id: int, shop_id: int, has_cond: bool, condition: List[Union[str, SimpleCond, List]],
-                     discount: Union[DiscountDict, CompositeDiscountDict]) -> int:
-
-        shop = self.get_shop(shop_id)
-        subscribed = self.get_user(user_id).user_state
-        return subscribed.add_discount(shop, has_cond, condition, discount)
-
-    def delete_discounts(self, user_id: int, shop_id, discount_ids):
-        shop = self.get_shop(shop_id)
-        subscribed = self.get_user(user_id).user_state
-        subscribed.delete_discounts(shop, discount_ids)
-
-    def aggregate_discounts(self, user_id: int, shop_id: int, discount_ids: [int], func: str):
-        shop = self.get_shop(shop_id)
-        subscribed = self.get_user(user_id).user_state
-        subscribed.aggregate_discounts(shop, discount_ids, func)
-
-    def move_discount_to(self, user_id, shop_id, src_discount_id, dst_discount_id):
-        shop = self.get_shop(shop_id)
-        subscribed = self.get_user(user_id).user_state
-        subscribed.move_discount_to(shop, src_discount_id, dst_discount_id)
-
     def get_product_info(self, shop_id, product_id):
         return self.shops.get(shop_id).get_product_info(product_id).to_dict()
 
@@ -388,3 +398,9 @@ class CommerceSystemFacade(ICommerceSystemFacade):
     def get_user_appointments(self, user_id):
         user = self.get_user(user_id)
         return [a.to_dict() for a in user.user_state.get_appointments()]
+
+    def clean_up(self):
+        self.transaction_repo = self.transaction_repo.cleanup()
+        self.shops.clear()
+        self.registered_users.clear()
+        self.active_users.clear()
