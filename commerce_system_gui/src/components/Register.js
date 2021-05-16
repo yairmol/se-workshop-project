@@ -16,7 +16,7 @@ import { makeStyles } from '@material-ui/core/styles';
 import Container from '@material-ui/core/Container';
 import { useFormik } from 'formik';
 import {
-  Link as RouteLink,
+  Link as RouteLink, useHistory,
 } from 'react-router-dom';
 import {useAuth} from "./use-auth";
 
@@ -44,6 +44,7 @@ export default function Register() {
   const classes = useStyles();
   const auth = useAuth();
   const [birthDate, setBirthDate] = useState(new Date());
+  const history = useHistory();
 
   const onBirthDateChange = (date) => {
     setBirthDate(date);
@@ -56,7 +57,12 @@ export default function Register() {
      },
      onSubmit: values => {
        // alert(JSON.stringify(values));
-       auth.signup({birthDate: birthDate, ...values})
+       auth.signup({birthDate: birthDate, ...values}).then((res) => {
+         if (res) {
+           alert("registered successfully, redirecting to login");
+           history.replace({ pathname: "/login", header: "Login"})
+         }
+       })
      },
    });
 
