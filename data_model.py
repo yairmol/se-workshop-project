@@ -41,6 +41,7 @@ class PermissionsModel:
 
 
 class ConditionsModel:
+    CONDITION_TYPE = "ConditionType"
     MAX_QUANTITY = "max_quantity"
     PRODUCT = "product"
     CATEGORY = "category"
@@ -48,6 +49,9 @@ class ConditionsModel:
     MAX_TIME = "max_time"
     MIN_DATE = "min_date"
     MAX_DATE = "max_date"
+    CONDITIONS = "conditions"
+    AND = "ANDCondition"
+    OR = "ORCondition"
     MAX_QUANTITY_FOR_PRODUCT = "MaxQuantityForProductCondition"
     TIME_WINDOW_FOR_CATEGORY = "TimeWindowForCategoryCondition"
     TIME_WINDOW_FOR_PRODUCT = "TimeWindowForProductCondition"
