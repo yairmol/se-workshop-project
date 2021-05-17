@@ -40,12 +40,15 @@ class DeliveryFacadeAlwaysTrue(IDeliveryFacade):
 
 class DeliveryFacadeWSEP(IDeliveryFacade):
     url = 'https://cs-bgu-wsep.herokuapp.com/'
+    SUCCESSFUL_HANDSHAKE = 'OK'
+    SUCCESSFUL_DELIVERY_CANCEL = '1'
+    ERROR = '-1'
 
     def handshake(self) -> bool:
         data = {"action_type": "handshake"}
         try:
             response = requests.post(self.url, data, timeout=5)
-            return response.text == 'OK'
+            return response.text == self.SUCCESSFUL_HANDSHAKE
         except Timeout:
             return False
 
@@ -55,7 +58,7 @@ class DeliveryFacadeWSEP(IDeliveryFacade):
             data.update(contact_details)
             try:
                 response = requests.post(self.url, data, timeout=5)
-                if response.text == '-1':
+                if response.text == self.ERROR:
                     return False
                 return response.text
             except Timeout:
@@ -67,7 +70,7 @@ class DeliveryFacadeWSEP(IDeliveryFacade):
             data = {"action_type": "cancel_pay", "transaction_id": delivery_id}
             try:
                 response = requests.post(self.url, data, timeout=5)
-                return response.text == '1'
+                return response.text == self.SUCCESSFUL_DELIVERY_CANCEL
             except Timeout:
                 return False
         return False

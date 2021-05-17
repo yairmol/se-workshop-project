@@ -43,12 +43,15 @@ class PaymentsFacadeAlwaysTrue(IPaymentsFacade):
 
 class PaymentsFacadeWSEP(IPaymentsFacade):
     url = 'https://cs-bgu-wsep.herokuapp.com/'
+    SUCCESSFUL_HANDSHAKE = 'OK'
+    SUCCESSFUL_PAY_CANCEL = '1'
+    ERROR = '-1'
 
     def handshake(self) -> bool:
         data = {"action_type": "handshake"}
         try:
             response = requests.post(self.url, data, timeout=5)
-            return response.text == 'OK'
+            return response.text == self.SUCCESSFUL_HANDSHAKE
         except Timeout:
             return False
 
@@ -58,7 +61,7 @@ class PaymentsFacadeWSEP(IPaymentsFacade):
             data.update(payment_details)
             try:
                 response = requests.post(self.url, data, timeout=5)
-                if response.text == '-1':
+                if response.text == self.ERROR:
                     return False
                 return response.text
             except Timeout:
@@ -70,7 +73,7 @@ class PaymentsFacadeWSEP(IPaymentsFacade):
             data = {"action_type": "cancel_pay", "transaction_id": transaction_id}
             try:
                 response = requests.post(self.url, data, timeout=5)
-                return response.text == '1'
+                return response.text == self.SUCCESSFUL_PAY_CANCEL
             except Timeout:
                 return False
         return False
