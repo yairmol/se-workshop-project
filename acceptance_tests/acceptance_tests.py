@@ -572,9 +572,9 @@ class PurchasesWithConditionsTests(TestCase):
         shop_id = get_shops_not_owned_by_user(u1, self.shop_ids, self.shop_to_staff)[0]
         shop_owner = self.shop_to_owners[shop_id]
         prod_id = self.shops_to_products[shop_id][0]
-        condition_dict = {Cm.MAX_QUANTITY: 3, Cm.PRODUCT: prod_id}
+        condition_dict = {Cm.CONDITION_TYPE: Cm.MAX_QUANTITY_FOR_PRODUCT, Cm.MAX_QUANTITY: 3, Cm.PRODUCT: prod_id}
         self.assertTrue(self.commerce_system.add_purchase_condition
-                        (shop_owner, shop_id, Cm.MAX_QUANTITY_FOR_PRODUCT, **condition_dict)['status'])
+                        (shop_owner, shop_id, **condition_dict)['status'])
         transaction_status = self.commerce_system.purchase_product(
             u1, shop_id, prod_id, 1, payment_details[0]
         )
@@ -586,9 +586,9 @@ class PurchasesWithConditionsTests(TestCase):
         shop_id = get_shops_not_owned_by_user(u1, self.shop_ids, self.shop_to_staff)[0]
         shop_owner = self.shop_to_owners[shop_id]
         prod_id = self.shops_to_products[shop_id][0]
-        condition_dict = {Cm.MAX_QUANTITY: 3, Cm.PRODUCT: prod_id}
+        condition_dict = {Cm.CONDITION_TYPE: Cm.MAX_QUANTITY_FOR_PRODUCT, Cm.MAX_QUANTITY: 3, Cm.PRODUCT: prod_id}
         self.assertTrue(self.commerce_system.add_purchase_condition
-                        (shop_owner, shop_id, Cm.MAX_QUANTITY_FOR_PRODUCT, **condition_dict)['status'])
+                        (shop_owner, shop_id, **condition_dict)['status'])
         transaction_status = self.commerce_system.purchase_product(
             u1, shop_id, prod_id, 5, payment_details[0]
         )
@@ -600,9 +600,10 @@ class PurchasesWithConditionsTests(TestCase):
         shop_id = get_shops_not_owned_by_user(u1, self.shop_ids, self.shop_to_staff)[0]
         shop_owner = self.shop_to_owners[shop_id]
         prod_id = self.shops_to_products[shop_id][0]
-        condition_dict = {Cm.MIN_TIME: '00:00', Cm.MAX_TIME: '23:00', Cm.PRODUCT: prod_id}
+        condition_dict = {Cm.CONDITION_TYPE: Cm.TIME_WINDOW_FOR_PRODUCT, Cm.MIN_TIME: '00:00', Cm.MAX_TIME: '23:00',
+                          Cm.PRODUCT: prod_id}
         self.assertTrue(self.commerce_system.add_purchase_condition
-                        (shop_owner, shop_id, Cm.TIME_WINDOW_FOR_PRODUCT, **condition_dict)['status'])
+                        (shop_owner, shop_id, **condition_dict)['status'])
         transaction_status = self.commerce_system.purchase_product(
             u1, shop_id, prod_id, 1, payment_details[0]
         )
@@ -614,9 +615,10 @@ class PurchasesWithConditionsTests(TestCase):
         shop_id = get_shops_not_owned_by_user(u1, self.shop_ids, self.shop_to_staff)[0]
         shop_owner = self.shop_to_owners[shop_id]
         prod_id = self.shops_to_products[shop_id][0]
-        condition_dict = {Cm.MIN_TIME: '00:00', Cm.MAX_TIME: '1:00', Cm.PRODUCT: prod_id}
+        condition_dict = {Cm.CONDITION_TYPE: Cm.TIME_WINDOW_FOR_PRODUCT, Cm.MIN_TIME: '00:00',
+                          Cm.MAX_TIME: '1:00', Cm.PRODUCT: prod_id}
         self.assertTrue(self.commerce_system.add_purchase_condition
-                        (shop_owner, shop_id, Cm.TIME_WINDOW_FOR_PRODUCT, **condition_dict)['status'])
+                        (shop_owner, shop_id, **condition_dict)['status'])
         transaction_status = self.commerce_system.purchase_product(
             u1, shop_id, prod_id, 1, payment_details[0]
         )
@@ -628,9 +630,10 @@ class PurchasesWithConditionsTests(TestCase):
         shop_id = get_shops_not_owned_by_user(u1, self.shop_ids, self.shop_to_staff)[0]
         shop_owner = self.shop_to_owners[shop_id]
         prod_id = self.shops_to_products[shop_id][0]
-        condition_dict = {Cm.MIN_DATE: '1/5/2021', Cm.MAX_DATE: '30/5/2021', Cm.PRODUCT: prod_id}
+        condition_dict = {Cm.CONDITION_TYPE: Cm.DATE_WINDOW_FOR_PRODUCT, Cm.MIN_DATE: '1/5/2021',
+                          Cm.MAX_DATE: '30/5/2021', Cm.PRODUCT: prod_id}
         self.assertTrue(self.commerce_system.add_purchase_condition
-                        (shop_owner, shop_id, Cm.DATE_WINDOW_FOR_PRODUCT, **condition_dict)['status'])
+                        (shop_owner, shop_id, **condition_dict)['status'])
         transaction_status = self.commerce_system.purchase_product(
             u1, shop_id, prod_id, 1, payment_details[0]
         )
@@ -642,9 +645,10 @@ class PurchasesWithConditionsTests(TestCase):
         shop_id = get_shops_not_owned_by_user(u1, self.shop_ids, self.shop_to_staff)[0]
         shop_owner = self.shop_to_owners[shop_id]
         prod_id = self.shops_to_products[shop_id][0]
-        condition_dict = {Cm.MIN_DATE: '1/5/2021', Cm.MAX_DATE: '3/5/2021', Cm.PRODUCT: prod_id}
+        condition_dict = {Cm.CONDITION_TYPE: Cm.DATE_WINDOW_FOR_PRODUCT,
+                          Cm.MIN_DATE: '1/5/2021', Cm.MAX_DATE: '3/5/2021', Cm.PRODUCT: prod_id}
         self.assertTrue(self.commerce_system.add_purchase_condition
-                        (shop_owner, shop_id, Cm.DATE_WINDOW_FOR_PRODUCT, **condition_dict)['status'])
+                        (shop_owner, shop_id, **condition_dict)['status'])
         transaction_status = self.commerce_system.purchase_product(
             u1, shop_id, prod_id, 1, payment_details[0]
         )
@@ -656,9 +660,10 @@ class PurchasesWithConditionsTests(TestCase):
         shop_id = get_shops_not_owned_by_user(u1, self.shop_ids, self.shop_to_staff)[0]
         shop_owner = self.shop_to_owners[shop_id]
         prod_id = self.shops_to_products[shop_id][0]
-        condition_dict = {Cm.MIN_TIME: '00:00', Cm.MAX_TIME: '23:00', Cm.CATEGORY: "c1"}
+        condition_dict = {Cm.CONDITION_TYPE: Cm.TIME_WINDOW_FOR_CATEGORY,
+                          Cm.MIN_TIME: '00:00', Cm.MAX_TIME: '23:00', Cm.CATEGORY: "c1"}
         self.assertTrue(self.commerce_system.add_purchase_condition
-                        (shop_owner, shop_id, Cm.TIME_WINDOW_FOR_CATEGORY, **condition_dict)['status'])
+                        (shop_owner, shop_id, **condition_dict)['status'])
         transaction_status = self.commerce_system.purchase_product(
             u1, shop_id, prod_id, 1, payment_details[0]
         )
@@ -670,9 +675,10 @@ class PurchasesWithConditionsTests(TestCase):
         shop_id = get_shops_not_owned_by_user(u1, self.shop_ids, self.shop_to_staff)[0]
         shop_owner = self.shop_to_owners[shop_id]
         prod_id = self.shops_to_products[shop_id][0]
-        condition_dict = {Cm.MIN_TIME: '00:00', Cm.MAX_TIME: '1:00', Cm.CATEGORY: "c1"}
+        condition_dict = {Cm.CONDITION_TYPE: Cm.TIME_WINDOW_FOR_CATEGORY,
+                          Cm.MIN_TIME: '00:00', Cm.MAX_TIME: '1:00', Cm.CATEGORY: "c1"}
         self.assertTrue(self.commerce_system.add_purchase_condition
-                        (shop_owner, shop_id, Cm.TIME_WINDOW_FOR_CATEGORY, **condition_dict)['status'])
+                        (shop_owner, shop_id, **condition_dict)['status'])
         transaction_status = self.commerce_system.purchase_product(
             u1, shop_id, prod_id, 1, payment_details[0]
         )
@@ -684,9 +690,10 @@ class PurchasesWithConditionsTests(TestCase):
         shop_id = get_shops_not_owned_by_user(u1, self.shop_ids, self.shop_to_staff)[0]
         shop_owner = self.shop_to_owners[shop_id]
         prod_id = self.shops_to_products[shop_id][0]
-        condition_dict = {Cm.MIN_DATE: '1/5/2021', Cm.MAX_DATE: '30/5/2021', Cm.CATEGORY: "c1"}
+        condition_dict = {Cm.CONDITION_TYPE: Cm.DATE_WINDOW_FOR_CATEGORY,
+                          Cm.MIN_DATE: '1/5/2021', Cm.MAX_DATE: '30/5/2021', Cm.CATEGORY: "c1"}
         self.assertTrue(self.commerce_system.add_purchase_condition
-                        (shop_owner, shop_id, Cm.DATE_WINDOW_FOR_CATEGORY, **condition_dict)['status'])
+                        (shop_owner, shop_id, **condition_dict)['status'])
         transaction_status = self.commerce_system.purchase_product(
             u1, shop_id, prod_id, 1, payment_details[0]
         )
@@ -698,9 +705,10 @@ class PurchasesWithConditionsTests(TestCase):
         shop_id = get_shops_not_owned_by_user(u1, self.shop_ids, self.shop_to_staff)[0]
         shop_owner = self.shop_to_owners[shop_id]
         prod_id = self.shops_to_products[shop_id][0]
-        condition_dict = {Cm.MIN_DATE: '1/5/2021', Cm.MAX_DATE: '3/5/2021', Cm.CATEGORY: "c1"}
+        condition_dict = {Cm.CONDITION_TYPE: Cm.DATE_WINDOW_FOR_CATEGORY,
+                          Cm.MIN_DATE: '1/5/2021', Cm.MAX_DATE: '3/5/2021', Cm.CATEGORY: "c1"}
         self.assertTrue(self.commerce_system.add_purchase_condition
-                        (shop_owner, shop_id, Cm.DATE_WINDOW_FOR_CATEGORY, **condition_dict)['status'])
+                        (shop_owner, shop_id, **condition_dict)['status'])
         transaction_status = self.commerce_system.purchase_product(
             u1, shop_id, prod_id, 1, payment_details[0]
         )
@@ -712,12 +720,43 @@ class PurchasesWithConditionsTests(TestCase):
         u1 = self.sessions[self.U1]
         shops = get_shops_not_owned_by_user(u1, self.shop_ids, self.shop_to_staff)
         prods = []
-        condition_dict = {Cm.MIN_DATE: '1/5/2021', Cm.MAX_DATE: '20/5/2021', Cm.CATEGORY: "c1"}
+        condition_dict = {Cm.CONDITION_TYPE: Cm.DATE_WINDOW_FOR_CATEGORY,
+                          Cm.MIN_DATE: '1/5/2021', Cm.MAX_DATE: '20/5/2021', Cm.CATEGORY: "c1"}
         for shop in shops:
             prods += self.shops_to_products[shop]
             owner = self.shop_to_owners[shop]
             self.assertTrue(self.commerce_system.add_purchase_condition
-                            (owner, shop, Cm.DATE_WINDOW_FOR_CATEGORY, **condition_dict)['status'])
+                            (owner, shop, **condition_dict)['status'])
+        self.assertTrue(all(map(lambda p: self.commerce_system.save_product_to_cart(
+            u1, self.product_to_shop[p], p, 1
+        ), prods[:NUM_PRODS])))
+        self.assertTrue(self.commerce_system.purchase_cart(u1, payment_details[0])['status'])
+
+    def test_purchase_cart_with_complex_conditions(self):
+        NUM_PRODS = 4
+        u1 = self.sessions[self.U1]
+        shops = get_shops_not_owned_by_user(u1, self.shop_ids, self.shop_to_staff)
+        prods = []
+        condition_dict1 = {Cm.CONDITION_TYPE: Cm.DATE_WINDOW_FOR_CATEGORY,
+                           Cm.MIN_DATE: '1/5/2021', Cm.MAX_DATE: '20/7/2021', Cm.CATEGORY: "c1"}
+        condition_dict2 = {Cm.CONDITION_TYPE: Cm.TIME_WINDOW_FOR_CATEGORY,
+                           Cm.MIN_TIME: '00:00', Cm.MAX_TIME: '23:59', Cm.CATEGORY: "c1"}
+        condition_dict3 = {Cm.CONDITION_TYPE: Cm.DATE_WINDOW_FOR_CATEGORY,
+                           Cm.MIN_DATE: '1/5/2021', Cm.MAX_DATE: '1/5/2021', Cm.CATEGORY: "c1"}
+        condition_dict4 = {Cm.CONDITION_TYPE: Cm.TIME_WINDOW_FOR_CATEGORY,
+                           Cm.MIN_TIME: '00:00', Cm.MAX_TIME: '00:01', Cm.CATEGORY: "c1"}
+        success_and_condition_dict = {Cm.CONDITION_TYPE: Cm.AND,
+                                      Cm.CONDITIONS: [condition_dict1, condition_dict2]}
+        success_or_condition_dict = {Cm.CONDITION_TYPE: Cm.OR,
+                                     Cm.CONDITIONS: [condition_dict3, condition_dict4, condition_dict1]}
+
+        for shop in shops:
+            prods += self.shops_to_products[shop]
+            owner = self.shop_to_owners[shop]
+            self.assertTrue(self.commerce_system.add_purchase_condition
+                            (owner, shop, **success_and_condition_dict)['status'])
+            self.assertTrue(self.commerce_system.add_purchase_condition
+                            (owner, shop, **success_or_condition_dict)['status'])
         self.assertTrue(all(map(lambda p: self.commerce_system.save_product_to_cart(
             u1, self.product_to_shop[p], p, 1
         ), prods[:NUM_PRODS])))
@@ -729,12 +768,13 @@ class PurchasesWithConditionsTests(TestCase):
         u1 = self.sessions[self.U1]
         shops = get_shops_not_owned_by_user(u1, self.shop_ids, self.shop_to_staff)
         prods = []
-        condition_dict = {Cm.MIN_DATE: '1/5/2021', Cm.MAX_DATE: '20/5/2021', Cm.CATEGORY: "c1"}
+        condition_dict = {Cm.CONDITION_TYPE: Cm.DATE_WINDOW_FOR_CATEGORY,
+                          Cm.MIN_DATE: '1/5/2021', Cm.MAX_DATE: '20/5/2021', Cm.CATEGORY: "c1"}
         for shop in shops:
             prods += self.shops_to_products[shop]
             owner = self.shop_to_owners[shop]
             self.assertTrue(self.commerce_system.add_purchase_condition
-                            (owner, shop, Cm.DATE_WINDOW_FOR_CATEGORY, **condition_dict)['status'])
+                            (owner, shop, **condition_dict)['status'])
         make_purchases(self.commerce_system, u1, self.product_to_shop, prods[:NUM_PRODS])
         transaction_history = self.commerce_system.get_personal_purchase_history(u1)['result']
         self.assertEqual(len(transaction_history), NUM_PRODS)
