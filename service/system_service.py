@@ -366,13 +366,13 @@ class SystemService:
         return make_status_dict(False, "Invalid Token", "")
 
     # 4.2
-    def add_purchase_condition(self, token: str, shop_id: int, condition_type: str, **condition_dict):
+    def add_purchase_condition(self, token: str, shop_id: int, **condition_dict):
         if self.is_valid_token(token):
             try:
                 user_id = self.tokenizer.get_id_by_token(token)
                 event_logger.info(f"User: {user_id} tries to add purchase condition "
                                   f"shop_id: {shop_id}")
-                self.commerce_system_facade.add_purchase_condition(user_id, shop_id, condition_type, **condition_dict)
+                self.commerce_system_facade.add_purchase_condition(user_id, shop_id,  **condition_dict)
                 event_logger.info("User: " + str(user_id) + " added condition successfully")
                 return make_status_dict(True, "", "")
             except AssertionError as e:

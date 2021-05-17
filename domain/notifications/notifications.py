@@ -27,6 +27,3 @@ class Notifications(INotifications):
 
     def send_broadcast(self, msg):
         notifs.send_broadcast(msg)
-
-    def enlist_sub(self, username):
-        notifs.enlistSub(username)
