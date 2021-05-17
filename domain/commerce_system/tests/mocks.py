@@ -1,6 +1,7 @@
 from typing import Union, List
 
 from domain.delivery_module.delivery_system import IDeliveryFacade
+from domain.notifications.notifications import INotifications
 from domain.payment_module.payment_system import IPaymentsFacade
 
 
@@ -38,3 +39,17 @@ class DeliveryMock(IDeliveryFacade):
     def cancel_delivery(self, delivery_id: str) -> bool:
         self.delivery_cancelled = True
         return True
+
+
+class NotificationsMock(INotifications):
+    def send_notif(self, msg, client_id=-1, username=""):
+        pass
+
+    def send_error(self, msg, client_id=-1, username=""):
+        pass
+
+    def send_broadcast(self, msg):
+        pass
+
+    def enlist_sub(self, username):
+        pass

@@ -108,6 +108,7 @@ class ICommerceSystemFacade:
         :param all_or_nothing: true if the user wants all the cart or nothing at all
         :param payment_details: payment details of the user
         :param user_id: identifies the user making the purchase
+        :param delivery_details:
         :return: true if the purchase was a success, false otherwise
         """
         raise NotImplementedError()
@@ -119,6 +120,7 @@ class ICommerceSystemFacade:
         :param shop_id: the shop that identifies the bag
         :param payment_details: payment details of the user
         :param user_id: identifies the user making the purchase
+        :param delivery_details:
         :return: true if the purchase was a success, false otherwise
         """
         raise NotImplementedError()
@@ -133,6 +135,7 @@ class ICommerceSystemFacade:
         :param user_id: session id of the user purchasing the product
         :param shop_id: the id of the shop in which the purchased product resides
         :param product_id: the id of the purchased product
+        :param delivery_details:
         :return: True if action was successful
         """
         raise NotImplementedError()

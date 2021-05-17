@@ -58,7 +58,6 @@ def disconnect():
 
 @io.on('send_notif')
 def send_notif(msg, client_id, username=""):
-    print(clients)
     if client_id in list(clients.keys()):
         emit('notification', msg, room=clients[client_id])
     elif username in subscribed_clients and username != "":

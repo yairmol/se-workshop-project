@@ -1,5 +1,5 @@
 import threading
-from typing import Dict, List
+from typing import Dict, List, TypeVar
 
 from domain.commerce_system.action import Action, ActionPool
 from domain.commerce_system.purchase_conditions import Condition
@@ -7,7 +7,7 @@ from domain.discount_module.discount_calculator import AdditiveDiscount, Discoun
 from domain.commerce_system.product import Product
 from domain.commerce_system.transaction import Transaction
 from data_model import ShopModel as Sm
-from domain.discount_module.discount_management import SimpleCond, DiscountManagement, DiscountDict
+from domain.discount_module.discount_management import DiscountManagement, DiscountDict, ConditionRaw
 
 SHOP_ID = "shopId"
 SHOP_NAME = "shopName"
@@ -18,6 +18,8 @@ WORKER_NAME = "username"
 WORKER_TITLE = "title"
 WORKER_APPOINTER = "appointer"
 PERMISSIONS = "permissions"
+
+T_app = TypeVar('T_app')
 
 
 class Shop:
@@ -61,12 +63,13 @@ class Shop:
             self.products[product.product_id] = product
             return product
 
-    def delete_product(self, product_id: int):
+    def delete_product(self, product_id: int) -> bool:
         with self.products_lock:
             assert product_id in self.products.keys(), f"shop1 does not hold product with id - {product_id}"
             self.products.pop(product_id)
+            return True
 
-    def edit_product(self, product_id, **to_edit):
+    def edit_product(self, product_id, **to_edit) -> bool:
         """
         edit product receives product id and a dict of fields to alter and the new values.
         MAKE SURE THE FIELD NAMES ARE ACCURATE
@@ -81,14 +84,7 @@ class Shop:
                 if not hasattr(product, field):
                     raise Exception("product has no field ", field)
                 setattr(product, field, new_value)
-
-    def get_free_id(self) -> int:
-        last_id = 1
-        for product_id in sorted(self.products.keys()):
-            if product_id > last_id + 1:
-                return last_id + 1
-            last_id = product_id
-        return last_id + 1
+        return True
 
     def has_product(self, product_name: str):
         """ return true if shop has product named product_name"""
@@ -109,98 +105,78 @@ class Shop:
         with self.products_lock:
             product_update_actions = ActionPool([
                 Action(product.set_quantity, product.get_quantity() - amount)
-                    .set_reverse(Action(product.set_quantity, product.get_quantity()))
+                .set_reverse(Action(product.set_quantity, product.get_quantity()))
                 for product, amount in bag
             ])
             product_update_actions.execute_actions()
             self.transaction_history.append(transaction)
             return True
 
-    def cancel_transaction(self, bag: dict, transaction: Transaction):
+    def cancel_transaction(self, bag: dict, transaction: Transaction) -> bool:
         with self.products_lock:
             for product, amount in bag:
                 product.set_quantity(product.get_quantity() + amount)
             self.transaction_history.remove(transaction)
+            return True
 
-    def add_manager(self, manager_sub):
+    def add_manager(self, manager_sub) -> bool:
         with self.managers_lock:
             self.shop_managers[manager_sub.username] = manager_sub
+            return True
 
-    def add_owner(self, owner_sub):
+    def add_owner(self, owner_sub) -> bool:
         with self.owners_lock:
             self.shop_owners[owner_sub.username] = owner_sub
+            return True
 
-    def remove_manager(self, manager_sub):
+    def remove_manager(self, manager_sub) -> bool:
         with self.managers_lock:
             self.shop_managers.pop(manager_sub.username)
+            return True
 
-    def remove_owner(self, owner_sub):
+    def remove_owner(self, owner_sub) -> bool:
         with self.owners_lock:
             self.shop_owners.pop(owner_sub.username)
+            return True
 
-    def get_manager_info(self, sub):
-        return {
-            WORKER_NAME: sub.username,
-            WORKER_TITLE: "manager",
-            WORKER_APPOINTER: sub.get_appointment(self).appointer.username,
-            PERMISSIONS: sub.get_appointment(self).get_permissions()
-        }
+    def get_staff_info(self) -> List[T_app]:
+        with self.owners_lock, self.managers_lock:
+            return list(self.shop_owners.values()) + list(self.shop_managers.values())
 
-    def get_owner_info(self, sub):
-        appointer = sub.get_appointment(self).appointer
-        return {
-            WORKER_NAME: sub.username,
-            WORKER_TITLE: "owner" if sub != self.founder else "founder",
-            WORKER_APPOINTER: appointer.username if appointer else "no appointer, this is the shop founder"
-        }
+    def get_shop_transaction_history(self) -> List[Transaction]:
+        return list(self.transaction_history)
 
-    def get_managers_info(self):
-        info_dicts = []
-        with self.managers_lock:
-            for manager_sub in self.shop_managers.values():
-                info_dicts += [self.get_manager_info(manager_sub)]
-        return info_dicts
-
-    def get_owners_info(self):
-        info_dicts = [self.get_owner_info(self.founder)]
-        with self.owners_lock:
-            for owner_sub in self.shop_owners.values():
-                info_dicts += [self.get_owner_info(owner_sub)]
-            return info_dicts
-
-    def get_staff_info(self):
-        return self.get_managers_info() + self.get_owners_info()
-
-    def get_shop_transaction_history(self):
-        return list(map(lambda x: x.to_dict(), self.transaction_history))
-
-    def get_product_info(self, product_id):
+    def get_product_info(self, product_id) -> Product:
         assert product_id in self.products, "product id doesn't exists"
         return self.products.get(product_id)
 
     def get_discounts(self) -> List[Discount]:
         return self.discount.discounts
 
-    def add_discount(self, has_cond: bool, condition: [str or SimpleCond or []], discount: DiscountDict)-> int:
+    def add_discount(self, has_cond: bool, condition: ConditionRaw, discount: DiscountDict) -> Discount:
         with self.discount_lock:
             return DiscountManagement.add_discount(self.discount, has_cond, condition, discount)
 
-    def aggregate_discounts(self, discount_ids: [int], func: str):
+    def aggregate_discounts(self, discount_ids: [int], func: str) -> bool:
         with self.discount_lock:
             self.discount.aggregate_discounts(discount_ids, func)
+        return True
 
-    def move_discount_to(self, src_discount_id: int, dst_discount_id: int):
+    def move_discount_to(self, src_discount_id: int, dst_discount_id: int) -> bool:
         with self.discount_lock:
             discount = DiscountManagement.remove(self.discount, src_discount_id)
             DiscountManagement.add(self.discount, dst_discount_id, discount)
+        return True
 
-    def delete_discounts(self, discount_ids):
+    def delete_discounts(self, discount_ids) -> bool:
         with self.discount_lock:
             for d_id in discount_ids:
                 DiscountManagement.remove(self.discount, d_id)
+        return True
 
-    def add_purchase_condition(self, condition: Condition):
+    def add_purchase_condition(self, condition: Condition) -> bool:
         self.conditions.append(condition)
+        return True
 
     def remove_purchase_condition(self, condition_id: int) -> bool:
         for condition in self.conditions:

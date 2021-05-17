@@ -1,17 +1,19 @@
 import unittest
-from datetime import time, datetime
 from unittest import TestCase
 import threading as th
 
 from domain.discount_module.discount_management import DiscountDict, SimpleCond
 from driver import Driver
-from test_data import users, shops, products, permissions, payment_details
+from test_data import users, shops, products, permissions, payment_details, simple_condition_dict
 from test_utils import (
     enter_register_and_login, add_product, make_purchases, register_login_users,
     open_shops, add_products, appoint_owners_and_managers, shop_to_products,
     sessions_to_shops, get_shops_not_owned_by_user, fill_with_data, admin_login, get_credentials
 )
-from data_model import UserModel as Um, ShopModel as Sm, ProductModel as Pm, ConditionsModel as Cm
+from data_model import (
+    UserModel as Um, ProductModel as Pm, ConditionsModel as Cm,
+    PermissionsModel as PermM,
+)
 
 
 # 2. Guest Functional Requirements tests
@@ -356,41 +358,45 @@ class ShopManagerOperations(TestCase):
 
     # 4.2.1 manage discounts
     def test_add_discount_with_no_cond(self):
-        perm = ["add_product", "discount"]
+        perm = [PermM.ADD_PRODUCT_PERM, PermM.MANAGE_DISCOUNT_PERM]
         self.assertTrue(self.commerce_system.edit_manager_permissions(
             self.owner_session_id, self.shop_id, self.manager_username, perm)['status'])
 
-        product1_discount_dict1: DiscountDict = {'type': 'product', 'identifier': 1, 'percentage': 20, "composite": False}
-        self.assertTrue(self.commerce_system.add_discount(self.manager_session_id,
-                                                          self.shop_id, False, None, product1_discount_dict1)['status'])
+        product1_discount_dict1: DiscountDict = {
+            'type': 'product', 'identifier': 1, 'percentage': 20, "composite": False
+        }
+        ret = self.commerce_system.add_discount(
+            self.manager_session_id, self.shop_id, False, None, product1_discount_dict1
+        )
+        self.assertTrue(ret["status"])
+
+    def add_discount_with_cond(self, session):
+        product1_discount_dict1: DiscountDict = {
+            'type': 'product', 'identifier': 1, 'percentage': 20, "composite": False
+        }
+        simple_cond: SimpleCond = {'condition': 'sum', 'type': 'shop', 'identifier': 'shop', 'num': 50}
+        condition = [simple_cond]
+        self.assertTrue(self.commerce_system.add_discount(
+            session, self.shop_id, True, condition, product1_discount_dict1
+        )['status'])
 
     # 4.2.1 manage discounts
     def test_add_discount_with_cond(self):
-        perm = ["add_product", "discount"]
+        perm = [PermM.ADD_PRODUCT_PERM, PermM.MANAGE_DISCOUNT_PERM]
         self.assertTrue(self.commerce_system.edit_manager_permissions(
             self.owner_session_id, self.shop_id, self.manager_username, perm)['status'])
-
-        product1_discount_dict1: DiscountDict = {'type': 'product', 'identifier': 1, 'percentage': 20, "composite": False}
-        simple_cond: SimpleCond = {'condition': 'sum', 'type': 'shop', 'identifier': 'shop', 'num': 50}
-        condition = [simple_cond]
-        self.assertTrue(self.commerce_system.add_discount(self.manager_session_id,
-                                                          self.shop_id, True, condition, product1_discount_dict1)[
-                            'status'])
+        self.add_discount_with_cond(self.manager_session_id)
 
     # 4.2.1 manage discounts
     def test_delete_discount(self):
-        product1_discount_dict1: DiscountDict = {'type': 'product', 'identifier': 1, 'percentage': 20, "composite": False}
-        simple_cond: SimpleCond = {'condition': 'sum', 'type': 'shop', 'identifier': 'shop', 'num': 50}
-        condition = [simple_cond]
-
-        self.assertTrue(self.commerce_system.add_discount(self.owner_session_id,
-                                                          self.shop_id, True, condition, product1_discount_dict1)[
-                            'status'])
+        self.add_discount_with_cond(self.owner_session_id)
         self.assertTrue(self.commerce_system.delete_discounts(self.owner_session_id, self.shop_id, [1])['status'])
 
     # 4.2.1 manage discounts
     def test_aggregate_discounts(self):
-        product1_discount_dict1: DiscountDict = {'type': 'product', 'identifier': 1, 'percentage': 20, "composite": False}
+        product1_discount_dict1: DiscountDict = {
+            'type': 'product', 'identifier': 1, 'percentage': 20, "composite": False
+        }
         discount_dict2: DiscountDict = {'type': 'shop', 'identifier': 'shop', 'percentage': 15, "composite": False}
 
         simple_cond: SimpleCond = {'condition': 'sum', 'type': 'shop', 'identifier': 'shop', 'num': 50}
@@ -464,44 +470,47 @@ class PurchasesTests(TestCase):
         shop_id = get_shops_not_owned_by_user(u1, self.shop_ids, self.shop_to_staff)[0]
         prod_id = self.shops_to_products[shop_id][0]
         transaction_status = self.commerce_system.purchase_product(
-            u1, shop_id, prod_id, 1, payment_details[0]
+            u1, shop_id, prod_id, 1, payment_details[0], {}
         )
         self.assertTrue(transaction_status["status"])
 
     # 2.9 purchase cart
     def test_purchase_cart(self):
-        NUM_PRODS = 4
+        num_prods = 4
         u1 = self.sessions[self.U1]
-        shops = get_shops_not_owned_by_user(u1, self.shop_ids, self.shop_to_staff)
+        shops1 = get_shops_not_owned_by_user(u1, self.shop_ids, self.shop_to_staff)
         prods = []
-        for shop in shops:
+        for shop in shops1:
             prods += self.shops_to_products[shop]
         self.assertTrue(all(map(lambda p: self.commerce_system.save_product_to_cart(
             u1, self.product_to_shop[p], p, 1
-        ), prods[:NUM_PRODS])))
-        self.assertTrue(self.commerce_system.purchase_cart(u1, payment_details[0])['status'])
+        ), prods[:num_prods])))
+        self.assertTrue(self.commerce_system.purchase_cart(u1, payment_details[0], {})['status'])
 
-    # 3.7 get transaction
-    def test_get_user_transactions(self):
-        NUM_PRODS = 3
-        u1 = self.sessions[self.U1]
-        shops = get_shops_not_owned_by_user(u1, self.shop_ids, self.shop_to_staff)
-        prods = []
-        for shop in shops:
-            prods += self.shops_to_products[shop]
-        make_purchases(self.commerce_system, u1, self.product_to_shop, prods[:NUM_PRODS])
+    def make_purchases_and_check_transactions(self, u1, prods, num_prods):
+        make_purchases(self.commerce_system, u1, self.product_to_shop, prods[:num_prods])
         transaction_history = self.commerce_system.get_personal_purchase_history(u1)['result']
-        self.assertEqual(len(transaction_history), NUM_PRODS)
+        self.assertEqual(len(transaction_history), num_prods)
         self.assertTrue(
             all(map(lambda pr:
                     any(map(lambda t: pr == t["products"][0]["product_id"],
                             transaction_history)),
-                    prods[:NUM_PRODS]))
+                    prods[:num_prods]))
         )
+
+    # 3.7 get transaction
+    def test_get_user_transactions(self):
+        num_prods = 3
+        u1 = self.sessions[self.U1]
+        shops1 = get_shops_not_owned_by_user(u1, self.shop_ids, self.shop_to_staff)
+        prods = []
+        for shop in shops1:
+            prods += self.shops_to_products[shop]
+        self.make_purchases_and_check_transactions(u1, prods, num_prods)
 
     # 4.9 get shop transactions
     def test_get_shop_transactions(self):
-        NUM_PRODS = 3
+        num_prods = 3
         u1 = self.sessions[self.U1]
         u2 = self.sessions[self.U2]
         shop_id = list(
@@ -510,16 +519,16 @@ class PurchasesTests(TestCase):
         )[0]
         prods = self.shops_to_products[shop_id]
         self.assertTrue(make_purchases(self.commerce_system, u1, self.product_to_shop, prods[:2]))
-        self.assertTrue(make_purchases(self.commerce_system, u2, self.product_to_shop, prods[2:NUM_PRODS]))
+        self.assertTrue(make_purchases(self.commerce_system, u2, self.product_to_shop, prods[2:num_prods]))
         transactions = self.commerce_system.get_shop_transaction_history(
             self.shop_to_opener[shop_id], shop_id
         )["result"]
-        self.assertTrue(len(transactions) == NUM_PRODS)
+        self.assertTrue(len(transactions) == num_prods)
         self.assertTrue(
             all(map(lambda pid:
                     any(map(lambda t: t["products"][0]["product_id"] == pid,
                             transactions)),
-                    prods[:NUM_PRODS]))
+                    prods[:num_prods]))
         )
 
     # 6.4 get system transaction
@@ -541,56 +550,32 @@ class PurchasesTests(TestCase):
                     products_purchased))
         )
 
+    # PurchasesWithConditionsTests:
 
-class PurchasesWithConditionsTests(TestCase):
-    NUM_USERS = len(users)
-    NUM_SHOPS = len(shops)
-    NUM_PRODUCTS = len(products)
-    U1, U2 = 0, 1
-
-    def setUp(self) -> None:
-        self.commerce_system = Driver.get_system_service()
-        self.sessions_to_users = register_login_users(self.commerce_system, self.NUM_USERS)
-        self.sessions = list(self.sessions_to_users.keys())
-        self.shop_id_to_shop, self.shop_to_opener = open_shops(self.commerce_system, self.sessions, self.NUM_SHOPS)
-        self.shop_ids = list(self.shop_id_to_shop.keys())
-        self.product_to_shop = add_products(self.commerce_system, self.shop_to_opener, self.shop_ids, self.NUM_PRODUCTS)
-        self.shop_to_owners, self.shop_to_managers = appoint_owners_and_managers(
-            self.commerce_system, self.sessions, self.sessions_to_users, self.shop_ids
-        )
-        self.shops_to_products = shop_to_products(self.product_to_shop, self.shop_ids)
-        self.shop_to_staff, self.session_to_shops = sessions_to_shops(
-            self.shop_to_opener, self.shop_to_owners, self.shops_to_products, self.sessions
-        )
-
-    def tearDown(self) -> None:
-        self.commerce_system.cleanup()
-
-    # 4.2.2 manage purchase policies + 2.9 purchase product
-    def test_purchase_product_with_max_quantity_condition(self):
+    def add_simple_purchase_condition_and_get_user(self):
         u1 = self.sessions[self.U1]
         shop_id = get_shops_not_owned_by_user(u1, self.shop_ids, self.shop_to_staff)[0]
         shop_owner = self.shop_to_owners[shop_id]
         prod_id = self.shops_to_products[shop_id][0]
         condition_dict = {Cm.CONDITION_TYPE: Cm.MAX_QUANTITY_FOR_PRODUCT, Cm.MAX_QUANTITY: 3, Cm.PRODUCT: prod_id}
-        self.assertTrue(self.commerce_system.add_purchase_condition
-                        (shop_owner, shop_id, **condition_dict)['status'])
+        self.assertTrue(
+            self.commerce_system.add_purchase_condition(shop_owner, shop_id, **condition_dict)['status']
+        )
+        return u1, shop_id, prod_id
+
+    # 4.2.2 manage purchase policies + 2.9 purchase product
+    def test_purchase_product_with_max_quantity_condition(self):
+        u1, shop_id, prod_id = self.add_simple_purchase_condition_and_get_user()
         transaction_status = self.commerce_system.purchase_product(
-            u1, shop_id, prod_id, 1, payment_details[0]
+            u1, shop_id, prod_id, 1, payment_details[0], {}
         )
         self.assertTrue(transaction_status["status"])
 
     # 4.2.2 manage purchase policies + 2.9 purchase product
     def test_purchase_product_that_fails_max_quantity_condition(self):
-        u1 = self.sessions[self.U1]
-        shop_id = get_shops_not_owned_by_user(u1, self.shop_ids, self.shop_to_staff)[0]
-        shop_owner = self.shop_to_owners[shop_id]
-        prod_id = self.shops_to_products[shop_id][0]
-        condition_dict = {Cm.CONDITION_TYPE: Cm.MAX_QUANTITY_FOR_PRODUCT, Cm.MAX_QUANTITY: 3, Cm.PRODUCT: prod_id}
-        self.assertTrue(self.commerce_system.add_purchase_condition
-                        (shop_owner, shop_id, **condition_dict)['status'])
+        u1, shop_id, prod_id = self.add_simple_purchase_condition_and_get_user()
         transaction_status = self.commerce_system.purchase_product(
-            u1, shop_id, prod_id, 5, payment_details[0]
+            u1, shop_id, prod_id, 5, payment_details[0], {}
         )
         self.assertFalse(transaction_status["status"])
 
@@ -605,7 +590,7 @@ class PurchasesWithConditionsTests(TestCase):
         self.assertTrue(self.commerce_system.add_purchase_condition
                         (shop_owner, shop_id, **condition_dict)['status'])
         transaction_status = self.commerce_system.purchase_product(
-            u1, shop_id, prod_id, 1, payment_details[0]
+            u1, shop_id, prod_id, 1, payment_details[0], {}
         )
         self.assertTrue(transaction_status["status"])
 
@@ -620,7 +605,7 @@ class PurchasesWithConditionsTests(TestCase):
         self.assertTrue(self.commerce_system.add_purchase_condition
                         (shop_owner, shop_id, **condition_dict)['status'])
         transaction_status = self.commerce_system.purchase_product(
-            u1, shop_id, prod_id, 1, payment_details[0]
+            u1, shop_id, prod_id, 1, payment_details[0], {}
         )
         self.assertFalse(transaction_status["status"])
 
@@ -635,7 +620,7 @@ class PurchasesWithConditionsTests(TestCase):
         self.assertTrue(self.commerce_system.add_purchase_condition
                         (shop_owner, shop_id, **condition_dict)['status'])
         transaction_status = self.commerce_system.purchase_product(
-            u1, shop_id, prod_id, 1, payment_details[0]
+            u1, shop_id, prod_id, 1, payment_details[0], {}
         )
         self.assertTrue(transaction_status["status"])
 
@@ -650,7 +635,7 @@ class PurchasesWithConditionsTests(TestCase):
         self.assertTrue(self.commerce_system.add_purchase_condition
                         (shop_owner, shop_id, **condition_dict)['status'])
         transaction_status = self.commerce_system.purchase_product(
-            u1, shop_id, prod_id, 1, payment_details[0]
+            u1, shop_id, prod_id, 1, payment_details[0], {}
         )
         self.assertFalse(transaction_status["status"])
 
@@ -665,7 +650,7 @@ class PurchasesWithConditionsTests(TestCase):
         self.assertTrue(self.commerce_system.add_purchase_condition
                         (shop_owner, shop_id, **condition_dict)['status'])
         transaction_status = self.commerce_system.purchase_product(
-            u1, shop_id, prod_id, 1, payment_details[0]
+            u1, shop_id, prod_id, 1, payment_details[0], {}
         )
         self.assertTrue(transaction_status["status"])
 
@@ -680,7 +665,7 @@ class PurchasesWithConditionsTests(TestCase):
         self.assertTrue(self.commerce_system.add_purchase_condition
                         (shop_owner, shop_id, **condition_dict)['status'])
         transaction_status = self.commerce_system.purchase_product(
-            u1, shop_id, prod_id, 1, payment_details[0]
+            u1, shop_id, prod_id, 1, payment_details[0], {}
         )
         self.assertFalse(transaction_status["status"])
 
@@ -695,7 +680,7 @@ class PurchasesWithConditionsTests(TestCase):
         self.assertTrue(self.commerce_system.add_purchase_condition
                         (shop_owner, shop_id, **condition_dict)['status'])
         transaction_status = self.commerce_system.purchase_product(
-            u1, shop_id, prod_id, 1, payment_details[0]
+            u1, shop_id, prod_id, 1, payment_details[0], {}
         )
         self.assertTrue(transaction_status["status"])
 
@@ -710,32 +695,31 @@ class PurchasesWithConditionsTests(TestCase):
         self.assertTrue(self.commerce_system.add_purchase_condition
                         (shop_owner, shop_id, **condition_dict)['status'])
         transaction_status = self.commerce_system.purchase_product(
-            u1, shop_id, prod_id, 1, payment_details[0]
+            u1, shop_id, prod_id, 1, payment_details[0], {}
         )
         self.assertFalse(transaction_status["status"])
 
     # 4.2.2 manage purchase policies + 2.9 purchase product
     def test_purchase_cart_with_condition(self):
-        NUM_PRODS = 4
+        num_prods = 4
         u1 = self.sessions[self.U1]
-        shops = get_shops_not_owned_by_user(u1, self.shop_ids, self.shop_to_staff)
+        shops1 = get_shops_not_owned_by_user(u1, self.shop_ids, self.shop_to_staff)
         prods = []
-        condition_dict = {Cm.CONDITION_TYPE: Cm.DATE_WINDOW_FOR_CATEGORY,
-                          Cm.MIN_DATE: '1/5/2021', Cm.MAX_DATE: '20/5/2021', Cm.CATEGORY: "c1"}
-        for shop in shops:
+        for shop in shops1:
             prods += self.shops_to_products[shop]
             owner = self.shop_to_owners[shop]
-            self.assertTrue(self.commerce_system.add_purchase_condition
-                            (owner, shop, **condition_dict)['status'])
+            self.assertTrue(
+                self.commerce_system.add_purchase_condition(owner, shop, **simple_condition_dict)['status']
+            )
         self.assertTrue(all(map(lambda p: self.commerce_system.save_product_to_cart(
             u1, self.product_to_shop[p], p, 1
-        ), prods[:NUM_PRODS])))
-        self.assertTrue(self.commerce_system.purchase_cart(u1, payment_details[0])['status'])
+        ), prods[:num_prods])))
+        self.assertTrue(self.commerce_system.purchase_cart(u1, payment_details[0], {})['status'])
 
     def test_purchase_cart_with_complex_conditions(self):
-        NUM_PRODS = 4
+        num_prods = 4
         u1 = self.sessions[self.U1]
-        shops = get_shops_not_owned_by_user(u1, self.shop_ids, self.shop_to_staff)
+        shops1 = get_shops_not_owned_by_user(u1, self.shop_ids, self.shop_to_staff)
         prods = []
         condition_dict1 = {Cm.CONDITION_TYPE: Cm.DATE_WINDOW_FOR_CATEGORY,
                            Cm.MIN_DATE: '1/5/2021', Cm.MAX_DATE: '20/7/2021', Cm.CATEGORY: "c1"}
@@ -750,7 +734,7 @@ class PurchasesWithConditionsTests(TestCase):
         success_or_condition_dict = {Cm.CONDITION_TYPE: Cm.OR,
                                      Cm.CONDITIONS: [condition_dict3, condition_dict4, condition_dict1]}
 
-        for shop in shops:
+        for shop in shops1:
             prods += self.shops_to_products[shop]
             owner = self.shop_to_owners[shop]
             self.assertTrue(self.commerce_system.add_purchase_condition
@@ -759,31 +743,21 @@ class PurchasesWithConditionsTests(TestCase):
                             (owner, shop, **success_or_condition_dict)['status'])
         self.assertTrue(all(map(lambda p: self.commerce_system.save_product_to_cart(
             u1, self.product_to_shop[p], p, 1
-        ), prods[:NUM_PRODS])))
-        self.assertTrue(self.commerce_system.purchase_cart(u1, payment_details[0])['status'])
+        ), prods[:num_prods])))
+        self.assertTrue(self.commerce_system.purchase_cart(u1, payment_details[0], {})['status'])
 
     # 3.7 get transactions
     def test_get_user_transactions_with_condition(self):
-        NUM_PRODS = 3
+        num_prods = 3
         u1 = self.sessions[self.U1]
-        shops = get_shops_not_owned_by_user(u1, self.shop_ids, self.shop_to_staff)
+        shops1 = get_shops_not_owned_by_user(u1, self.shop_ids, self.shop_to_staff)
         prods = []
-        condition_dict = {Cm.CONDITION_TYPE: Cm.DATE_WINDOW_FOR_CATEGORY,
-                          Cm.MIN_DATE: '1/5/2021', Cm.MAX_DATE: '20/5/2021', Cm.CATEGORY: "c1"}
-        for shop in shops:
+        for shop in shops1:
             prods += self.shops_to_products[shop]
             owner = self.shop_to_owners[shop]
             self.assertTrue(self.commerce_system.add_purchase_condition
-                            (owner, shop, **condition_dict)['status'])
-        make_purchases(self.commerce_system, u1, self.product_to_shop, prods[:NUM_PRODS])
-        transaction_history = self.commerce_system.get_personal_purchase_history(u1)['result']
-        self.assertEqual(len(transaction_history), NUM_PRODS)
-        self.assertTrue(
-            all(map(lambda pr:
-                    any(map(lambda t: pr == t["products"][0]["product_id"],
-                            transaction_history)),
-                    prods[:NUM_PRODS]))
-        )
+                            (owner, shop, **simple_condition_dict)['status'])
+        self.make_purchases_and_check_transactions(u1, prods, num_prods)
 
 
 class GuestTestsWithData(TestCase):
@@ -820,18 +794,19 @@ class GuestTestsWithData(TestCase):
 
     # 2.6 search products
     def test_search_products_by_name_simple(self):
-        results = self.commerce_system.search_products(product_name=products[0]["product_name"])['result']
+        results = self.commerce_system.search_products(self.guest_sess[0], product_name=products[0]["product_name"])[
+            'result']
         self.assertTrue(len(results) == 1)
         self.assertTrue(results[0]["product_name"] == products[0]["product_name"])
 
     # 2.6 search products
     def test_search_product_by_name_general(self):
-        results = self.commerce_system.search_products(product_name="p")['result']
+        results = self.commerce_system.search_products(self.guest_sess[0], product_name="p")['result']
         self.assertTrue(len(results) == 0)
 
     # 2.6 search products
     def test_search_products_by_filters(self):
-        results = self.commerce_system.search_products(filters=[
+        results = self.commerce_system.search_products(self.guest_sess[0], filters=[
             {"type": "price_range", "from": 0, "to": 100}
         ])['result']
         products_in_range_indices = [0, 1, 2, 3, 4, 8, 9, 11]
@@ -853,7 +828,7 @@ class GuestTestsWithData(TestCase):
         self.assertTrue(all(map(lambda p: add_product(
             self.sid_to_sess[self.sids[self.S1]], self.commerce_system, self.sids[self.S1], p
         ), other_products)))
-        results = self.commerce_system.search_products(product_name="bambaa", filters=[
+        results = self.commerce_system.search_products(self.guest_sess[0], product_name="bambaa", filters=[
             {"type": "price_range", "from": 5, "to": 5}
         ])["result"]
         self.assertTrue(len(results) == 1)
@@ -899,10 +874,12 @@ class ParallelismTests(TestCase):
             results = []
 
             def buyer1():
-                results.append(self.commerce_system.purchase_product(u_buyer1, sid, pid, 1, payment_details[0])["status"])
+                results.append(
+                    self.commerce_system.purchase_product(u_buyer1, sid, pid, 1, payment_details[0], {})["status"])
 
             def buyer2():
-                results.append(self.commerce_system.purchase_product(u_buyer2, sid, pid, 1, payment_details[0])["status"])
+                results.append(
+                    self.commerce_system.purchase_product(u_buyer2, sid, pid, 1, payment_details[0], {})["status"])
 
             self.run_parallel_test(buyer1, buyer2)
             self.assertTrue(any(results))
@@ -924,7 +901,7 @@ class ParallelismTests(TestCase):
             results = {}
 
             def buyer():
-                results[u_buyer] = self.commerce_system.purchase_product(u_buyer, sid, pid, 1, payment_details)
+                results[u_buyer] = self.commerce_system.purchase_product(u_buyer, sid, pid, 1, payment_details, {})
 
             def opener():
                 results[u_opener] = self.commerce_system.delete_product(u_opener, sid, pid)

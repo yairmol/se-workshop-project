@@ -64,9 +64,9 @@ class ShoppingBag:
         return total
 
     def get_products_dtos(self):
-        PRODUCT = 0
-        AMOUNT = 1
-        return list(map(lambda kv: ProductDTO(kv[PRODUCT], kv[AMOUNT]), self.products.items()))
+        product = 0
+        amount = 1
+        return list(map(lambda kv: ProductDTO(kv[product], kv[amount]), self.products.items()))
 
     def set_products(self, products: Dict[Product, int]) -> bool:
         self.products = products
@@ -160,7 +160,8 @@ class ShoppingCart:
             total += bag.calculate_price()
         return total
 
-    def _purchase_shopping_bag(self, username: str, bag: ShoppingBag, payment_details, purchased_shops: list,
+    @staticmethod
+    def _purchase_shopping_bag(username: str, bag: ShoppingBag, payment_details, purchased_shops: list,
                                delivery_details: dict):
         transaction = bag.purchase_bag(username, payment_details, delivery_details)
         purchased_shops.append(bag.shop)
@@ -171,7 +172,7 @@ class ShoppingCart:
         purchased_shops = []
         actions = [
             Action(self._purchase_shopping_bag, username, bag, payment_details, purchased_shops, delivery_details)
-                .set_reverse(Action(ShoppingBag.cancel_transaction), use_return_value=True)
+            .set_reverse(Action(ShoppingBag.cancel_transaction), use_return_value=True)
             for shop, bag in self
         ]
         actions += [Action(self.remove_shopping_bags, purchased_shops)]
