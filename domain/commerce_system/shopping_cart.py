@@ -93,8 +93,7 @@ class ShoppingBag:
         shop_action.set_reverse(Action(self.shop.cancel_transaction, self, transaction))
         payment_action = Action(self.payment_facade.pay, total_price, payment_details)
         payment_action.set_reverse(Action(self.payment_facade.cancel_payment), True)
-        delivery_action = Action(self.delivery_facade.deliver_to, [p.to_dict() for p in products_dtos],
-                                 delivery_details)
+        delivery_action = Action(self.delivery_facade.deliver_to, delivery_details)
         delivery_action.set_reverse(Action(self.delivery_facade.cancel_delivery), use_return_value=True)
         clean_action = Action(self.clear_bag).set_reverse(Action(self.set_products, self.products.copy()))
 

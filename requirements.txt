@@ -1,2 +1,5 @@
 Flask~=1.1.2
 flask_cors
+requests
+flask_socketio
+responses

@@ -30,10 +30,10 @@ class DeliveryMock(IDeliveryFacade):
         self.delivery_cancelled = False
         self.delivery_works = delivery_works
 
-    def deliver_to(self, products: List[dict], address: str, contact_details: dict = None) -> Union[str, bool]:
+    def deliver_to(self, contact_details: dict = None) -> Union[str, bool]:
         self.delivery_called = True
         if self.delivery_works:
-            return str(hash(tuple([p["product_name"] for p in products])))
+            return str(hash(frozenset(contact_details.items())))
         return False
 
     def cancel_delivery(self, delivery_id: str) -> bool:

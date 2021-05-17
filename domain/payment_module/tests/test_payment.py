@@ -13,22 +13,24 @@ class TestPayment(unittest.TestCase):
         self.responses = responses.RequestsMock()
         self.responses.start()
         self.ERROR = '-1'
+        self.SUCCESS = '1'
         # self.responses.add(...)
 
         self.addCleanup(self.responses.stop)
         self.addCleanup(self.responses.reset)
 
     def test_success_handshake_and_success_pay(self):
+        transaction_id = '12345'
         payment_system = PaymentsFacadeWSEP()
         payment_system.handshake = MagicMock(return_value=True)
         self.responses.add(
             responses.POST, self.url,
-            body='12345', status=200,
+            body=transaction_id, status=200,
             content_type='application/json')
         payment_details = {'card_number': '1234567890', 'month': '4', 'year': '2021', 'holder': 'dudu faruk',
                            'ccv': '222', 'id': '20444444'}
         resp = payment_system.pay(100, payment_details)
-        assert resp
+        self.assertEqual(resp, transaction_id)
 
     def test_success_handshake_and_fail_pay(self):
         payment_system = PaymentsFacadeWSEP()
@@ -41,7 +43,7 @@ class TestPayment(unittest.TestCase):
                            'ccv': '222', 'id': '20444444'}
 
         resp = payment_system.pay(100, payment_details)
-        assert not resp
+        self.assertFalse(resp)
 
     def test_fail_handshake_and_pay(self):
         payment_system = PaymentsFacadeWSEP()
@@ -54,26 +56,26 @@ class TestPayment(unittest.TestCase):
                            'ccv': '222', 'id': '20444444'}
 
         resp = payment_system.pay(100, payment_details)
-        assert not resp
+        self.assertFalse(resp)
 
     def test_success_cancel_pay(self):
+        trans_id = '1'
         payment_system = PaymentsFacadeWSEP()
         payment_system.handshake = MagicMock(return_value=True)
         self.responses.add(
             responses.POST, self.url,
-            body='1', status=200,
+            body=self.SUCCESS, status=200,
             content_type='application/json')
-        trans_id = '1'
         resp = payment_system.cancel_payment(trans_id)
-        assert resp
+        self.assertTrue(resp)
 
     def test_fail_cancel_pay(self):
         payment_system = PaymentsFacadeWSEP()
         payment_system.handshake = MagicMock(return_value=True)
         self.responses.add(
             responses.POST, self.url,
-            body='-1', status=200,
+            body=self.ERROR, status=200,
             content_type='application/json')
         trans_id = '1'
         resp = payment_system.cancel_payment(trans_id)
-        assert not resp
+        self.assertFalse(resp)
