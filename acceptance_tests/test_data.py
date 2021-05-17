@@ -1,6 +1,9 @@
 from datetime import datetime
 
-from data_model import UserModel as Um, ShopModel as Sm, ProductModel as Pm
+from data_model import (
+    UserModel as Um, ShopModel as Sm, ProductModel as Pm, PermissionsModel as PermM,
+    ConditionsModel as Cm
+)
 
 users = [
     {
@@ -62,10 +65,15 @@ admin_credentials = {
 }
 
 permissions = [
-    ["add_product", "edit_product", "delete_product"],
-    ["add_product", "edit_product"],
-    ["delete_product"]
+    [PermM.ADD_PRODUCT_PERM, PermM.EDIT_PRODUCT_PERM, PermM.DELETE_PRODUCT_PERM],
+    [PermM.ADD_PRODUCT_PERM, PermM.EDIT_PRODUCT_PERM],
+    [PermM.DELETE_PRODUCT_PERM]
 ]
+
+simple_condition_dict = {
+    Cm.CONDITION_TYPE: Cm.DATE_WINDOW_FOR_CATEGORY, Cm.MIN_DATE: '1/5/2021', Cm.MAX_DATE: '20/5/2021',
+    Cm.CATEGORY: "c1"
+}
 
 payment_details = [
     {

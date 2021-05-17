@@ -64,9 +64,9 @@ class ShoppingBag:
         return total
 
     def get_products_dtos(self):
-        PRODUCT = 0
-        AMOUNT = 1
-        return list(map(lambda kv: ProductDTO(kv[PRODUCT], kv[AMOUNT]), self.products.items()))
+        product = 0
+        amount = 1
+        return list(map(lambda kv: ProductDTO(kv[product], kv[amount]), self.products.items()))
 
     def set_products(self, products: Dict[Product, int]) -> bool:
         self.products = products
@@ -93,8 +93,7 @@ class ShoppingBag:
         shop_action.set_reverse(Action(self.shop.cancel_transaction, self, transaction))
         payment_action = Action(self.payment_facade.pay, total_price, payment_details)
         payment_action.set_reverse(Action(self.payment_facade.cancel_payment), True)
-        delivery_action = Action(self.delivery_facade.deliver_to, [p.to_dict() for p in products_dtos],
-                                 delivery_details)
+        delivery_action = Action(self.delivery_facade.deliver_to, delivery_details)
         delivery_action.set_reverse(Action(self.delivery_facade.cancel_delivery), use_return_value=True)
         clean_action = Action(self.clear_bag).set_reverse(Action(self.set_products, self.products.copy()))
 
@@ -160,7 +159,8 @@ class ShoppingCart:
             total += bag.calculate_price()
         return total
 
-    def _purchase_shopping_bag(self, username: str, bag: ShoppingBag, payment_details, purchased_shops: list,
+    @staticmethod
+    def _purchase_shopping_bag(username: str, bag: ShoppingBag, payment_details, purchased_shops: list,
                                delivery_details: dict):
         transaction = bag.purchase_bag(username, payment_details, delivery_details)
         purchased_shops.append(bag.shop)
@@ -171,7 +171,7 @@ class ShoppingCart:
         purchased_shops = []
         actions = [
             Action(self._purchase_shopping_bag, username, bag, payment_details, purchased_shops, delivery_details)
-                .set_reverse(Action(ShoppingBag.cancel_transaction), use_return_value=True)
+            .set_reverse(Action(ShoppingBag.cancel_transaction), use_return_value=True)
             for shop, bag in self
         ]
         actions += [Action(self.remove_shopping_bags, purchased_shops)]

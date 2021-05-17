@@ -1,11 +1,11 @@
 import unittest
-from unittest.mock import MagicMock
 
 from domain.commerce_system.appointment import ShopOwner
-from domain.commerce_system.product import Product
 from domain.commerce_system.shop import Shop
 
 shop_dict = {"shop_name": "s1", "description": "desc"}
+tost = {"product_name": "tost", "price": 115, "description": "tost taim", "quantity": 3}
+tost2 = {"product_name": "tost2", "price": 116, "description": "tost2 taim", "quantity": 4}
 
 
 class TestShopOwner(unittest.TestCase):
@@ -21,15 +21,11 @@ class TestShopOwner(unittest.TestCase):
         self.shop_owner = ShopOwner(self.shop)
 
     def test_add_product(self):
-        tost = {"product_name": "tost", "price": 115, "description": "tost taim", "quantity": 3}
-        tost2 = {"product_name": "tost2", "price": 116, "description": "tost2 taim", "quantity": 4}
         self.shop_owner.add_product(**tost)
         self.shop_owner.add_product(**tost2)
         assert self.shop.has_product("tost") and self.shop.has_product("tost2")
 
     def test_delete_product(self):
-        tost = {"product_name": "tost", "price": 115, "description": "tost taim", "quantity": 3}
-        tost2 = {"product_name": "tost2", "price": 116, "description": "tost2 taim", "quantity": 4}
         self.shop.add_product(**tost)
         self.shop.add_product(**tost2)
         tost_id = self.shop.get_id("tost")
@@ -39,12 +35,17 @@ class TestShopOwner(unittest.TestCase):
         assert not self.shop.has_product("tost") and not self.shop.has_product("tost2")
 
     def test_edit_product(self):
-        tost = {"product_name": "tost", "price": 115, "description": "tost taim", "quantity": 12}
-        tost2 = {"product_name": "tost2", "price": 116, "description": "tost2 taim", "quantity": 54}
-        self.shop.add_product(**tost)
-        self.shop.add_product(**tost2)
+        tost_dup = tost.copy()
+        tost_dup["quantity"] = 12
+        tost2_dup = tost2.copy()
+        tost2_dup["quantity"] = 54
+        self.shop.add_product(**tost_dup)
+        self.shop.add_product(**tost2_dup)
         tost_id = self.shop.get_id("tost")
         tost2_id = self.shop.get_id("tost2")
         self.shop_owner.edit_product(tost_id, product_name="tost3")
         self.shop_owner.edit_product(tost2_id, product_name="tost4")
-        assert not self.shop.has_product("tost") and not self.shop.has_product("tost2") and self.shop.has_product("tost3") and self.shop.has_product("tost4")
+        self.assertFalse(self.shop.has_product("tost"))
+        self.assertFalse(self.shop.has_product("tost2"))
+        self.assertTrue(self.shop.has_product("tost3"))
+        self.assertTrue(self.shop.has_product("tost4"))

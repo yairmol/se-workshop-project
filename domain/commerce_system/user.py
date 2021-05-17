@@ -1,6 +1,6 @@
 from __future__ import annotations
 import threading
-from typing import List, Dict
+from typing import List, Dict, Iterable
 
 from domain.commerce_system.appointment import Appointment, ShopOwner
 from domain.commerce_system.product import Product
@@ -12,6 +12,7 @@ from domain.commerce_system.transaction import Transaction
 from domain.commerce_system.shopping_cart import ShoppingCart
 from domain.discount_module.discount_calculator import Discount
 from data_model import UserModel as UserM
+from domain.discount_module.discount_management import DiscountDict, ConditionRaw
 
 
 class User:
@@ -26,18 +27,21 @@ class User:
         self.counter_lock.release()
         self.cart = ShoppingCart(self.id)
 
-    def get_name(self):
+    def get_name(self) -> str:
         return self.user_state.get_name(self.id)
 
-    def login(self, sub_user: Subscribed):
+    def login(self, sub_user: Subscribed) -> bool:
+        self.user_state.login()
         self.user_state = sub_user
+        return True
 
-    def register(self, username: str, **user_details):
-        return self.user_state.register(username)
+    def register(self, username: str, **user_details) -> Subscribed:
+        return self.user_state.register(username, **user_details)
 
-    def logout(self):
+    def logout(self) -> bool:
         self.user_state.logout()
         self.user_state = Guest()
+        return True
 
     def purchase_product(self, shop: Shop, product: Product, amount_to_buy: int, payment_details: dict,
                          delivery_details: dict) -> Transaction:
@@ -59,11 +63,11 @@ class User:
             self._add_transaction(transaction)
         return transactions
 
-    def _add_transaction(self, transaction: Transaction):
+    def _add_transaction(self, transaction: Transaction) -> None:
         TransactionRepo.get_transaction_repo().add_transaction(transaction)
         self.user_state.add_transaction(transaction)
 
-    def _remove_transaction(self, transaction: Transaction):
+    def _remove_transaction(self, transaction: Transaction) -> None:
         self.user_state.remove_transaction(transaction)
 
     def save_product_to_cart(self, shop: Shop, product: Product, amount_to_buy: int) -> bool:
@@ -93,7 +97,7 @@ class User:
     def appoint_shop_owner(self, shop: Shop, user: Subscribed) -> Appointment:
         return self.user_state.appoint_owner(user, shop)
 
-    def appoint_shop_manager(self, shop: Shop, user: Subscribed, permissions: List[str]) -> bool:
+    def appoint_shop_manager(self, shop: Shop, user: Subscribed, permissions: List[str]) -> Appointment:
         return self.user_state.appoint_manager(user, shop, permissions)
 
     def get_shop_staff_info(self, shop: Shop) -> List[Appointment]:
@@ -102,13 +106,13 @@ class User:
     def get_shop_transaction_history(self, shop: Shop) -> List[Transaction]:
         return self.user_state.get_shop_transaction_history(shop)
 
-    def add_purchase_condition(self, shop: Shop, condition: Condition):
+    def add_purchase_condition(self, shop: Shop, condition: Condition) -> bool:
         return self.user_state.add_purchase_condition(shop, condition)
 
-    def remove_purchase_condition(self, shop: Shop, condition_id: int):
+    def remove_purchase_condition(self, shop: Shop, condition_id: int) -> bool:
         return self.user_state.remove_purchase_condition(shop, condition_id)
 
-    def get_shop_discounts(self, shop: Shop) -> List[Discount]:
+    def get_shop_discounts(self, shop: Shop) -> Iterable[Discount]:
         return self.user_state.get_shop_discounts(shop)
 
     def get_shop_purchase_conditions(self, shop: Shop) -> List[Condition]:
@@ -123,92 +127,104 @@ class User:
 
 
 class UserState:
-    def get_name(self, userid=None):
+    def get_name(self, userid=None) -> str:
         raise NotImplementedError()
 
-    def register(self, username: str, **user_details):
+    def register(self, username: str, **user_details) -> Subscribed:
         raise Exception("Logged-in User cannot register")
 
-    def appoint_manager(self, owner_sub: Subscribed, shop: Shop, permissions: List[str]):
+    def login(self) -> bool:
+        raise NotImplementedError()
+
+    def appoint_manager(self, owner_sub: Subscribed, shop: Shop, permissions: List[str]) -> Appointment:
         raise Exception("Guest User cannot appoint manager")
 
-    def appoint_owner(self, owner_sub: Subscribed, shop: Shop):
+    def appoint_owner(self, owner_sub: Subscribed, shop: Shop) -> Appointment:
         raise Exception("Guest User cannot appoint owner")
 
-    def get_appointment(self, shop: Shop):
+    def promote_manager_to_owner(self, manager_sub: Subscribed, shop: Shop) -> Appointment:
+        raise Exception("Guest User cannot appoint owner")
+
+    def get_appointment(self, shop: Shop) -> Appointment:
         raise Exception("Guest User cannot get appointment")
 
     def add_product(self, shop: Shop, **product_info) -> Product:
         raise Exception("Guest User cannot add product")
 
-    def edit_product(self, shop: Shop, product_id: int, **to_edit):
+    def edit_product(self, shop: Shop, product_id: int, **to_edit) -> bool:
         raise Exception("Guest User cannot edit product")
 
     def delete_product(self, shop: Shop, product_id: int) -> bool:
         raise Exception("Guest User cannot delete product")
 
-    def un_appoint_manager(self, owner_sub, shop: Shop):
+    def un_appoint_manager(self, owner_sub, shop: Shop) -> bool:
         raise Exception("Guest User cannot un appoint manager")
 
-    def un_appoint_owner(self, owner_sub, shop: Shop):
+    def un_appoint_owner(self, owner_sub, shop: Shop) -> bool:
         raise Exception("Guest User cannot un appoint owner")
 
-    def edit_manager_permissions(self, owner_sub: Subscribed, shop: Shop, permissions: List[str]):
+    def edit_manager_permissions(self, owner_sub: Subscribed, shop: Shop, permissions: List[str]) -> bool:
         raise Exception("Guest User cannot edit manager permissions")
 
-    def get_personal_transaction_history(self):
+    def get_personal_transaction_history(self) -> List[Transaction]:
         raise Exception("User cannot perform this action")
 
-    def get_shop_transaction_history(self, shop: Shop):
+    def get_shop_transaction_history(self, shop: Shop) -> List[Transaction]:
         raise Exception("User cannot perform this action")
 
-    def open_shop(self, shop_details):
+    def open_shop(self, shop_details) -> Shop:
         raise Exception("Guest User cannot edit manager permissions")
 
-    def add_transaction(self, transaction: Transaction):
+    def add_transaction(self, transaction: Transaction) -> bool:
         pass
 
-    def logout(self):
+    def logout(self) -> bool:
         raise Exception("User cannot logout in current state")
 
-    def remove_transaction(self, transaction: Transaction):
+    def remove_transaction(self, transaction: Transaction) -> bool:
         pass
 
-    def get_system_transaction_history(self):
+    def get_system_transaction_history(self) -> List[Transaction]:
         raise Exception("only system administrator can see the system transaction history")
 
-    def get_shop_discounts(self, shop: Shop):
+    def get_shop_discounts(self, shop: Shop) -> Iterable[Discount]:
         raise Exception("User doesn't have permissions to get shop discounts")
 
-    def add_discount(self, shop, has_cond, condition, discount):
+    def add_discount(self, shop: Shop, has_cond: bool, condition: ConditionRaw, discount: DiscountDict) -> Discount:
         raise Exception("User doesnt have permissions to manage discounts")
 
-    def delete_discounts(self, shop, discount_ids):
+    def delete_discounts(self, shop: Shop, discount_ids: List[int]) -> bool:
         raise Exception("User doesnt have permissions to manage discounts")
 
-    def aggregate_discounts(self, shop, discount_ids, func):
+    def aggregate_discounts(self, shop: Shop, discount_ids: List[int], func: str) -> bool:
         raise Exception("User doesnt have permissions to manage discounts")
 
-    def move_discount_to(self, shop: Shop, src_discount_id: int, dst_discount_id: int):
+    def move_discount_to(self, shop: Shop, src_discount_id: int, dst_discount_id: int) -> bool:
         raise Exception("User doesnt have permissions to manage discounts")
 
     def get_shop_purchase_conditions(self, shop: Shop) -> List[Condition]:
         raise Exception("User doesn't have permissions to get shop purchase conditions")
 
-    def add_purchase_condition(self, shop: Shop, condition: Condition):
+    def add_purchase_condition(self, shop: Shop, condition: Condition) -> bool:
         raise Exception("User cannot perform this action")
 
-    def remove_purchase_condition(self, shop: Shop, condition_id: int):
+    def remove_purchase_condition(self, shop: Shop, condition_id: int) -> bool:
         raise Exception("User cannot perform this action")
 
-    def get_permissions(self, shop):
+    def get_permissions(self, shop) -> Dict[str, bool]:
         return {'delete': False, 'edit': False, 'add': False, 'discount': False, 'transaction': False, 'owner': False}
 
     def get_shop_staff_info(self, shop: Shop) -> List[Appointment]:
         raise Exception("User doesn't have permission to see shop staff")
 
-    def get_appointments(self):
+    def get_appointments(self) -> List[Appointment]:
         raise Exception("User doesn't have permission to get appointments")
+
+    def get_system_transaction_history_of_shop(self, shop_id: int):
+        raise Exception("User doesn't have system manager permissions")
+
+    def get_system_transaction_history_of_user(self, username: str):
+        raise Exception("User doesn't have system manager permissions")
 
     def to_dict(self) -> dict:
         raise NotImplementedError()
@@ -224,6 +240,9 @@ class Guest(UserState):
     def to_dict(self):
         return {UserM.USERNAME: self.get_name()}
 
+    def login(self):
+        return True
+
 
 class Subscribed(UserState):
 
@@ -235,25 +254,26 @@ class Subscribed(UserState):
     def to_dict(self):
         return {UserM.USERNAME: self.get_name()}
 
-    def logout(self):
-        pass
+    def login(self) -> bool:
+        raise Exception("Can't login while logged in")
 
-    """ calls personal appointment for the request. if doesnt have permission raises an exception"""
+    def logout(self):
+        return True
 
     def get_name(self, userid=None):
         return self.username
 
     def appoint_manager(self, sub: Subscribed, shop: Shop, permissions: List[str]):
         session_app = self.get_appointment(shop)
-        session_app.appoint_manager(sub, permissions)
+        return session_app.appoint_manager(sub, permissions)
 
     def appoint_owner(self, new_owner_sub: Subscribed, shop: Shop):
         owner_app = self.get_appointment(shop)
-        owner_app.appoint_owner(new_owner_sub)
+        return owner_app.appoint_owner(new_owner_sub)
 
     def promote_manager_to_owner(self, manager_sub: Subscribed, shop: Shop):
         session_app: Appointment = self.get_appointment(shop)
-        session_app.promote_manager_to_owner(manager_sub)
+        return session_app.promote_manager_to_owner(manager_sub)
 
     def get_appointment(self, shop: Shop):
         if shop in self.appointments:
@@ -264,27 +284,28 @@ class Subscribed(UserState):
         return self.get_appointment(shop).add_product(**product_info)
 
     def edit_product(self, shop: Shop, product_id: int, **to_edit):
-        self.get_appointment(shop).edit_product(product_id, **to_edit)
+        return self.get_appointment(shop).edit_product(product_id, **to_edit)
 
     def delete_product(self, shop: Shop, product_id: int):
-        self.get_appointment(shop).delete_product(product_id)
+        return self.get_appointment(shop).delete_product(product_id)
 
     def un_appoint_manager(self, unappointed_manager, shop: Shop):
         unappointing_owner_app = self.get_appointment(shop)
-        unappointing_owner_app.un_appoint_manager(unappointed_manager)
+        return unappointing_owner_app.un_appoint_manager(unappointed_manager)
 
     def un_appoint_owner(self, owner_sub, shop: Shop):
         session_app = self.get_appointment(shop)
-        session_app.un_appoint_owner(owner_sub)
+        return session_app.un_appoint_owner(owner_sub)
 
     def edit_manager_permissions(self, manager_sub: Subscribed, shop: Shop, permissions: List[str]):
         owner_app = self.get_appointment(shop)
-        owner_app.edit_manager_permissions(manager_sub, permissions)
+        return owner_app.edit_manager_permissions(manager_sub, permissions)
 
     def open_shop(self, shop_details):
         new_shop = Shop(**shop_details)
         owner = ShopOwner(new_shop, username=self.username)
         new_shop.founder = self
+        new_shop.add_owner(self)
         self.appointments[new_shop] = owner
         return new_shop
 
@@ -294,6 +315,7 @@ class Subscribed(UserState):
 
     def add_transaction(self, transaction: Transaction):
         self.transactions.append(transaction)
+        return True
 
     def get_personal_transaction_history(self):
         return self.transactions
@@ -301,34 +323,34 @@ class Subscribed(UserState):
     def get_shop_discounts(self, shop: Shop) -> List[Discount]:
         return self.get_appointment(shop).get_discounts()
 
-    def add_discount(self, shop, has_cond, condition, discount):
+    def add_discount(self, shop, has_cond, condition, discount) -> Discount:
         appointment = self.get_appointment(shop)
         return appointment.add_discount(has_cond, condition, discount)
 
     def delete_discounts(self, shop, discount_ids):
         appointment = self.get_appointment(shop)
-        appointment.delete_discounts(discount_ids)
+        return appointment.delete_discounts(discount_ids)
 
-    def aggregate_discounts(self, shop, discount_ids, func):
+    def aggregate_discounts(self, shop, discount_ids, func) -> bool:
         appointment = self.get_appointment(shop)
-        appointment.aggregate_discounts(discount_ids, func)
+        return appointment.aggregate_discounts(discount_ids, func)
 
-    def move_discount_to(self, shop: Shop, src_discount_id: int, dst_discount_id: int):
+    def move_discount_to(self, shop: Shop, src_discount_id: int, dst_discount_id: int) -> bool:
         appointment = self.get_appointment(shop)
-        appointment.move_discount_to(src_discount_id, dst_discount_id)
+        return appointment.move_discount_to(src_discount_id, dst_discount_id)
 
     def get_shop_purchase_conditions(self, shop: Shop) -> List[Condition]:
         return self.get_appointment(shop).get_purchase_conditions()
 
-    def add_purchase_condition(self, shop: Shop, condition: Condition):
+    def add_purchase_condition(self, shop: Shop, condition: Condition) -> bool:
         appointment = self.get_appointment(shop)
-        appointment.add_purchase_condition(condition)
+        return appointment.add_purchase_condition(condition)
 
-    def remove_purchase_condition(self, shop: Shop, condition_id: int):
+    def remove_purchase_condition(self, shop: Shop, condition_id: int) -> bool:
         appointment = self.get_appointment(shop)
-        appointment.remove_purchase_condition(condition_id)
+        return appointment.remove_purchase_condition(condition_id)
 
-    def get_permissions(self, shop):
+    def get_permissions(self, shop) -> Dict[str, bool]:
         appointment = self.get_appointment(shop)
         if not appointment:
             return super().get_permissions(shop)
@@ -350,8 +372,8 @@ class SystemManager(Subscribed):
     def get_system_transaction_history(self):
         return self.system_transactions.get_transactions()
 
-    def get_system_transaction_history_of_shop(self, shop_id):
+    def get_system_transaction_history_of_shop(self, shop_id: int):
         return self.system_transactions.get_transactions_of_shop(shop_id)
 
-    def get_system_transaction_history_of_user(self, username):
+    def get_system_transaction_history_of_user(self, username: str):
         return self.system_transactions.get_transactions_of_user(username)

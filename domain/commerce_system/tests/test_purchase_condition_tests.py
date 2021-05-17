@@ -1,16 +1,14 @@
 import unittest
-from datetime import datetime, time
+from datetime import datetime
 from unittest import TestCase
 
 from data_model import ConditionsModel as Cm
 from domain.commerce_system.product import Product
-from domain.commerce_system.productDTO import ProductDTO
 from domain.commerce_system.purchase_conditions import MaxQuantityForProductCondition, TimeWindowForCategoryCondition, \
     TimeWindowForProductCondition, DateWindowForCategoryCondition, DateWindowForProductCondition, ANDCondition, \
     ORCondition
 from domain.commerce_system.shop import Shop
 from domain.commerce_system.shopping_cart import ShoppingBag
-from domain.commerce_system.tests.mocks import DeliveryMock, PaymentMock
 
 shop1 = {"shop_name": "s1", "description": "a shop1"}
 prices = [5, 2.8, 3, 90]
@@ -46,7 +44,7 @@ class PurchaseConditionTests(TestCase):
         self.assertTrue(self.bag.resolve_shop_conditions())
 
     def test_TimeWindowForCategoryCondition(self):
-        condition_dict = {Cm.MIN_TIME: '00:00', Cm.MAX_TIME: '23:00', Cm.CATEGORY: "aaa"}
+        condition_dict = {Cm.MIN_TIME: '00:00', Cm.MAX_TIME: '23:59', Cm.CATEGORY: "aaa"}
         condition = TimeWindowForCategoryCondition(condition_dict)
         self.shop.add_purchase_condition(condition)
         amount = 4
@@ -54,7 +52,7 @@ class PurchaseConditionTests(TestCase):
         self.assertTrue(self.bag.resolve_shop_conditions())
 
     def test_TimeWindowForProductCondition(self):
-        condition_dict = {Cm.MIN_TIME: '00:00', Cm.MAX_TIME: '23:00', Cm.PRODUCT: self.product.product_id}
+        condition_dict = {Cm.MIN_TIME: '00:00', Cm.MAX_TIME: '23:59', Cm.PRODUCT: self.product.product_id}
         condition = TimeWindowForProductCondition(condition_dict)
         self.shop.add_purchase_condition(condition)
         amount = 4
@@ -86,7 +84,7 @@ class PurchaseConditionTests(TestCase):
         self.assertFalse(self.bag.resolve_shop_conditions())
 
     def test_Fail_TimeWindowForCategoryCondition(self):
-        condition_dict = {Cm.MIN_TIME: '08:00', Cm.MAX_TIME: '23:00', Cm.CATEGORY: "aaa"}
+        condition_dict = {Cm.MIN_TIME: '08:00', Cm.MAX_TIME: '9:00', Cm.CATEGORY: "aaa"}
         condition = TimeWindowForCategoryCondition(condition_dict)
         self.shop.add_purchase_condition(condition)
         amount = 4
@@ -94,7 +92,7 @@ class PurchaseConditionTests(TestCase):
         self.assertFalse(self.bag.resolve_shop_conditions())
 
     def test_Fail_TimeWindowForProductCondition(self):
-        condition_dict = {Cm.MIN_TIME: '08:00', Cm.MAX_TIME: '23:00', Cm.PRODUCT: self.product.product_id}
+        condition_dict = {Cm.MIN_TIME: '08:00', Cm.MAX_TIME: '9:00', Cm.PRODUCT: self.product.product_id}
         condition = TimeWindowForProductCondition(condition_dict)
         self.shop.add_purchase_condition(condition)
         amount = 4
@@ -158,8 +156,6 @@ class PurchaseConditionTests(TestCase):
         self.bag.add_product(self.products[2], 1)
         self.bag.add_product(self.products[3], 10)
         self.assertTrue(self.bag.resolve_shop_conditions())
-
-
 
 
 if __name__ == '__main__':

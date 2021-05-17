@@ -1,5 +1,8 @@
 from __future__ import annotations
 from typing import List, Union
+import json
+import requests
+from requests import Timeout
 
 
 class IDeliveryFacade:
@@ -8,10 +11,8 @@ class IDeliveryFacade:
     def get_delivery_facade() -> IDeliveryFacade:
         return DeliveryFacadeAlwaysTrue()
 
-    def deliver_to(self, products: List[dict], address: str, contact_details: dict = None) -> Union[str, bool]:
+    def deliver_to(self, contact_details: dict = None) -> Union[str, bool]:
         """
-        :param products:
-        :param address:
         :param contact_details:
         :return: delivery id (str) in case of success, else False
         """
@@ -29,9 +30,47 @@ class IDeliveryFacade:
 class DeliveryFacadeAlwaysTrue(IDeliveryFacade):
     __delivery_id = 0
 
-    def deliver_to(self, products: List[dict], address: str, contact_details: dict = None) -> Union[str, bool]:
+    def deliver_to(self, contact_details: dict = None) -> Union[str, bool]:
         DeliveryFacadeAlwaysTrue.__delivery_id += 1
         return str(DeliveryFacadeAlwaysTrue.__delivery_id)
 
     def cancel_delivery(self, delivery_id: str) -> bool:
         return True
+
+
+class DeliveryFacadeWSEP(IDeliveryFacade):
+    url = 'https://cs-bgu-wsep.herokuapp.com/'
+    SUCCESSFUL_HANDSHAKE = 'OK'
+    SUCCESSFUL_DELIVERY_CANCEL = '1'
+    ERROR = '-1'
+
+    def handshake(self) -> bool:
+        data = {"action_type": "handshake"}
+        try:
+            response = requests.post(self.url, data, timeout=5)
+            return response.text == self.SUCCESSFUL_HANDSHAKE
+        except Timeout:
+            return False
+
+    def deliver_to(self, contact_details: dict = None) -> Union[str, bool]:
+        if self.handshake():
+            data = {"action_type": "supply"}
+            data.update(contact_details)
+            try:
+                response = requests.post(self.url, data, timeout=5)
+                if response.text == self.ERROR:
+                    return False
+                return response.text
+            except Timeout:
+                return False
+        return False
+
+    def cancel_delivery(self, delivery_id: str) -> bool:
+        if self.handshake():
+            data = {"action_type": "cancel_pay", "transaction_id": delivery_id}
+            try:
+                response = requests.post(self.url, data, timeout=5)
+                return response.text == self.SUCCESSFUL_DELIVERY_CANCEL
+            except Timeout:
+                return False
+        return False
