@@ -2,7 +2,6 @@ from domain.notifications.notifications import Notifications
 from domain.token_module.tokenizer import Tokenizer
 from domain.authentication_module.authenticator import Authenticator
 from domain.commerce_system.commerce_system_facade import CommerceSystemFacade
-from domain.commerce_system.ifacade import ICommerceSystemFacade
 from service.system_service import SystemService
 
 

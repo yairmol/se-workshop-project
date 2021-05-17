@@ -550,17 +550,22 @@ class PurchasesTests(TestCase):
                     products_purchased))
         )
 
-    # PurchasesWithConditionsTests(TestCase):
+    # PurchasesWithConditionsTests:
 
-    # 4.2.2 manage purchase policies + 2.9 purchase product
-    def test_purchase_product_with_max_quantity_condition(self):
+    def add_simple_purchase_condition_and_get_user(self):
         u1 = self.sessions[self.U1]
         shop_id = get_shops_not_owned_by_user(u1, self.shop_ids, self.shop_to_staff)[0]
         shop_owner = self.shop_to_owners[shop_id]
         prod_id = self.shops_to_products[shop_id][0]
         condition_dict = {Cm.CONDITION_TYPE: Cm.MAX_QUANTITY_FOR_PRODUCT, Cm.MAX_QUANTITY: 3, Cm.PRODUCT: prod_id}
-        self.assertTrue(self.commerce_system.add_purchase_condition
-                        (shop_owner, shop_id, **condition_dict)['status'])
+        self.assertTrue(
+            self.commerce_system.add_purchase_condition(shop_owner, shop_id, **condition_dict)['status']
+        )
+        return u1, shop_id, prod_id
+
+    # 4.2.2 manage purchase policies + 2.9 purchase product
+    def test_purchase_product_with_max_quantity_condition(self):
+        u1, shop_id, prod_id = self.add_simple_purchase_condition_and_get_user()
         transaction_status = self.commerce_system.purchase_product(
             u1, shop_id, prod_id, 1, payment_details[0], {}
         )
@@ -568,13 +573,7 @@ class PurchasesTests(TestCase):
 
     # 4.2.2 manage purchase policies + 2.9 purchase product
     def test_purchase_product_that_fails_max_quantity_condition(self):
-        u1 = self.sessions[self.U1]
-        shop_id = get_shops_not_owned_by_user(u1, self.shop_ids, self.shop_to_staff)[0]
-        shop_owner = self.shop_to_owners[shop_id]
-        prod_id = self.shops_to_products[shop_id][0]
-        condition_dict = {Cm.CONDITION_TYPE: Cm.MAX_QUANTITY_FOR_PRODUCT, Cm.MAX_QUANTITY: 3, Cm.PRODUCT: prod_id}
-        self.assertTrue(self.commerce_system.add_purchase_condition
-                        (shop_owner, shop_id, **condition_dict)['status'])
+        u1, shop_id, prod_id = self.add_simple_purchase_condition_and_get_user()
         transaction_status = self.commerce_system.purchase_product(
             u1, shop_id, prod_id, 5, payment_details[0], {}
         )

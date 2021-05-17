@@ -1,16 +1,14 @@
 import unittest
-from datetime import datetime, time
+from datetime import datetime
 from unittest import TestCase
 
 from data_model import ConditionsModel as Cm
 from domain.commerce_system.product import Product
-from domain.commerce_system.productDTO import ProductDTO
 from domain.commerce_system.purchase_conditions import MaxQuantityForProductCondition, TimeWindowForCategoryCondition, \
     TimeWindowForProductCondition, DateWindowForCategoryCondition, DateWindowForProductCondition, ANDCondition, \
     ORCondition
 from domain.commerce_system.shop import Shop
 from domain.commerce_system.shopping_cart import ShoppingBag
-from domain.commerce_system.tests.mocks import DeliveryMock, PaymentMock
 
 shop1 = {"shop_name": "s1", "description": "a shop1"}
 prices = [5, 2.8, 3, 90]

@@ -1,10 +1,9 @@
 import unittest
 from datetime import datetime
-from unittest.mock import MagicMock
 from domain.authentication_module.authenticator import Authenticator
 from domain.commerce_system.commerce_system_facade import CommerceSystemFacade
 from domain.commerce_system.tests.mocks import NotificationsMock
-from domain.commerce_system.user import User, Subscribed
+from domain.commerce_system.user import User
 
 
 class TestCommerceSystemFacade(unittest.TestCase):
@@ -59,14 +58,14 @@ class UserTests(unittest.TestCase):
 
     def test_get_transactions_empty(self):
         user = self.register_and_login(*self.users[0])
-        self.assertEquals(user.get_personal_transactions_history(), [])
+        self.assertEqual(user.get_personal_transactions_history(), [])
 
     def test_get_transactions(self):
         user = self.register_and_login(*self.users[0])
         shop, prod = self.open_shop()
         self.assertTrue(user.purchase_product(shop, prod, 1, self.payment_details[0], self.delivery_details))
         transactions = user.get_personal_transactions_history()
-        self.assertEquals(len(transactions), 1)
+        self.assertEqual(len(transactions), 1)
 
     def test_get_transactions_by_guest(self):
         user = User()
