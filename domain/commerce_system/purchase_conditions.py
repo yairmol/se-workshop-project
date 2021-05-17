@@ -1,8 +1,8 @@
-from datetime import datetime, time
+from datetime import datetime
 import threading
 
 from domain.commerce_system.product import Product
-from typing import Dict, List
+from typing import Dict
 
 
 # from domain.commerce_system.user import User

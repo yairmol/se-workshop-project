@@ -13,16 +13,16 @@ products = [
 
 class SearchEngineTests(unittest.TestCase):
     def test_edit_distance1(self):
-        self.assertEquals(levenshtein_distance("aaa", "aaa"), 0)
+        self.assertEqual(levenshtein_distance("aaa", "aaa"), 0)
 
     def test_edit_distance_insertions(self):
-        self.assertEquals(levenshtein_distance("aabba", "aaa"), 2)
+        self.assertEqual(levenshtein_distance("aabba", "aaa"), 2)
 
     def test_edit_distance_replacements(self):
-        self.assertEquals(levenshtein_distance("abcsa", "aaaaa"), 3)
+        self.assertEqual(levenshtein_distance("abcsa", "aaaaa"), 3)
 
     def test_edit_distance(self):
-        self.assertEquals(levenshtein_distance("Charlie Goes Down After Eating BreakFest",
+        self.assertEqual(levenshtein_distance("Charlie Goes Down After Eating BreakFest",
                                                "Chaarlie Boes own Aftr Eatin BreaakFeest"), 7)
 
     def test_is_similar_words(self):
@@ -33,11 +33,11 @@ class SearchEngineTests(unittest.TestCase):
         self.assertFalse(is_similar_words("osem", "elit"))
 
     def test_search_by_category(self):
-        self.assertEquals(search_by_categories(products, products[1].categories), [products[1]])
-        self.assertEquals(search_by_categories(products, ["furniters"]), [products[1]])
-        self.assertEquals(search_by_categories(products, ["future"]), [])
+        self.assertEqual(search_by_categories(products, products[1].categories), [products[1]])
+        self.assertEqual(search_by_categories(products, ["furniters"]), [products[1]])
+        self.assertEqual(search_by_categories(products, ["future"]), [])
 
     def test_search_by_product_name(self):
-        self.assertEquals(search_by_product_name(products, products[0].product_name), [products[0]])
-        self.assertEquals(search_by_product_name(products, "noname"), [])
-        self.assertEquals(search_by_product_name(products, "mount bike"), [products[2]])
+        self.assertEqual(search_by_product_name(products, products[0].product_name), [products[0]])
+        self.assertEqual(search_by_product_name(products, "noname"), [])
+        self.assertEqual(search_by_product_name(products, "mount bike"), [products[2]])

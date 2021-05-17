@@ -24,6 +24,7 @@ products = [
 payment_details = {
     "credit_card_number": "4580-0000-1111-2222", "cvv": "012", "expiration_date": datetime(2024, 6, 1).timestamp()
 }
+delivery_details = {}
 
 username = "aviv"
 
@@ -90,7 +91,7 @@ class ShoppingCartTests(unittest.TestCase):
 
     def check_bags(self, bags: List[ShoppingBag]):
         for bag in bags:
-            self.assertEquals(bag.products, {})
+            self.assertEqual(bag.products, {})
             self.assertTrue(bag.delivery_facade.delivery_called and not bag.delivery_facade.delivery_cancelled)
             self.assertTrue(bag.payment_facade.pay_called and not bag.payment_facade.pay_cancelled)
 
@@ -99,7 +100,7 @@ class ShoppingCartTests(unittest.TestCase):
             amounts_bought: Dict[Product, int]
     ):
         for product in self.products:
-            self.assertEquals(
+            self.assertEqual(
                 product.get_quantity(),
                 previous_quantities[product] - amounts_bought[product]
             )
@@ -117,9 +118,9 @@ class ShoppingCartTests(unittest.TestCase):
         amounts_bought = self.init_purchase_data()
         quantities = {p: p.get_quantity() for p in self.products}
         bags = list(self.user.cart.shopping_bags.values())
-        transactions = self.user.cart.purchase_cart(username, payment_details)
-        self.assertEquals(len(transactions), len(bags))
-        self.assertEquals(self.user.cart.shopping_bags, {})
+        transactions = self.user.cart.purchase_cart(username, payment_details, delivery_details)
+        self.assertEqual(len(transactions), len(bags))
+        self.assertEqual(self.user.cart.shopping_bags, {})
         self.check_bags(bags)
         self.check_updated_quantities(quantities, amounts_bought)
 
@@ -127,14 +128,14 @@ class ShoppingCartTests(unittest.TestCase):
         quantities = {p: p.get_quantity() for p in self.products}
         bags = self.user.cart.shopping_bags.copy()
         bags_products = {shop: bag.products.copy() for shop, bag in bags.items()}
-        self.assertRaises(AssertionError, self.user.cart.purchase_cart, username, payment_details)
+        self.assertRaises(AssertionError, self.user.cart.purchase_cart, username, payment_details, delivery_details)
         # check that products quantities weren't changed
         amounts_bought = dict(zip(self.products, [0] * len(products)))
         self.check_updated_quantities(quantities, amounts_bought)
         # check bags are unchanged
-        self.assertEquals(len(bags), len(self.user.cart.shopping_bags))
+        self.assertEqual(len(bags), len(self.user.cart.shopping_bags))
         for shop, bag in bags.items():
-            self.assertEquals(self.user.cart.shopping_bags[shop].products, bags_products[shop])
+            self.assertEqual(self.user.cart.shopping_bags[shop].products, bags_products[shop])
 
     def test_purchase_cart_fails_in_the_middle_due_to_payment(self):
         self.init_purchase_data()
@@ -169,15 +170,15 @@ class ShoppingCartTests(unittest.TestCase):
         bags = self.user.cart.shopping_bags.copy()
         bag_fails = bags.pop(shop_fails)
         bag_fails_products = bag_fails.products.copy()
-        transactions = self.user.cart.purchase_cart(username, payment_details, do_what_you_can=True)
+        transactions = self.user.cart.purchase_cart(username, payment_details, delivery_details, do_what_you_can=True)
         # check that products quantities were changed except from the one in shop_fails
         self.check_updated_quantities(quantities, amounts_bought)
-        self.assertEquals(len(self.user.cart.shopping_bags), 1)
+        self.assertEqual(len(self.user.cart.shopping_bags), 1)
         # check that the shopping bags are emptied except for bag_fails
         self.check_bags(bags.values())
-        self.assertEquals(self.user.cart.shopping_bags[shop_fails].products, bag_fails_products)
+        self.assertEqual(self.user.cart.shopping_bags[shop_fails].products, bag_fails_products)
         # check that the number of successful transactions is correct
-        self.assertEquals(len(bags), len(list(filter(lambda x: x is not None, transactions))))
+        self.assertEqual(len(bags), len(list(filter(lambda x: x is not None, transactions))))
 
 
 if __name__ == '__main__':

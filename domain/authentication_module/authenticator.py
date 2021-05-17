@@ -1,4 +1,3 @@
-import string
 import threading
 from typing import Dict
 import domain.commerce_system.valdiation as validate
@@ -23,7 +22,8 @@ class Authenticator:
         with self.users_passwords_lock:
             assert username not in self.users_passwords, "Username already exists"
             assert validate.validate_username(username), "Username length needs to be between 1 - 20 characters"
-            assert validate.validate_password(plaintext_password), "Password length needs to be between 6 - 20 characters"
+            assert validate.validate_password(plaintext_password), \
+                "Password length needs to be between 6 - 20 characters"
 
             encrypted_password = encrypt_password(plaintext_password)
             self.users_passwords[username] = encrypted_password

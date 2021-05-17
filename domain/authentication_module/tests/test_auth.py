@@ -1,5 +1,4 @@
 import unittest
-from unittest.mock import MagicMock
 
 from domain.authentication_module.authenticator import Authenticator
 
@@ -25,4 +24,4 @@ class TestAuthenticator(unittest.TestCase):
         username = "aviv"
         password = "123456"
         auth.register_new_user(username, password)
-        auth.login(username,password)
+        auth.login(username, password)

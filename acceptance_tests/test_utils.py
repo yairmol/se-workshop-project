@@ -1,8 +1,8 @@
 from typing import Tuple, List, Dict
 
-from .test_data import users, shops, permissions, products, payment_details
+from test_data import users, shops, permissions, products, payment_details
 from service.system_service import SystemService
-from data_model import UserModel as Um, ShopModel as Sm, ProductModel as Pm, admin_credentials
+from data_model import UserModel as Um, admin_credentials
 
 
 def get_credentials(user: dict):
@@ -32,7 +32,7 @@ def register_login_users(commerce_system, num_users) -> Dict[str, dict]:
 
 
 def enter_guests(commerce_system: SystemService, num_guests) -> List[str]:
-    return [commerce_system.enter()['result'] for i in range(num_guests)]
+    return [commerce_system.enter()['result'] for _ in range(num_guests)]
 
 
 def open_shops(commerce_system: SystemService, sessions, num_shops) -> (Dict[int, dict], Dict[int, str]):
@@ -109,11 +109,11 @@ def get_shops_not_owned_by_user(user_sess: str, shop_ids: List[int], shop_to_sta
 
 def make_purchases(
         commerce_system: SystemService, session: str,
-        product_to_shop: Dict[int, int], products: List[int]
+        product_to_shop: Dict[int, int], products_to_buy: List[int]
 ):
     return all(map(lambda p: commerce_system.purchase_product(
         session, product_to_shop[p], p, 1, payment_details[0], {}
-    )["status"], products))
+    )["status"], products_to_buy))
 
 
 def fill_with_data(

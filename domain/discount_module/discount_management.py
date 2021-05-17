@@ -1,3 +1,4 @@
+from __future__ import annotations
 from typing import TypedDict, Union, Optional
 
 from domain.discount_module.discount_calculator import *
@@ -23,11 +24,14 @@ class SimpleCond(TypedDict):
     num: int  # num: (<quantity> / <sum>)
 
 
+ConditionRaw = Union[str, SimpleCond, List['ConditionRaw']]
+
+
 class DiscountManagement:
 
     @staticmethod
-    def add_discount(shop_discount: AdditiveDiscount, has_cond: bool, condition: [str or SimpleCond or []],
-                     new_discount_dict: Union[DiscountDict, CompositeDiscountDict]):
+    def add_discount(shop_discount: AdditiveDiscount, has_cond: bool, condition: ConditionRaw,
+                     new_discount_dict: Union[DiscountDict, CompositeDiscountDict]) -> Discount:
         if new_discount_dict["composite"]:
             discount_to_add = DiscountManagement.create_comp_discount_from_dict(new_discount_dict, shop_discount)
             shop_discount.add_discount(discount_to_add)
@@ -38,7 +42,7 @@ class DiscountManagement:
             cond = None
         discount_to_add = DiscountManagement.create_discount_from_dict(has_cond, cond, new_discount_dict)
         shop_discount.add_discount(discount_to_add)
-        return discount_to_add.discount_id
+        return discount_to_add
 
     @staticmethod
     def create_discount_from_dict(has_cond: bool, cond: Condition, new_discount: DiscountDict) -> Discount:

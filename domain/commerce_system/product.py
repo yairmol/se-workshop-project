@@ -21,8 +21,9 @@ class Product:
         self.product_name = product_name
         self.price = price
         self.description = description
+        self._quantity = 0
         self.set_quantity(quantity)
-        self.categories = categories
+        self.categories: List[str] = categories
         self.shop_id = shop_id
 
     def to_dict(self):
