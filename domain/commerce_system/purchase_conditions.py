@@ -23,7 +23,7 @@ class Condition:
         raise NotImplementedError()
 
     def to_dict(self):
-        raise NotImplementedError()
+        return {CondM.CONDITION_TYPE: self.type, "id": self.id}
 
 
 class ProductCondition(Condition, ABC):
@@ -55,8 +55,8 @@ class MaxQuantityForProductCondition(ProductCondition):
 
     def __init__(self, condition_dict: dict):
         super().__init__()
-        self.max_quantity = condition_dict["max_quantity"]
-        self.product_id = condition_dict["product"]
+        self.max_quantity = condition_dict[CondM.MAX_QUANTITY]
+        self.product_id = condition_dict[CondM.PRODUCT]
 
     def resolve(self, products: Dict[Product, int]) -> bool:
         for product in products:
@@ -66,7 +66,12 @@ class MaxQuantityForProductCondition(ProductCondition):
         return True
 
     def to_dict(self):
-        return {}
+        ret = super().to_dict()
+        ret.update({
+            CondM.MAX_QUANTITY: self.max_quantity,
+            CondM.PRODUCT: self.product_id,
+        })
+        return ret
 
 
 # class UserAgeMinForCategoryCondition(UserCondition):
@@ -82,9 +87,9 @@ class TimeWindowForCategoryCondition(CategoryCondition):
 
     def __init__(self, condition_dict: dict):
         super().__init__()
-        self.min_time = datetime.strptime(condition_dict["min_time"], '%H:%M').time()
-        self.max_time = datetime.strptime(condition_dict["max_time"], '%H:%M').time()
-        self.category = condition_dict["category"]
+        self.min_time = datetime.strptime(condition_dict[CondM.MIN_TIME], CondM.TIME_FORMAT).time()
+        self.max_time = datetime.strptime(condition_dict[CondM.MAX_TIME], CondM.TIME_FORMAT).time()
+        self.category = condition_dict[CondM.CATEGORY]
 
     def resolve(self, products: Dict[Product, int]) -> bool:
         cur_time = datetime.now().time()
@@ -95,7 +100,13 @@ class TimeWindowForCategoryCondition(CategoryCondition):
         return True
 
     def to_dict(self):
-        return {}
+        ret = super().to_dict()
+        ret.update({
+            CondM.MIN_TIME: self.min_time.strftime(CondM.TIME_FORMAT),
+            CondM.MAX_TIME: self.max_time.strftime(CondM.TIME_FORMAT),
+            CondM.CATEGORY: self.category,
+        })
+        return ret
 
 
 class TimeWindowForProductCondition(CategoryCondition):
@@ -103,8 +114,8 @@ class TimeWindowForProductCondition(CategoryCondition):
 
     def __init__(self, condition_dict: dict):
         super().__init__()
-        self.min_time = datetime.strptime(condition_dict["min_time"], '%H:%M').time()
-        self.max_time = datetime.strptime(condition_dict["max_time"], '%H:%M').time()
+        self.min_time = datetime.strptime(condition_dict[CondM.MIN_TIME], CondM.TIME_FORMAT).time()
+        self.max_time = datetime.strptime(condition_dict[CondM.MAX_TIME], CondM.TIME_FORMAT).time()
         self.product_id = condition_dict["product"]
 
     def resolve(self, products: Dict[Product, int]) -> bool:
@@ -116,7 +127,13 @@ class TimeWindowForProductCondition(CategoryCondition):
         return True
 
     def to_dict(self):
-        return {}
+        ret = super().to_dict()
+        ret.update({
+            CondM.MIN_TIME: self.min_time.strftime(CondM.TIME_FORMAT),
+            CondM.MAX_TIME: self.max_time.strftime(CondM.TIME_FORMAT),
+            CondM.PRODUCT: self.product_id,
+        })
+        return ret
 
 
 class DateWindowForCategoryCondition(CategoryCondition):
@@ -124,9 +141,9 @@ class DateWindowForCategoryCondition(CategoryCondition):
 
     def __init__(self, condition_dict: dict):
         super().__init__()
-        self.min_date = datetime.strptime(condition_dict["min_date"], '%d/%m/%Y')
-        self.max_date = datetime.strptime(condition_dict["max_date"], '%d/%m/%Y')
-        self.category = condition_dict["category"]
+        self.min_date = datetime.strptime(condition_dict[CondM.MIN_DATE], CondM.DATE_FORMAT)
+        self.max_date = datetime.strptime(condition_dict[CondM.MAX_DATE], CondM.DATE_FORMAT)
+        self.category = condition_dict[CondM.CATEGORY]
 
     def resolve(self, products: Dict[Product, int]) -> bool:
         cur_date = datetime.now()
@@ -137,7 +154,13 @@ class DateWindowForCategoryCondition(CategoryCondition):
         return True
 
     def to_dict(self):
-        return {}
+        ret = super().to_dict()
+        ret.update({
+            CondM.MIN_DATE: self.min_date.strftime(CondM.DATE_FORMAT),
+            CondM.MAX_DATE: self.max_date.strftime(CondM.DATE_FORMAT),
+            CondM.CATEGORY: self.category,
+        })
+        return ret
 
 
 class DateWindowForProductCondition(CategoryCondition):
@@ -145,9 +168,9 @@ class DateWindowForProductCondition(CategoryCondition):
 
     def __init__(self, condition_dict: dict):
         super().__init__()
-        self.min_date = datetime.strptime(condition_dict["min_date"], '%d/%m/%Y')
-        self.max_date = datetime.strptime(condition_dict["max_date"], '%d/%m/%Y')
-        self.product_id = condition_dict["product"]
+        self.min_date = datetime.strptime(condition_dict[CondM.MIN_DATE], CondM.DATE_FORMAT)
+        self.max_date = datetime.strptime(condition_dict[CondM.MAX_DATE], CondM.DATE_FORMAT)
+        self.product_id = condition_dict[CondM.PRODUCT]
 
     def resolve(self, products: Dict[Product, int]) -> bool:
         cur_date = datetime.now()
@@ -158,7 +181,13 @@ class DateWindowForProductCondition(CategoryCondition):
         return True
 
     def to_dict(self):
-        return {}
+        ret = super().to_dict()
+        ret.update({
+            CondM.MIN_DATE: self.min_date.strftime(CondM.DATE_FORMAT),
+            CondM.MAX_DATE: self.max_date.strftime(CondM.DATE_FORMAT),
+            CondM.PRODUCT: self.product_id,
+        })
+        return ret
 
 
 class CompositePurchaseCondition(Condition, ABC):
@@ -167,13 +196,15 @@ class CompositePurchaseCondition(Condition, ABC):
         self.conditions = condition_dict["conditions"]
 
     def to_dict(self):
-        return {
-            "conditions": [c.to_dict() for c in self.conditions]
-        }
+        ret = super().to_dict()
+        ret.update({
+            CondM.CONDITIONS: [c.to_dict() for c in self.conditions]
+        })
+        return ret
 
 
 class ANDCondition(CompositePurchaseCondition):
-    type = CondM.AND_CONDITION
+    type = CondM.AND
 
     # returns AND between all conditions
     def resolve(self, products: Dict[Product, int]) -> bool:
@@ -184,7 +215,8 @@ class ANDCondition(CompositePurchaseCondition):
 
 
 class ORCondition(CompositePurchaseCondition):
-    type = CondM.OR_CONDITION
+    type = CondM.OR
+
     # returns OR between all conditions
     def resolve(self, products: Dict[Product, int]) -> bool:
         for cond in self.conditions:

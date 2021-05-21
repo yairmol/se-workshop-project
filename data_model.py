@@ -41,7 +41,7 @@ class PermissionsModel:
 
 
 class ConditionsModel:
-    CONDITION_TYPE = "ConditionType"
+    CONDITION_TYPE = "condition_type"
     MAX_QUANTITY = "max_quantity"
     PRODUCT = "product"
     CATEGORY = "category"
@@ -49,16 +49,16 @@ class ConditionsModel:
     MAX_TIME = "max_time"
     MIN_DATE = "min_date"
     MAX_DATE = "max_date"
-    CONDITIONS = "conditions"
-    AND = "ANDCondition"
-    OR = "ORCondition"
-    MAX_QUANTITY_FOR_PRODUCT = "MaxQuantityForProductCondition"
-    TIME_WINDOW_FOR_CATEGORY = "TimeWindowForCategoryCondition"
-    TIME_WINDOW_FOR_PRODUCT = "TimeWindowForProductCondition"
-    DATE_WINDOW_FOR_CATEGORY = "DateWindowForCategoryCondition"
-    DATE_WINDOW_FOR_PRODUCT = "DateWindowForProductCondition"
-    AND_CONDITION = "and"
-    OR_CONDITION = "or"
+    CONDITIONS = "conditions"  # for composite conditions
+    AND = "and_condition"
+    OR = "or_condition"
+    MAX_QUANTITY_FOR_PRODUCT = "max_quantity_for_product_condition"
+    TIME_WINDOW_FOR_CATEGORY = "time_window_for_category_condition"
+    TIME_WINDOW_FOR_PRODUCT = "time_window_for_product_condition"
+    DATE_WINDOW_FOR_CATEGORY = "date_window_for_category_condition"
+    DATE_WINDOW_FOR_PRODUCT = "date_window_for_product_condition"
+    TIME_FORMAT = "%H:%M"
+    DATE_FORMAT = "%d/%m/%Y"
 
 
 class AppointmentModel:

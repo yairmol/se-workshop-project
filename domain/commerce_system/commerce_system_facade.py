@@ -18,13 +18,13 @@ from domain.discount_module.discount_management import SimpleCond, DiscountDict,
 from domain.notifications.notifications import INotifications
 
 condition_map = {
-    "MaxQuantityForProductCondition": MaxQuantityForProductCondition,
-    "TimeWindowForCategoryCondition": TimeWindowForCategoryCondition,
-    "TimeWindowForProductCondition": TimeWindowForProductCondition,
-    "DateWindowForCategoryCondition": DateWindowForCategoryCondition,
-    "DateWindowForProductCondition": DateWindowForProductCondition,
-    "ANDCondition": ANDCondition,
-    "ORCondition": ORCondition
+    Cm.MAX_QUANTITY_FOR_PRODUCT: MaxQuantityForProductCondition,
+    Cm.TIME_WINDOW_FOR_CATEGORY: TimeWindowForCategoryCondition,
+    Cm.TIME_WINDOW_FOR_PRODUCT: TimeWindowForProductCondition,
+    Cm.DATE_WINDOW_FOR_CATEGORY: DateWindowForCategoryCondition,
+    Cm.DATE_WINDOW_FOR_PRODUCT: DateWindowForProductCondition,
+    Cm.AND: ANDCondition,
+    Cm.OR: ORCondition
 }
 
 

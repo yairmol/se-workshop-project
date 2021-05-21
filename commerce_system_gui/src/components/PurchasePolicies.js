@@ -20,21 +20,84 @@ import {useDrag, useDrop} from "react-dnd";
 import {HTML5Backend} from 'react-dnd-html5-backend'
 import {DndProvider} from 'react-dnd'
 import DeleteIcon from '@material-ui/icons/Delete';
-import {add_policy, get_shop_policies, get_shop_info, move_policy_to, remove_policy} from "../api";
+import {add_policy, get_shop_policies, get_shop_info, remove_purchase_policy} from "../api";
 import {useAuth} from "./use-auth";
 import {useParams} from "react-router-dom";
 
-const conditionTypes = {
-  "sum": "Total Price",
-  "quantity": "Number of Products"
+const condition_types = [
+  {key: "max_quantity_for_product_condition", text: "Max Quantity on Product"},
+  {key: "time_window_for_category_condition", text: "Purchase Time Window For Category"},
+  {key: "time_window_for_product_condition", text: "Purchase Time Window For Product"},
+  {key: "date_window_for_category_condition", text: "Purchase Date Window For Category"},
+  {key: "date_window_for_product_condition", text: "Purchase Date Window For Product"},
+]
+
+const condition_types_dict = {
+  "max_quantity_for_product_condition": "Max Quantity on Product",
+  "time_window_for_category_condition": "Purchase Time Window For Category",
+  "time_window_for_product_condition": "Purchase Time Window For Product",
+  "date_window_for_category_condition": "Purchase Date Window For Category",
+  "date_window_for_product_condition": "Purchase Date Window For Product",
+}
+
+const condition_type_to_format_str = {
+  "max_quantity_for_product_condition": (p, pr_names) => `product ${pr_names[p.product] || "__"} with a quantity less than ${p.max_quantity || "__"}`,
+  "time_window_for_category_condition": (p, _) => `products from category ${p.category || "__"} between ${p.min_time || "__"} and ${p.max_time || "__"}`,
+  "time_window_for_product_condition": (p, pr_names) => `product ${pr_names[p.product] || "__"} between ${p.min_time || "__"} and ${p.max_time || "__"}`,
+  "date_window_for_category_condition": (p, _) => `products from category ${p.category || "__"} between ${p.min_date || "__"} and ${p.max_date || "__"}`,
+  "date_window_for_product_condition": (p, pr_names) => `product ${pr_names[p.product] || "__"} between ${p.min_date || "__"} and ${p.max_date || "__"}`,
+}
+
+const ct_to_f = {
+  "max_quantity_for_product_condition": {
+    "product": {key: "product", text: "Product", type: "select"},
+    "max_quantity": {key: "max_quantity", text: "Max Quantity", type: "text_field"}
+  },
+  "time_window_for_category_condition": {
+    "category": {key: "category", text: "Category", type: "select"},
+    "min_time": {key: "min_time", text: "Start Time", type: "text_field"},
+    "max_time": {key: "max_time", text: "End Time", type: "text_field"}
+  },
+  "time_window_for_product_condition": {
+    "product": {key: "product", text: "Product", type: "select"},
+    "min_time": {key: "min_time", text: "Start Time", type: "text_field"},
+    "max_time": {key: "max_time", text: "End Time", type: "text_field"}
+  },
+  "date_window_for_category_condition": {
+    "category": {key: "category", text: "Category", type: "select"},
+    "min_date": {key: "min_date", text: "Start Date", type: "text_field"},
+    "max_date": {key: "max_date", text: "End Date", type: "text_field"}
+  },
+  "date_window_for_product_condition": {
+    "product": {key: "product", text: "Product", type: "select"},
+    "min_date": {key: "min_date", text: "Start Date", type: "text_field"},
+    "max_date": {key: "max_date", text: "End Date", type: "text_field"},
+  },
+}
+
+
+function isComposite(p) {
+  return p.condition_type === "and_condition" || p.condition_type === "or_condition"
+}
+
+function maxId(policies) {
+  // alert(JSON.stringify(policies))
+  const ret = Math.max(0, ...policies.map(
+    (p) => {
+      // alert(`pid ${p.id} ${parseInt(p.id)}`)
+      return isComposite(p) ? Math.max(parseInt(p.id), maxId(p.conditions)) : parseInt(p.id)
+    }
+  ))
+  // alert(JSON.stringify(`ret ${ret}`))
+  return ret
 }
 
 function getPolicyPath(policies, id) {
   for (let i = 0; i < policies.length; i++) {
     if (id === policies[i].id) {
       return [i];
-    } else if (policies[i].type === "composite") {
-      const path = getpolicyPath(policies[i].policies, id);
+    } else if (isComposite(policies[i])) {
+      const path = getPolicyPath(policies[i].conditions, id);
       if (path) {
         return [i, ...path];
       }
@@ -49,7 +112,7 @@ const getFromPath = (policies, path) => {
     if (i === 0) {
       a = a[path[i]]
     } else {
-      a = a.policies[path[i]]
+      a = a.conditions[path[i]]
     }
   }
   return a[path[path.length - 1]]
@@ -58,7 +121,7 @@ const getFromPath = (policies, path) => {
 const remove = (policies, path) => {
   let a = policies;
   for (let i = 0; i < path.length - 1; i++) {
-    a = a[path[i]].policies
+    a = a[path[i]].conditions
   }
   const [removed] = a.splice(path[path.length - 1], 1)
   return removed
@@ -67,21 +130,21 @@ const remove = (policies, path) => {
 const add = (policy, policies, path) => {
   let a = policies;
   for (let i = 0; i < path.length; i++) {
-    a = a[path[i]].policies
+    a = a[path[i]].conditions
   }
   a.push(policy)
 }
 
 const moveItem = (policies, policyId, destId) => {
   const oldPath = getPolicyPath(policies, policyId)
+  alert(oldPath);
   const policy = remove(policies, oldPath);
   const newPath = getPolicyPath(policies, destId)
+  alert(newPath)
   add(policy, policies, newPath)
 
   return policies;
 };
-
-let nextid = 1;
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -109,8 +172,10 @@ const useStyles = makeStyles((theme) => ({
   },
   policy: {
     padding: theme.spacing(2),
-    width: "auto",
-    maxWidth: theme.spacing(48),
+    // width: "auto",
+    // maxWidth: theme.spacing(48),
+    resize: "both",
+    maxWidth: "100%"
   },
   root2: {
     margin: theme.spacing(0),
@@ -133,49 +198,54 @@ const useStyles = makeStyles((theme) => ({
   },
   policyText2: {
     fontSize: theme.typography.pxToRem(20),
+  },
+  resizeConsumer: {
+    display: "inline-flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "centerl",
+    width: "auto",
+    height: "auto",
+    resize: "both",
+    overflow: "hidden",
   }
-}));
+}))
 
-function SimplePolicy({policy, classname}) {
+function SimplePolicy({policy, classname, productNames}) {
   const classes = useStyles();
-
-  return (
-    <>
+  // alert(`${JSON.stringify(condition_types_dict[policy.condition_type])}, ${JSON.stringify(!!condition_types_dict[policy.condition_type])}`)
+  return (condition_types_dict[policy.condition_type] ?
       <Typography variant="h6" className={classes[classname]}>
-        {policy.percentage || "__"}% policy on
-        {policy.type === "product" ? ` ${policy.identifier || "__"}` :
-          policy.type === "category" ? ` all products from ${policy.identifier || "__"}` :
-            policy.type === "shop" ? " on the entire shop!" : "__"}
-      </Typography>
-    </>
+        Customer can only buy {condition_type_to_format_str[policy.condition_type](policy, productNames)}
+      </Typography> :
+      <Typography>Choose policy type</Typography>
   )
 }
 
-function CompositePolicy({policy, onDrop, removePolicy}) {
+function CompositePolicy({policy, onDrop, removePolicy, productNames}) {
   const classes = useStyles();
-
   const [collected, drop] = useDrop(() => ({
     accept: "POLICY",
     drop: (item, monitor) => onDrop(policy.id, item, monitor)
   }));
 
   return (
-    <div ref={drop}>
-      <Typography>{policy.operator}</Typography>
-      <List>
-        {policy.policies.map((policy, index) => (
-          <ListItem>
+    <div>
+      <Typography>{policy.condition_type}</Typography>
+      <Grid container spacing={2}>
+        {policy.conditions.map((policy, index) => (
+          <Grid item>
             <PolicyView onDrop={onDrop} removePolicy={removePolicy} policy={policy} index={index}
-                          key={policy.id}/>
-          </ListItem>
+                        key={policy.id} productNames={productNames}/>
+          </Grid>
         ))}
-      </List>
-      <div className={classes.dropHere}>Drop Policys Here</div>
+      </Grid>
+      <Grid item ref={drop} className={classes.dropHere}>Drop Policys Here</Grid>
     </div>
   )
 }
 
-function PolicyView({policy, index, onDrop, removePolicy}) {
+function PolicyView({policy, index, onDrop, removePolicy, productNames}) {
   const classes = useStyles();
   const [{isDragging}, drag, dragPreview] = useDrag(
     () => ({
@@ -187,18 +257,30 @@ function PolicyView({policy, index, onDrop, removePolicy}) {
     }),
     []
   )
+  const [size, setSize] = useState({})
+  useEffect(() => {
+    // alert(JSON.stringify(policy))
+  })
+
+  const handleSizeChanged = size => {
+    setSize({size});
+  };
 
   return (
+    // <ResizeConsumer
+    //   className={classes.resizeConsumer}
+    //   onSizeChanged={handleSizeChanged}>
     <div className={classes.root2} role="Handle" ref={drag} style={{opacity: 1}}>
       <Paper style={{maxHeight: 500, overflow: 'auto'}} className={classes.policy} elevation={2}>
-        {!policy.composite ?
-          <SimplePolicy policy={policy} classname={"policyText"}/> :
-          <CompositePolicy removePolicy={removePolicy} policy={policy} onDrop={onDrop}/>}
+        {policy.conditions instanceof Array ?
+          <CompositePolicy removePolicy={removePolicy} policy={policy} onDrop={onDrop} productNames={productNames}/> :
+          <SimplePolicy policy={policy} classname={"policyText"} productNames={productNames}/>}
         <IconButton onClick={() => removePolicy(policy)}>
           <DeleteIcon/>
         </IconButton>
       </Paper>
     </div>
+    // </ResizeConsumer>
   )
 }
 
@@ -207,25 +289,22 @@ function useForceUpdate() {
   return () => setValue(value => value + 1); // update the state to force render
 }
 
-const parseCondition = (conditions, rators, sendToApi) => {
-  if (conditions.length === 0) {
-    return []
-  }
-  if (conditions.length === 1) {
-    return sendToApi ? [conditions[0]] : conditions[0]
-  }
-  return [
-    rators[0], conditions[0], parseCondition(conditions.slice(1), rators.slice(1))
-  ]
-}
-
 export const PurchasePolicies = () => {
   const classes = useStyles();
   const {shop_id} = useParams();
   const [policies, setPolicies] = useState([]);
   const [shop, setShop] = useState({products: []});
+  const productNames = {}
+  shop.products.forEach((prod, i) => {
+    productNames[prod.product_id] = prod.product_name;
+  })
   const [loaded, setLoaded] = useState(false);
   const [addComp, setAddComp] = useState(null);
+  const [nextId, setNextId] = useState(1);
+  const [state, setState] = useState({
+    width: 200,
+    height: 200,
+  })
   const auth = useAuth();
   const forceUpdate = useForceUpdate();
 
@@ -237,6 +316,8 @@ export const PurchasePolicies = () => {
         })
         await get_shop_policies(token, shop_id).then((policies) => {
           setPolicies(policies);
+          const Id = maxId(policies)
+          setNextId(Id + 1)
         })
         setLoaded(true);
       })
@@ -254,100 +335,106 @@ export const PurchasePolicies = () => {
     })
   }
 
+  const addPolicy = (policy) => {
+    policies.push({...policy, id: nextId})
+    setPolicies(policies);
+    setNextId(nextId + 1);
+    forceUpdate();
+  }
+
   const removePolicy = (policy) => {
     auth.getToken().then((token) => {
-      remove_policy(token, shop.shop_id, policy.id).then((res) => {
+      remove_purchase_policy(token, shop.shop_id, policy.id).then((res) => {
         setLoaded(false);
       })
     })
   }
 
   const onDrop = async (droppableId, item, monitor) => {
-    auth.getToken().then((token) => {
-      move_policy_to(token, shop_id, item.id, droppableId).then((res) => {
-        setLoaded(false)
-      })
-    })
-
-    // const newDiscounts = moveItem(discounts, item.id, droppableId)
-    // setDiscounts(newDiscounts)
-    // forceUpdate();
-    // move(path)
+    alert(`on drop ${item.id} ${droppableId}`)
+    const newPolicies = moveItem(policies, item.id, droppableId)
+    setPolicies(newPolicies)
+    forceUpdate();
   }
+
+  // alert(JSON.stringify(policies))
 
   return (
     loaded ?
-      <div>
-        <PolicyForm shop={shop} savePolicy={savePolicy}/>
-        <Divider style={{color: "black", margin: 20}}/>
-        <Grid container className={classes.root} spacing={2} style={{marginBottom: 100}}>
-          <Grid item>
-            <Typography variant="h5">Compose Policies</Typography>
-          </Grid>
-          <div style={{width: "100%"}}/>
-          <Grid item xs={9}>
-            <Grid container>
-              <DndProvider backend={HTML5Backend}>
-                {policies.map((policy, index) => (
-                  <Grid item>
-                    <PolicyView policy={policy} index={index} key={policy.id}
-                                  onDrop={(d, i, m) => onDrop(d, i, m)} removePolicy={removePolicy}/>
-                  </Grid>
-                ))}
-              </DndProvider>
+      <Grid container>
+        <Grid item xs={12}>
+          <Grid container direction="column">
+            <Grid item xs={12}>
+              <PolicyForm shop={shop} savePolicy={savePolicy} productNames={productNames}/>
             </Grid>
-          </Grid>
-          <Grid item xs={3}>
-            <Grid container direction={"row"} justify="center">
-              {addComp ?
-                <>
-                  <Grid item>
-                    <FormControl variant="outlined" required className={classes.formControl}>
-                      <InputLabel id="comp-type-label">Composition type</InputLabel>
-                      <Select labelId="comp-type-label"
-                              id="comp-type" label="Composition type" name="comp-type" autoFocus
-                              onChange={(e) => setAddComp(e.target.value)} value={addComp}>
-                        <MenuItem value={"additive"}>Additive</MenuItem>
-                        <MenuItem value={"max"}>Max</MenuItem>
-                      </Select>
-                    </FormControl>
-                  </Grid>
-                  <Grid item>
-                    <Button onClick={() => {
-                      savePolicy({composite: true, operator: addComp, policies: []});
-                      nextid++;
-                      setAddComp(null);
-                    }} variant="outlined" color="primary" className={classes.submit}>Add</Button>
-                  </Grid>
-                </> :
+            <Divider style={{color: "black", margin: 20}}/>
+            <Grid item xs={12}>
+              <Grid container className={classes.root} spacing={2} style={{marginBottom: 100}}>
                 <Grid item>
-                  <Button color="primary" className={classes.submit}
-                          onClick={() => setAddComp("additive")} variant="outlined">Add Policy Composition Rule
-                  </Button>
-                </Grid>}
+                  <Typography variant="h5">Compose Policies</Typography>
+                </Grid>
+                <div style={{width: "100%"}}/>
+                <Grid item xs={9}>
+                  <Grid container>
+                    <DndProvider backend={HTML5Backend}>
+                      {policies.map((policy, index) => (
+                        <Grid item>
+                          <PolicyView policy={policy} index={index} key={policy.id} productNames={productNames}
+                                      onDrop={(d, i, m) => onDrop(d, i, m)} removePolicy={removePolicy}/>
+                        </Grid>
+                      ))}
+                    </DndProvider>
+                  </Grid>
+                </Grid>
+                <Grid item xs={3}>
+                  <Grid container direction={"row"} justify="center">
+                    {addComp ?
+                      <>
+                        <Grid item>
+                          <FormControl variant="outlined" required className={classes.formControl}>
+                            <InputLabel id="comp-type-label">Composition type</InputLabel>
+                            <Select labelId="comp-type-label"
+                                    id="comp-type" label="Composition type" name="comp-type" autoFocus
+                                    onChange={(e) => setAddComp(e.target.value)} value={addComp}>
+                              <MenuItem value={"and_condition"}>And</MenuItem>
+                              <MenuItem value={"or_condition"}>Or</MenuItem>
+                            </Select>
+                          </FormControl>
+                        </Grid>
+                        <Grid item>
+                          <Button onClick={() => {
+                            addPolicy({conditions: [], condition_type: addComp});
+                            setAddComp(null);
+                          }} variant="outlined" color="primary" className={classes.submit}>Add</Button>
+                        </Grid>
+                      </> :
+                      <Grid item>
+                        <Button color="primary" className={classes.submit}
+                                onClick={() => setAddComp("additive")} variant="outlined">Add Policy Composition Rule
+                        </Button>
+                      </Grid>}
+                  </Grid>
+                </Grid>
+              </Grid>
             </Grid>
           </Grid>
         </Grid>
-      </div> :
+      </Grid> :
       <Typography>Loading...</Typography>
   )
 };
 
-function PolicyForm({shop, savePolicy}) {
+function PolicyForm({shop, savePolicy, productNames}) {
   const classes = useStyles();
   const formik = useFormik({
     initialValues: {
-      type: '',
-      composite: false,
+      condition_type: '',
     },
     onSubmit: values => {
-      savePolicy({
-        id: nextid, ...values,
-      })
+      savePolicy(values)
       formik.setValues({
-        type: '',
+        condition_type: '',
       })
-      nextid++;
     },
   });
 
@@ -364,9 +451,9 @@ function PolicyForm({shop, savePolicy}) {
 
   return (
     <form onSubmit={formik.handleSubmit} className={classes.form} noValidate>
-      <Grid container direction={"row"} justify="center" className={classes.root} spacing={2}>
+      <Grid container className={classes.root} spacing={2}>
         <Grid item xs={8}>
-          <Grid container spacing={2}>
+          <Grid container spacing={2} style={{width: "100%"}}>
             <Grid item>
               <Typography align="center" variant="h5">Add Simple Policy</Typography>
             </Grid>
@@ -375,32 +462,39 @@ function PolicyForm({shop, savePolicy}) {
               <FormControl variant="outlined" required className={classes.formControl}>
                 <InputLabel id="policy-type-label">Policy Type</InputLabel>
                 <Select labelId="policy-type-label"
-                        id="type" label="Policy type" name="type" autoFocus
-                        onChange={formik.handleChange} value={formik.values.type}>
-                  <MenuItem value={"tbd"}>Dont know</MenuItem>
+                        id="condition_type" label="Policy type" name="condition_type" autoFocus
+                        onChange={formik.handleChange} value={formik.values.condition_type}>
+                  {condition_types.map((ct) => <MenuItem value={ct.key}>{ct.text}</MenuItem>)}
                 </Select>
               </FormControl>
             </Grid>
-            <Grid item>
-              <FormControl disabled={formik.values.type === ''}
-                           variant="outlined" required className={classes.formControl}>
-                <InputLabel id="policy-target-identifier-label">{formik.values.type}</InputLabel>
-                <Select
-                  labelId="policy-target-identifier-label"
-                  id="identifier" label={formik.values.type} name="identifier"
-                  onChange={formik.handleChange}
-                  value={formik.values.identifier}
-                >
-                  {getItems(formik.values.type)}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item>
-              <FormControl className={classes.formControl} required>
-                <TextField name="percentage" label="percentage" variant="outlined" id="percentage"
-                           onChange={formik.handleChange} value={formik.values.percentage}/>
-              </FormControl>
-            </Grid>
+            {condition_types_dict[formik.values.condition_type] ?
+              Object.entries(ct_to_f[formik.values.condition_type]).map(([key, value]) => {
+                // alert(JSON.stringify(value))
+                return <Grid item>
+                  <FormControl variant="outlined" required className={classes.formControl}>
+                    {value.type === "select" ? <>
+                        <InputLabel id={`policy-${value.key}-label`}>{value.text}</InputLabel>
+                        <Select
+                          labelId={`policy-${value.key}-label`}
+                          id={value.key} label={value.text} name={value.key}
+                          onChange={formik.handleChange}
+                          value={formik.values[value.key]}
+                        >
+                          {getItems(value.key)}
+                        </Select></> :
+                      value.type === "text_field" ?
+                        <TextField labelId={`policy-${value.key}-label`} id={value.key} label={value.text}
+                                   name={value.key} variant="outlined"
+                                   onChange={formik.handleChange} value={formik.values[value.key]}/> :
+                        <Typography>Bad type</Typography>
+                    }
+                  </FormControl>
+                </Grid>
+              }) : <Grid item>
+                <div style={{width: "100%"}}/>
+              </Grid>
+            }
             <div style={{width: "100%"}}/>
             <Grid item>
               <Button
@@ -419,7 +513,8 @@ function PolicyForm({shop, savePolicy}) {
           <Grid container spacing={2}>
             <Paper className={classes.policy} elevation={2}>
               <Grid item>
-                Preview: <SimplePolicy classname={classes.policyText2} policy={formik.values}/>
+                Preview: <SimplePolicy classname={classes.policyText2} policy={formik.values}
+                                       productNames={productNames}/>
               </Grid>
               <div style={{width: "100%"}}/>
             </Paper>
