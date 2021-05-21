@@ -3,3 +3,4 @@ flask_cors
 requests
 flask_socketio
 responses
+SQLAlchemy~=1.4.15
