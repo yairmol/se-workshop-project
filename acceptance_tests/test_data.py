@@ -71,7 +71,7 @@ permissions = [
 ]
 
 simple_condition_dict = {
-    Cm.CONDITION_TYPE: Cm.DATE_WINDOW_FOR_CATEGORY, Cm.MIN_DATE: '1/5/2021', Cm.MAX_DATE: '20/5/2021',
+    Cm.CONDITION_TYPE: Cm.DATE_WINDOW_FOR_CATEGORY, Cm.MIN_DATE: '1/5/2021', Cm.MAX_DATE: '20/7/2021',
     Cm.CATEGORY: "c1"
 }
 
@@ -82,3 +82,5 @@ payment_details = [
         "card_holder_name": "Ligma"
     }
 ]
+
+delivery_details = {}

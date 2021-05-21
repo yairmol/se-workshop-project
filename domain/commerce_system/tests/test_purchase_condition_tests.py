@@ -9,6 +9,9 @@ from domain.commerce_system.purchase_conditions import MaxQuantityForProductCond
     ORCondition
 from domain.commerce_system.shop import Shop
 from domain.commerce_system.shopping_cart import ShoppingBag
+from domain.commerce_system.tests.mocks import DeliveryMock, PaymentMock
+from domain.delivery_module.delivery_system import IDeliveryFacade
+from domain.payment_module.payment_system import IPaymentsFacade
 
 shop1 = {"shop_name": "s1", "description": "a shop1"}
 prices = [5, 2.8, 3, 90]
@@ -30,6 +33,8 @@ assert len(products) == len(amounts) == len(prices), "data lengths must be equal
 
 class PurchaseConditionTests(TestCase):
     def setUp(self) -> None:
+        IPaymentsFacade.get_payment_facade = lambda: PaymentMock(True)
+        IDeliveryFacade.get_delivery_facade = lambda: DeliveryMock(True)
         self.shop = Shop(**shop1)
         self.bag = ShoppingBag(self.shop)
         self.products = [Product(**p) for p in products]
@@ -100,7 +105,7 @@ class PurchaseConditionTests(TestCase):
         self.assertFalse(self.bag.resolve_shop_conditions())
 
     def test_Fail_DateWindowForCategoryCondition(self):
-        condition_dict = {Cm.MIN_DATE: '20/5/2021', Cm.MAX_DATE: '30/5/2021', Cm.CATEGORY: "aaa"}
+        condition_dict = {Cm.MIN_DATE: '20/5/2022', Cm.MAX_DATE: '30/5/2022', Cm.CATEGORY: "aaa"}
         condition = DateWindowForCategoryCondition(condition_dict)
         self.shop.add_purchase_condition(condition)
         amount = 4
@@ -108,7 +113,7 @@ class PurchaseConditionTests(TestCase):
         self.assertFalse(self.bag.resolve_shop_conditions())
 
     def test_Fail_DateWindowForProductCondition(self):
-        condition_dict = {Cm.MIN_DATE: '20/5/2021', Cm.MAX_DATE: '30/5/2021', Cm.PRODUCT: self.product.product_id}
+        condition_dict = {Cm.MIN_DATE: '20/5/2022', Cm.MAX_DATE: '30/5/2022', Cm.PRODUCT: self.product.product_id}
         condition = DateWindowForProductCondition(condition_dict)
         self.shop.add_purchase_condition(condition)
         amount = 4

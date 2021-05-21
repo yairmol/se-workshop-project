@@ -8,6 +8,8 @@ from domain.commerce_system.purchase_conditions import MaxQuantityForProductCond
 from domain.commerce_system.shop import Shop
 from domain.commerce_system.shopping_cart import ShoppingBag
 from domain.commerce_system.tests.mocks import DeliveryMock, PaymentMock
+from domain.delivery_module.delivery_system import IDeliveryFacade
+from domain.payment_module.payment_system import IPaymentsFacade
 
 shop1 = {"shop_name": "s1", "description": "a shop1"}
 prices = [5, 2.8, 3, 90]
@@ -29,6 +31,8 @@ assert len(products) == len(amounts) == len(prices), "data lengths must be equal
 
 class BagTests(TestCase):
     def setUp(self) -> None:
+        IPaymentsFacade.get_payment_facade = lambda: PaymentMock(True)
+        IDeliveryFacade.get_delivery_facade = lambda: DeliveryMock(True)
         self.shop = Shop(**shop1)
         self.bag = ShoppingBag(self.shop)
         self.products = [Product(**p) for p in products]

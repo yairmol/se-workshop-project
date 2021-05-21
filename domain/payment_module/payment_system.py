@@ -7,9 +7,13 @@ from requests import Timeout
 
 class IPaymentsFacade:
 
+    __instance = None
+
     @staticmethod
     def get_payment_facade() -> IPaymentsFacade:
-        return PaymentsFacadeAlwaysTrue()
+        if not IPaymentsFacade.__instance:
+            IPaymentsFacade.__instance = PaymentsFacadeWSEP()
+        return IPaymentsFacade.__instance
 
     def pay(self, total_price: int, payment_details: dict, contact_details: dict = None) -> Union[str, bool]:
         """
