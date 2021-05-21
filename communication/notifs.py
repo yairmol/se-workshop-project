@@ -1,6 +1,7 @@
 import json
 import os
 
+import eventlet
 from flask import Flask, request
 from flask_socketio import SocketIO, join_room, leave_room, emit
 from flask_cors import CORS
@@ -21,7 +22,7 @@ CORS(app, resources={
 app.config['CORS_HEADERS'] = 'Content-Type'
 io = SocketIO(app, cors_allowed_origins='*')
 
-# app.config['SECRET_KEY'] = '../secrets/cert.pem'
+# app.config['SECRET_KEY'] = '../secrets/key.pem'
 # app.config['SECRET_CERT'] = '../secrets/cert.pem'
 
 clients = {}
@@ -88,4 +89,5 @@ def send_broadcast(msg):
 # If you are running it using python <filename> then below command will be used
 if __name__ == '__main__':
     print("Server starting")
-    io.run(app, port=5000)
+    # io.run(app, port=5000)
+    io.run(app, port=int(5000), debug=True, certfile="../secrets/cert.pem", keyfile="../secrets/key.pem")
