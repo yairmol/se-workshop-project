@@ -6,6 +6,7 @@ from flask import Flask, request
 from flask_socketio import SocketIO, join_room, leave_room, emit
 from flask_cors import CORS
 
+
 # Initializing the flask object
 app = Flask(__name__)
 # by default runs on port 5000
@@ -38,45 +39,56 @@ def enlist(data):
     print("client id %s enlisting " % data["client_id"])
     print("%s sid" % request.sid)
     clients[data["client_id"]] = request.sid
-    if data["username"] not in list(subscribed_clients.keys()):
-        subscribed_clients[data["username"]] = {"client_id": data["client_id"], "msgs": []}
+    if data["username"] and data["username"] not in list(subscribed_clients.keys()):
+        subscribed_clients[data["username"]] = {"client_id": data["client_id"]}
     elif data["username"]:
         subscribed_clients[data["username"]].client_id = data["client_id"]
-        for msg in subscribed_clients["msgs"]:
-            send_notif(data["client_id"], msg)
+        if "pending" in subscribed_clients.keys():
+            for msg in subscribed_clients[data["username"]].pending:
+                send_notif(msg, data["client_id"])
+                subscribed_clients[data["username"]].pending.remove(msg)
 
-def enlist_sub(username):
+def enlist_sub(username, pending_messages=[]):
     if username not in list(subscribed_clients.keys()):
-        subscribed_clients[username] = {"client_id": -1, "msgs": []}
+        subscribed_clients[username] = {"client_id": -1, "pending": pending_messages}
 
 @io.on('disconnect')
 def disconnect():
     print("%s disconnected" % request.sid)
-    for k in clients.copy():
+    for k in clients.keys():
         if clients[k] == request.sid:
             del clients[k]
+            for pair in subscribed_clients.items():
+                if clients[k] in pair:
+                    subscribed_clients[pair[0]].client_id = -1
 
 
 @io.on('send_notif')
-def send_notif(msg, client_id, username=""):
+def send_notif(msg, client_id, username="", pending_messages=[]):
     if client_id in list(clients.keys()):
         emit('notification', msg, room=clients[client_id])
+        for p in pending_messages:
+            emit('notification', p, room=clients[client_id])
+            pending_messages.remove(p)
     elif username in subscribed_clients and username != "":
-        subscribed_clients[username]["msgs"] += msg
+        pending_messages += msg
     elif username != "":
-        subscribed_clients[username] = {"client_id": client_id, "msgs": []}
+        subscribed_clients[username] = {"client_id": client_id}
     else:
         print("Guest is not enlisted")
 
 
 @io.on('send_error')
-def send_error(msg, client_id, username):
+def send_error(msg, client_id, username, pending_messages=[]):
     if client_id in list(clients.keys()):
         emit('error', msg, room=clients[client_id])
+        for p in pending_messages:
+            emit('notification', p, room=clients[client_id])
+            pending_messages.remove(p)
     elif username in subscribed_clients.keys() and username != "":
-        subscribed_clients[username]["msgs"] += msg
+        pending_messages += msg
     elif username != "":
-        subscribed_clients[username] = {"client_id": client_id, "msgs": []}
+        subscribed_clients[username] = {"client_id": client_id}
     else:
         print("Guest is not enlisted")
 
