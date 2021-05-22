@@ -1,0 +1,13 @@
+{
+  "payment_facade": "always_true",
+    "delivery_facade": "always_true",
+    "database_url": "sqlite+pysqlite:///:memory:",
+    "database_credentials": {
+        "username": "username",
+        "password": "password"
+    },
+    "admin_credentials": {
+        "username": "admin_username",
+        "password": "admin_password"
+    }
+}

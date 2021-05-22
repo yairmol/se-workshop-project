@@ -1,5 +1,6 @@
 from typing import Tuple, List, Dict
 
+from config.config import config, ConfigFields as cf
 from test_data import users, shops, permissions, products, payment_details
 from service.system_service import SystemService
 from data_model import UserModel as Um, admin_credentials
@@ -129,6 +130,8 @@ def fill_with_data(
 
 
 def admin_login(commerce_system: SystemService):
+    admin_username = config[cf.ADMIN_CREDENTIALS][cf.ADMIN_USERNAME]
+    admin_password = config[cf.ADMIN_CREDENTIALS][cf.ADMIN_PASSWORD]
     admin_session = commerce_system.enter()["result"]
-    commerce_system.login(admin_session, **admin_credentials)
+    commerce_system.login(admin_session, admin_username, admin_password)
     return admin_session
