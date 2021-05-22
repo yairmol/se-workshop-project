@@ -1,6 +1,7 @@
 import threading
 from typing import Dict, List, Union, Optional
 
+from config.config import config, ConfigFields as cf
 from data_model import ConditionsModel as Cm
 from domain.authentication_module.authenticator import Authenticator
 from domain.commerce_system.ifacade import ICommerceSystemFacade
@@ -386,10 +387,11 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         return products
 
     def create_admin_user(self):
-        from data_model import UserModel as Um, admin_credentials as ac
-        self.authenticator.register_new_user(ac[Um.USERNAME], ac[Um.PASSWORD])
-        self.registered_users[ac[Um.USERNAME]] = SystemManager(
-            ac[Um.USERNAME], self.transaction_repo
+        admin_un = config[cf.ADMIN_CREDENTIALS][cf.ADMIN_USERNAME]
+        admin_password = config[cf.ADMIN_CREDENTIALS][cf.ADMIN_PASSWORD]
+        self.authenticator.register_new_user(admin_un, admin_password)
+        self.registered_users[admin_un] = SystemManager(
+            admin_password, self.transaction_repo
         )
 
     def get_product_info(self, shop_id, product_id):

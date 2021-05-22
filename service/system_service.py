@@ -404,7 +404,7 @@ class SystemService:
                 event_logger.info(f"User: {user_id} tries to remove purchase condition "
                                   f"{condition_id} from"
                                   f"shop_id: {shop_id}")
-                self.commerce_system_facade.add_purchase_condition(user_id, shop_id, condition_id)
+                self.commerce_system_facade.remove_purchase_condition(user_id, shop_id, condition_id)
                 event_logger.info("User: " + str(user_id) + " removed condition successfully")
                 return make_status_dict(True, "", "")
             except AssertionError as e:
