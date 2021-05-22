@@ -1,13 +1,21 @@
 from __future__ import annotations
-from typing import List, Union
-import json
+from typing import Union
 import requests
 from requests import Timeout
+
+from config.config import config, ConfigFields as cf
 
 
 class IDeliveryFacade:
 
     __instance = None
+
+    @staticmethod
+    def delivery_facade_from_config():
+        if config[cf.PAYMENT_FACADE] == "real":
+            return DeliveryFacadeWSEP()
+        elif config[cf.PAYMENT_FACADE] == "always_true":
+            return DeliveryFacadeAlwaysTrue()
 
     @staticmethod
     def get_delivery_facade() -> IDeliveryFacade:
@@ -43,7 +51,7 @@ class DeliveryFacadeAlwaysTrue(IDeliveryFacade):
 
 
 class DeliveryFacadeWSEP(IDeliveryFacade):
-    url = 'https://cs-bgu-wsep.herokuapp.com/'
+    url = config[cf.DELIVERY_SYSTEM_URL]
     SUCCESSFUL_HANDSHAKE = 'OK'
     SUCCESSFUL_DELIVERY_CANCEL = '1'
     ERROR = '-1'

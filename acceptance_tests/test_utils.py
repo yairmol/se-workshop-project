@@ -1,6 +1,7 @@
 from enum import Enum, auto
 from typing import Tuple, List, Dict, Union
 
+from config.config import config, ConfigFields as cf
 from domain.delivery_module.delivery_system import IDeliveryFacade, DeliveryFacadeAlwaysTrue
 from domain.payment_module.payment_system import IPaymentsFacade, PaymentsFacadeAlwaysTrue
 from test_data import users, shops, permissions, products, payment_details
@@ -182,6 +183,8 @@ def set_delivery_facade(mock_type: DeliveryFacadeMocks) -> None:
 
 
 def admin_login(commerce_system: SystemService):
+    admin_username = config[cf.ADMIN_CREDENTIALS][cf.ADMIN_USERNAME]
+    admin_password = config[cf.ADMIN_CREDENTIALS][cf.ADMIN_PASSWORD]
     admin_session = commerce_system.enter()["result"]
-    commerce_system.login(admin_session, **admin_credentials)
+    commerce_system.login(admin_session, admin_username, admin_password)
     return admin_session
