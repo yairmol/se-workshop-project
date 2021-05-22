@@ -15,12 +15,16 @@ from data_model import (
     UserModel as Um, ProductModel as Pm, ConditionsModel as Cm,
     PermissionsModel as PermM,
 )
+from config.config import load_config
+
+
+TESTS_CONFIG_PATH = "./acceptance-tests-config.json"
 
 
 # 2. Guest Functional Requirements tests
 class GuestTests(TestCase):
-
     def setUp(self) -> None:
+        load_config(TESTS_CONFIG_PATH)
         self.commerce_system = Driver.get_system_service()
         self.session_id = self.commerce_system.enter()['result']
         self.assertIsInstance(self.session_id, str)
@@ -85,6 +89,7 @@ class GuestTests(TestCase):
 class SubscribedTests(TestCase):
 
     def setUp(self) -> None:
+        load_config(TESTS_CONFIG_PATH)
         self.commerce_system = Driver.get_system_service()
         self.session_id = enter_register_and_login(self.commerce_system, users[0])
 
@@ -124,6 +129,7 @@ class SubscribedTests(TestCase):
 class ShopOwnerOperations(TestCase):
 
     def setUp(self) -> None:
+        load_config(TESTS_CONFIG_PATH)
         self.commerce_system = Driver.get_system_service()
         self.session_id = enter_register_and_login(self.commerce_system, users[0])
         self.shop_id = self.commerce_system.open_shop(self.session_id, **shops[0])['result']
@@ -280,6 +286,7 @@ class ShopOwnerOperations(TestCase):
 class ShopManagerOperations(TestCase):
 
     def setUp(self) -> None:
+        load_config(TESTS_CONFIG_PATH)
         self.commerce_system = Driver.get_system_service()
         self.owner_session_id = enter_register_and_login(self.commerce_system, users[0])
         self.shop_id = self.commerce_system.open_shop(self.owner_session_id, **shops[0])['result']
@@ -421,6 +428,7 @@ class PurchasesTests(TestCase):
     U1, U2 = 0, 1
 
     def setUp(self) -> None:
+        load_config(TESTS_CONFIG_PATH)
         self.commerce_system = Driver.get_system_service()
         set_delivery_facade(DeliveryFacadeMocks.ALWAYS_TRUE)
         set_payment_facade(PaymentFacadeMocks.ALWAYS_TRUE)
@@ -475,9 +483,59 @@ class PurchasesTests(TestCase):
         shop_id = get_shops_not_owned_by_user(u1, self.shop_ids, self.shop_to_staff)[0]
         prod_id = self.shops_to_products[shop_id][0]
         transaction_status = self.commerce_system.purchase_product(
-            u1, shop_id, prod_id, 1, payment_details[0], {}
+            u1, shop_id, prod_id, 1, payment_details[0], delivery_details
         )
         self.assertTrue(transaction_status["status"])
+
+    def save_shop_products_to_bag(self, num_products, quantity_overflow=False):
+        u1 = self.sessions[self.U1]
+        shop_id = get_shops_not_owned_by_user(u1, self.shop_ids, self.shop_to_staff)[0]
+        prods = self.shops_to_products[shop_id][:num_products]
+        self.assertTrue(all(map(lambda p: self.commerce_system.save_product_to_cart(
+            u1, self.product_to_shop[p], p, 1 if not quantity_overflow else self.pid_to_product[p][Pm.QUANTITY] + 1
+        ), prods)))
+        return u1, shop_id
+
+    # 2.9 purchase shopping bag
+    def test_purchase_bag(self):
+        num_products = 2
+        u1, shop_id = self.save_shop_products_to_bag(num_products)
+        transaction_status = self.commerce_system.purchase_shopping_bag(
+            u1, shop_id, payment_details[0], delivery_details
+        )
+        self.assertTrue(transaction_status["status"])
+
+    # 2.9 purchase shopping bag
+    def test_purchase_bag_missing_stock(self):
+        num_products = 2
+        u1, shop_id = self.save_shop_products_to_bag(num_products, quantity_overflow=True)
+        transaction_status = self.commerce_system.purchase_shopping_bag(
+            u1, shop_id, payment_details[0], delivery_details
+        )
+        print(transaction_status["description"])
+        self.assertFalse(transaction_status["status"])
+
+    # 2.9 purchase shopping bag
+    def test_purchase_bag_payment_fails(self):
+        num_products = 2
+        set_payment_facade(PaymentFacadeMocks.ALWAYS_FALSE)
+        u1, shop_id = self.save_shop_products_to_bag(num_products)
+        transaction_status = self.commerce_system.purchase_shopping_bag(
+            u1, shop_id, payment_details[0], delivery_details
+        )
+        print(transaction_status["description"])
+        self.assertFalse(transaction_status["status"])
+
+    # 2.9 purchase shopping bag
+    def test_purchase_bag_delivery_fails(self):
+        num_products = 2
+        set_delivery_facade(DeliveryFacadeMocks.ALWAYS_FALSE)
+        u1, shop_id = self.save_shop_products_to_bag(num_products)
+        transaction_status = self.commerce_system.purchase_shopping_bag(
+            u1, shop_id, payment_details[0], delivery_details
+        )
+        print(transaction_status["description"])
+        self.assertFalse(transaction_status["status"])
 
     def save_products_to_cart(self, num_prods, quantity_overflow=False):
         u1 = self.sessions[self.U1]
@@ -504,6 +562,7 @@ class PurchasesTests(TestCase):
         print(res["description"])
         self.assertFalse(res["status"])
 
+    # 2.9 purchase cart
     def test_purchase_cart_bad_payment(self):
         num_prods = 4
         set_payment_facade(PaymentFacadeMocks.ALWAYS_FALSE)
@@ -512,14 +571,16 @@ class PurchasesTests(TestCase):
         print("description", res["description"])
         self.assertFalse(res["status"])
 
+    # 2.9 purchase cart
     def test_purchase_cart_bad_delivery(self):
         num_prods = 4
         set_delivery_facade(DeliveryFacadeMocks.ALWAYS_FALSE)
-        u1 = self.save_products_to_cart(num_prods, quantity_overflow=True)
+        u1 = self.save_products_to_cart(num_prods)
         res = self.commerce_system.purchase_cart(u1, payment_details[0], delivery_details)
         print("description", res["description"])
         self.assertFalse(res["status"])
 
+    # 2.9 purchase cart
     def make_purchases_and_check_transactions(self, u1, prods, num_prods):
         self.assertTrue(make_purchases(self.commerce_system, u1, self.product_to_shop, prods[:num_prods]))
         transaction_history = self.commerce_system.get_personal_purchase_history(u1)['result']
@@ -600,7 +661,7 @@ class PurchasesTests(TestCase):
     def test_purchase_product_with_max_quantity_condition(self):
         u1, shop_id, prod_id = self.add_simple_purchase_condition_and_get_user()
         transaction_status = self.commerce_system.purchase_product(
-            u1, shop_id, prod_id, 1, payment_details[0], {}
+            u1, shop_id, prod_id, 1, payment_details[0], delivery_details
         )
         self.assertTrue(transaction_status["status"])
 
@@ -608,7 +669,7 @@ class PurchasesTests(TestCase):
     def test_purchase_product_that_fails_max_quantity_condition(self):
         u1, shop_id, prod_id = self.add_simple_purchase_condition_and_get_user()
         transaction_status = self.commerce_system.purchase_product(
-            u1, shop_id, prod_id, 5, payment_details[0], {}
+            u1, shop_id, prod_id, 5, payment_details[0], delivery_details
         )
         self.assertFalse(transaction_status["status"])
 
@@ -623,7 +684,7 @@ class PurchasesTests(TestCase):
         self.assertTrue(self.commerce_system.add_purchase_condition
                         (shop_owner, shop_id, **condition_dict)['status'])
         transaction_status = self.commerce_system.purchase_product(
-            u1, shop_id, prod_id, 1, payment_details[0], {}
+            u1, shop_id, prod_id, 1, payment_details[0], delivery_details
         )
         self.assertTrue(transaction_status["status"])
 
@@ -638,7 +699,7 @@ class PurchasesTests(TestCase):
         self.assertTrue(self.commerce_system.add_purchase_condition
                         (shop_owner, shop_id, **condition_dict)['status'])
         transaction_status = self.commerce_system.purchase_product(
-            u1, shop_id, prod_id, 1, payment_details[0], {}
+            u1, shop_id, prod_id, 1, payment_details[0], delivery_details
         )
         self.assertFalse(transaction_status["status"])
 
@@ -653,7 +714,7 @@ class PurchasesTests(TestCase):
         self.assertTrue(self.commerce_system.add_purchase_condition
                         (shop_owner, shop_id, **condition_dict)['status'])
         transaction_status = self.commerce_system.purchase_product(
-            u1, shop_id, prod_id, 1, payment_details[0], {}
+            u1, shop_id, prod_id, 1, payment_details[0], delivery_details
         )
         self.assertTrue(transaction_status["status"])
 
@@ -668,7 +729,7 @@ class PurchasesTests(TestCase):
         self.assertTrue(self.commerce_system.add_purchase_condition
                         (shop_owner, shop_id, **condition_dict)['status'])
         transaction_status = self.commerce_system.purchase_product(
-            u1, shop_id, prod_id, 1, payment_details[0], {}
+            u1, shop_id, prod_id, 1, payment_details[0], delivery_details
         )
         self.assertFalse(transaction_status["status"])
 
@@ -683,7 +744,7 @@ class PurchasesTests(TestCase):
         self.assertTrue(self.commerce_system.add_purchase_condition
                         (shop_owner, shop_id, **condition_dict)['status'])
         transaction_status = self.commerce_system.purchase_product(
-            u1, shop_id, prod_id, 1, payment_details[0], {}
+            u1, shop_id, prod_id, 1, payment_details[0], delivery_details
         )
         self.assertTrue(transaction_status["status"])
 
@@ -698,7 +759,7 @@ class PurchasesTests(TestCase):
         self.assertTrue(self.commerce_system.add_purchase_condition
                         (shop_owner, shop_id, **condition_dict)['status'])
         transaction_status = self.commerce_system.purchase_product(
-            u1, shop_id, prod_id, 1, payment_details[0], {}
+            u1, shop_id, prod_id, 1, payment_details[0], delivery_details
         )
         self.assertFalse(transaction_status["status"])
 
@@ -713,7 +774,7 @@ class PurchasesTests(TestCase):
         self.assertTrue(self.commerce_system.add_purchase_condition
                         (shop_owner, shop_id, **condition_dict)['status'])
         transaction_status = self.commerce_system.purchase_product(
-            u1, shop_id, prod_id, 1, payment_details[0], {}
+            u1, shop_id, prod_id, 1, payment_details[0], delivery_details
         )
         self.assertTrue(transaction_status["status"])
 
@@ -728,7 +789,7 @@ class PurchasesTests(TestCase):
         self.assertTrue(self.commerce_system.add_purchase_condition
                         (shop_owner, shop_id, **condition_dict)['status'])
         transaction_status = self.commerce_system.purchase_product(
-            u1, shop_id, prod_id, 1, payment_details[0], {}
+            u1, shop_id, prod_id, 1, payment_details[0], delivery_details
         )
         self.assertFalse(transaction_status["status"])
 
@@ -747,7 +808,9 @@ class PurchasesTests(TestCase):
         self.assertTrue(all(map(lambda p: self.commerce_system.save_product_to_cart(
             u1, self.product_to_shop[p], p, 1
         ), prods[:num_prods])))
-        print(self.commerce_system.purchase_cart(u1, payment_details[0], {})['description'])
+        res = self.commerce_system.purchase_cart(u1, payment_details[0], delivery_details)
+        print(res["description"])
+        self.assertTrue(res["status"])
 
     def test_purchase_cart_with_complex_conditions(self):
         num_prods = 4
@@ -777,7 +840,7 @@ class PurchasesTests(TestCase):
         self.assertTrue(all(map(lambda p: self.commerce_system.save_product_to_cart(
             u1, self.product_to_shop[p], p, 1
         ), prods[:num_prods])))
-        self.assertTrue(self.commerce_system.purchase_cart(u1, payment_details[0], {})['status'])
+        self.assertTrue(self.commerce_system.purchase_cart(u1, payment_details[0], delivery_details)['status'])
 
     # 3.7 get transactions
     def test_get_user_transactions_with_condition(self):
@@ -804,6 +867,7 @@ class GuestTestsWithData(TestCase):
     S1 = 0
 
     def setUp(self):
+        load_config(TESTS_CONFIG_PATH)
         self.commerce_system = Driver.get_system_service()
         self.guest_sess, self.subs_sess, self.sids_to_shop, self.sid_to_sess, self.pid_to_sid = fill_with_data(
             self.commerce_system, self.NUM_GUESTS, self.NUM_SUBS, self.NUM_SHOPS, self.NUM_PRODUCTS
@@ -877,6 +941,7 @@ class ParallelismTests(TestCase):
     S1 = 0
 
     def setUp(self) -> None:
+        load_config(TESTS_CONFIG_PATH)
         set_delivery_facade(DeliveryFacadeMocks.ALWAYS_TRUE)
         set_payment_facade(PaymentFacadeMocks.ALWAYS_TRUE)
         self.commerce_system = Driver.get_system_service()
@@ -910,11 +975,11 @@ class ParallelismTests(TestCase):
 
             def buyer1():
                 results.append(
-                    self.commerce_system.purchase_product(u_buyer1, sid, pid, 1, payment_details[0], {})["status"])
+                    self.commerce_system.purchase_product(u_buyer1, sid, pid, 1, payment_details[0], delivery_details)["status"])
 
             def buyer2():
                 results.append(
-                    self.commerce_system.purchase_product(u_buyer2, sid, pid, 1, payment_details[0], {})["status"])
+                    self.commerce_system.purchase_product(u_buyer2, sid, pid, 1, payment_details[0], delivery_details)["status"])
 
             self.run_parallel_test(buyer1, buyer2)
             self.assertTrue(any(results))
@@ -936,7 +1001,7 @@ class ParallelismTests(TestCase):
             results = {}
 
             def buyer():
-                results[u_buyer] = self.commerce_system.purchase_product(u_buyer, sid, pid, 1, payment_details, {})
+                results[u_buyer] = self.commerce_system.purchase_product(u_buyer, sid, pid, 1, payment_details, delivery_details)
 
             def opener():
                 results[u_opener] = self.commerce_system.delete_product(u_opener, sid, pid)

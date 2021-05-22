@@ -2,7 +2,7 @@ import json
 import sys
 
 from communication.api import create_app
-from config.config import config, ConfigFields as cf
+from config.config import config, ConfigFields as cf, load_config
 
 
 def main():
@@ -10,9 +10,7 @@ def main():
     argv: (program_name) + [<configuration-file-path>]
     """
     if len(sys.argv) > 1:
-        with open(sys.argv[1], "r") as f:
-            my_config = json.load(f)
-            config.update(my_config)
+        load_config(sys.argv[1])
     app = create_app()
     cert_info = config[cf.CERTIFICATE_PATH]
     app.run(
