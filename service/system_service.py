@@ -391,9 +391,9 @@ class SystemService:
                 event_logger.info("User: " + str(user_id) + " added condition successfully")
                 return make_status_dict(True, "", "")
             except AssertionError as e:
-                event_logger.warning(e)
+                return handle_assertion(e)
             except Exception as e:
-                error_logger.error(e)
+                return handle_exception(e)
         return make_status_dict(False, "Invalid Token", "")
 
     # 4.2
@@ -408,9 +408,9 @@ class SystemService:
                 event_logger.info("User: " + str(user_id) + " removed condition successfully")
                 return make_status_dict(True, "", "")
             except AssertionError as e:
-                event_logger.warning(e)
+                return handle_assertion(e)
             except Exception as e:
-                error_logger.error(e)
+                return handle_exception(e)
         return make_status_dict(False, "Invalid Token", "")
 
     # 4.5

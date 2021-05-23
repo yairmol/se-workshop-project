@@ -23,6 +23,8 @@ import DeleteIcon from '@material-ui/icons/Delete';
 import {add_policy, get_shop_policies, get_shop_info, remove_purchase_policy} from "../api";
 import {useAuth} from "./use-auth";
 import {useParams} from "react-router-dom";
+import {MuiPickersUtilsProvider, KeyboardDatePicker, KeyboardTimePicker} from "@material-ui/pickers";
+import DateFnsUtils from "@date-io/date-fns";
 
 const condition_types = [
   {key: "max_quantity_for_product_condition", text: "Max Quantity on Product"},
@@ -40,12 +42,20 @@ const condition_types_dict = {
   "date_window_for_product_condition": "Purchase Date Window For Product",
 }
 
+function formatDate(date) {
+  return date ? date instanceof Date ? `${date.getUTCDate()}/${date.getMonth() + 1}/${date.getFullYear()}` : date : "__"
+}
+
+function formatTime(date){
+  return date ? date instanceof Date ? `${date.getHours()}:${date.getMinutes()}` : date : "__"
+}
+
 const condition_type_to_format_str = {
   "max_quantity_for_product_condition": (p, pr_names) => `product ${pr_names[p.product] || "__"} with a quantity less than ${p.max_quantity || "__"}`,
-  "time_window_for_category_condition": (p, _) => `products from category ${p.category || "__"} between ${p.min_time || "__"} and ${p.max_time || "__"}`,
-  "time_window_for_product_condition": (p, pr_names) => `product ${pr_names[p.product] || "__"} between ${p.min_time || "__"} and ${p.max_time || "__"}`,
-  "date_window_for_category_condition": (p, _) => `products from category ${p.category || "__"} between ${p.min_date || "__"} and ${p.max_date || "__"}`,
-  "date_window_for_product_condition": (p, pr_names) => `product ${pr_names[p.product] || "__"} between ${p.min_date || "__"} and ${p.max_date || "__"}`,
+  "time_window_for_category_condition": (p, _) => `products from category ${p.category || "__"} between ${formatTime(p.min_time)} and ${formatTime(p.max_time)}`,
+  "time_window_for_product_condition": (p, pr_names) => `product ${pr_names[p.product] || "__"} between ${formatTime(p.min_time)} and ${formatTime(p.max_time)}`,
+  "date_window_for_category_condition": (p, _) => `products from category ${p.category || "__"} between ${formatDate(p.min_date)} and ${formatDate(p.max_date)}`,
+  "date_window_for_product_condition": (p, pr_names) => `product ${pr_names[p.product] || "__"} between ${formatDate(p.min_date)} and ${formatDate(p.max_date)}`,
 }
 
 const ct_to_f = {
@@ -55,24 +65,44 @@ const ct_to_f = {
   },
   "time_window_for_category_condition": {
     "category": {key: "category", text: "Category", type: "select"},
-    "min_time": {key: "min_time", text: "Start Time", type: "text_field"},
-    "max_time": {key: "max_time", text: "End Time", type: "text_field"}
+    "min_time": {key: "min_time", text: "Start Time", type: "time"},
+    "max_time": {key: "max_time", text: "End Time", type: "time"}
   },
   "time_window_for_product_condition": {
     "product": {key: "product", text: "Product", type: "select"},
-    "min_time": {key: "min_time", text: "Start Time", type: "text_field"},
-    "max_time": {key: "max_time", text: "End Time", type: "text_field"}
+    "min_time": {key: "min_time", text: "Start Time", type: "time"},
+    "max_time": {key: "max_time", text: "End Time", type: "time"}
   },
   "date_window_for_category_condition": {
     "category": {key: "category", text: "Category", type: "select"},
-    "min_date": {key: "min_date", text: "Start Date", type: "text_field"},
-    "max_date": {key: "max_date", text: "End Date", type: "text_field"}
+    "min_date": {key: "min_date", text: "Start Date", type: "date"},
+    "max_date": {key: "max_date", text: "End Date", type: "date"}
   },
   "date_window_for_product_condition": {
     "product": {key: "product", text: "Product", type: "select"},
-    "min_date": {key: "min_date", text: "Start Date", type: "text_field"},
-    "max_date": {key: "max_date", text: "End Date", type: "text_field"},
+    "min_date": {key: "min_date", text: "Start Date", type: "date"},
+    "max_date": {key: "max_date", text: "End Date", type: "date"},
   },
+}
+
+const time_policy_formatter = (policy) => ({
+  ...policy,
+  min_time: formatTime(policy.min_time),
+  max_time: formatTime(policy.max_time)
+})
+
+const date_policy_formatter = (policy) => ({
+  ...policy,
+  min_date: formatDate(policy.min_date),
+  max_date: formatDate(policy.max_date)
+})
+
+const ct_to_formatter = {
+  "max_quantity_for_product_condition": (policy) => policy,
+  "time_window_for_category_condition": time_policy_formatter,
+  "time_window_for_product_condition": time_policy_formatter,
+  "date_window_for_category_condition": date_policy_formatter,
+  "date_window_for_product_condition": date_policy_formatter,
 }
 
 
@@ -137,10 +167,10 @@ const add = (policy, policies, path) => {
 
 const moveItem = (policies, policyId, destId) => {
   const oldPath = getPolicyPath(policies, policyId)
-  alert(oldPath);
+  // alert(oldPath);
   const policy = remove(policies, oldPath);
   const newPath = getPolicyPath(policies, destId)
-  alert(newPath)
+  // alert(newPath)
   add(policy, policies, newPath)
 
   return policies;
@@ -172,10 +202,9 @@ const useStyles = makeStyles((theme) => ({
   },
   policy: {
     padding: theme.spacing(2),
-    // width: "auto",
-    // maxWidth: theme.spacing(48),
-    resize: "both",
-    maxWidth: "100%"
+    width: "auto",
+    maxWidth: theme.spacing(48),
+    // resize: "both",
   },
   root2: {
     margin: theme.spacing(0),
@@ -222,6 +251,11 @@ function SimplePolicy({policy, classname, productNames}) {
   )
 }
 
+const composite_policies = {
+  and_condition: "And",
+  or_condition: "Or"
+}
+
 function CompositePolicy({policy, onDrop, removePolicy, productNames}) {
   const classes = useStyles();
   const [collected, drop] = useDrop(() => ({
@@ -231,8 +265,10 @@ function CompositePolicy({policy, onDrop, removePolicy, productNames}) {
 
   return (
     <div>
-      <Typography>{policy.condition_type}</Typography>
       <Grid container spacing={2}>
+        <Grid item>
+          <Typography>{composite_policies[policy.condition_type]}</Typography>
+        </Grid>
         {policy.conditions.map((policy, index) => (
           <Grid item>
             <PolicyView onDrop={onDrop} removePolicy={removePolicy} policy={policy} index={index}
@@ -293,6 +329,8 @@ export const PurchasePolicies = () => {
   const classes = useStyles();
   const {shop_id} = useParams();
   const [policies, setPolicies] = useState([]);
+  const orig_policies = policies;
+  // alert(JSON.stringify(policies));
   const [shop, setShop] = useState({products: []});
   const productNames = {}
   shop.products.forEach((prod, i) => {
@@ -301,10 +339,7 @@ export const PurchasePolicies = () => {
   const [loaded, setLoaded] = useState(false);
   const [addComp, setAddComp] = useState(null);
   const [nextId, setNextId] = useState(1);
-  const [state, setState] = useState({
-    width: 200,
-    height: 200,
-  })
+  const [edited, setEdited] = useState(false);
   const auth = useAuth();
   const forceUpdate = useForceUpdate();
 
@@ -339,6 +374,7 @@ export const PurchasePolicies = () => {
     policies.push({...policy, id: nextId})
     setPolicies(policies);
     setNextId(nextId + 1);
+    setEdited(policies === orig_policies);
     forceUpdate();
   }
 
@@ -351,10 +387,21 @@ export const PurchasePolicies = () => {
   }
 
   const onDrop = async (droppableId, item, monitor) => {
-    alert(`on drop ${item.id} ${droppableId}`)
+    // alert(`on drop ${item.id} ${droppableId}`)
     const newPolicies = moveItem(policies, item.id, droppableId)
     setPolicies(newPolicies)
+    setEdited(policies === orig_policies);
     forceUpdate();
+  }
+
+  const saveChanges = () => {
+    auth.getToken().then((token) =>
+      Promise.all(orig_policies.map((policy) => remove_purchase_policy(token, shop_id, policy.id))).then((res) =>
+        Promise.all(policies.map((policy) => add_policy(token, shop_id, policy))).then((res) =>
+          setLoaded(false)
+        )
+      )
+    )
   }
 
   // alert(JSON.stringify(policies))
@@ -415,6 +462,13 @@ export const PurchasePolicies = () => {
                       </Grid>}
                   </Grid>
                 </Grid>
+                {edited &&
+                  <Grid item xs={3}>
+                    <Button className={classes.submit} color="primary" variant="outlined" onClick={saveChanges}>
+                      Save
+                    </Button>
+                  </Grid>
+                }
               </Grid>
             </Grid>
           </Grid>
@@ -431,7 +485,7 @@ function PolicyForm({shop, savePolicy, productNames}) {
       condition_type: '',
     },
     onSubmit: values => {
-      savePolicy(values)
+      savePolicy(ct_to_formatter[values.condition_type](values))
       formik.setValues({
         condition_type: '',
       })
@@ -450,6 +504,7 @@ function PolicyForm({shop, savePolicy, productNames}) {
   }
 
   return (
+    <MuiPickersUtilsProvider utils={DateFnsUtils}>
     <form onSubmit={formik.handleSubmit} className={classes.form} noValidate>
       <Grid container className={classes.root} spacing={2}>
         <Grid item xs={8}>
@@ -487,6 +542,18 @@ function PolicyForm({shop, savePolicy, productNames}) {
                         <TextField labelId={`policy-${value.key}-label`} id={value.key} label={value.text}
                                    name={value.key} variant="outlined"
                                    onChange={formik.handleChange} value={formik.values[value.key]}/> :
+                        value.type  === "date" ?
+                          <KeyboardDatePicker format="dd/MM/yyyy" labelId={`policy-${value.key}-label`} id={value.key}
+                                              label={value.text} name={value.key} variant="outlined"
+                                              onChange={(date) => formik.handleChange({target: {name: value.key, value: date}})}
+                                              value={formik.values[value.key]}
+                                              KeyboardButtonProps={{'aria-label': 'change date'}}/> :
+                          value.type === "time" ?
+                            <KeyboardTimePicker KeyboardButtonProps={{'aria-label': 'change time'}}
+                                                labelId={`policy-${value.key}-label`} id={value.key}
+                                                label={value.text} name={value.key} variant="outlined"
+                                                onChange={(date) => formik.handleChange({target: {name: value.key, value: date}})}
+                                                value={formik.values[value.key]}/> :
                         <Typography>Bad type</Typography>
                     }
                   </FormControl>
@@ -522,5 +589,6 @@ function PolicyForm({shop, savePolicy, productNames}) {
         </Grid>
       </Grid>
     </form>
+    </MuiPickersUtilsProvider>
   );
 }
