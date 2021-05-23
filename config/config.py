@@ -1,3 +1,7 @@
+import json
+from typing import Union
+
+
 class ConfigFields:
     PAYMENT_SYSTEM_URL = "payment_system_url"
     DELIVERY_SYSTEM_URL = "delivery_system_url"
@@ -38,3 +42,14 @@ config = {
     ConfigFields.SEVER_PORT: 5000,
     ConfigFields.WEBSOCKET_PORT: 5001,
 }
+
+
+def load_config(new_config=Union[dict, str]):
+    """
+    updates system configuration with new_config
+    :param new_config either a dictionary with the configuration or a path to a json file
+    """
+    if isinstance(new_config, str):
+        with open(new_config, "r") as f:
+            new_config = json.load(f)
+    config.update(new_config)

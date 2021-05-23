@@ -24,14 +24,6 @@ class IPaymentsFacade:
             IPaymentsFacade.__instance = IPaymentsFacade.payment_facade_from_config()
         return IPaymentsFacade.__instance
 
-    def cancel_payment(self, transaction_id: str) -> bool:
-        """
-        cancel payment identified by payment_id
-        :param transaction_id:
-        :return: True on success, otherwise False
-        """
-        raise NotImplementedError()
-
     def pay(self, total_price: int, payment_details: dict, contact_details: dict = None) -> Union[str, bool]:
         """
         make a payment
@@ -39,6 +31,14 @@ class IPaymentsFacade:
         :param payment_details:
         :param contact_details:
         :return: payment id (str) on success else False
+        """
+        raise NotImplementedError()
+
+    def cancel_payment(self, transaction_id: str) -> bool:
+        """
+        cancel payment identified by payment_id
+        :param transaction_id:
+        :return: True on success, otherwise False
         """
         raise NotImplementedError()
 

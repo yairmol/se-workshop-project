@@ -8,6 +8,8 @@ from config.config import config, ConfigFields as cf
 
 class IDeliveryFacade:
 
+    __instance = None
+
     @staticmethod
     def delivery_facade_from_config():
         if config[cf.PAYMENT_FACADE] == "real":
@@ -17,7 +19,9 @@ class IDeliveryFacade:
 
     @staticmethod
     def get_delivery_facade() -> IDeliveryFacade:
-        return DeliveryFacadeAlwaysTrue()
+        if not IDeliveryFacade.__instance:
+            IDeliveryFacade.__instance = DeliveryFacadeWSEP()
+        return IDeliveryFacade.__instance
 
     def deliver_to(self, contact_details: dict = None) -> Union[str, bool]:
         """
