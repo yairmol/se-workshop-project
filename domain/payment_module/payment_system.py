@@ -4,12 +4,25 @@ import json
 import requests
 from requests import Timeout
 
+from config.config import config, ConfigFields as cf
+
 
 class IPaymentsFacade:
 
+    __instance = None
+
+    @staticmethod
+    def payment_facade_from_config():
+        if config[cf.PAYMENT_FACADE] == "real":
+            return PaymentsFacadeWSEP()
+        elif config[cf.PAYMENT_FACADE] == "always_true":
+            return PaymentsFacadeAlwaysTrue()
+
     @staticmethod
     def get_payment_facade() -> IPaymentsFacade:
-        return PaymentsFacadeAlwaysTrue()
+        if not IPaymentsFacade.__instance:
+            IPaymentsFacade.__instance = IPaymentsFacade.payment_facade_from_config()
+        return IPaymentsFacade.__instance
 
     def pay(self, total_price: int, payment_details: dict, contact_details: dict = None) -> Union[str, bool]:
         """
@@ -42,7 +55,7 @@ class PaymentsFacadeAlwaysTrue(IPaymentsFacade):
 
 
 class PaymentsFacadeWSEP(IPaymentsFacade):
-    url = 'https://cs-bgu-wsep.herokuapp.com/'
+    url = config[cf.PAYMENT_SYSTEM_URL]
     SUCCESSFUL_HANDSHAKE = 'OK'
     SUCCESSFUL_PAY_CANCEL = '1'
     ERROR = '-1'

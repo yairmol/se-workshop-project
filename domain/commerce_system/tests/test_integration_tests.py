@@ -2,9 +2,11 @@ import unittest
 from typing import List
 
 from domain.commerce_system.commerce_system_facade import CommerceSystemFacade
-from domain.commerce_system.tests.mocks import NotificationsMock
+from domain.commerce_system.tests.mocks import NotificationsMock, PaymentMock, DeliveryMock
 from domain.authentication_module.authenticator import Authenticator
+from domain.delivery_module.delivery_system import IDeliveryFacade
 from domain.discount_module.discount_management import DiscountDict
+from domain.payment_module.payment_system import IPaymentsFacade
 
 shop_dict = {"shop_name": "Armani", "description": "dudu faruk's favorite shop"}
 shop_dict2 = {"shop_name": "Galavanni", "description": "dudu faruk's second favorite shop"}
@@ -22,7 +24,8 @@ delivery_details = {}
 class IntegrationTests(unittest.TestCase):
 
     def setUp(self):
-
+        IPaymentsFacade.get_payment_facade = lambda: PaymentMock(True)
+        IDeliveryFacade.get_delivery_facade = lambda: DeliveryMock(True)
         self.facade = CommerceSystemFacade(Authenticator(), NotificationsMock())
         self.user_id1 = self.facade.enter()
         self.user_id2 = self.facade.enter()
