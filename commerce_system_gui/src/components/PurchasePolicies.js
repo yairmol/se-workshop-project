@@ -329,7 +329,7 @@ export const PurchasePolicies = () => {
   const classes = useStyles();
   const {shop_id} = useParams();
   const [policies, setPolicies] = useState([]);
-  const orig_policies = policies;
+  const [orig_policies, setOrigPolicies] = useState([]);
   // alert(JSON.stringify(policies));
   const [shop, setShop] = useState({products: []});
   const productNames = {}
@@ -351,10 +351,12 @@ export const PurchasePolicies = () => {
         })
         await get_shop_policies(token, shop_id).then((policies) => {
           setPolicies(policies);
+          setOrigPolicies(JSON.parse(JSON.stringify(policies)));
           const Id = maxId(policies)
           setNextId(Id + 1)
         })
         setLoaded(true);
+        setEdited(false);
       })
     }
   })
@@ -374,23 +376,30 @@ export const PurchasePolicies = () => {
     policies.push({...policy, id: nextId})
     setPolicies(policies);
     setNextId(nextId + 1);
-    setEdited(policies === orig_policies);
+    setEdited(policies !== orig_policies);
     forceUpdate();
   }
 
   const removePolicy = (policy) => {
-    auth.getToken().then((token) => {
-      remove_purchase_policy(token, shop.shop_id, policy.id).then((res) => {
-        setLoaded(false);
-      })
-    })
+    const oldPath = getPolicyPath(policies, policy.id)
+    // alert(oldPath);
+    remove(policies, oldPath);
+    setPolicies(policies);
+    setEdited(policies !== orig_policies);
+    forceUpdate();
+
+    // auth.getToken().then((token) => {
+    //   remove_purchase_policy(token, shop.shop_id, policy.id).then((res) => {
+    //     setLoaded(false);
+    //   })
+    // })
   }
 
   const onDrop = async (droppableId, item, monitor) => {
     // alert(`on drop ${item.id} ${droppableId}`)
     const newPolicies = moveItem(policies, item.id, droppableId)
     setPolicies(newPolicies)
-    setEdited(policies === orig_policies);
+    setEdited(policies !== orig_policies);
     forceUpdate();
   }
 
