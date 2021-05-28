@@ -35,6 +35,7 @@ shop = Table(
     Column('id', Integer, primary_key=True),
     Column('name', String),
     Column('description', String),
+    Column('image_url', String),
 )
 
 product = Table(

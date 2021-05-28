@@ -10,6 +10,19 @@ def save_subscribed(sub: Subscribed):
         session.commit()
 
 
+def get_subscribed(username: str):
+    with Session(engine) as session:
+        subscribed = session.query(Subscribed).filter_by(username=username).first()
+        return subscribed
+
+
+def remove_subscribed(username: str):
+    with Session(engine) as session:
+        subscribed = session.query(Subscribed).filter_by(username=username).first()
+        session.delete(subscribed)
+        session.commit()
+
+
 def save_password(password):
     pass
 
