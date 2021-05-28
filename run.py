@@ -1,3 +1,4 @@
+import argparse
 import json
 import sys
 
@@ -5,13 +6,34 @@ from communication.api import create_app
 from config.config import config, ConfigFields as cf, load_config
 
 
+def _parse_args():
+    parser = argparse.ArgumentParser(description='Commerce System')
+    parser.add_argument('-c', '--config', help="configuration file path for the system")
+    parser.add_argument('-i', '--init', help="initialization file for the system")
+
+    args = parser.parse_args()
+    return args
+
+
+def load_init(path):
+    with open(path, "r") as f:
+        return json.load(f)
+
+
 def main():
     """
-    argv: (program_name) + [<configuration-file-path>]
+    usage: -c <configuration-file-path> -i <initialization-file-path>
+    both the configuration and initialization files are optional
+    run 'python run.py -h' for help
     """
-    if len(sys.argv) > 1:
-        load_config(sys.argv[1])
-    app = create_app()
+
+    args = _parse_args()
+    if args.config:
+        load_config(args.config)
+    init = None
+    if args.init:
+        init = load_init(args.init)
+    app = create_app(init)
     cert_info = config[cf.CERTIFICATE_PATH]
     app.run(
         port=config[cf.SEVER_PORT],

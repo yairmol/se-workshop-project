@@ -1,16 +1,14 @@
 import json
-from typing import List, Union
+from typing import List
 
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-
-from acceptance_tests.test_data import products
-from acceptance_tests.test_utils import fill_with_data, make_purchases
-from domain.discount_module.discount_management import SimpleCond, DiscountDict
 from service.system_service import SystemService
 
+API_BASE = '/api'
 
-def create_app():
+
+def create_app(init=None):
     app = Flask(__name__)
     CORS(app)
 
@@ -21,12 +19,9 @@ def create_app():
         }
     })
     app.config['CORS_HEADERS'] = 'Content-Type'
-
-    API_BASE = '/api'
-
     __system_service = SystemService.get_system_service()
-    guest_sess, subs_sess, sids_to_shop, sid_to_sess, pid_to_sid = fill_with_data(__system_service, 0, 2, 2, 6)
-    make_purchases(__system_service, subs_sess[0], pid_to_sid, list(pid_to_sid.keys())[:3])
+    if init:
+        __system_service.init(init)
 
     def apply_request_on_function(func, *args, **kwargs):
         print(request.data)
@@ -282,6 +277,6 @@ def create_app():
     return app
 
 
-if __name__ == '__main__':
-    app = create_app()
-    app.run(port=5000, debug=True, ssl_context=('../secrets/cert.pem', '../secrets/key.pem'))
+# if __name__ == '__main__':
+#     app = create_app()
+#     app.run(port=5000, debug=True, ssl_context=('../secrets/cert.pem', '../secrets/key.pem'))
