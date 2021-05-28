@@ -19,13 +19,13 @@ from domain.discount_module.discount_management import SimpleCond, DiscountDict,
 from domain.notifications.notifications import INotifications
 
 condition_map = {
-    "MaxQuantityForProductCondition": MaxQuantityForProductCondition,
-    "TimeWindowForCategoryCondition": TimeWindowForCategoryCondition,
-    "TimeWindowForProductCondition": TimeWindowForProductCondition,
-    "DateWindowForCategoryCondition": DateWindowForCategoryCondition,
-    "DateWindowForProductCondition": DateWindowForProductCondition,
-    "ANDCondition": ANDCondition,
-    "ORCondition": ORCondition
+    Cm.MAX_QUANTITY_FOR_PRODUCT: MaxQuantityForProductCondition,
+    Cm.TIME_WINDOW_FOR_CATEGORY: TimeWindowForCategoryCondition,
+    Cm.TIME_WINDOW_FOR_PRODUCT: TimeWindowForProductCondition,
+    Cm.DATE_WINDOW_FOR_CATEGORY: DateWindowForCategoryCondition,
+    Cm.DATE_WINDOW_FOR_PRODUCT: DateWindowForProductCondition,
+    Cm.AND: ANDCondition,
+    Cm.OR: ORCondition
 }
 
 
@@ -206,6 +206,12 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         shop = self.get_shop(shop_id)
         worker = self.get_user(user_id).user_state
         return worker.delete_product(shop, product_id)
+
+    # 4.2
+    def get_purchase_conditions(self, user_id: int, shop_id: int) -> List[dict]:
+        user = self.get_user(user_id)
+        shop = self.get_shop(shop_id)
+        return list(map(lambda d: d.to_dict(), user.get_shop_purchase_conditions(shop)))
 
     # 4.2
     def get_discounts(self, user_id, shop_id) -> List[dict]:

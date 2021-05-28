@@ -26,6 +26,7 @@ import SearchProducts from "./components/SearchProducts";
 import {ShopForCustomer} from "./components/ShopForCustomer";
 import ProfilePage from "./components/ProfilePage";
 import {Checkout} from "./components/Checkout";
+import {PurchasePolicies} from "./components/PurchasePolicies";
 
 const useStyles = makeStyles((theme) => ({
   mainGrid: {
@@ -162,6 +163,9 @@ export default function Blog() {
                   </Route>
                   <Route path="/shops/:shop_id/discounts">
                     <Discounts/>
+                  </Route>
+                  <Route path="/shops/:shop_id/purchase_policies">
+                    <PurchasePolicies />
                   </Route>
                   <Route path="/shops/:shop_id">
                     <Shop/>

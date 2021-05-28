@@ -275,9 +275,31 @@ def create_app():
     def get_user_appointments():
         return __system_service.get_user_appointemnts(request.args.get("token"))
 
+    @app.route(f'{API_BASE}/shops/<int:shop_id>/purchase_policies', methods=["POST"])
+    def add_purchase_condition(shop_id: int):
+        return apply_request_on_function(__system_service.add_purchase_condition, shop_id=shop_id)
+
+    @app.route(f'{API_BASE}/shops/<int:shop_id>/purchase_policies/<int:policy_id>', methods=["DELETE"])
+    def remove_purchase_condition(shop_id: int, policy_id: int):
+        return apply_request_on_function(
+            __system_service.remove_purchase_condition, shop_id=shop_id, condition_id=policy_id
+        )
+
+    @app.route(f'{API_BASE}/shops/<int:shop_id>/purchase_policies', methods=["GET"])
+    def get_shop_purchase_policies(shop_id: int):
+        return __system_service.get_purchase_conditions(token=request.args.get("token"), shop_id=shop_id)
+
     @app.errorhandler(404)
     def server_error(e):
         return jsonify(error=str(e)), 404
+
+    @app.errorhandler(500)
+    def server_error(e):
+        return jsonify(error=str(e)), 500
+
+    @app.errorhandler(501)
+    def server_error(e):
+        return jsonify(error=str(e)), 501
 
     return app
 
