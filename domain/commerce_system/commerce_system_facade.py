@@ -70,7 +70,6 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         with self.registered_users_lock:
             sub_user = self.registered_users.get(username)
 
-        # **************** NEED TO CHECK IF THE USER IS GUEST ?
         with self.active_users_lock:
             self.active_users.get(user_id).login(sub_user)
         return True
