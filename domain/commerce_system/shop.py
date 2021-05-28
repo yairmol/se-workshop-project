@@ -183,17 +183,14 @@ class Shop:
 
     def remove_purchase_condition(self, condition_id: int) -> bool:
         def remove(conds: List[Condition], cond_id: int):
-            print("conds:", [c.to_dict() for c in conds])
             for c in conds:
                 if c.id == cond_id:
                     conds.remove(c)
-                    print(f"removing {c.to_dict()}")
                     return True
                 if isinstance(c, CompositePurchaseCondition):
                     res = remove(c.conditions, cond_id)
                     if res:
                         return True
             return False
-        print("trying to remove")
         success = remove(self.conditions, condition_id)
         return success
