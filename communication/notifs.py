@@ -7,7 +7,7 @@ from flask_socketio import SocketIO, join_room, leave_room, emit
 from flask_cors import CORS
 
 # Initializing the flask object
-from domain.notifications.notifications import WebSocketNotifications
+import domain.notifications.notifications
 
 app = Flask(__name__)
 # by default runs on port 5000
@@ -28,27 +28,26 @@ io = SocketIO(app, cors_allowed_origins='*')
 def connect():
     print("%s connected" % request.namespace)
 
-
 @io.on('enlist')
 def enlist(data):
-    WebSocketNotifications.clients[data["client_id"]] = request.sid
+    domain.notifications.notifications.clients[data["client_id"]] = request.sid
 
 @io.on('disconnect')
 def disconnect():
     print("%s disconnected" % request.sid)
-    clients = WebSocketNotifications.clients
+    clients = domain.notifications.notifications.clients
     for k in clients.keys():
         if clients[k] == request.sid:
             del clients[k]
 
 @io.on('send_notif')
 def send_notif(msg, client_id):
-    emit('notification', msg, room=WebSocketNotifications.clients[client_id])
+    emit('notification', msg, room=domain.notifications.notifications.clients[client_id])
 
 
 @io.on('send_error')
 def send_error(msg, client_id):
-    emit('error', msg, room=WebSocketNotifications[client_id])
+    emit('error', msg, room=domain.notifications.notifications[client_id])
 
 
 @io.on('broadcast')

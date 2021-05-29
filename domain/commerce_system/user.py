@@ -12,6 +12,7 @@ from domain.commerce_system.transaction import Transaction
 from domain.commerce_system.shopping_cart import ShoppingCart
 from domain.discount_module.discount_calculator import Discount
 from domain.discount_module.discount_management import DiscountDict, ConditionRaw
+import domain.notifications.notifications
 
 
 class User:
@@ -247,6 +248,7 @@ class Subscribed(UserState):
         self.username = username
         self.transactions: List[Transaction] = []
         self.pending_messages = []
+        self.notifications = domain.notifications.notifications.Notifications(self)
 
     def enlist_sub(self):
         raise NotImplementedError()
