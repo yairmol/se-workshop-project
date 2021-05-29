@@ -6,82 +6,27 @@ from domain.notifications.notifications import Notifications
 from domain.token_module.tokenizer import Tokenizer
 from service.init_dict import InitDict
 from service.system_service import SystemService, InitError
-
-
-def create_enter_register_login_of_user(user_id, username, password):
-    return [
-        {
-            "user": user_id,
-            "action": "enter",
-            "params": {}
-        },
-        {
-            "user": user_id,
-            "action": "register",
-            "params": {
-                "username": username,
-                "password": password,
-            }
-        },
-        {
-            "user": user_id,
-            "action": "login",
-            "params": {
-                "username": username,
-                "password": password,
-            }
-        }
-    ]
+import init_generator as ig
 
 init_enter_register_login = {
     "users": ["u1"],
-    "actions": create_enter_register_login_of_user("u1", "user1", "password")
+    "actions": [
+        ig.enter("u1"),
+        ig.register("u1", "user1", "password"),
+        ig.login("u1", "user1", "password")
+    ]
 }
 
 additional_users = ["u2"]
 
 additional_actions = [
-    *create_enter_register_login_of_user("u2", "user2", "password"),
-    {
-        "action": "open_shop",
-        "user": "u1",
-        "params": {
-            "shop_name": "shop1",
-            "description": "the one and only shop in the entire commerce system"
-        },
-        "ref_id": "s1"
-    },
-    {
-        "action": "add_product_to_shop",
-        "user": "u1",
-        "params": {
-            "shop_id": {
-                "ref": "s1"
-            },
-            "product_name": "Bamba",
-            "description": "Its Osem",
-            "categories": [
-                "snacks"
-            ],
-            "price": 30,
-            "quantity": 20
-        },
-        "ref_id": "p1"
-    },
-    {
-        "action": "save_product_to_cart",
-        "user": "u2",
-        "params": {
-            "shop_id": {"ref": "s1"},
-            "product_id": {"ref": "p1"},
-            "amount_to_buy": 3
-        },
-    },
-    {
-        "action": "purchase_cart",
-        "user": "u2",
-        # "params":
-    }
+    ig.enter("u2"),
+    ig.register("u2", "user2", "password"),
+    ig.login("u2", "user2", "password"),
+    ig.open_shop("u1", "shop1", "the one and only shop in the entire commerce system", add_ref="s1"),
+    ig.add_product_to_shop("u1", "s1", "Bamba", "Its Osem", 30, 20, ["snacks"], add_ref="p1"),
+    ig.save_product_to_cart("u2", "s1", "p1", 3),
+    ig.purchase_cart("u2", {}, {}, add_ref="t1"),
 ]
 
 
@@ -166,4 +111,31 @@ class TestInit(unittest.TestCase):
         ])
         self.assertRaises(Exception, self.service.init, init)
 
-    # def test_init_many_actions(self):
+    def test_init_many_actions(self):
+        init: InitDict = copy.deepcopy(init_enter_register_login)
+        init["actions"].extend(additional_actions)
+        init["users"].extend(additional_users)
+        bindings = self.service.init(init)
+        for key in [*init["users"], "s1", "p1"]:
+            self.assertIn(key, bindings)
+        transactions = self.service.get_personal_purchase_history(bindings["u2"])["result"]
+        self.assertEqual(len(transactions), 1)
+
+    def test_init_bad_sequence(self):
+        init = {
+            "users": ["u1"],
+            "actions": [
+                ig.register("u1", "user1", "password")
+            ]
+        }
+        self.assertRaises(Exception, self.service.init, init)
+
+    def test_init_bad_sequence_2(self):
+        init = {
+            "users": ["u1"],
+            "actions": [
+                ig.enter("u1"),
+                ig.login("u1", "user1", "password"),
+            ]
+        }
+        self.assertRaises(Exception, self.service.init, init)
