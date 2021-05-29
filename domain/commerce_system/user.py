@@ -12,7 +12,6 @@ from domain.commerce_system.transaction import Transaction
 from domain.commerce_system.shopping_cart import ShoppingCart
 from domain.discount_module.discount_calculator import Discount
 from domain.discount_module.discount_management import DiscountDict, ConditionRaw
-from domain.notifications.notifications import Notifications
 
 
 class User:
@@ -28,7 +27,8 @@ class User:
         self.cart = ShoppingCart(self.id)
 
     def send_message(self, msg):
-        Notifications.send_notif(msg, self.id)
+        # Notifications.send_notif(msg, self.id)
+        raise NotImplementedError()
 
     def get_name(self) -> str:
         return self.user_state.get_name(self.id)
@@ -249,13 +249,13 @@ class Subscribed(UserState):
         self.pending_messages = []
 
     def enlist_sub(self):
-        Notifications.enlist_sub(username=self.username, pending_messages=self.pending_messages)
+        raise NotImplementedError()
 
     def send_error(self, msg):
-        Notifications.send_error(msg, username=self.username, pending_messages=self.pending_messages)
+        raise NotImplementedError()
 
     def send_message(self, msg):
-        Notifications.send_notif(msg, username=self.username, pending_messages=self.pending_messages)
+        raise NotImplementedError()
 
     def to_dict(self):
         return {"username": self.username, }
