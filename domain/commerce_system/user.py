@@ -28,8 +28,10 @@ class User:
         self.cart = ShoppingCart(self.id)
 
     def send_message(self, msg):
-        # Notifications.send_notif(msg, self.id)
-        raise NotImplementedError()
+        self.user_state.send_message(msg)
+
+    def send_error(self, msg):
+        self.user_state.send_error(msg)
 
     def get_name(self) -> str:
         return self.user_state.get_name(self.id)
@@ -40,7 +42,7 @@ class User:
         return True
 
     def register(self, username: str, **user_details) -> Subscribed:
-        return self.user_state.register(username, **user_details)
+        return self.user_state.register(username, self.id, **user_details)
 
     def logout(self) -> bool:
         self.user_state.logout()
@@ -127,10 +129,17 @@ class User:
 
 
 class UserState:
+
+    def send_error(self, msg):
+        raise NotImplementedError()
+
+    def send_message(self, msg):
+        raise NotImplementedError()
+
     def get_name(self, userid) -> str:
         raise NotImplementedError()
 
-    def register(self, username: str, **user_details) -> Subscribed:
+    def register(self, username: str,  user_id, **user_detail) -> Subscribed:
         raise Exception("Logged-in User cannot register")
 
     def login(self) -> bool:
@@ -231,8 +240,8 @@ class Guest(UserState):
     def get_name(self, userid):
         return f"Guest-{hash(userid)}"
 
-    def register(self, username: str, **user_details):
-        return Subscribed(username)
+    def register(self, username: str, user_id, **user_details):
+        return Subscribed(username, user_id)
 
     def to_dict(self):
         return {"username": "Guest"}
@@ -243,17 +252,17 @@ class Guest(UserState):
 
 class Subscribed(UserState):
 
-    def __init__(self, username: str):
+    def __init__(self, username: str, user_id):
         self.appointments: Dict[Shop, Appointment] = {}
         self.username = username
+        self.id = user_id
         self.transactions: List[Transaction] = []
-        self.pending_messages = []
         self.notifications = domain.notifications.notifications.Notifications(self)
 
-    def send_error(self, msg):
-        self.notifications.send_notif(msg=msg)
-
     def send_message(self, msg):
+        self.notifications.send_message(msg=msg)
+
+    def send_error(self, msg):
         self.notifications.send_error(msg=msg)
 
     def to_dict(self):

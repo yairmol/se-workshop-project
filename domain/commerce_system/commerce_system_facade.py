@@ -265,8 +265,8 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         new_owner = self.get_subscribed(username)
         app = owner.user_state.appoint_owner(new_owner, shop)
         # TODO: change or delete value of userid here and below
-        self.notifications.send_notif(f"{owner.get_name()} appointed you as owner to {shop.name}",
-                                      username=new_owner.username)
+        # self.notifications.send_message(f"{owner.get_name()} appointed you as owner to {shop.name}",
+        #                               username=new_owner.username)
         return app.to_dict()
 
     # 4.5
@@ -275,8 +275,8 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         owner = self.get_user(user_id)
         new_manager = self.get_subscribed(username)
         app = owner.user_state.appoint_manager(new_manager, shop, permissions)
-        self.notifications.send_notif(f"{owner.get_name()} appointed you as owner to {shop.name}",
-                                      username=new_manager.username)
+        # self.notifications.send_message(f"{owner.get_name()} appointed you as owner to {shop.name}",
+        #                               username=new_manager.username)
         return app.to_dict()
 
     # 4.6
@@ -285,8 +285,8 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         owner = self.get_user(user_id)
         new_owner = self.get_subscribed(username)
         res = owner.user_state.edit_manager_permissions(new_owner, shop, permissions)
-        self.notifications.send_notif(f"{owner.get_name()} edited your permissions in shop {shop.name}",
-                                      username=new_owner.username)
+        # self.notifications.send_message(f"{owner.get_name()} edited your permissions in shop {shop.name}",
+        #                               username=new_owner.username)
         return res
 
     # 4.3
@@ -295,8 +295,8 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         owner = self.get_user(user_id)
         new_owner = self.get_subscribed(username)
         app = owner.user_state.promote_manager_to_owner(new_owner, shop)
-        self.notifications.send_notif(f"{owner.get_name()} promoted you to owner in {shop.name}",
-                                      username=new_owner.username)
+        # self.notifications.send_message(f"{owner.get_name()} promoted you to owner in {shop.name}",
+        #                               username=new_owner.username)
         return app.to_dict()
 
     def unappoint_shop_manager(self, user_id: int, shop_id: int, username: str) -> bool:
@@ -304,8 +304,8 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         owner = self.get_user(user_id)
         old_owner = self.get_subscribed(username)
         res = owner.user_state.un_appoint_manager(old_owner, shop)
-        self.notifications.send_notif(f"{owner.get_name()} unappointed you as manager in {shop.name}",
-                                      username=old_owner.username)
+        # self.notifications.send_message(f"{owner.get_name()} unappointed you as manager in {shop.name}",
+        #                               username=old_owner.username)
         return res
 
     # 4.7
@@ -314,8 +314,8 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         owner = self.get_user(user_id)
         old_owner = self.get_subscribed(username)
         res = owner.user_state.un_appoint_owner(old_owner, shop)
-        self.notifications.send_notif(f"{owner.get_name()} unappointed you as owner in {shop.name}",
-                                      username=old_owner.username)
+        # self.notifications.send_message(f"{owner.get_name()} unappointed you as owner in {shop.name}",
+        #                               username=old_owner.username)
         return res
 
     # 4.9

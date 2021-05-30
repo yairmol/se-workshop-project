@@ -38,8 +38,8 @@ def disconnect():
     domain.notifications.notifications.disconnect(request.sid)
 
 
-@io.on('send_notif')
-def send_notif(msg, client_id):
+@io.on('send_message')
+def send_message(msg, client_id):
     emit('notification', msg, room=domain.notifications.notifications.clients[client_id])
 
 
