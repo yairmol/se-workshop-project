@@ -30,15 +30,13 @@ def connect():
 
 @io.on('enlist')
 def enlist(data):
-    domain.notifications.notifications.clients[data["client_id"]] = request.sid
+    domain.notifications.notifications.add_client(data["client_id"], request.sid)
 
 @io.on('disconnect')
 def disconnect():
     print("%s disconnected" % request.sid)
-    clients = domain.notifications.notifications.clients
-    for k in clients.keys():
-        if clients[k] == request.sid:
-            del clients[k]
+    domain.notifications.notifications.disconnect(request.sid)
+
 
 @io.on('send_notif')
 def send_notif(msg, client_id):
