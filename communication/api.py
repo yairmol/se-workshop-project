@@ -1,16 +1,14 @@
 import json
-from typing import List, Union
+from typing import List
 
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-
-from acceptance_tests.test_data import products
-from acceptance_tests.test_utils import fill_with_data, make_purchases
-from domain.discount_module.discount_management import SimpleCond, DiscountDict
 from service.system_service import SystemService
 
+API_BASE = '/api'
 
-def create_app():
+
+def create_app(init=None):
     app = Flask(__name__)
     CORS(app)
 
@@ -21,12 +19,9 @@ def create_app():
         }
     })
     app.config['CORS_HEADERS'] = 'Content-Type'
-
-    API_BASE = '/api'
-
     __system_service = SystemService.get_system_service()
-    guest_sess, subs_sess, sids_to_shop, sid_to_sess, pid_to_sid = fill_with_data(__system_service, 0, 2, 2, 6)
-    make_purchases(__system_service, subs_sess[0], pid_to_sid, list(pid_to_sid.keys())[:3])
+    if init:
+        __system_service.init(init)
 
     def apply_request_on_function(func, *args, **kwargs):
         print(request.data)
@@ -275,13 +270,35 @@ def create_app():
     def get_user_appointments():
         return __system_service.get_user_appointemnts(request.args.get("token"))
 
+    @app.route(f'{API_BASE}/shops/<int:shop_id>/purchase_policies', methods=["POST"])
+    def add_purchase_condition(shop_id: int):
+        return apply_request_on_function(__system_service.add_purchase_condition, shop_id=shop_id)
+
+    @app.route(f'{API_BASE}/shops/<int:shop_id>/purchase_policies/<int:policy_id>', methods=["DELETE"])
+    def remove_purchase_condition(shop_id: int, policy_id: int):
+        return apply_request_on_function(
+            __system_service.remove_purchase_condition, shop_id=shop_id, condition_id=policy_id
+        )
+
+    @app.route(f'{API_BASE}/shops/<int:shop_id>/purchase_policies', methods=["GET"])
+    def get_shop_purchase_policies(shop_id: int):
+        return __system_service.get_purchase_conditions(token=request.args.get("token"), shop_id=shop_id)
+
     @app.errorhandler(404)
     def server_error(e):
         return jsonify(error=str(e)), 404
 
+    @app.errorhandler(500)
+    def server_error(e):
+        return jsonify(error=str(e)), 500
+
+    @app.errorhandler(501)
+    def server_error(e):
+        return jsonify(error=str(e)), 501
+
     return app
 
 
-if __name__ == '__main__':
-    app = create_app()
-    app.run(port=5000, debug=True, ssl_context=('../secrets/cert.pem', '../secrets/key.pem'))
+# if __name__ == '__main__':
+#     app = create_app()
+#     app.run(port=5000, debug=True, ssl_context=('../secrets/cert.pem', '../secrets/key.pem'))

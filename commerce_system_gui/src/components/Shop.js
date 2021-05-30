@@ -43,8 +43,8 @@ export const Shop = () => {
   const [load_perms, set_load_perms] = useState(true)
   const [shop_info, set_info] = useState([])
   const [worker_permissions, set_perms] = useState({'edit_product': false, 'delete_product': true})
-
   const auth = useAuth();
+
   const load_perms_func = async () => {
     return await auth.getToken().then(async (token) => {
       return await get_permissions(token, shop_id).then((permissions) => {
@@ -114,11 +114,21 @@ export const Shop = () => {
           <Grid item className="Grid">
             {worker_permissions.manage_discounts ?
               <RouteLink to={{pathname: `/shops/${shop_id}/discounts`, header: "Discount Manager"}}>
-                <Button variant="outlined" size="small" color="primary">
-                  discounts
+                <Button variant="outlined" size="small" color="primary" fullWidth>
+                  Manage Discounts
                 </Button>
               </RouteLink> :
               <Typography>You don't have permission to manage discounts</Typography>
+            }
+          </Grid>
+          <Grid item className="Grid">
+            {worker_permissions.manage_purchase_condition ?
+              <RouteLink to={{pathname: `/shops/${shop_id}/purchase_policies`, header: "Purchase Policies Manager"}}>
+                <Button variant="outlined" size="small" color="primary" fullWidth>
+                  Manage Purchase Policies
+                </Button>
+              </RouteLink> :
+              <Typography>You don't have permission to manage purchase policies</Typography>
             }
           </Grid>
         </Grid>

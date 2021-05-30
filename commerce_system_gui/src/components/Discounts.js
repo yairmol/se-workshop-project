@@ -212,7 +212,7 @@ function SimpleDiscount({discount, classname, productNames}) {
   const parseCond = (cond) => {
     return `the ${conditionTypes[cond.condition] || "__"} of ${
       cond.type === "category" ? `all products of category ${cond.identifier || "__"}` :
-        cond.type === "product" ? `product ${cond.identifier || "__"}` :
+        cond.type === "product" ? `product ${productNames[cond.identifier] || "__"}` :
           cond.type === "shop" ? "the entire shopping bag" : "__"
     } is more then ${cond.num || "__"}`
   }

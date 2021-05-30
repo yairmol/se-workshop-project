@@ -6,6 +6,7 @@ from domain.notifications.notifications import Notifications
 from domain.token_module.tokenizer import Tokenizer
 from domain.commerce_system.commerce_system_facade import CommerceSystemFacade
 from domain.logger.log import event_logger, error_logger
+from service.init_dict import InitDict
 
 
 def make_status_dict(status: bool, desc: str, result) -> dict:
@@ -20,6 +21,10 @@ def handle_assertion(e: AssertionError):
 def handle_exception(e: Exception):
     error_logger.error(e)
     return make_status_dict(False, "Server Error", "")
+
+
+class InitError(Exception):
+    pass
 
 
 class SystemService:
@@ -37,6 +42,25 @@ class SystemService:
                 CommerceSystemFacade(Authenticator(), Notifications()), Tokenizer()
             )
         return SystemService.__instance
+
+    def init(self, init: InitDict):
+        bindings = dict()
+        for action in init["actions"]:
+            action_name = action["action"]
+            user = action["user"]
+            if action_name == "enter":
+                bindings[user] = self.enter()["result"]
+                continue
+            params = action["params"]
+            for param, val in params.items():
+                if isinstance(val, dict) and "ref" in val:
+                    params[param] = bindings[val["ref"]]
+            ret = getattr(self, action_name)(token=bindings[user], **params)
+            if not ret["status"]:
+                raise InitError(ret["description"])
+            if "ref_id" in action:
+                bindings[action["ref_id"]] = ret["result"]
+        return bindings
 
     def is_valid_token(self, token: str):
         if self.tokenizer.is_token_expired(token):
@@ -366,6 +390,21 @@ class SystemService:
         return make_status_dict(False, "Invalid Token", "")
 
     # 4.2
+    def get_purchase_conditions(self, token: str, shop_id: int) -> dict:
+        if self.is_valid_token(token):
+            try:
+                user_id = self.tokenizer.get_id_by_token(token)
+                event_logger.info(f"User: {user_id} tries to get the purchase policies of shop: {shop_id}")
+                ret = self.commerce_system_facade.get_purchase_conditions(user_id, shop_id)
+                event_logger.info(f"User: {user_id} got purcahse policies of shop: {shop_id} successfully")
+                return make_status_dict(True, "", ret)
+            except AssertionError as e:
+                return handle_assertion(e)
+            except Exception as e:
+                return handle_exception(e)
+        return make_status_dict(False, "Invalid Token", [])
+
+    # 4.2
     def add_purchase_condition(self, token: str, shop_id: int, **condition_dict):
         if self.is_valid_token(token):
             try:
@@ -376,9 +415,9 @@ class SystemService:
                 event_logger.info("User: " + str(user_id) + " added condition successfully")
                 return make_status_dict(True, "", "")
             except AssertionError as e:
-                event_logger.warning(e)
+                return handle_assertion(e)
             except Exception as e:
-                error_logger.error(e)
+                return handle_exception(e)
         return make_status_dict(False, "Invalid Token", "")
 
     # 4.2
@@ -393,9 +432,9 @@ class SystemService:
                 event_logger.info("User: " + str(user_id) + " removed condition successfully")
                 return make_status_dict(True, "", "")
             except AssertionError as e:
-                event_logger.warning(e)
+                return handle_assertion(e)
             except Exception as e:
-                error_logger.error(e)
+                return handle_exception(e)
         return make_status_dict(False, "Invalid Token", "")
 
     # 4.5

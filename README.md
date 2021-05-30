@@ -1,4 +1,5 @@
 # se-workshop-project
+
 Commerce System project in the 'SE Workshop' course
 
 ## Set up
@@ -15,11 +16,26 @@ Commerce System project in the 'SE Workshop' course
 
 ## Running
 
-1. run the backend by running [run.py](./run.py) with a single optional argument which is a path to a system
-   configuration file which will be discusses later on.
+1. run the backend by running [run.py](./run.py) with two optional arguments
+    - configuration file path
+    - initialization file path
+
+   both will be discussed later.
    ```shell
-   python run.py ./input-config.json
+   python run.py ./input-config.json ./init.json
    ```
+    ```shell
+    usage: run.py [-h] [-c CONFIG] [-i INIT]
+    
+    Commerce System
+    
+    optional arguments:
+      -h, --help            show this help message and exit
+      -c CONFIG, --config CONFIG
+                            configuration file path for the system
+      -i INIT, --init INIT  initialization file for the system
+    
+    ```
 2. run the frontend (GUI) by cd into the gui folder and running `npm start`
     ```shell
    cd commerce_system_gui
@@ -34,7 +50,7 @@ determined by the configuration file. There is a default configuration stored in
 [config](./config/config.py). to override or add additional options write your own configuration file and pass its path
 to the [run.py](./run.py) script.
 <br/>
-The configuration file is a json file with the following fields, where all fields are optional. you can find an example 
+The configuration file is a json file with the following fields, where all fields are optional. you can find an example
 in [input-config.json](./input-config.json) or follow the following template. (your config file doesn't have to contain
 all the fields mentioned below)
 
@@ -61,6 +77,84 @@ all the fields mentioned below)
   "ws_port": "<web-socket-port>"
 }
 ```
+
+## Initialization File
+
+The initialization file describes a series of actions to be executed when the system goes up. The initialization file is
+a json file in the following format
+
+```json
+{
+  "users": [
+    <user-id-1>,
+    <user-id-2>,
+    ...
+  ],
+  "actions": [
+    <action-1>,
+    <action-2>,
+    <action-3>,
+    ...
+  ]
+}
+```
+
+1. `users`: the users list is used to declare ids for the users that will be executing the actions in the `actions`
+   list. later we will see that each action has a `user` key which declares which user is the one performing the action.
+2. `actions`: the actions list describes action to be performed in the order they are written each action is in the
+   following format.
+    ```json
+    {
+      "user": "<id-of-user-performing-action>",
+      "action": "<service-function-name>",
+      "params": {
+        "<param-name>": "<param-value>"
+      }
+    }
+    ```
+
+sometimes we would like to use return values of one action as a param value of another action. in this case we can use
+refs. the following examples illustrates refs:
+
+```json
+[
+  {
+    "action": "open_shop",
+    "user": "u1",
+    "params": {
+      "shop_name": "shop1",
+      "description": "the one and only shop in the entire commerce system"
+    },
+    "ref_id": "s1"
+  },
+  {
+    "action": "add_product_to_shop",
+    "user": 1,
+    "params": {
+      "shop_id": {
+        "ref": "s1"
+      },
+      "product_name": "Bamba",
+      "description": "Its Osem",
+      "categories": [
+        "snacks"
+      ],
+      "price": 30,
+      "quantity": 20
+    },
+    "ref_id": "p1"
+  }
+]
+```
+
+when an action has a `ref_id`, the return value of the action is bound to the given `ref_id`. for example the return
+value of the `open_shop` (a shop id) will be bound to the key `s1`, which we can later use by using the ref dictionary,
+as in the `add_product_to_shop_action`.
+
+for a full example look at the example [init file](./init.json).
+
+There is also a convenient and safer way for creating the initialization files through python by using the 
+[init_generator](./init_generator.py) module. a usage example is in [init_1](./init_1.py)
 
 ## Testing Framework
 
