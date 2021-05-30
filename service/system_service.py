@@ -6,6 +6,7 @@ from domain.notifications.notifications import Notifications
 from domain.token_module.tokenizer import Tokenizer
 from domain.commerce_system.commerce_system_facade import CommerceSystemFacade
 from domain.logger.log import event_logger, error_logger
+from service.init_dict import InitDict
 
 
 def make_status_dict(status: bool, desc: str, result) -> dict:
@@ -20,6 +21,10 @@ def handle_assertion(e: AssertionError):
 def handle_exception(e: Exception):
     error_logger.error(e)
     return make_status_dict(False, "Server Error", "")
+
+
+class InitError(Exception):
+    pass
 
 
 class SystemService:
@@ -37,6 +42,25 @@ class SystemService:
                 CommerceSystemFacade(Authenticator(), Notifications()), Tokenizer()
             )
         return SystemService.__instance
+
+    def init(self, init: InitDict):
+        bindings = dict()
+        for action in init["actions"]:
+            action_name = action["action"]
+            user = action["user"]
+            if action_name == "enter":
+                bindings[user] = self.enter()["result"]
+                continue
+            params = action["params"]
+            for param, val in params.items():
+                if isinstance(val, dict) and "ref" in val:
+                    params[param] = bindings[val["ref"]]
+            ret = getattr(self, action_name)(token=bindings[user], **params)
+            if not ret["status"]:
+                raise InitError(ret["description"])
+            if "ref_id" in action:
+                bindings[action["ref_id"]] = ret["result"]
+        return bindings
 
     def is_valid_token(self, token: str):
         if self.tokenizer.is_token_expired(token):
