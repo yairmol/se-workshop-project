@@ -1,5 +1,6 @@
 Flask~=1.1.2
 flask_cors
-requests
+requests~=2.25.1
 flask_socketio
-responses
+responses~=0.13.3
+SQLAlchemy~=1.4.15

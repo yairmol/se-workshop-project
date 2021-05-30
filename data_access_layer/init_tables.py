@@ -29,8 +29,8 @@ transaction = Table(
     # Column('price', ), TODO: how to save double/ float
 )
 
-shop = Table(
-    'shop',
+shops = Table(
+    'shops',
     mapper_registry.metadata,
     Column('id', Integer, primary_key=True),
     Column('name', String),
@@ -38,7 +38,7 @@ shop = Table(
     Column('image_url', String),
 )
 
-product = Table(
+products = Table(
     'products',
     mapper_registry.metadata,
     Column('product_id', Integer, primary_key=True),
@@ -62,6 +62,31 @@ categories_product_mtm = Table(
     Column('product_id', Integer, ForeignKey("products.product_id")),
 )
 
+purchase_policies = Table(
+    'purchase_policies',
+    mapper_registry.metadata,
+    Column('policy_id', Integer, primary_key=True),
+    Column('shop_id', Integer, ForeignKey('shops.id', ondelete='CASCADE')),
+    Column('condition_type', String),
+    Column('max_quantity', Integer),
+    Column('product', Integer, ForeignKey('products.product_id', ondelete='CASCADE')),
+    # Column('category', String), TODO: check if category is string or integer
+    Column('min_time', String),
+    Column('max_time', String),
+    Column('min_date', String),
+    Column('max_date', String),
+    Column('conditions', list),
+
+)
+
+discounts = Table(
+    'discounts',
+    mapper_registry.metadata,
+    Column('discount_id', Integer, primary_key=True),
+    Column('shop_id', Integer, ForeignKey('shops.id', ondelete='CASCADE')),
+    # Column('Condition', ) TODO
+)
+
 # appointments = Table(
 #     'appointments',
 #     mapper_registry.metadata,
@@ -71,8 +96,8 @@ categories_product_mtm = Table(
 # )
 
 mapper_registry.map_imperatively(Subscribed, subscribed)
-mapper_registry.map_imperatively(Shop, shop)
-mapper_registry.map_imperatively(Product, product)
+mapper_registry.map_imperatively(Shop, shops)
+mapper_registry.map_imperatively(Product, products)
 mapper_registry.map_imperatively(Transaction, transaction)
 
 mapper_registry.metadata.create_all(engine)
