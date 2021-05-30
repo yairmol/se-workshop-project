@@ -2,8 +2,10 @@ import unittest
 from datetime import datetime
 from domain.authentication_module.authenticator import Authenticator
 from domain.commerce_system.commerce_system_facade import CommerceSystemFacade
-from domain.commerce_system.tests.mocks import NotificationsMock
+from domain.commerce_system.tests.mocks import NotificationsMock, DeliveryMock, PaymentMock
 from domain.commerce_system.user import User
+from domain.delivery_module.delivery_system import IDeliveryFacade
+from domain.payment_module.payment_system import IPaymentsFacade
 
 
 class TestCommerceSystemFacade(unittest.TestCase):
@@ -23,6 +25,9 @@ class TestCommerceSystemFacade(unittest.TestCase):
 
 
 class UserTests(unittest.TestCase):
+    def setUp(self) -> None:
+        IPaymentsFacade.get_payment_facade = lambda: PaymentMock(True)
+        IDeliveryFacade.get_delivery_facade = lambda: DeliveryMock(True)
 
     users = [
         ["username", "password"],

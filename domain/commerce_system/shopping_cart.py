@@ -91,11 +91,15 @@ class ShoppingBag:
 
         shop_action = Action(self.shop.add_transaction, self, transaction)
         shop_action.set_reverse(Action(self.shop.cancel_transaction, self, transaction))
+        shop_action.set_error_message("failed to save transaction")
         payment_action = Action(self.payment_facade.pay, total_price, payment_details)
         payment_action.set_reverse(Action(self.payment_facade.cancel_payment), True)
+        payment_action.set_error_message("payment failed")
         delivery_action = Action(self.delivery_facade.deliver_to, delivery_details)
         delivery_action.set_reverse(Action(self.delivery_facade.cancel_delivery), use_return_value=True)
+        delivery_action.set_error_message("delivery failed")
         clean_action = Action(self.clear_bag).set_reverse(Action(self.set_products, self.products.copy()))
+        clean_action.set_error_message("failed to clear shopping bag")
 
         purchase_actions = ActionPool([shop_action, payment_action, delivery_action, clean_action])
         transaction.set_transaction_action_pool(purchase_actions)
@@ -172,6 +176,7 @@ class ShoppingCart:
         actions = [
             Action(self._purchase_shopping_bag, username, bag, payment_details, purchased_shops, delivery_details)
             .set_reverse(Action(ShoppingBag.cancel_transaction), use_return_value=True)
+            .set_error_message(f"failed to purchase shopping bag for shop {shop.name}")
             for shop, bag in self
         ]
         actions += [Action(self.remove_shopping_bags, purchased_shops)]

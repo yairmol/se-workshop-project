@@ -8,6 +8,8 @@ from domain.commerce_system.shop import Shop
 from domain.commerce_system.shopping_cart import ShoppingBag
 from domain.commerce_system.tests.mocks import PaymentMock, DeliveryMock
 from domain.commerce_system.user import User
+from domain.delivery_module.delivery_system import IDeliveryFacade
+from domain.payment_module.payment_system import IPaymentsFacade
 
 shops = [
     {"shop_name": "s1", "description": "desc"},
@@ -31,6 +33,8 @@ username = "aviv"
 
 class ShoppingCartTests(unittest.TestCase):
     def setUp(self) -> None:
+        IPaymentsFacade.get_payment_facade = lambda: PaymentMock(True)
+        IDeliveryFacade.get_delivery_facade = lambda: DeliveryMock(True)
         self.shop1 = Shop(**shops[0])
         self.shop2 = Shop(**shops[1])
         self.shop3 = Shop(**shops[2])

@@ -29,6 +29,7 @@ const routes = {
   owners: "owners",
   promotions: "promotions",
   discounts: "discounts",
+  purchase_policies: "purchase_policies",
 }
 
 const base_route = `${host_port}/${routes.base}`;
@@ -726,4 +727,53 @@ export const get_appointments = (token) => {
       throw new Error(res.data.description)
     }
   }).catch((err) => alert(`failed to get shop discounts due to ${err}`));
+}
+
+export const get_shop_policies = (token, shop_id) => {
+  return axios({
+    method: "GET",
+    url: `${base_route}/${routes.shops}/${shop_id}/${routes.purchase_policies}`,
+    params: {
+      token: token,
+    }
+  }).then((res) => {
+    if (res.data.status) {
+      return res.data.result
+    } else {
+      throw new Error(res.data.description)
+    }
+  }).catch((err) => alert(`failed to get shop purchase policies due to ${err}`));
+}
+
+export const add_policy = (token, shop_id, policy) => {
+  return axios({
+    method: "POST",
+    url: `${base_route}/${routes.shops}/${shop_id}/${routes.purchase_policies}`,
+    data: {
+      token: token,
+      ...policy
+    }
+  }).then((res) => {
+    if (res.data.status) {
+      return res.data.result
+    } else {
+      throw new Error(res.data.description)
+    }
+  }).catch((err) => alert(`failed to add purchase policy due to ${err}`));
+}
+
+export const remove_purchase_policy = (token, shop_id, policy_id) => {
+  return axios({
+    method: "DELETE",
+    url: `${base_route}/${routes.shops}/${shop_id}/${routes.purchase_policies}/${policy_id}`,
+    data: {
+      token: token,
+    }
+  }).then((res) => {
+    if (res.data.status) {
+      return res.data.status
+    } else {
+      throw new Error(res.data.description)
+    }
+  }).catch((err) => alert(`failed to delete purchase policy due to ${err}`));
 }
