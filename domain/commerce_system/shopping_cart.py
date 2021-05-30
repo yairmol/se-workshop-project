@@ -1,16 +1,17 @@
 from datetime import datetime
 
 from domain.commerce_system.action import Action, ActionPool
-from domain.commerce_system.product import Product
+from domain.commerce_system.product import Product, BuyNow, PurchaseType, ptype_str_to_ptype
 from domain.commerce_system.productDTO import ProductDTO
 from domain.commerce_system.purchase_conditions import ANDCondition
 from domain.commerce_system.shop import Shop
 
-from typing import Dict, List
+from typing import Dict, List, Type, TypeVar, Optional
 
 from domain.commerce_system.transaction import Transaction
 from domain.delivery_module.delivery_system import IDeliveryFacade
 from domain.payment_module.payment_system import IPaymentsFacade
+from data_model import PurchaseTypes as Pt
 
 CART_ID = "cart_id"
 SHOPPING_BAGS = "shopping_bags"
@@ -19,14 +20,25 @@ SHOP_NAME = "shop_name"
 TOTAL = "total"
 
 
+T_PT = TypeVar('T_PT', bound=PurchaseType)
+
+
+class ProductInBag:
+    def __init__(self, product: Product, amount: int, purchase_type: T_PT, **purchase_type_args):
+        self.product = product
+        self.amount = amount
+        self.purchase_type = purchase_type
+        self.purchase_type_args = purchase_type_args
+
+
 class ShoppingBag:
     def __init__(self, shop: Shop):
         self.shop = shop
-        self.products: Dict[Product, int] = {}
+        self.products: Dict[Product, ProductInBag] = {}
         self.payment_facade = IPaymentsFacade.get_payment_facade()
         self.delivery_facade = IDeliveryFacade.get_delivery_facade()
 
-    def __setitem__(self, key: Product, value: int):
+    def __setitem__(self, key: Product, value: ProductInBag):
         self.products[key] = value
 
     def __iter__(self):
@@ -35,31 +47,37 @@ class ShoppingBag:
     def to_dict(self):
         return {
             SHOP_NAME: self.shop.name,
-            PRODUCTS: [ProductDTO(prod, amount).to_dict() for prod, amount in self.products.items()],
+            PRODUCTS: [
+                ProductDTO(prod, prod_in_bag).to_dict()
+                for prod, prod_in_bag in self.products.items()
+            ],
             TOTAL: self.calculate_price()
         }
 
-    def add_product(self, product: Product, amount_to_buy: int):
+    def add_product(self, product: Product, amount_to_buy: int, purchase_type_id: Optional[int] = None):
         if product in self.products:
-            self.products[product] += amount_to_buy
+            self.products[product].amount += amount_to_buy
         else:
-            self.products[product] = amount_to_buy
+            purchase_type = product.get_purchase_of_type(BuyNow)
+            if purchase_type_id:
+                purchase_type = product.get_purchase_type(purchase_type_id)
+            self.products[product] = ProductInBag(product, amount_to_buy, purchase_type)
 
     def remove_product(self, product: Product, amount_to_buy: int):
         assert product in self.products, "product not in the shopping bag"
-        assert self.products[product] >= amount_to_buy, "not enough items in the bag"
-        if self.products[product] == amount_to_buy:
+        assert self.products[product].amount >= amount_to_buy, "not enough items in the bag"
+        if self.products[product].amount == amount_to_buy:
             self.products.pop(product)
         else:
-            self.products[product] -= amount_to_buy
+            self.products[product].amount -= amount_to_buy
 
     def remove_all_products(self):
         self.products.clear()
 
     def calculate_price(self) -> int:
         total = 0
-        for product, amount in self.products.items():
-            total += amount * product.price
+        for product, prod_in_bag in self.products.items():
+            total += prod_in_bag.amount * prod_in_bag.purchase_type.get_price()
         total = max(0, total - self.shop.discount.apply(self.products))
         return total
 
@@ -68,7 +86,7 @@ class ShoppingBag:
         amount = 1
         return list(map(lambda kv: ProductDTO(kv[product], kv[amount]), self.products.items()))
 
-    def set_products(self, products: Dict[Product, int]) -> bool:
+    def set_products(self, products: Dict[Product, ProductInBag]) -> bool:
         self.products = products
         return True
 
@@ -82,6 +100,7 @@ class ShoppingBag:
 
     def purchase_bag(self, username, payment_details, delivery_details: dict) -> Transaction:
         assert self.resolve_shop_conditions(), f"condition exception: {self}"
+        assert all(map(lambda p: p.can_purchase()))
         total_price = self.calculate_price()
         products_dtos = self.get_products_dtos()
         transaction = Transaction(

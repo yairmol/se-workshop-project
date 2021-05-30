@@ -407,6 +407,21 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         user = self.get_user(user_id)
         return [a.to_dict() for a in user.user_state.get_appointments()]
 
+    def add_purchase_type(self, user_id: int, shop_id: int, product_id: int, purchase_type_info: dict) -> bool:
+        shop = self.get_shop(shop_id)
+        user = self.get_user(user_id)
+        return user.add_purchase_type(shop, product_id, purchase_type_info)
+
+    def reply_price_offer(self, user_id: int, shop_id: int, product_id: int, offer_maker: str, action: str) -> bool:
+        shop = self.get_shop(shop_id)
+        user = self.get_user(user_id)
+        return user.reply_price_offer(shop, product_id, offer_maker, action)
+
+    def offer_price(self, user_id: int, shop_id: int, product_id: int, offer: float) -> bool:
+        shop = self.get_shop(shop_id)
+        user = self.get_user(user_id)
+        return user.offer_price(shop, product_id, offer)
+
     def clean_up(self):
         self.transaction_repo = self.transaction_repo.cleanup()
         self.shops.clear()

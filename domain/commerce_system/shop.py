@@ -194,3 +194,12 @@ class Shop:
             return False
         success = remove(self.conditions, condition_id)
         return success
+
+    def add_purchase_type(self, product_id: int, purchase_type_info: dict) -> bool:
+        return self.products[product_id].add_purchase_type(purchase_type_info)
+
+    def add_price_offer(self, username: str, product_id: int, offer: float) -> bool:
+        return self.products[product_id].add_price_offer(username, offer)
+
+    def reply_price_offer(self, product_id: int, offer_maker: str, action: str) -> bool:
+        return self.products[product_id].reply_price_offer(offer_maker, action)

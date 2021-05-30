@@ -6,7 +6,7 @@ from domain.delivery_module.delivery_system import IDeliveryFacade, DeliveryFaca
 from domain.payment_module.payment_system import IPaymentsFacade, PaymentsFacadeAlwaysTrue
 from test_data import users, shops, permissions, products, payment_details
 from service.system_service import SystemService
-from data_model import UserModel as Um, admin_credentials
+from data_model import UserModel as Um
 
 
 def get_credentials(user: dict):

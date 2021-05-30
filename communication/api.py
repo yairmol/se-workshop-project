@@ -4,9 +4,7 @@ from typing import List, Union
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 
-from acceptance_tests.test_data import products
 from acceptance_tests.test_utils import fill_with_data, make_purchases
-from domain.discount_module.discount_management import SimpleCond, DiscountDict
 from service.system_service import SystemService
 
 

@@ -88,7 +88,7 @@ class User:
     def add_product(self, shop: Shop, **product_details) -> Product:
         return self.user_state.add_product(shop, **product_details)
 
-    def edit_product(self, shop: Shop, **product_details) -> Product:
+    def edit_product(self, shop: Shop, **product_details) -> bool:
         return self.user_state.edit_product(shop, **product_details)
 
     def delete_product(self, shop: Shop, product_id: int) -> bool:
@@ -124,6 +124,15 @@ class User:
         }
         ret.update(self.user_state.to_dict())
         return ret
+
+    def add_purchase_type(self, shop: Shop, product_id: int, purchase_type_info: dict) -> bool:
+        return self.user_state.add_purchase_type(shop, product_id, purchase_type_info)
+
+    def offer_price(self, shop: Shop, product_id: int, offer: float) -> bool:
+        return self.user_state.offer_price(shop, product_id, offer)
+
+    def reply_price_offer(self, shop: Shop, product_id: int, offer_maker: str, action: str) -> bool:
+        return self.user_state.reply_price_offer(shop, product_id, offer_maker, action)
 
 
 class UserState:
@@ -228,6 +237,15 @@ class UserState:
 
     def to_dict(self) -> dict:
         raise NotImplementedError()
+
+    def add_purchase_type(self, shop: Shop, product_id: int, purchase_type_info: dict):
+        raise Exception("User doesn't have permission to edit purchase types")
+
+    def offer_price(self, shop: Shop, product_id: int, offer: float) -> bool:
+        raise Exception("user must be signed in to make a purchase offer")
+
+    def reply_price_offer(self, shop: Shop, product_id: int, offer_maker: str, action: str) -> bool:
+        raise Exception("User doesn't have permission to reply to a price offer")
 
 
 class Guest(UserState):
@@ -362,6 +380,15 @@ class Subscribed(UserState):
 
     def get_appointments(self):
         return list(self.appointments.values())
+
+    def add_purchase_type(self, shop: Shop, product_id: int, purchase_type_info: dict) -> bool:
+        return self.get_appointment(shop).add_purchase_type(product_id, purchase_type_info)
+
+    def offer_price(self, shop: Shop, product_id: int, offer: float) -> bool:
+        return shop.add_price_offer(self.username, product_id, offer)
+
+    def reply_price_offer(self, shop: Shop, product_id: int, offer_maker: str, action: str) -> bool:
+        return self.get_appointment(shop).reply_price_offer(product_id, offer_maker, action)
 
 
 class SystemManager(Subscribed):
