@@ -143,10 +143,13 @@ class SystemService:
 
     # 2.7
     @handler
-    def save_product_to_cart(self, user_id: int, shop_id: int, product_id: int, amount_to_buy: int) -> dict:
+    def save_product_to_cart(self, user_id: int, shop_id: int, product_id: int, amount_to_buy: int,
+                             purchase_type_id=None, **pt_args) -> dict:
         event_logger.info(f"User: {str(user_id)} tries to save {amount_to_buy}"
                           f" products: {str(product_id)} of shop_id: {str(shop_id)}")
-        self.commerce_system_facade.save_product_to_cart(user_id, shop_id, product_id, amount_to_buy)
+        self.commerce_system_facade.save_product_to_cart(
+            user_id, shop_id, product_id, amount_to_buy, purchase_type_id, **pt_args
+        )
         event_logger.info(f"User: {user_id} successfully save the product {product_id}")
         return make_status_dict(True, "", "")
 
@@ -407,7 +410,7 @@ class SystemService:
     @handler
     def add_purchase_type(self, user_id: int, shop_id: int, product_id: int, **purchase_type_info: PurchaseTypeDict):
         event_logger.info(f"User: {user_id} tries to add a purchase type")
-        res = self.commerce_system_facade.add_purchase_type(user_id, shop_id, product_id, **purchase_type_info)
+        res = self.commerce_system_facade.add_purchase_type(user_id, shop_id, product_id, purchase_type_info)
         event_logger.info(f"User: {user_id} added a purchase type successfully")
         return make_status_dict(True, "", res)
 

@@ -20,18 +20,17 @@ class ShopTests(TestCase):
         self.offered_price = 0.75
 
     def test_open_shop(self):
-        print(self.shop.to_dict())
         self.assertIsNotNone(self.shop)
 
     def test_add_purchase_type(self):
         self.assertTrue(self.founder.add_purchase_type(
             self.shop, self.product.product_id, offer_purchase_type_dict.copy())
         )
+        self.assertEqual(len(self.product.purchase_types), 2)
 
     def test_make_offer(self):
         self.test_add_purchase_type()
         self.assertTrue(self.buyer.offer_price(self.shop, self.product.product_id, self.offered_price))
-        self.assertEqual(len(self.product.purchase_types), 2)
 
     def test_approve_offer(self):
         self.test_make_offer()
@@ -45,7 +44,8 @@ class ShopTests(TestCase):
         self.assertTrue(self.founder.reply_price_offer(
             self.shop, self.product.product_id, self.buyer.get_name(), "reject"
         ))
-        self.assertFalse(self.product.can_purchase(PurchaseOfferType, offer_maker=self.buyer.get_name()))
+        self.assertRaises(AssertionError, self.product.can_purchase, PurchaseOfferType,
+                          offer_maker=self.buyer.get_name())
 
 
 if __name__ == "__main__":

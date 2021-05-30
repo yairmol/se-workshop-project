@@ -3,7 +3,7 @@ from __future__ import annotations
 import threading
 from typing import List, Dict
 
-from domain.commerce_system.product import Product
+from domain.commerce_system.product import Product, PurchaseType
 from domain.commerce_system.purchase_conditions import Condition
 from domain.commerce_system.shop import Shop
 from domain.commerce_system.transaction import Transaction
@@ -89,7 +89,7 @@ class Appointment:
     def get_permissions(self) -> Dict[str, bool]:
         raise NotImplementedError()
 
-    def add_purchase_type(self, product_id: int, purchase_type_info: dict) -> bool:
+    def add_purchase_type(self, product_id: int, purchase_type_info: dict) -> PurchaseType:
         raise Exception("Cannot manage purchase types")
 
     def reply_price_offer(self, product_id: int, offer_maker: str, action: str) -> bool:
@@ -197,7 +197,7 @@ class ShopManager(Appointment):
         assert self.get_staff_permission, "manager user does not have permission to see shop staff"
         return self.shop.get_staff_info()
 
-    def add_purchase_type(self, product_id: int, purchase_type_info: dict) -> bool:
+    def add_purchase_type(self, product_id: int, purchase_type_info: dict) -> PurchaseType:
         assert self.purchase_type_permission, "manager user does not have permission to manage purchase types"
         return self.shop.add_purchase_type(product_id, purchase_type_info)
 
@@ -349,7 +349,7 @@ class ShopOwner(Appointment):
         }
         return ret
 
-    def add_purchase_type(self, product_id: int, purchase_type_info: dict) -> bool:
+    def add_purchase_type(self, product_id: int, purchase_type_info: dict) -> PurchaseType:
         return self.shop.add_purchase_type(product_id, purchase_type_info)
 
     def reply_price_offer(self, product_id: int, offer_maker: str, action: str) -> bool:

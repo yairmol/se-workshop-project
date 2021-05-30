@@ -65,7 +65,7 @@ class PurchaseConditionTests(TestCase):
         self.assertTrue(self.bag.resolve_shop_conditions())
 
     def test_DateWindowForCategoryCondition(self):
-        condition_dict = {Cm.MIN_DATE: '1/5/2021', Cm.MAX_DATE: '30/5/2021', Cm.CATEGORY: "aaa"}
+        condition_dict = {Cm.MIN_DATE: '1/5/2021', Cm.MAX_DATE: '30/7/2021', Cm.CATEGORY: "aaa"}
         condition = DateWindowForCategoryCondition(condition_dict)
         self.shop.add_purchase_condition(condition)
         amount = 4
@@ -73,7 +73,7 @@ class PurchaseConditionTests(TestCase):
         self.assertTrue(self.bag.resolve_shop_conditions())
 
     def test_DateWindowForProductCondition(self):
-        condition_dict = {Cm.MIN_DATE: '1/5/2021', Cm.MAX_DATE: '30/5/2021', Cm.PRODUCT: self.product.product_id}
+        condition_dict = {Cm.MIN_DATE: '1/5/2021', Cm.MAX_DATE: '30/7/2021', Cm.PRODUCT: self.product.product_id}
         condition = DateWindowForProductCondition(condition_dict)
         self.shop.add_purchase_condition(condition)
         amount = 4

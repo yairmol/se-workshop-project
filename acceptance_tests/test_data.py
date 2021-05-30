@@ -2,7 +2,7 @@ from datetime import datetime
 
 from data_model import (
     UserModel as Um, ShopModel as Sm, ProductModel as Pm, PermissionsModel as PermM,
-    ConditionsModel as Cm
+    ConditionsModel as Cm, PurchaseTypes as Pt
 )
 
 users = [
@@ -84,3 +84,5 @@ payment_details = [
 ]
 
 delivery_details = {}
+
+offer_purchase_type_dict = {Pt.PURCHASE_TYPE: Pt.OFFER}

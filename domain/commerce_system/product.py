@@ -14,6 +14,7 @@ class PurchaseType:
         self.product = product
         with PurchaseType.__nextid_lock:
             self.id = PurchaseType.__nextid
+            PurchaseType.__nextid += 1
 
     def can_purchase(self, **kwargs) -> bool:
         raise NotImplementedError()
@@ -74,25 +75,25 @@ class Product:
     def get_quantity(self):
         return self._quantity
 
-    def add_purchase_type(self, purchase_type_info: dict) -> bool:
+    def add_purchase_type(self, purchase_type_info: dict) -> PurchaseType:
         ptype = purchase_type_info[Pt.PURCHASE_TYPE]
         purchase_type_info.pop(Pt.PURCHASE_TYPE)
         new_ptype = purchase_types_factory(ptype, self, **purchase_type_info)
         self.purchase_types[new_ptype.id] = new_ptype
-        return True
+        return new_ptype
 
-    def get_purchase_of_type(self, purchase_type: Type[T_PT], not_found_message: str = "") -> T_PT:
-        ret = [pt for pt in self.purchase_types if isinstance(pt, purchase_type)]
+    def get_purchase_type_of_type(self, purchase_type: Type[T_PT], not_found_message: str = "") -> T_PT:
+        ret = [pt for pt in self.purchase_types.values() if isinstance(pt, purchase_type)]
         assert len(ret) > 0, not_found_message
         return ret[0]
 
     def add_price_offer(self, username: str, offer: float) -> bool:
-        purchase_offer_type = self.get_purchase_of_type(PurchaseOfferType)
+        purchase_offer_type = self.get_purchase_type_of_type(PurchaseOfferType)
         return purchase_offer_type.offer_price(username, offer)
 
     def reply_price_offer(self, offer_maker: str, action: str) -> bool:
         assert action in [Pt.APPROVE, Pt.REJECT], "bad action"
-        purchase_offer_type = self.get_purchase_of_type(PurchaseOfferType)
+        purchase_offer_type = self.get_purchase_type_of_type(PurchaseOfferType)
         if action == Pt.APPROVE:
             purchase_offer_type.approve(offer_maker)
         elif action == Pt.REJECT:
@@ -100,15 +101,23 @@ class Product:
         return True
 
     def get_price(self, purchase_type_type: Type[T_PT], **kwargs) -> float:
-        purchase_type = self.get_purchase_of_type(purchase_type_type)
+        purchase_type = self.get_purchase_type_of_type(purchase_type_type)
         return purchase_type.get_price(**kwargs)
 
     def can_purchase(self, purchase_type_type: Type[T_PT], **kwargs) -> bool:
-        purchase_type = self.get_purchase_of_type(purchase_type_type)
+        purchase_type = self.get_purchase_type_of_type(purchase_type_type)
         return purchase_type.can_purchase(**kwargs)
 
     def get_purchase_type(self, purchase_type_id: int) -> PurchaseType:
         return self.purchase_types[purchase_type_id]
+
+
+class ProductInBag:
+    def __init__(self, product: Product, amount: int, purchase_type: T_PT, **purchase_type_args):
+        self.product = product
+        self.amount = amount
+        self.purchase_type = purchase_type
+        self.purchase_type_args = purchase_type_args
 
 
 class BuyNow(PurchaseType):
@@ -172,7 +181,15 @@ class PurchaseOfferType(PurchaseType):
         self.offers[offer_maker].reject()
 
     def can_purchase(self, offer_maker: str) -> bool:
-        return offer_maker in self.offers and self.offers[offer_maker].offer_state == OfferState.APPROVED
+        assert offer_maker in self.offers, "You must first make an offer before you purchase"
+        offer_state = self.offers[offer_maker].offer_state
+        if offer_state != OfferState.APPROVED:
+            error_message = (
+                "offer must be approved before purchasing" if offer_state == OfferState.WAITING else
+                "offer was rejected"
+            )
+            raise AssertionError(error_message)
+        return True
 
     def get_price(self, offer_maker) -> float:
         assert offer_maker in self.offers, f"There is no existing offer for {offer_maker}"

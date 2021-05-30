@@ -1,11 +1,10 @@
 from data_model import ProductModel as Pm
 from domain.commerce_system.product import Product
-from domain.commerce_system.shopping_cart import ProductInBag
 
 
 class ProductDTO:
 
-    def __init__(self, product: Product, bag_info: ProductInBag):
+    def __init__(self, product: Product, bag_info):
         self.product_id = product.product_id
         self.name = product.product_name
         self.price = product.price

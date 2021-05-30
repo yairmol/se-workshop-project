@@ -124,11 +124,12 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         return list(map(lambda p: p.to_dict(), search_results))
 
     # 2.7, 2.8
-    def save_product_to_cart(self, user_id: int, shop_id: int, product_id: int, amount_to_buy: int) -> bool:
+    def save_product_to_cart(self, user_id: int, shop_id: int, product_id: int, amount_to_buy: int,
+                             purchase_type_id=None, **pt_args) -> bool:
         user = self.get_user(user_id)
         shop = self.get_shop(shop_id)
         product = shop.products[product_id]
-        return user.save_product_to_cart(shop, product, amount_to_buy)
+        return user.save_product_to_cart(shop, product, amount_to_buy, purchase_type_id, **pt_args)
 
     # 2.8
     def remove_product_from_cart(self, user_id: int, shop_id: int, product_id: int, amount: int) -> bool:
@@ -407,10 +408,10 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         user = self.get_user(user_id)
         return [a.to_dict() for a in user.user_state.get_appointments()]
 
-    def add_purchase_type(self, user_id: int, shop_id: int, product_id: int, purchase_type_info: dict) -> bool:
+    def add_purchase_type(self, user_id: int, shop_id: int, product_id: int, purchase_type_info: dict) -> int:
         shop = self.get_shop(shop_id)
         user = self.get_user(user_id)
-        return user.add_purchase_type(shop, product_id, purchase_type_info)
+        return user.add_purchase_type(shop, product_id, purchase_type_info).id
 
     def reply_price_offer(self, user_id: int, shop_id: int, product_id: int, offer_maker: str, action: str) -> bool:
         shop = self.get_shop(shop_id)
