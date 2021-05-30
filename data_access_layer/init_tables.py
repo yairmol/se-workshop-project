@@ -96,7 +96,7 @@ shopping_bag = Table(
     mapper_registry.metadata,
     Column('shop_id', Integer, ForeignKey("shop.id", ondelete='CASCADE'), primary_key=True),
     Column('cart_id', Integer, ForeignKey("shopping_cart.cart_id", ondelete='CASCADE')),
-    Column('product_id', Integer, ForeignKey("product.product_id", ondelete='CASCADE'))
+    Column('product_id', Integer, ForeignKey("products.product_id", ondelete='CASCADE'))
 )
 
 mapper_registry.map_imperatively(Subscribed, subscribed)
