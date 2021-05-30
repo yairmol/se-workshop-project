@@ -250,14 +250,11 @@ class Subscribed(UserState):
         self.pending_messages = []
         self.notifications = domain.notifications.notifications.Notifications(self)
 
-    def enlist_sub(self):
-        raise NotImplementedError()
-
     def send_error(self, msg):
-        raise NotImplementedError()
+        self.notifications.send_notif(msg=msg)
 
     def send_message(self, msg):
-        raise NotImplementedError()
+        self.notifications.send_error(msg=msg)
 
     def to_dict(self):
         return {"username": self.username, }
