@@ -7,7 +7,7 @@ from domain.commerce_system.user import Subscribed
 from init_tables import engine
 from sqlalchemy.orm import Session
 
-subscribed = Subscribed("aviv_the_king5")
+# subscribed = Subscribed("aviv_the_king5", 1)
 # save_subscribed(subscribed)
 # remove_subscribed("aviv_the_king5")
 # subscribed_from_db = get_subscribed("aviv_the_king5")
@@ -15,7 +15,7 @@ subscribed = Subscribed("aviv_the_king5")
 
 
 shop = Shop("Armani", "Dudu Faruk's favorite shop", "https://website/cool_image.jpg/")
-# save_shop(shop)
-# remove_shop(1)
-# shop_from_db = get_shop("Armani")
-# print(shop_from_db.description)
+save_shop(shop)
+# remove_shop(165)
+shop_from_db = get_shop("Armani")
+print(shop_from_db.description)

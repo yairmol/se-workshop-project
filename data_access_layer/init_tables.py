@@ -1,8 +1,10 @@
 from datetime import datetime
 
-from sqlalchemy import create_engine, MetaData, Table, Column, Integer, String, ForeignKey, DATE, FLOAT
-from sqlalchemy.orm import registry
+from sqlalchemy import create_engine, MetaData, Table, Column, Integer, String, ForeignKey,  DATE, FLOAT
+from sqlalchemy.orm import registry, relationship
 
+from domain.commerce_system.appointment import ShopManager, ShopOwner
+from domain.commerce_system.shopping_cart import ShoppingCart, ShoppingBag
 from domain.commerce_system.transaction import Transaction
 from domain.commerce_system.user import Subscribed
 from domain.commerce_system.shop import Shop
@@ -35,6 +37,15 @@ shop = Table(
     Column('name', String),
     Column('description', String),
     Column('image_url', String),
+    relationship("product")
+)
+
+categories_product_mtm = Table(
+    'product_categories_mtm',
+    mapper_registry.metadata,
+    Column('product_category_id', Integer, primary_key=True),
+    Column('category_id', Integer, ForeignKey('categories.category_id', ondelete='CASCADE')),
+    Column('product_id', Integer, ForeignKey("products.product_id", ondelete='CASCADE')),
 )
 
 product = Table(
@@ -46,6 +57,7 @@ product = Table(
     Column('description', String),
     Column('quantity', Integer),
     Column('shop_id', Integer, ForeignKey('categories.category_id', ondelete='CASCADE')),
+    relationship('categories', secondary=categories_product_mtm)
 )
 categories = Table(
     'categories',
@@ -54,13 +66,7 @@ categories = Table(
     Column('category', String),
 )
 
-categories_product_mtm = Table(
-    'product_categories_mtm',
-    mapper_registry.metadata,
-    Column('product_category_id', Integer, primary_key=True),
-    Column('category_id', Integer, ForeignKey('categories.category_id', ondelete='CASCADE')),
-    Column('product_id', Integer, ForeignKey("products.product_id", ondelete='CASCADE')),
-)
+
 
 shop_manager_appointments = Table(
     'shop_manager_appointments',
@@ -103,5 +109,11 @@ mapper_registry.map_imperatively(Subscribed, subscribed)
 mapper_registry.map_imperatively(Shop, shop)
 mapper_registry.map_imperatively(Product, product)
 mapper_registry.map_imperatively(Transaction, transaction)
+mapper_registry.map_imperatively( ) # TODO : add categories somehow
+mapper_registry.map_imperatively( ) # TODO : add categories product mtm table
+mapper_registry.map_imperatively(ShopManager, shop_manager_appointments)
+mapper_registry.map_imperatively(ShopOwner, shop_owner_appointments)
+mapper_registry.map_imperatively(ShoppingCart, shopping_cart)
+mapper_registry.map_imperatively(ShoppingBag, shopping_bag)
 
 mapper_registry.metadata.create_all(engine)
