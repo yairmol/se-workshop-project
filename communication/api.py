@@ -3,6 +3,9 @@ from typing import List
 
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+from flask_socketio import SocketIO
+
+from domain.notifications.notifications import Notifications
 from service.system_service import SystemService
 
 API_BASE = '/api'
@@ -22,6 +25,47 @@ def create_app(init=None):
     __system_service = SystemService.get_system_service()
     if init:
         __system_service.init(init)
+
+    client_session_map = {}
+    socketio = SocketIO(app, cors_allowed_origins='*')
+
+    @socketio.on('connect')
+    def connect():
+        print("%s connected" % request.namespace)
+
+    @socketio.on('enlist')
+    def enlist(data):
+        print(f"enlisting {data['client_id']} as {request.sid}")
+        print(f"client_session map {client_session_map}")
+        client_session_map[int(data["client_id"])] = request.sid
+        print(f"client_session map {client_session_map}")
+
+    @socketio.on('disconnect')
+    def disconnect():
+        print("%s disconnected" % request.sid)
+        for user_id, sid in client_session_map.items():
+            if request.sid == sid:
+                print(f"disconnecting {user_id}")
+                client_session_map.pop(user_id)
+                break
+
+    class WebsocketsNotifications:
+        @staticmethod
+        def send_message(msg, client_id):
+            print(f"sending message {msg} to {client_id}", client_session_map)
+            if client_id in client_session_map:
+                print("client id in client session map")
+                socketio.emit('notification', msg, room=client_session_map[client_id])
+
+        @staticmethod
+        def send_error(msg, client_id):
+            socketio.emit('error', msg, room=client_session_map[client_id])
+
+        @staticmethod
+        def send_broadcast(msg):
+            socketio.emit('broadcast', msg, broadcast=True)
+
+    Notifications.set_communication(WebsocketsNotifications)
 
     def apply_request_on_function(func, *args, **kwargs):
         print(request.data)
@@ -296,7 +340,7 @@ def create_app(init=None):
     def server_error(e):
         return jsonify(error=str(e)), 501
 
-    return app
+    return socketio, app
 
 
 # if __name__ == '__main__':
