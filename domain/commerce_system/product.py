@@ -2,6 +2,7 @@ import threading
 from typing import List
 
 from data_model import ProductModel as Pm
+from domain.commerce_system.category import Category
 
 
 class Product:
@@ -23,7 +24,7 @@ class Product:
         self.description = description
         self._quantity = 0
         self.set_quantity(quantity)
-        self.categories: List[str] = categories
+        self.categories: List[Category] = [Category(name) for name in categories]
         self.shop_id = shop_id
 
     def to_dict(self):
@@ -33,7 +34,7 @@ class Product:
             Pm.PRODUCT_DESC: self.description,
             Pm.PRICE: self.price,
             Pm.QUANTITY: self._quantity,
-            Pm.CATEGORIES: self.categories,
+            Pm.CATEGORIES: [category.name for category in self.categories],
             Pm.SHOP_ID: self.shop_id
         }
 
