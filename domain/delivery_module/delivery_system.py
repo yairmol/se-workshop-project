@@ -20,7 +20,7 @@ class IDeliveryFacade:
     @staticmethod
     def get_delivery_facade() -> IDeliveryFacade:
         if not IDeliveryFacade.__instance:
-            IDeliveryFacade.__instance = DeliveryFacadeWSEP()
+            IDeliveryFacade.__instance = IDeliveryFacade.delivery_facade_from_config()
         return IDeliveryFacade.__instance
 
     def deliver_to(self, contact_details: dict = None) -> Union[str, bool]:

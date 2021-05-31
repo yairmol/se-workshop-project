@@ -42,7 +42,7 @@ class DeliveryMock(IDeliveryFacade):
 
 
 class NotificationsMock(INotifications):
-    def send_notif(self, msg, client_id=-1, username=""):
+    def send_message(self, msg, client_id=-1, username=""):
         pass
 
     def send_error(self, msg, client_id=-1, username=""):
