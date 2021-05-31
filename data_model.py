@@ -26,6 +26,7 @@ class ProductModel:
     SHOP_ID = "shop_id"
     PURCHASE_TYPES = "purchase_types"
     PURCHASE_TYPE = "purchase_type"
+    PURCHASE_PRICE = "purchase_price"
 
 
 class TransactionModel:
@@ -80,9 +81,9 @@ class PurchaseTypes:
     PURCHASE_TYPE = "purchase_type"
     APPROVE = "approve"
     REJECT = "reject"
-    FOR_SUBS_ONLY = "for subs_only"
+    FOR_SUBS_ONLY = "for_subs_only"
     OFFER_MAKER = "offer_maker"
-    STATE = "offee_state"
+    STATE = "offer_state"
 
 
 class PurchaseTypeDict(TypedDict):

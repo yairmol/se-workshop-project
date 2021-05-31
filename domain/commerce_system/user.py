@@ -3,7 +3,7 @@ import threading
 from typing import List, Dict, Iterable
 
 from domain.commerce_system.appointment import Appointment, ShopOwner
-from domain.commerce_system.product import Product, PurchaseType
+from domain.commerce_system.product import Product, PurchaseType, PurchaseOffer
 from domain.commerce_system.purchase_conditions import Condition
 from domain.commerce_system.shop import Shop
 from domain.commerce_system.shopping_cart import ShoppingBag
@@ -135,6 +135,15 @@ class User:
     def reply_price_offer(self, shop: Shop, product_id: int, offer_maker: str, action: str) -> bool:
         return self.user_state.reply_price_offer(shop, product_id, offer_maker, action)
 
+    def change_product_purchase_type(self, shop: Shop, product_id: int, purchase_type_id: int, pt_args: dict) -> bool:
+        return self.cart.change_product_purchase_type(shop, product_id, purchase_type_id, pt_args)
+
+    def get_shop_info(self, shop: Shop):
+        self.user_state.get_shop_info(shop)
+
+    def get_offers(self, shop: Shop, product_id: int) -> List[PurchaseOffer]:
+        return self.user_state.get_offers(shop, product_id)
+
 
 class UserState:
     def get_name(self, userid=None) -> str:
@@ -247,6 +256,12 @@ class UserState:
 
     def reply_price_offer(self, shop: Shop, product_id: int, offer_maker: str, action: str) -> bool:
         raise Exception("User doesn't have permission to reply to a price offer")
+
+    def get_shop_info(self, shop: Shop):
+        return shop.to_dict()
+
+    def get_offers(self, shop: Shop, product_id: int) -> List[PurchaseOffer]:
+        raise Exception("user doesn't have permission to get offers")
 
 
 class Guest(UserState):
@@ -390,6 +405,9 @@ class Subscribed(UserState):
 
     def reply_price_offer(self, shop: Shop, product_id: int, offer_maker: str, action: str) -> bool:
         return self.get_appointment(shop).reply_price_offer(product_id, offer_maker, action)
+
+    def get_offers(self, shop: Shop, product_id: int) -> List[PurchaseOffer]:
+        return self.get_appointment(shop).get_offers(product_id)
 
 
 class SystemManager(Subscribed):

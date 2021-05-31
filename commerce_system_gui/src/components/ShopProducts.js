@@ -9,6 +9,7 @@ import ShopProduct from "./ShopProduct";
 import RemoveProductPopup from "./PopUps/RemoveProductPopup";
 import EditProductPopup from "./PopUps/EditProductPopup";
 import AddProductPopup from "./PopUps/AddProductPopup";
+import OffersPopup from "./PopUps/OffersPopup";
 
 const useStyles = makeStyles((theme) => ({
   mainFeaturedPost: {
@@ -67,6 +68,13 @@ export default function Products({shop_id, products, auth, permissions, reload})
     set_edit_product(true)
   }
 
+  const [product_for_offer, set_product_for_offer] = useState([])
+  const [open_offers, set_manage_offers] = useState(false)
+  const open_manage_offers = (product) => {
+    set_product_for_offer(product)
+    set_manage_offers(true)
+  }
+
   // for removing product
   const [product_for_remove, set_product_for_remove] = useState([])
   const [open_remove_product, set_remove_product] = useState(false)
@@ -75,9 +83,9 @@ export default function Products({shop_id, products, auth, permissions, reload})
     set_remove_product(true)
   }
 
-  const edit_product_func = (product_id, name, price, description, categories) => {
+  const edit_product_func = (product_id, name, price, description, categories, purchaseTypes) => {
     auth.getToken().then((token) =>
-      edit_product(token, shop_id, product_id, name, price, description, categories).then((res) =>
+      edit_product(token, shop_id, product_id, name, price, description, categories, purchaseTypes).then((res) =>
         reload().then(_ => {
             if (res) {
               alert("Successfully Edited Product (product id = " + product_id + ")")
@@ -126,6 +134,7 @@ export default function Products({shop_id, products, auth, permissions, reload})
               permissions={permissions}
               edit_product_func={open_edit_product_window}
               remove_product_func={open_remove_product_window}
+              manage_offers_func={open_manage_offers}
               key={index} product={product}/></div>)
           : <Paper><Typography className={classes.empty_msg}/>Shop has no products</Paper>
         }
@@ -156,6 +165,8 @@ export default function Products({shop_id, products, auth, permissions, reload})
           add_product_func={add_product_func}
         />)
         : []}
+      {open_offers &&
+        <OffersPopup close={() => {set_manage_offers(false)}} shopId={shop_id} product={product_for_offer}/>}
     </>
   );
 }

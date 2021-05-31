@@ -35,14 +35,13 @@ class Product:
 
     def __init__(
             self, product_name: str, price: float, description: str = "",
-            quantity: int = 0, categories: List[str] = None, shop_id=None
+            quantity: int = 0, categories: List[str] = None, shop_id=None, image_url=None
     ):
         if categories is None:
             categories = []
-        Product.__id_lock.acquire()
-        self.product_id = Product.__product_id
-        Product.__product_id += 1
-        Product.__id_lock.release()
+        with Product.__id_lock:
+            self.product_id = Product.__product_id
+            Product.__product_id += 1
         self.product_name = product_name
         self.price = price
         self.description = description
@@ -50,6 +49,7 @@ class Product:
         self.set_quantity(quantity)
         self.categories: List[str] = categories
         self.shop_id = shop_id
+        self.image_url = image_url
         buy_now = BuyNow(self)
         self.purchase_types: Dict[int, PurchaseType] = {buy_now.id: buy_now}
 
@@ -64,7 +64,7 @@ class Product:
             Pm.SHOP_ID: self.shop_id,
         }
         if include_purchase_types:
-            ret[Pm.PURCHASE_TYPES] = [pt for pt in self.purchase_types]
+            ret[Pm.PURCHASE_TYPES] = [pt.to_dict() for pt in self.purchase_types.values()]
         return ret
 
     def set_quantity(self, new_quantity):
@@ -110,6 +110,24 @@ class Product:
 
     def get_purchase_type(self, purchase_type_id: int) -> PurchaseType:
         return self.purchase_types[purchase_type_id]
+
+    def set_purchase_types(self, purchase_types: list):
+        to_remove = []
+        for ptid, pt in self.purchase_types.items():
+            if all("id" not in other_pt or other_pt["id"] != ptid for other_pt in purchase_types):
+                to_remove.append(ptid)
+        for ptid in to_remove:
+            self.purchase_types.pop(ptid)
+        for pt in purchase_types:
+            if "id" not in pt or all(other_pt != pt["id"] for other_pt in self.purchase_types.keys()):
+                self.add_purchase_type(pt)
+
+    def get_offers(self) -> List[PurchaseOffer]:
+        try:
+            pt_offer = self.get_purchase_type_of_type(PurchaseOfferType)
+            return list(pt_offer.offers.values())
+        except AssertionError:
+            return []
 
 
 class ProductInBag:
@@ -168,7 +186,9 @@ class PurchaseOfferType(PurchaseType):
         self.offers: Dict[str, PurchaseOffer] = {}
 
     def offer_price(self, offer_maker: str, offer: float) -> bool:
-        assert offer_maker not in self.offers, "Can't make two simultaneous offers for the same product"
+        # we can allow re offers
+        # assert offer_maker not in self.offers  self.offers[offer_maker].offer_state == OfferState.REJECTED,\
+        #     "Can't make two simultaneous offers for the same product"
         self.offers[offer_maker] = PurchaseOffer(offer_maker, offer)
         return True
 

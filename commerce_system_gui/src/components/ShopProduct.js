@@ -60,7 +60,7 @@ const useStyles = makeStyles((theme) => ({
     }
 }));
 
-export default function Product({product, remove_product_func, edit_product_func, permissions}) {
+export default function Product({product, remove_product_func, edit_product_func, manage_offers_func, permissions}) {
     const classes = useStyles();
     const [expanded, setExpanded] = useState(false);
     const onChange = () => {
@@ -134,6 +134,12 @@ export default function Product({product, remove_product_func, edit_product_func
                             </Tooltip>
                         </Grid>
                     }
+                    <Grid item align="center" style={{padding: '5px'}}>
+                        <Button disabled={permissions.purchase_types} onClick={() => {manage_offers_func(product)}}
+                                size="small" className={classes.button} variant="contained" color="primary">
+                            Manage Offers
+                        </Button>
+                    </Grid>
                 </Grid>
             </AccordionDetails>
         </Accordion>

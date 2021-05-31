@@ -3,7 +3,7 @@ from __future__ import annotations
 import threading
 from typing import List, Dict
 
-from domain.commerce_system.product import Product, PurchaseType
+from domain.commerce_system.product import Product, PurchaseType, PurchaseOffer
 from domain.commerce_system.purchase_conditions import Condition
 from domain.commerce_system.shop import Shop
 from domain.commerce_system.transaction import Transaction
@@ -94,6 +94,9 @@ class Appointment:
 
     def reply_price_offer(self, product_id: int, offer_maker: str, action: str) -> bool:
         raise Exception("Cannot reply to price offer")
+
+    def get_offers(self, product_id: int) -> List[PurchaseOffer]:
+        raise NotImplementedError()
 
 
 class ShopManager(Appointment):
@@ -204,6 +207,10 @@ class ShopManager(Appointment):
     def reply_price_offer(self, product_id: int, offer_maker: str, action: str) -> bool:
         assert self.purchase_type_permission, "manager user does not have permission to manage purchase types"
         return self.shop.reply_price_offer(product_id, offer_maker, action)
+
+    def get_offers(self, product_id: int) -> List[PurchaseOffer]:
+        assert self.purchase_type_permission, "manager user does not have permission to manage purchase types"
+        return self.shop.products[product_id].get_offers()
 
 
 class ShopOwner(Appointment):
@@ -354,3 +361,6 @@ class ShopOwner(Appointment):
 
     def reply_price_offer(self, product_id: int, offer_maker: str, action: str) -> bool:
         return self.shop.reply_price_offer(product_id, offer_maker, action)
+
+    def get_offers(self, product_id: int) -> List[PurchaseOffer]:
+        return self.shop.products[product_id].get_offers()

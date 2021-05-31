@@ -4,7 +4,7 @@ from typing import Tuple, List, Dict, Union
 from config.config import config, ConfigFields as cf
 from domain.delivery_module.delivery_system import IDeliveryFacade, DeliveryFacadeAlwaysTrue
 from domain.payment_module.payment_system import IPaymentsFacade, PaymentsFacadeAlwaysTrue
-from test_data import users, shops, permissions, products, payment_details
+from .test_data import users, shops, permissions, products, payment_details
 from service.system_service import SystemService
 from data_model import UserModel as Um
 

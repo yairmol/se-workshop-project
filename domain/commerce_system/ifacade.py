@@ -38,7 +38,7 @@ class ICommerceSystemFacade:
         raise NotImplementedError()
 
     # 2.5
-    def get_shop_info(self, shop_id: int) -> dict:
+    def get_shop_info(self, user_id: int, shop_id: int) -> dict:
         """
         returns a dictionary with shop information such as shop_name, products etc.
         """
@@ -183,7 +183,7 @@ class ICommerceSystemFacade:
     def edit_product_info(
             self, user_id: int, shop_id: int, product_id: int,
             product_name: str, description: str, price: float,
-            quantity: int, categories: List[str]
+            quantity: int, categories: List[str], purchase_types: list
     ) -> bool:
         """
         edit the product info of a product identified by product_id in shop identified by shop_id.

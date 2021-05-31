@@ -6,7 +6,7 @@ import {
   DialogContent,
   DialogTitle,
   FormControlLabel,
-  FormGroup, InputAdornment, TextField
+  FormGroup, InputAdornment, TextField, Typography
 } from "@material-ui/core";
 import Button from "@material-ui/core/Button";
 import NumberFormat from 'react-number-format';
@@ -51,6 +51,10 @@ export default function EditProductPopup({product, close_window_func, edit_produ
   const [price, setPrice] = useState(product.price);
   const [description, setDescription] = useState(product.description);
   const [categories, setCategories] = useState(product.categories);
+  const [purchaseTypes, setPurchaseTypes] = useState(
+    product.purchase_types.reduce((d, pt) => ({...d, [pt.purchase_type]: true}), {})
+  )
+  // alert(JSON.stringify(purchaseTypes))
 
   const set_categories = (category_str) => {
     let categories_lst = category_str.split(',');
@@ -77,10 +81,29 @@ export default function EditProductPopup({product, close_window_func, edit_produ
     /*
     CALL FOR SET PERMISSIONS
      */
-    alert(`${[product.product_id, name, price, description, categories]}`)
-    edit_product_func(product.product_id, name, price, description, categories)
+    const ptDIct = product.purchase_types.reduce((d, pt) => ({...d, [pt.purchase_type]: pt}), {})
+    const purchaseTypesList = Object.keys(purchaseTypes).reduce((pts, key) =>
+      purchaseTypes[key] ?
+        key in ptDIct ? [...pts, ptDIct[key]] : [...pts, {purchase_type: key}]
+        : pts
+      , [])
+    alert(`${[product.product_id, name, price, description, categories, purchaseTypesList]}`)
+    edit_product_func(product.product_id, name, price, description, categories, purchaseTypesList)
     handleClose()
   }
+
+  const onPTChange = (e) => {
+    let newPurchaseTypes = {...purchaseTypes}
+    newPurchaseTypes[e.target.name] = e.target.checked
+    const numPt = Object.keys(newPurchaseTypes).reduce((a, key) => newPurchaseTypes[key] ? a + 1: a, 0)
+    if (numPt === 0){
+      alert("product must have at least one purchase type")
+    } else {
+      setPurchaseTypes(newPurchaseTypes)
+    }
+  }
+
+  const hasPT = (pts, ptt) => pts[ptt]
 
   return (
     <div>
@@ -105,6 +128,17 @@ export default function EditProductPopup({product, close_window_func, edit_produ
             <TextField autoFocus margin="dense" id="name" label="categories" fullWidth
                        defaultValue={get_categories()}
                        onChange={(e) => set_categories(e.target.value)}/>
+          <FormGroup>
+            <Typography>Purchase Types</Typography>
+            <FormControlLabel
+              control={<Checkbox checked={hasPT(purchaseTypes, "buy_now")} onChange={onPTChange} name="buy_now" />}
+              label="Buy Now"
+            />
+            <FormControlLabel
+              control={<Checkbox checked={hasPT(purchaseTypes, "offer")} onChange={onPTChange} name="offer" />}
+              label="Price Offer"
+            />
+          </FormGroup>
         </form>
         </DialogContent>
         <DialogActions>

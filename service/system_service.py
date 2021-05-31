@@ -30,8 +30,10 @@ def handler(func):
                 user_id = self.tokenizer.get_id_by_token(token)
                 return func(self, user_id, *args, **kwargs)
             except AssertionError as e:
+                print("assdertion", e)
                 return handle_assertion(e)
             except Exception as e:
+                print("errpor", e)
                 return handle_exception(e)
         return make_status_dict(False, "Invalid Token", "")
 
@@ -117,7 +119,12 @@ class SystemService:
     @handler
     def get_shop_info(self, user_id: int, shop_id: int) -> dict:
         event_logger.info(f"user_sess {user_id} requested for shop {shop_id} information")
-        return make_status_dict(True, "", self.commerce_system_facade.get_shop_info(shop_id))
+        return make_status_dict(True, "", self.commerce_system_facade.get_shop_info(user_id, shop_id))
+
+    @handler
+    def get_offers(self, user_id: int, shop_id: int, product_id) -> dict:
+        event_logger.info(f"user_sess {user_id} requested for shop {product_id} offers")
+        return make_status_dict(True, "", self.commerce_system_facade.get_offers(user_id, shop_id, product_id))
 
     @handler
     def get_all_shops_info(self, user_id: int) -> dict:
@@ -152,6 +159,15 @@ class SystemService:
         )
         event_logger.info(f"User: {user_id} successfully save the product {product_id}")
         return make_status_dict(True, "", "")
+
+    @handler
+    def change_product_purchase_type(self, user_id: int, shop_id: int, product_id: int, purchase_type_id: int,
+                                     **pt_args):
+        event_logger.info(f" User {user_id} tries to change {product_id} purchase type")
+        res = self.commerce_system_facade.change_product_purchase_type(
+            user_id, shop_id, product_id, purchase_type_id, pt_args
+        )
+        return make_status_dict(True, "", res)
 
     # 2.8
     @handler
@@ -239,12 +255,13 @@ class SystemService:
     def edit_product_info(
             self, user_id: int, shop_id: int, product_id: int,
             product_name: str = None, description: str = None,
-            price: float = None, quantity: int = None, categories: List[str] = None
+            price: float = None, quantity: int = None, categories: List[str] = None,
+            purchase_types = None
     ) -> dict:
         event_logger.info(f"User: {user_id} tries to edit product info of "
                           f"shop_id: {shop_id} product_id: {product_id}")
         self.commerce_system_facade.edit_product_info(
-            user_id, shop_id, product_id, product_name, description, price, quantity, categories
+            user_id, shop_id, product_id, product_name, description, price, quantity, categories, purchase_types
         )
         event_logger.info(f"User: {user_id} Edit product info successfully")
         return make_status_dict(True, "", "")

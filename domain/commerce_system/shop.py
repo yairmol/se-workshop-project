@@ -81,6 +81,9 @@ class Shop:
                 if field == "quantity":
                     product.set_quantity(new_value)
                     continue
+                if field == "purchase_types":
+                    product.set_purchase_types(new_value)
+                    continue
                 if not hasattr(product, field):
                     raise Exception("product has no field ", field)
                 setattr(product, field, new_value)

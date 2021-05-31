@@ -50,13 +50,13 @@ class IntegrationTests(unittest.TestCase):
     def test_appoint_manager(self):
         self.facade.login(self.user_id1, self.username1, self.password)
         shop_id = self.facade.open_shop(self.user_id1, **shop_dict)
-        self.facade.get_shop_info(shop_id)
+        self.facade.get_shop_info(shop_id, )
         self.facade.appoint_shop_manager(self.user_id1, shop_id, self.username2, all_permissions)
 
     def test_add_product2(self):
         self.facade.login(self.user_id1, self.username1, self.password)
         shop_id = self.facade.open_shop(self.user_id1, **shop_dict)
-        self.facade.get_shop_info(shop_id)
+        self.facade.get_shop_info(shop_id, )
         self.facade.add_product_to_shop(self.user_id1, shop_id, **product1_dict)
         self.facade.appoint_shop_manager(self.user_id1, shop_id, self.username2, all_permissions)
         self.facade.login(self.user_id2, self.username2, self.password)
@@ -65,7 +65,7 @@ class IntegrationTests(unittest.TestCase):
     def test_delete_product(self):
         self.facade.login(self.user_id1, self.username1, self.password)
         shop_id = self.facade.open_shop(self.user_id1, **shop_dict)
-        self.facade.get_shop_info(shop_id)
+        self.facade.get_shop_info(shop_id, )
         product_id = self.facade.add_product_to_shop(self.user_id1, shop_id, **product1_dict)
         self.facade.delete_product(self.user_id1, shop_id, product_id)
 

@@ -124,6 +124,14 @@ class ShoppingBag:
     def cancel_transaction(transaction):
         transaction.cancel_transaction()
 
+    def change_product_purchase_type(self, product: Product, purchase_type_id: int, pt_args: dict) -> bool:
+        assert purchase_type_id in product.purchase_types, "purchase type doesn't exist"
+        # if we can get the price then it is valid for the cart owner to set this purchase type.
+        product.purchase_types[purchase_type_id].get_price(**pt_args)
+        self.products[product].purchase_type = product.purchase_types[purchase_type_id]
+        self.products[product].purchase_type_args = pt_args
+        return True
+
 
 class ShoppingCart:
     def __init__(self, cart_id):
@@ -197,3 +205,7 @@ class ShoppingCart:
         actions = ActionPool(actions)
         assert actions.execute_actions(do_what_you_can)
         return actions.get_return_values()[:-1]
+
+    def change_product_purchase_type(self, shop, product_id: int, purchase_type_id: int, pt_args: dict) -> bool:
+        product = shop.products[product_id]
+        return self.shopping_bags[shop].change_product_purchase_type(product, purchase_type_id, pt_args)

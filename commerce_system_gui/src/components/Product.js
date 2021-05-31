@@ -1,5 +1,12 @@
 import {useEffect, useState} from "react";
-import {delete_product, edit_product, get_permissions, get_product_info, save_product_to_cart} from "../api";
+import {
+  delete_product,
+  edit_product,
+  get_permissions,
+  get_product_info,
+  make_offer,
+  save_product_to_cart
+} from "../api";
 import React from "react";
 import {
   useParams, Link as RouteLink
@@ -7,7 +14,17 @@ import {
 import {useAuth} from "./use-auth";
 import Button from "@material-ui/core/Button";
 import {makeStyles} from '@material-ui/core/styles';
-import {Paper, TextField} from "@material-ui/core";
+import {
+  Checkbox,
+  Dialog, DialogActions,
+  DialogContent,
+  DialogTitle,
+  FormControlLabel,
+  FormGroup,
+  InputAdornment,
+  Paper,
+  TextField
+} from "@material-ui/core";
 import Typography from "@material-ui/core/Typography";
 import Grid from "@material-ui/core/Grid";
 
@@ -25,6 +42,51 @@ const useStyles = makeStyles((theme) => ({
   }
 }));
 
+
+const OfferPriceDialog = ({shopId, product, close}) => {
+  const [price, setPrice] = useState(0);
+  const auth = useAuth();
+
+  const onSubmit = () => {
+    alert('here')
+    auth.getToken().then((token) => make_offer(token, shopId, product.product_id, price)).then((res) => {
+      if (res) {
+        alert('offer successfully made')
+      }
+    })
+    close()
+  }
+
+  return (<div>
+      <Dialog
+        open={true}
+        onClose={close}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+      >
+        <DialogTitle id="alert-dialog-title">
+          Offer Price for Product {product.product_name}
+        </DialogTitle>
+        <DialogContent>
+        <form autoComplete="off">
+            <TextField autoFocus margin="dense" id="price" label="Offered Price" fullWidth value={price}
+                       onChange={(e) => setPrice(parseInt(e.target.value))} />
+        </form>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={onSubmit} color="primary">
+            Done
+          </Button>
+          <Button onClick={close} color="primary">
+            Cancel
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </div>
+  );
+}
+
+
 export const Product = ({shop_name}) => {
   const classes = useStyles();
   const auth = useAuth()
@@ -38,6 +100,12 @@ export const Product = ({shop_name}) => {
   const [loaded, setLoaded] = useState(false);
   const [description, setDescription] = useState(product.description);
   const [categories, setCategories] = useState(product.categories);
+  const [purchaseTypeDialogOpen, setPTDOpen] = useState(false);
+
+  const purchaseTypes = {
+    'offer': {label: 'Make Offer', action: () => setPTDOpen(true)},
+    'buy_now': {label: 'Buy Now', action: () => {}},
+  }
 
   useEffect(async () => {
     if (!loaded) {
@@ -79,6 +147,10 @@ export const Product = ({shop_name}) => {
     })
   }
 
+  const onPurchaseTypeClick = (pt) => {
+    purchaseTypes[pt].action()
+  }
+
 
   return (loaded &&
     <form>
@@ -91,14 +163,26 @@ export const Product = ({shop_name}) => {
               <Grid item><Typography>Description: {product.description}</Typography></Grid>
               <Grid item><Typography>Categories: {product.categories}</Typography></Grid>
               <Grid item><Button onClick={onSubmitBuy} variant="outlined" color="primary">Add to Cart</Button></Grid>
-            {/*  <Grid item>*/}
-            {/*    <Grid container direction="row">*/}
-            {/*      {permissions.edit ? <Button onClick={onSubmitEdit} variant="outlined" color="primary">*/}
-            {/*        Edit Product </Button> : <> </>}*/}
-            {/*      {permissions.delete ? <Button onClick={onSubmitDelete} variant="outlined" color="primary" href="/">*/}
-            {/*        Delete Product </Button> : <> </>}*/}
-            {/*    </Grid>*/}
-            {/*  </Grid>*/}
+              {product.purchase_types
+                .filter((pt) => !pt.for_subs_only || auth.user)
+                .map((pt) =>
+                  <Grid item>
+                    <Button onClick={(e) => onPurchaseTypeClick(pt.purchase_type)}
+                            name={pt.purchase_type} variant="outlined" color="primary">
+                      {purchaseTypes[pt.purchase_type].label}
+                    </Button>
+                  </Grid>)
+              }
+              {purchaseTypeDialogOpen &&
+              <OfferPriceDialog shopId={shop_id} product={product} close={(e) => setPTDOpen(false)}/>}
+              {/*  <Grid item>*/}
+              {/*    <Grid container direction="row">*/}
+              {/*      {permissions.edit ? <Button onClick={onSubmitEdit} variant="outlined" color="primary">*/}
+              {/*        Edit Product </Button> : <> </>}*/}
+              {/*      {permissions.delete ? <Button onClick={onSubmitDelete} variant="outlined" color="primary" href="/">*/}
+              {/*        Delete Product </Button> : <> </>}*/}
+              {/*    </Grid>*/}
+              {/*  </Grid>*/}
             </Grid>
           </Grid>
         </Grid>

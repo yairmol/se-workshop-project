@@ -1,4 +1,13 @@
-import {Button, CircularProgress, IconButton, TextField, Link as MUILink} from "@material-ui/core";
+import {
+  Button,
+  CircularProgress,
+  TextField,
+  IconButton,
+  Link as MUILink,
+  InputLabel,
+  Select,
+  MenuItem, FormControl
+} from "@material-ui/core";
 import React, {useEffect, useState} from "react";
 import {makeStyles} from '@material-ui/core/styles';
 import Accordion from '@material-ui/core/Accordion';
@@ -16,22 +25,38 @@ import TableContainer from '@material-ui/core/TableContainer';
 import TableHead from '@material-ui/core/TableHead';
 import TablePagination from '@material-ui/core/TablePagination';
 import TableRow from '@material-ui/core/TableRow';
-import {get_cart_info, remove_product_from_cart, save_product_to_cart} from "../api";
+import {change_purchase_type, get_cart_info, remove_product_from_cart, save_product_to_cart} from "../api";
 import {useAuth} from "./use-auth";
 import RemoveCircleOutlineIcon from '@material-ui/icons/RemoveCircleOutline';
 import {Link as RouteLink} from "react-router-dom";
 
+
+const purchase_types_map = {
+  'buy_now': 'Buy Now',
+  'offer': 'Price Offer',
+}
+
+
 const columns = [
-  {id: 'product_name', label: 'Name'},
+  {id: 'product_name', label: 'Name', getter: (p) => p['product_name']},
   {
     id: 'description',
     label: 'Description',
+    getter: (p) => p['description']
     // minWidth: 170,
     // align: 'right',
   },
   {
     id: 'price',
-    label: 'Price',
+    label: 'Base Price',
+    getter: (p) => p['price']
+    // minWidth: 170,
+    // align: 'right',
+  },
+  {
+    id: 'purchase_price',
+    label: 'Purchasing Price',
+    getter: (p) => p['purchase_price']
     // minWidth: 170,
     // align: 'right',
   },
@@ -39,8 +64,10 @@ const columns = [
     id: 'amount',
     label: 'Quantity',
     minWidth: 170,
+    getter: (p) => p['amount']
     // align: 'right',
   },
+  {id: 'purchase_type', label: 'Purchase Type', getter: (p) => p.purchase_type.purchase_type}
 ];
 
 const cart_info = {
@@ -128,12 +155,17 @@ const useStyles = makeStyles((theme) => ({
       textDecoration: 'underline',
     },
   },
+  formControl: {
+    margin: theme.spacing(1),
+    minWidth: 160,
+  },
 }));
 
-function StickyHeadProductsTable({products, onProductChange, onRemoveProduct}) {
+function StickyHeadProductsTable({products, onProductChange, onRemoveProduct, onProductPTChange}) {
   const classes = useStyles();
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  const auth = useAuth();
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
@@ -144,7 +176,7 @@ function StickyHeadProductsTable({products, onProductChange, onRemoveProduct}) {
     setPage(0);
   };
 
-  // alert(JSON.stringify(products));
+  alert(JSON.stringify(products));
 
   return (
     <Paper className={classes.root}>
@@ -165,17 +197,29 @@ function StickyHeadProductsTable({products, onProductChange, onRemoveProduct}) {
             </TableRow>
           </TableHead>
           <TableBody>
-            {products.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((product) => {
-              return (
+            {products.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((product) =>
                 <TableRow hover role="checkbox" tabIndex={-1} key={product.product_id}>
                   {columns.map((column) => {
-                    const value = product[column.id];
+                    const value = column.getter(product);
                     return (
                       <TableCell key={column.id} align={column.align}>
                         {column.id === "amount" ?
                           <TextField id="standard-number" label="Number" type="number" value={value}
                                      onChange={(event) =>
                                        onProductChange(product.product_id, event.target.value)}/> :
+                           column.id === "purchase_type" ?
+                             <FormControl required className={classes.formControl}>
+                              <InputLabel id="purchase-type-label">{column.label}</InputLabel>
+                              <Select labelId="purchase-type-label"
+                                      id={column.id} label={column.label} name={column.id}
+                                      onChange={(e) =>
+                                        onProductPTChange(product.product_id, e.target.value)} value={value}>
+                                {product.purchase_types.filter((pt) => !pt.for_subs_only || auth.user).map((pt) =>
+                                  <MenuItem selected={pt.purchase_type === value} value={pt.purchase_type}>
+                                    {purchase_types_map[pt.purchase_type]}
+                                  </MenuItem>)}
+                              </Select>
+                            </FormControl> :
                           column.format && typeof value === 'number' ? column.format(value) : value
                         }
                       </TableCell>
@@ -187,8 +231,7 @@ function StickyHeadProductsTable({products, onProductChange, onRemoveProduct}) {
                     </IconButton>
                   </TableCell>
                 </TableRow>
-              );
-            })}
+            )}
           </TableBody>
         </Table>
       </TableContainer>
@@ -203,12 +246,6 @@ function StickyHeadProductsTable({products, onProductChange, onRemoveProduct}) {
       />
     </Paper>
   );
-}
-
-const ProductView = () => {
-  return (
-    <></>
-  )
 }
 
 const ShoppingBagView = ({shopId, shoppingBag, refresh}) => {
@@ -241,6 +278,12 @@ const ShoppingBagView = ({shopId, shoppingBag, refresh}) => {
           func = remove_product_from_cart;
         }
         await func(await auth.getToken(), shopId, products[j].product_id, Math.abs(additional_amount));
+        if (products[j].purchase_type.purchase_type !== shoppingBag.products[i].purchase_type.purchase_type){
+          const pt_args = products[j].purchase_type.purchase_type === 'offer' ? {offer_maker: auth.user} : {}
+          await auth.getToken().then((token) =>
+            change_purchase_type(token, shopId, products[j].product_id, products[j].purchase_type.id, pt_args)
+          )
+        }
         j++
       }
     }
@@ -262,6 +305,18 @@ const ShoppingBagView = ({shopId, shoppingBag, refresh}) => {
     }
     let product = productsState[product_idx]
     product.amount = val;
+    setProducts([
+      ...productsState.slice(0, product_idx),
+      product,
+      ...productsState.slice(product_idx + 1)
+    ])
+    setEdited(productsState !== shoppingBag.products);
+  }
+
+  const onProductPTChange = (prod_id, pt) => {
+    const product_idx = productsState.findIndex((p) => p.product_id === prod_id);
+    let product = {...productsState[product_idx]}
+    product.purchase_type = product.purchase_types.find((other_pt) => other_pt.purchase_type === pt);
     setProducts([
       ...productsState.slice(0, product_idx),
       product,
@@ -318,7 +373,7 @@ const ShoppingBagView = ({shopId, shoppingBag, refresh}) => {
         <AccordionDetails className={classes.details}>
             {productsState.length > 0 ?
                 <StickyHeadProductsTable products={productsState} onProductChange={onProductChange}
-                                         onRemoveProduct={onRemoveProduct}/>
+                                         onProductPTChange={onProductPTChange} onRemoveProduct={onRemoveProduct}/>
                 : <Typography>Shopping bag is empty</Typography>}
         </AccordionDetails>
         <Divider/>
