@@ -101,7 +101,7 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         cats = set()
         for shop in self.shops.values():
             for prod in shop.products.values():
-                cats.update(prod.categories)
+                cats.update(prod.get_category_names())
         return list(cats)
 
     # 2.6

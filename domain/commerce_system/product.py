@@ -45,3 +45,6 @@ class Product:
 
     def get_quantity(self):
         return self._quantity
+
+    def get_category_names(self):
+        return [category.name for category in self.categories]

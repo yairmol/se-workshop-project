@@ -14,7 +14,7 @@ def calculate_total_sum(products: Dict[Product, int]) -> float:
 def calculate_category_sum(products: Dict[Product, int], category: str) -> float:
     sum = 0
     for product in products:
-        if product.categories.__contains__(category):
+        if product.get_category_names().__contains__(category):
             sum += product.price * products[product]
     return sum
 
@@ -91,7 +91,7 @@ class CategoryQuantityCondition(QuantitySimpleCondition):
     def resolve(self, products: Dict[Product, int]) -> bool:
         quantity = 0
         for product in products:
-            if product.categories.__contains__(self.conditioned_category):
+            if product.get_category_names().__contains__(self.conditioned_category):
                 quantity += products[product]
         return quantity >= self.min_category_quantity
 

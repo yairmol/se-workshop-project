@@ -33,7 +33,7 @@ class SearchEngineTests(unittest.TestCase):
         self.assertFalse(is_similar_words("osem", "elit"))
 
     def test_search_by_category(self):
-        self.assertEqual(search_by_categories(products, products[1].categories), [products[1]])
+        self.assertEqual(search_by_categories(products, products[1].get_category_names()), [products[1]])
         self.assertEqual(search_by_categories(products, ["furniters"]), [products[1]])
         self.assertEqual(search_by_categories(products, ["future"]), [])
 
