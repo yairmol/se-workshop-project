@@ -1,11 +1,15 @@
+import copy
 import unittest
 from unittest import TestCase
 import threading as th
 
 from domain.discount_module.discount_management import DiscountDict, SimpleCond
 from driver import Driver
-from test_data import users, shops, products, permissions, payment_details, simple_condition_dict, delivery_details, \
-    offer_purchase_type_dict
+from service.init_dict import InitDict
+from test_data import (
+    users, shops, products, permissions, payment_details, simple_condition_dict, delivery_details,
+    init_enter_register_login, additional_actions, additional_users, offer_purchase_type_dict
+)
 from test_utils import (
     enter_register_and_login, add_product, make_purchases, register_login_users,
     open_shops, add_products, appoint_owners_and_managers, shop_to_products,
@@ -17,7 +21,7 @@ from data_model import (
     PermissionsModel as PermM, PurchaseTypes as Pt
 )
 from config.config import load_config
-
+import init_generator as ig
 
 TESTS_CONFIG_PATH = "./acceptance-tests-config.json"
 
@@ -1095,6 +1099,117 @@ class ParallelismTests(TestCase):
         self.run_parallel_test(u1, u2)
         self.assertTrue(any(results))
         self.assertFalse(all(results))
+
+
+class TestInit(unittest.TestCase):
+    def setUp(self) -> None:
+        self.service = Driver.get_system_service()
+
+    def test_init_enter_register_login(self):
+        bindings = self.service.init(init_enter_register_login)
+        self.assertIsNotNone(bindings["u1"])
+        self.assertTrue(self.service.logout(bindings["u1"])["status"])
+
+    def test_init_with_ref(self):
+        init: InitDict = copy.deepcopy(init_enter_register_login)
+        init["actions"].extend([
+            {
+                "action": "open_shop",
+                "user": "u1",
+                "params": {
+                    "shop_name": "shop1",
+                    "description": "the one and only shop in the entire commerce system"
+                },
+                "ref_id": "s1"
+            },
+            {
+                "action": "add_product_to_shop",
+                "user": "u1",
+                "params": {
+                    "shop_id": {
+                        "ref": "s1"
+                    },
+                    "product_name": "Bamba",
+                    "description": "Its Osem",
+                    "categories": [
+                        "snacks"
+                    ],
+                    "price": 30,
+                    "quantity": 20
+                },
+                "ref_id": "p1"
+            },
+        ])
+        bindings = self.service.init(init)
+        self.assertIsNotNone(bindings["s1"])
+        self.assertIsNotNone(bindings["p1"])
+        ret = self.service.get_product_info(bindings["u1"], bindings["s1"], bindings["p1"])
+        self.assertTrue(ret["status"])
+        p = ret["result"]
+        self.assertEqual(p["product_name"], "Bamba")
+
+    def test_init_bad(self):
+        self.assertRaises(Exception, self.service.init, {})
+
+    def test_init_bad_no_ref(self):
+        init: InitDict = copy.deepcopy(init_enter_register_login)
+        init["actions"].extend([
+            {
+                "action": "open_shop",
+                "user": "u1",
+                "params": {
+                    "shop_name": "shop1",
+                    "description": "the one and only shop in the entire commerce system"
+                },
+            },
+            {
+                "action": "add_product_to_shop",
+                "user": "u1",
+                "params": {
+                    "shop_id": {
+                        "ref": "s1"
+                    },
+                    "product_name": "Bamba",
+                    "description": "Its Osem",
+                    "categories": [
+                        "snacks"
+                    ],
+                    "price": 30,
+                    "quantity": 20
+                },
+                "ref_id": "p1"
+            },
+        ])
+        self.assertRaises(Exception, self.service.init, init)
+
+    def test_init_many_actions(self):
+        init: InitDict = copy.deepcopy(init_enter_register_login)
+        init["actions"].extend(additional_actions)
+        init["users"].extend(additional_users)
+        bindings = self.service.init(init)
+        for key in [*init["users"], "s1", "p1"]:
+            self.assertIn(key, bindings)
+        transactions = self.service.get_personal_purchase_history(bindings["u2"])["result"]
+        self.assertEqual(len(transactions), 1)
+
+    def test_init_bad_sequence(self):
+        init = {
+            "users": ["u1"],
+            "actions": [
+                ig.register("u1", "user1", "password")
+            ]
+        }
+        self.assertRaises(Exception, self.service.init, init)
+
+    def test_init_bad_sequence_2(self):
+        init = {
+            "users": ["u1"],
+            "actions": [
+                ig.enter("u1"),
+                ig.login("u1", "user1", "password"),
+            ]
+        }
+        self.assertRaises(Exception, self.service.init, init)
 
 
 if __name__ == "__main__":
