@@ -94,7 +94,7 @@ class TimeWindowForCategoryCondition(CategoryCondition):
     def resolve(self, products: Dict[Product, int]) -> bool:
         cur_time = datetime.now().time()
         for product in products:
-            if product.categories.__contains__(self.category):
+            if product.get_category_names().__contains__(self.category):
                 if cur_time > self.max_time or cur_time < self.min_time:
                     return False
         return True
@@ -148,7 +148,7 @@ class DateWindowForCategoryCondition(CategoryCondition):
     def resolve(self, products: Dict[Product, int]) -> bool:
         cur_date = datetime.now()
         for product in products:
-            if product.categories.__contains__(self.category):
+            if product.get_category_names().__contains__(self.category):
                 if cur_date > self.max_date or cur_date < self.min_date:
                     return False
         return True
