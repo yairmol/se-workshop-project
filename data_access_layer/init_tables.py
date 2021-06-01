@@ -25,7 +25,7 @@ transaction = Table(
     'transaction',
     mapper_registry.metadata,
     Column('id', Integer, primary_key=True),
-    Column('username', String),
+    Column('username', String, ForeignKey('subscribed.username')),
     Column('shop_id', Integer),
     Column('date', DATE),
     Column('price', FLOAT),
@@ -108,7 +108,8 @@ shopping_bag = Table(
 )
 
 mapper_registry.map_imperatively(Subscribed, subscribed, properties={
-    "shoppingCart": relationship(ShoppingCart, backref='subscribed')
+    "shoppingCart": relationship(ShoppingCart, backref='subscribed'),
+    "transactions": relationship(Transaction, backref='subscribed')
 })
 mapper_registry.map_imperatively(Shop, shop, properties={
     "product": relationship(Product, backref='shop')
