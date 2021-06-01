@@ -79,8 +79,10 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         return self.active_users[user_id].to_dict()
 
     # 2.5
-    def get_shop_info(self, shop_id: int) -> dict:
+    def get_shop_info(self, user_id: int, shop_id: int) -> dict:
+        user = self.get_user(user_id)
         shop: Shop = self.shops[shop_id]
+        user.get_shop_info(shop)
         return shop.to_dict()
 
     def get_all_shop_info(self) -> List[dict]:
@@ -124,11 +126,12 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         return list(map(lambda p: p.to_dict(), search_results))
 
     # 2.7, 2.8
-    def save_product_to_cart(self, user_id: int, shop_id: int, product_id: int, amount_to_buy: int) -> bool:
+    def save_product_to_cart(self, user_id: int, shop_id: int, product_id: int, amount_to_buy: int,
+                             purchase_type_id=None, **pt_args) -> bool:
         user = self.get_user(user_id)
         shop = self.get_shop(shop_id)
         product = shop.products[product_id]
-        return user.save_product_to_cart(shop, product, amount_to_buy)
+        return user.save_product_to_cart(shop, product, amount_to_buy, purchase_type_id, **pt_args)
 
     # 2.8
     def remove_product_from_cart(self, user_id: int, shop_id: int, product_id: int, amount: int) -> bool:
@@ -191,13 +194,13 @@ class CommerceSystemFacade(ICommerceSystemFacade):
     def edit_product_info(
             self, user_id: int, shop_id: int, product_id: int,
             product_name: str, description: str, price: float,
-            quantity: int, categories: List[str]
+            quantity: int, categories: List[str], purchase_types: list
     ) -> bool:
         shop = self.get_shop(shop_id)
         worker = self.get_user(user_id).user_state
         to_edit = {key: value for key, value in [
             ("product_name", product_name), ("description", description),
-            ("price", price), ("quantity", quantity), ("categories", categories),
+            ("price", price), ("quantity", quantity), ("categories", categories), ("purchase_types", purchase_types)
         ] if value is not None}
         return worker.edit_product(shop, product_id, **to_edit)
 
@@ -401,8 +404,34 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         user = self.get_user(user_id)
         return [a.to_dict() for a in user.user_state.get_appointments()]
 
+    def add_purchase_type(self, user_id: int, shop_id: int, product_id: int, purchase_type_info: dict) -> int:
+        shop = self.get_shop(shop_id)
+        user = self.get_user(user_id)
+        return user.add_purchase_type(shop, product_id, purchase_type_info).id
+
+    def reply_price_offer(self, user_id: int, shop_id: int, product_id: int, offer_maker: str, action: str) -> bool:
+        shop = self.get_shop(shop_id)
+        user = self.get_user(user_id)
+        return user.reply_price_offer(shop, product_id, offer_maker, action)
+
+    def offer_price(self, user_id: int, shop_id: int, product_id: int, offer: float) -> bool:
+        shop = self.get_shop(shop_id)
+        user = self.get_user(user_id)
+        return user.offer_price(shop, product_id, offer)
+
     def clean_up(self):
         self.transaction_repo = self.transaction_repo.cleanup()
         self.shops.clear()
         self.registered_users.clear()
         self.active_users.clear()
+
+    def change_product_purchase_type(self, user_id: int, shop_id: int, product_id: int,
+                                     purchase_type_id: int, pt_args: dict) -> bool:
+        shop = self.get_shop(shop_id)
+        user = self.get_user(user_id)
+        return user.change_product_purchase_type(shop, product_id, purchase_type_id, pt_args)
+
+    def get_offers(self, user_id: int, shop_id: int, product_id: int):
+        user = self.get_user(user_id)
+        shop = self.get_shop(shop_id)
+        return [offer.to_dict() for offer in user.get_offers(shop, product_id)]

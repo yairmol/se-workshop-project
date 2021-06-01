@@ -121,6 +121,15 @@ def create_app(init=None):
     def get_all_shops_ids_and_names() -> dict:
         return __system_service.get_all_ids_and_names(request.args.get("token"))
 
+    @app.route(f'{API_BASE}/shops/<int:shop_id>/<int:product_id>/offers')
+    def get_offers(shop_id: int, product_id: int):
+        return __system_service.get_offers(token=request.args.get("token"), shop_id=shop_id, product_id=product_id)
+
+    @app.route(f'{API_BASE}/shops/<int:shop_id>/<int:product_id>/offers/<offer_maker>', methods=['PUT'])
+    def reply_to_offer(shop_id: int, product_id: int, offer_maker: str):
+        return apply_request_on_function(__system_service.reply_price_offer,
+                                         shop_id=shop_id, product_id=product_id, offer_maker=offer_maker)
+
     # 2.6
     @app.route(f'{API_BASE}/search', methods=["PUT"])
     def search_products() -> List[dict]:
@@ -151,6 +160,20 @@ def create_app(init=None):
                 __system_service.remove_product_from_cart,
                 shop_id=shop_id, product_id=product_id
             )
+
+    @app.route(f'{API_BASE}/cart/<int:shop_id>/<int:product_id>', methods=['PUT'])
+    def change_product_purchase_type(shop_id: int, product_id: int):
+        return apply_request_on_function(
+            __system_service.change_product_purchase_type,
+            shop_id=shop_id, product_id=product_id
+        )
+
+    @app.route(f'{API_BASE}/cart/<int:shop_id>/<int:product_id>/offer', methods=['POST'])
+    def make_offer(shop_id: int, product_id: int):
+        return apply_request_on_function(
+            __system_service.offer_price,
+            shop_id=shop_id, product_id=product_id
+        )
 
     # 2.9
     @app.route(f'{API_BASE}/cart/<int:shop_id>/<int:product_id>', methods=['POST'])

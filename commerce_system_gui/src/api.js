@@ -2,7 +2,7 @@
 const axios = require("axios");
 const urljoin = require('url-join');
 
-const host = "https://127.0.0.1"
+const host = "http://127.0.0.1"
 const port = 5000
 
 const host_port = `${host}:${port}`
@@ -271,7 +271,7 @@ export const get_permissions = (token, shop_id) => {
   }).catch((err) => alert(`failed to get user permissions due to ${err}`))
 }
 
-export const edit_product = (token, shop_id, product_id, name, price, description, categories) => {
+export const edit_product = (token, shop_id, product_id, name, price, description, categories, purchaseTypes) => {
   const url = `${base_route}/${routes.shops}/${shop_id}/${routes.products}/${product_id}`;
   return axios({
     method: "put",
@@ -281,7 +281,8 @@ export const edit_product = (token, shop_id, product_id, name, price, descriptio
       product_name: name,
       price: price,
       description: description,
-      categories: categories
+      categories: categories,
+      purchase_types: purchaseTypes,
     }
   }).then((res) => {
     if (res.data.status) {
@@ -776,4 +777,72 @@ export const remove_purchase_policy = (token, shop_id, policy_id) => {
       throw new Error(res.data.description)
     }
   }).catch((err) => alert(`failed to delete purchase policy due to ${err}`));
+}
+
+export const change_purchase_type = (token, shop_id, product_id, purchase_type_id, pt_args) => {
+  return axios({
+    method: "PUT",
+    url: `${base_route}/${routes.cart}/${shop_id}/${product_id}`,
+    data: {
+      token: token,
+      purchase_type_id: purchase_type_id,
+      ...pt_args
+    }
+  }).then((res) => {
+    if (res.data.status) {
+      return res.data.status
+    } else {
+      throw new Error(res.data.description)
+    }
+  }).catch((err) => alert(`failed to change purchase type due to ${err}`));
+}
+
+export const make_offer = (token, shop_id, product_id, offer) => {
+  return axios({
+    method: "POST",
+    url: `${base_route}/${routes.cart}/${shop_id}/${product_id}/offer`,
+    data: {
+      token: token,
+      offer: offer,
+    }
+  }).then((res) => {
+    if (res.data.status) {
+      return res.data.status
+    } else {
+      throw new Error(res.data.description)
+    }
+  }).catch((err) => alert(`failed to make price offer due to ${err}`));
+}
+
+export const get_offers = (token, shop_id, product_id) => {
+  return axios({
+    method: "GET",
+    url: `${base_route}/${routes.shops}/${shop_id}/${product_id}/offers`,
+    params: {
+      token: token,
+    }
+  }).then((res) => {
+    if (res.data.status) {
+      return res.data.result
+    } else {
+      throw new Error(res.data.description)
+    }
+  }).catch((err) => alert(`failed to get offers due to ${err}`));
+}
+
+export const reply_offer = (token, shop_id, product_id, offer_maker, action) => {
+  return axios({
+    method: "PUT",
+    url: `${base_route}/${routes.shops}/${shop_id}/${product_id}/offers/${offer_maker}`,
+    data: {
+      token: token,
+      action: action
+    }
+  }).then((res) => {
+    if (res.data.status) {
+      return res.data.status
+    } else {
+      throw new Error(res.data.description)
+    }
+  }).catch((err) => alert(`failed to ${action} offer by ${offer_maker} due to ${err}`));
 }
