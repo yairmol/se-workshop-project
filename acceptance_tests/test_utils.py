@@ -188,3 +188,17 @@ def admin_login(commerce_system: SystemService):
     admin_session = commerce_system.enter()["result"]
     commerce_system.login(admin_session, admin_username, admin_password)
     return admin_session
+
+
+class NotificationMock:
+    @staticmethod
+    def send_message(*args, **kwargs):
+        return True
+
+    @staticmethod
+    def send_error(*args, **kwargs):
+        return True
+
+    @staticmethod
+    def send_broadcast(*args, **kwargs):
+        return True

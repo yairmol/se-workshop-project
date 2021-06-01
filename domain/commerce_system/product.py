@@ -1,9 +1,10 @@
 from __future__ import annotations
 import threading
 from typing import List, Dict, TypeVar, Type
+from enum import Enum, auto
 
 from data_model import ProductModel as Pm, PurchaseTypes as Pt
-from enum import Enum, auto
+from domain.commerce_system.category import Category
 
 
 class PurchaseType:
@@ -47,7 +48,7 @@ class Product:
         self.description = description
         self._quantity = 0
         self.set_quantity(quantity)
-        self.categories: List[str] = categories
+        self.categories: List[Category] = [Category(name) for name in categories]
         self.shop_id = shop_id
         self.image_url = image_url
         buy_now = BuyNow(self)
@@ -60,7 +61,7 @@ class Product:
             Pm.PRODUCT_DESC: self.description,
             Pm.PRICE: self.price,
             Pm.QUANTITY: self._quantity,
-            Pm.CATEGORIES: self.categories,
+            Pm.CATEGORIES: [category.name for category in self.categories],
             Pm.SHOP_ID: self.shop_id,
         }
         if include_purchase_types:
@@ -75,6 +76,8 @@ class Product:
     def get_quantity(self):
         return self._quantity
 
+    def get_category_names(self):
+        return [category.name for category in self.categories]
     def add_purchase_type(self, purchase_type_info: dict) -> PurchaseType:
         ptype = purchase_type_info[Pt.PURCHASE_TYPE]
         purchase_type_info.pop(Pt.PURCHASE_TYPE)

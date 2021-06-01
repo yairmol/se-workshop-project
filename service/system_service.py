@@ -3,7 +3,6 @@ from typing import List, Union
 from data_model import PurchaseTypeDict
 from domain.authentication_module.authenticator import Authenticator
 from domain.discount_module.discount_management import SimpleCond, DiscountDict, CompositeDiscountDict
-from domain.notifications.notifications import Notifications
 from domain.token_module.tokenizer import Tokenizer
 from domain.commerce_system.commerce_system_facade import CommerceSystemFacade
 from domain.logger.log import event_logger, error_logger
@@ -57,7 +56,7 @@ class SystemService:
     def get_system_service(cls):
         if not SystemService.__instance:
             SystemService.__instance = SystemService(
-                CommerceSystemFacade(Authenticator(), Notifications()), Tokenizer()
+                CommerceSystemFacade(Authenticator()), Tokenizer()
             )
         return SystemService.__instance
 
@@ -109,13 +108,14 @@ class SystemService:
                 raise Exception(f"User: {user_id} Token's is not valid")
             self.tokenizer.remove_token(token)
             event_logger.info(f"User {user_id} exit the system")
+            self.commerce_system_facade.exit(user_id)
             ret = make_status_dict(True, "", "")
         except Exception as e:
             return handle_exception(e)
         finally:
             if user_id > 0:
                 self.commerce_system_facade.remove_active_user(user_id)
-            return ret
+            return make_status_dict(ret, "", "")
 
     # 2.3
     @handler

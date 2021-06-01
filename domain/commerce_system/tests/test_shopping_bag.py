@@ -2,6 +2,7 @@ import unittest
 from datetime import datetime
 from unittest import TestCase
 
+from domain.commerce_system.category import Category
 from domain.commerce_system.product import Product
 from domain.commerce_system.productDTO import ProductDTO
 from domain.commerce_system.purchase_conditions import MaxQuantityForProductCondition, DateWindowForCategoryCondition
@@ -192,7 +193,7 @@ class BagTests(TestCase):
         self.bag.delivery_facade = deliver_facade
         self.bag.add_product(self.product, amount)
         product_quantity = self.product.get_quantity()
-        self.product.categories += ["c1"]
+        self.product.categories += [Category("c1")]
         products_copy = self.bag.products.copy()
         condition_dict = {
             "min_date": '1/5/2021',

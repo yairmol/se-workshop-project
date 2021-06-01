@@ -1,23 +1,22 @@
-import communication.notifs
-import domain.commerce_system.user
+from typing import Dict
 
 
 class INotifications:
-    def send_message(self, msg):
+    def send_message(self, user_id, msg):
         """Send the msg to an enlisted client with client_id"""
         raise NotImplementedError()
 
-    def send_error(self, msg):
+    def send_error(self, user_id, msg):
         """Send an error message to an enlisted client with client_id"""
         raise NotImplementedError()
 
-    def add_client(self, client_id, value):
+    def add_client(self, user_id):
         raise NotImplementedError()
 
-    def disconnect(self, value):
+    def on_sub_login(self, user_id, username):
         raise NotImplementedError()
 
-    def send_pending_msgs(self):
+    def disconnect(self, user_id):
         raise NotImplementedError()
 
     def send_broadcast(self, msg):
@@ -27,41 +26,45 @@ class INotifications:
 
 class Notifications(INotifications):
 
-    clients = {}
-    __observers = []
+    __instance = None
+    __comm = None
 
-    def __init__(self, user):
-        self.pending_messages = []
-        self.user = user
-        self.__observers += [self.send_pending_msgs]
+    @staticmethod
+    def get_notifications():
+        if not Notifications.__instance:
+            Notifications.__instance = Notifications()
+        return Notifications.__instance
 
-    def add_client(self, client_id, value):
-        self.clients[client_id] = value
-        for obs in self.__observers:
-            obs()
+    def __init__(self):
+        self.subs_to_clients: Dict[str, int] = {}
+        self.clients = []
 
-    def disconnect(self, value):
-        for k in self.clients.keys():
-            if self.clients[k] == value:
-                del self.clients[k]
+    def add_client(self, user_id):
+        self.clients.append(user_id)
+
+    def on_sub_login(self, user_id, username):
+        assert user_id in self.clients
+        self.subs_to_clients[username] = user_id
+
+    def disconnect(self, user_id):
+        if user_id in self.clients:
+            self.clients.remove(user_id)
+        for username, other_user_id in self.subs_to_clients.items():
+            if other_user_id == user_id:
+                self.subs_to_clients.pop(username)
                 break
 
-    def send_pending_msgs(self):
-        if self.user.id in self.clients.keys():
-            for msg in self.pending_messages:
-                self.send_message(msg)
+    def send_message(self, user_id, msg):
+        assert user_id in self.clients, "can't send message to unlisted user"
+        Notifications.__comm.send_message(msg, client_id=user_id)
 
-    def send_message(self, msg):
-        if self.user.id in self.clients.keys():
-            communication.notifs.send_message(msg, client_id=self.user.id)
-        else:
-            self.pending_messages += [msg]
-
-    def send_error(self, msg):
-        if self.user.id in self.clients.keys():
-            communication.notifs.send_error(msg, client_id=self.user.id)
-        else:
-            self.pending_messages += [msg]
+    def send_error(self, user_id, msg):
+        assert user_id in self.clients, "can't send error message to unlisted user"
+        Notifications.__comm.send_message(msg, client_id=user_id)
 
     def send_broadcast(self, msg):
-        communication.notifs.send_broadcast(msg)
+        Notifications.__comm.send_broadcast(msg)
+
+    @classmethod
+    def set_communication(cls, comm):
+        cls.__comm = comm

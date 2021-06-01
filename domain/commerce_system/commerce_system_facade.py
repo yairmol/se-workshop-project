@@ -16,7 +16,6 @@ from domain.commerce_system.transaction import Transaction
 from domain.commerce_system.transaction_repo import TransactionRepo
 from domain.commerce_system.user import User, Subscribed, SystemManager
 from domain.discount_module.discount_management import SimpleCond, DiscountDict, CompositeDiscountDict
-from domain.notifications.notifications import INotifications
 
 condition_map = {
     Cm.MAX_QUANTITY_FOR_PRODUCT: MaxQuantityForProductCondition,
@@ -34,13 +33,12 @@ class CommerceSystemFacade(ICommerceSystemFacade):
     registered_users_lock = threading.Lock()
     shops_lock = threading.Lock()
 
-    def __init__(self, authenticator: Authenticator, notifications: INotifications):
+    def __init__(self, authenticator: Authenticator):
         self.active_users: Dict[int, User] = {}  # dictionary {user_sess.id : user_sess object}
         self.registered_users: Dict[str, Subscribed] = {}  # dictionary {user_id.username : user_sess object}
         self.shops: Dict[int, Shop] = {}  # dictionary {shop.shop_id : shop}
         self.transaction_repo = TransactionRepo.get_transaction_repo()
         self.authenticator = authenticator
-        self.notifications = notifications
 
     # 2.1
     def enter(self) -> int:
@@ -51,8 +49,10 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         return new_user.id
 
     # 2.2
-    def exit(self, session_id: int) -> bool:
-        pass
+    def exit(self, user_id: int) -> bool:
+        user = self.get_user(user_id)
+        user.exit()
+        return True
 
     # 2.3
     def register(self, user_id: int, username: str, password: str, **more) -> bool:
@@ -103,7 +103,7 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         cats = set()
         for shop in self.shops.values():
             for prod in shop.products.values():
-                cats.update(prod.categories)
+                cats.update(prod.get_category_names())
         return list(cats)
 
     # 2.6

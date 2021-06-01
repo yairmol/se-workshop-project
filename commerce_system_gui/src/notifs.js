@@ -1,23 +1,26 @@
 const io = require('socket.io-client');
 
-export default function start () {
+export default function startNotifications() {
   const socket = io.connect('http://localhost:5000');
 
   function registerNotifHandler(onNotificationReceived) {
     socket.on('notification', (msg) => {
-        onNotificationReceived(msg);
+      onNotificationReceived(msg);
     })
   }
-    function registerNotifErrorHandler(handler) {
+
+  function registerNotifErrorHandler(handler) {
     socket.on('error', (msg) => {
-        handler(msg);
+      handler(msg);
     })
   }
-    function registerBroadcastHandler(handler) {
+
+  function registerBroadcastHandler(handler) {
     socket.on('broadcast', (msg) => {
-        handler(msg);
+      handler(msg);
     })
   }
+
   function enlist(client_id, username) {
     socket.emit('enlist', {client_id: client_id, username: username})
   }
@@ -31,12 +34,12 @@ export default function start () {
     console.log(err)
   })
 
- return {
+  return {
     registerNotifHandler,
-     registerNotifErrorHandler,
-     registerBroadcastHandler,
+    registerNotifErrorHandler,
+    registerBroadcastHandler,
     unregisterHandler,
-     enlist
+    enlist
   }
 }
 // const a = start();
