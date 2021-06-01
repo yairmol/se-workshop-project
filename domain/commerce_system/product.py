@@ -78,6 +78,7 @@ class Product:
 
     def get_category_names(self):
         return [category.name for category in self.categories]
+
     def add_purchase_type(self, purchase_type_info: dict) -> PurchaseType:
         ptype = purchase_type_info[Pt.PURCHASE_TYPE]
         purchase_type_info.pop(Pt.PURCHASE_TYPE)
@@ -131,6 +132,9 @@ class Product:
             return list(pt_offer.offers.values())
         except AssertionError:
             return []
+
+    def set_categories(self, categories):
+        self.categories = [Category(c) for c in categories]
 
 
 class ProductInBag:

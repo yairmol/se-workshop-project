@@ -87,7 +87,7 @@ export default function EditProductPopup({product, close_window_func, edit_produ
         key in ptDIct ? [...pts, ptDIct[key]] : [...pts, {purchase_type: key}]
         : pts
       , [])
-    alert(`${[product.product_id, name, price, description, categories, purchaseTypesList]}`)
+    // alert(`${[product.product_id, name, price, description, categories, purchaseTypesList]}`)
     edit_product_func(product.product_id, name, price, description, categories, purchaseTypesList)
     handleClose()
   }

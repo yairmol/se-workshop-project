@@ -176,8 +176,6 @@ function StickyHeadProductsTable({products, onProductChange, onRemoveProduct, on
     setPage(0);
   };
 
-  alert(JSON.stringify(products));
-
   return (
     <Paper className={classes.root}>
       <TableContainer className={classes.container}>

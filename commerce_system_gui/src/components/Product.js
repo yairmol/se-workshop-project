@@ -48,7 +48,6 @@ const OfferPriceDialog = ({shopId, product, close}) => {
   const auth = useAuth();
 
   const onSubmit = () => {
-    alert('here')
     auth.getToken().then((token) => make_offer(token, shopId, product.product_id, price)).then((res) => {
       if (res) {
         alert('offer successfully made')

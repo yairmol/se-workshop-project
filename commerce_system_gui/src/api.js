@@ -2,7 +2,7 @@
 const axios = require("axios");
 const urljoin = require('url-join');
 
-const host = "https://127.0.0.1"
+const host = "http://127.0.0.1"
 const port = 5000
 
 const host_port = `${host}:${port}`

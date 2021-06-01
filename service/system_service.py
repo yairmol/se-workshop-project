@@ -280,7 +280,7 @@ class SystemService:
             self, user_id: int, shop_id: int, product_id: int,
             product_name: str = None, description: str = None,
             price: float = None, quantity: int = None, categories: List[str] = None,
-            purchase_types = None
+            purchase_types=None
     ) -> dict:
         event_logger.info(f"User: {user_id} tries to edit product info of "
                           f"shop_id: {shop_id} product_id: {product_id}")
