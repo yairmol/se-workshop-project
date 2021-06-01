@@ -4,6 +4,7 @@ from sqlalchemy import create_engine, MetaData, Table, Column, Integer, String, 
 from sqlalchemy.orm import registry, relationship
 
 from domain.commerce_system.appointment import ShopManager, ShopOwner
+from domain.commerce_system.category import Category
 from domain.commerce_system.shopping_cart import ShoppingCart, ShoppingBag
 from domain.commerce_system.transaction import Transaction
 from domain.commerce_system.user import Subscribed
@@ -37,7 +38,7 @@ shop = Table(
     Column('name', String),
     Column('description', String),
     Column('image_url', String),
-    relationship("product")
+    # relationship("product")
 )
 
 categories_product_mtm = Table(
@@ -56,8 +57,9 @@ product = Table(
     Column('price', Integer),
     Column('description', String),
     Column('quantity', Integer),
-    Column('shop_id', Integer, ForeignKey('categories.category_id', ondelete='CASCADE')),
-    relationship('categories', secondary=categories_product_mtm)
+    Column('shop_id', Integer, ForeignKey('shop.id', ondelete='CASCADE')),
+    # Column('shop_id', Integer, ForeignKey('categories.category_id', ondelete='CASCADE')),
+    # relationship('categories', secondary=categories_product_mtm)
 )
 categories = Table(
     'categories',
@@ -105,15 +107,22 @@ shopping_bag = Table(
     Column('product_id', Integer, ForeignKey("products.product_id", ondelete='CASCADE'))
 )
 
-mapper_registry.map_imperatively(Subscribed, subscribed)
-mapper_registry.map_imperatively(Shop, shop)
-mapper_registry.map_imperatively(Product, product)
+mapper_registry.map_imperatively(Subscribed, subscribed, properties={
+    "shoppingCart": relationship(ShoppingCart, backref='subscribed')
+})
+mapper_registry.map_imperatively(Shop, shop, properties={
+    "product": relationship(Product, backref='shop')
+})
+mapper_registry.map_imperatively(Product, product, properties={
+    "categories": relationship(Category, backref='product', secondary=categories_product_mtm)
+})
 mapper_registry.map_imperatively(Transaction, transaction)
-mapper_registry.map_imperatively( ) # TODO : add categories somehow
-mapper_registry.map_imperatively( ) # TODO : add categories product mtm table
+mapper_registry.map_imperatively(Category, categories)
 mapper_registry.map_imperatively(ShopManager, shop_manager_appointments)
 mapper_registry.map_imperatively(ShopOwner, shop_owner_appointments)
-mapper_registry.map_imperatively(ShoppingCart, shopping_cart)
+mapper_registry.map_imperatively(ShoppingCart, shopping_cart, properties={
+    "shoppingBags": relationship(ShoppingBag, backref='shopping_cart')
+})
 mapper_registry.map_imperatively(ShoppingBag, shopping_bag)
 
 mapper_registry.metadata.create_all(engine)
