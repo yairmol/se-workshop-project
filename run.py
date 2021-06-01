@@ -1,6 +1,5 @@
 import argparse
 import json
-import sys
 
 from communication.api import create_app
 from config.config import config, ConfigFields as cf, load_config
@@ -33,12 +32,20 @@ def main():
     init = None
     if args.init:
         init = load_init(args.init)
-    app = create_app(init)
+    socketio, app = create_app(init)
     cert_info = config[cf.CERTIFICATE_PATH]
-    app.run(
+
+    # ws = threading.Thread(target=ws_notifications.websockets_server)
+    # ws.start()
+    # Notifications.set_communication(ws_notifications)
+
+    socketio.run(
+        app,
         port=config[cf.SEVER_PORT],
         debug=True,
-        ssl_context=(cert_info[cf.CERTIFICATE], cert_info[cf.KEY])
+        # certfile=cert_info[cf.CERTIFICATE],
+        # keyfile=cert_info[cf.KEY],
+        # ssl_context=(cert_info[cf.CERTIFICATE], cert_info[cf.KEY])
     )
 
 
