@@ -1,6 +1,7 @@
 from data_access_layer.purchasing_repository import save_transaction, save_shopping_bag, save_shopping_cart
 from data_access_layer.shop_repository import save_shop, remove_shop, get_shop
 from data_access_layer.subscribed_repository import save_subscribed, get_subscribed, remove_subscribed
+from domain.commerce_system.product import Product
 from domain.commerce_system.shop import Shop
 from domain.commerce_system.shopping_cart import ShoppingCart, ShoppingBag
 from domain.commerce_system.transaction import Transaction
