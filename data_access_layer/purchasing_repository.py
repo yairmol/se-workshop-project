@@ -1,9 +1,9 @@
 from domain.commerce_system.shopping_cart import ShoppingBag, ShoppingCart
 from domain.commerce_system.transaction import Transaction
-from init_tables import engine
+from init_tables import engine, shopping_bag
 from sqlalchemy.orm import Session
 
-def save_shopping_shop(shopping_cart: ShoppingCart):
+def save_shopping_cart(shopping_cart: ShoppingCart):
     with Session(engine) as session:
         session.add(shopping_cart)
         session.commit()
@@ -21,9 +21,9 @@ def remove_shopping_cart(username: str):
         session.commit()
 
 
-def save_shopping_bag(shopping_bag: ShoppingBag):
+def save_shopping_bag(shoppingBag: ShoppingBag):
     with Session(engine) as session:
-        session.add(shopping_bag)
+        session.add(shoppingBag)
         session.commit()
 
 def get_all_shopping_bags(cart_id: int):
