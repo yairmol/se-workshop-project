@@ -1,6 +1,6 @@
 import React, {useState, useEffect, useContext, createContext} from "react";
 import {enter, exit, isValidToken, login, logout, register} from "../api";
-import notifs from "../notifs";
+import startNotifications from "../notifs";
 import {useHistory} from "react-router-dom";
 
 const authContext = createContext();
@@ -23,6 +23,8 @@ function useProvideAuth() {
   const [token, setToken] = useState(localStorage.getItem("token"));
   const [user, setUser] = useState(localStorage.getItem("user"));
   const [userId, setUserId] = useState(localStorage.getItem("userId"));
+  const [notif, setNotif] = useState({})
+  const [loadedNotif, setLoadedNotif] = useState(false)
   const history = useHistory();
 
   const refresh = () => {
@@ -32,6 +34,9 @@ function useProvideAuth() {
       setToken(data.result);
       localStorage.setItem("userId", data.id)
       setUserId(data.id);
+      const _notif = startNotifications();
+      _notif.enlist(userId, user);
+      setNotif(_notif);
       return data.result;
     })
   }
@@ -86,6 +91,18 @@ function useProvideAuth() {
       return res
     });
 
+  const getNotif = () => {
+    if (!loadedNotif) {
+      const _notif = startNotifications();
+      _notif.enlist(userId, user);
+      setNotif(_notif);
+      setLoadedNotif(true)
+      // alert('here')
+      return _notif
+    }
+    return notif;
+  }
+
   useEffect(async () => {
     // localStorage.clear();
     await getToken();
@@ -101,19 +118,6 @@ function useProvideAuth() {
     // }
   }, []);
 
-  const notif = notifs(); //
-  notif.enlist(userId, user);// Change to user id
-
-  const registerNotifHandler = (handler) => {
-    notif.registerNotifHandler(handler);
-  }
-  const registerNotifErrorHandler = (handler) => {
-    notif.registerNotifErrorHandler(handler);
-  }
-  const registerBroadcastHandler = (handler) => {
-    notif.registerBroadcastHandler(handler);
-  }
-
 
   // Return the user object and auth methods
   return {
@@ -123,8 +127,6 @@ function useProvideAuth() {
     signin,
     signup,
     signout,
-    registerNotifHandler,
-    registerNotifErrorHandler,
-    registerBroadcastHandler,
+    getNotif,
   };
 }

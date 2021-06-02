@@ -70,7 +70,7 @@ def search_by_categories(products: List[Product], categories: List[str]):
                        any(map(lambda c: is_similar_words(pc, c), categories)),  # There exists a category similar to pc
                        prod_categories))
 
-    return list(filter(lambda p: filtering(p.categories), products))
+    return list(filter(lambda p: filtering(p.get_category_names()), products))
 
 
 # from stack_overflow: https://stackoverflow.com/questions/2460177/edit-distance-in-python

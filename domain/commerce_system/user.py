@@ -3,7 +3,7 @@ import threading
 from typing import List, Dict, Iterable
 
 from domain.commerce_system.appointment import Appointment, ShopOwner
-from domain.commerce_system.product import Product
+from domain.commerce_system.product import Product, PurchaseType, PurchaseOffer
 from domain.commerce_system.purchase_conditions import Condition
 from domain.commerce_system.shop import Shop
 from domain.commerce_system.shopping_cart import ShoppingBag
@@ -13,7 +13,7 @@ from domain.commerce_system.shopping_cart import ShoppingCart
 from domain.discount_module.discount_calculator import Discount
 from data_model import UserModel as UserM
 from domain.discount_module.discount_management import DiscountDict, ConditionRaw
-import domain.notifications.notifications
+from domain.notifications.notifications import Notifications
 
 
 class User:
@@ -27,12 +27,14 @@ class User:
         User.__id_counter = User.__id_counter + 1
         self.counter_lock.release()
         self.cart = ShoppingCart(self.id)
+        self.notifications = Notifications.get_notifications()
+        self.notifications.add_client(self.id)
 
     def send_message(self, msg):
-        self.user_state.send_message(msg)
+        self.notifications.send_message(self.id, msg)
 
     def send_error(self, msg):
-        self.user_state.send_error(msg)
+        self.notifications.send_error(self.id, msg)
 
     def get_name(self) -> str:
         return self.user_state.get_name(self.id)
@@ -40,10 +42,11 @@ class User:
     def login(self, sub_user: Subscribed) -> bool:
         self.user_state.login()
         self.user_state = sub_user
+        sub_user.on_login(self.id)
         return True
 
     def register(self, username: str, **user_details) -> Subscribed:
-        return self.user_state.register(username, self.id, **user_details)
+        return self.user_state.register(username, **user_details)
 
     def logout(self) -> bool:
         self.user_state.logout()
@@ -77,8 +80,9 @@ class User:
     def _remove_transaction(self, transaction: Transaction) -> None:
         self.user_state.remove_transaction(transaction)
 
-    def save_product_to_cart(self, shop: Shop, product: Product, amount_to_buy: int) -> bool:
-        return self.cart.add_product(product, shop, amount_to_buy)
+    def save_product_to_cart(self, shop: Shop, product: Product, amount_to_buy: int,
+                             purchase_type_id=None, **pt_args) -> bool:
+        return self.cart.add_product(product, shop, amount_to_buy, purchase_type_id, **pt_args)
 
     def remove_product_from_cart(self, shop: Shop, product: Product, amount: int) -> bool:
         return self.cart.remove_from_shopping_bag(shop, product, amount)
@@ -95,7 +99,7 @@ class User:
     def add_product(self, shop: Shop, **product_details) -> Product:
         return self.user_state.add_product(shop, **product_details)
 
-    def edit_product(self, shop: Shop, **product_details) -> Product:
+    def edit_product(self, shop: Shop, **product_details) -> bool:
         return self.user_state.edit_product(shop, **product_details)
 
     def delete_product(self, shop: Shop, product_id: int) -> bool:
@@ -132,6 +136,27 @@ class User:
         ret.update(self.user_state.to_dict())
         return ret
 
+    def exit(self):
+        self.notifications.disconnect(self.id)
+
+    def add_purchase_type(self, shop: Shop, product_id: int, purchase_type_info: dict) -> PurchaseType:
+        return self.user_state.add_purchase_type(shop, product_id, purchase_type_info)
+
+    def offer_price(self, shop: Shop, product_id: int, offer: float) -> bool:
+        return self.user_state.offer_price(shop, product_id, offer)
+
+    def reply_price_offer(self, shop: Shop, product_id: int, offer_maker: str, action: str) -> bool:
+        return self.user_state.reply_price_offer(shop, product_id, offer_maker, action)
+
+    def change_product_purchase_type(self, shop: Shop, product_id: int, purchase_type_id: int, pt_args: dict) -> bool:
+        return self.cart.change_product_purchase_type(shop, product_id, purchase_type_id, pt_args)
+
+    def get_shop_info(self, shop: Shop):
+        self.user_state.get_shop_info(shop)
+
+    def get_offers(self, shop: Shop, product_id: int) -> List[PurchaseOffer]:
+        return self.user_state.get_offers(shop, product_id)
+
 
 class UserState:
     def get_name(self, userid=None) -> str:
@@ -143,7 +168,7 @@ class UserState:
     def send_message(self, msg):
         raise NotImplementedError()
 
-    def register(self, username: str,  user_id, **user_detail) -> Subscribed:
+    def register(self, username: str, **user_detail) -> Subscribed:
         raise Exception("Logged-in User cannot register")
 
     def login(self) -> bool:
@@ -242,13 +267,28 @@ class UserState:
     def to_dict(self) -> dict:
         raise NotImplementedError()
 
+    def add_purchase_type(self, shop: Shop, product_id: int, purchase_type_info: dict) -> PurchaseType:
+        raise Exception("User doesn't have permission to edit purchase types")
+
+    def offer_price(self, shop: Shop, product_id: int, offer: float) -> bool:
+        raise Exception("user must be signed in to make a purchase offer")
+
+    def reply_price_offer(self, shop: Shop, product_id: int, offer_maker: str, action: str) -> bool:
+        raise Exception("User doesn't have permission to reply to a price offer")
+
+    def get_shop_info(self, shop: Shop):
+        return shop.to_dict()
+
+    def get_offers(self, shop: Shop, product_id: int) -> List[PurchaseOffer]:
+        raise Exception("user doesn't have permission to get offers")
+
 
 class Guest(UserState):
     def get_name(self, userid=None):
         return f"Guest-{hash(userid) if userid else 'None'}"
 
-    def register(self, username: str, user_id, **user_details):
-        return Subscribed(username, user_id)
+    def register(self, username: str, **user_details):
+        return Subscribed(username)
 
     def to_dict(self):
         return {UserM.USERNAME: self.get_name()}
@@ -259,15 +299,25 @@ class Guest(UserState):
 
 class Subscribed(UserState):
 
-    def __init__(self, username: str, user_id):
+    def __init__(self, username: str):
         self.appointments: Dict[Shop, Appointment] = {}
         self.username = username
-        self.id = user_id
         self.transactions: List[Transaction] = []
-        self.notifications = domain.notifications.notifications.Notifications(self)
+        self.pending_messages = []
+        self.logged_user = None
+        self.notifications = Notifications.get_notifications()
+
+    def on_login(self, logged_user):
+        self.logged_user = logged_user
+        self.notifications.on_sub_login(logged_user, self.username)
+        for msg in self.pending_messages:
+            self.send_message(msg)
 
     def send_message(self, msg):
-        self.notifications.send_message(msg=msg)
+        if self.logged_user:
+            self.notifications.send_message(self.logged_user, msg)
+        else:
+            self.pending_messages.append(msg)
 
     def send_error(self, msg):
         self.notifications.send_error(msg=msg)
@@ -279,6 +329,7 @@ class Subscribed(UserState):
         raise Exception("Can't login while logged in")
 
     def logout(self):
+        self.logged_user = None
         return True
 
     def get_name(self, userid=None):
@@ -383,6 +434,18 @@ class Subscribed(UserState):
 
     def get_appointments(self):
         return list(self.appointments.values())
+
+    def add_purchase_type(self, shop: Shop, product_id: int, purchase_type_info: dict) -> PurchaseType:
+        return self.get_appointment(shop).add_purchase_type(product_id, purchase_type_info)
+
+    def offer_price(self, shop: Shop, product_id: int, offer: float) -> bool:
+        return shop.add_price_offer(self.username, product_id, offer)
+
+    def reply_price_offer(self, shop: Shop, product_id: int, offer_maker: str, action: str) -> bool:
+        return self.get_appointment(shop).reply_price_offer(product_id, offer_maker, action)
+
+    def get_offers(self, shop: Shop, product_id: int) -> List[PurchaseOffer]:
+        return self.get_appointment(shop).get_offers(product_id)
 
 
 class SystemManager(Subscribed):

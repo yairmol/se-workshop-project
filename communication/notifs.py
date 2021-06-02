@@ -1,56 +1,71 @@
+import json
+import os
+
+import eventlet
 from flask import Flask, request
+from flask_socketio import SocketIO, join_room, leave_room, emit
 from flask_cors import CORS
-from flask_socketio import SocketIO, emit
+
 
 # Initializing the flask object
 import domain.notifications.notifications
 
-app = Flask(__name__)
-# by default runs on port 5000
-#  Initializing the flask-websocketio
 
-CORS(app)
+def create_socket_io_app():
+    app = Flask(__name__)
+    CORS(app)
+    CORS(app, resources={
+        r"/.*": {
+            "origins": "*",
+            "Content-Type": "application/json"
+        }
+    })
+    app.config['CORS_HEADERS'] = 'Content-Type'
+    io = SocketIO(app, cors_allowed_origins='*')
+    client_session_map = {}
 
-CORS(app, resources={
-    r"/.*": {
-        "origins": "*",
-        "Content-Type": "application/json"
-    }
-})
-app.config['CORS_HEADERS'] = 'Content-Type'
-io = SocketIO(app, cors_allowed_origins='*')
+    class WebsocketNotifications:
+        def __init__(self):
+            self.io = io
+            self.app = app
 
-@io.on('connect')
-def connect():
-    print("%s connected" % request.namespace)
+        @io.on('connect')
+        def connect(self):
+            print("%s connected" % request.namespace)
 
-@io.on('enlist')
-def enlist(data):
-    domain.notifications.notifications.add_client(data["client_id"], request.sid)
+        @io.on('enlist')
+        def enlist(self, data):
+            print("here")
+            client_session_map[data["client_id"]] = request.sid
 
-@io.on('disconnect')
-def disconnect():
-    print("%s disconnected" % request.sid)
-    domain.notifications.notifications.disconnect(request.sid)
+        @io.on('disconnect')
+        def disconnect(self):
+            print("%s disconnected" % request.sid)
+            for user_id, sid in client_session_map.items():
+                if request.sid == sid:
+                    print(f"disconnecting {user_id}")
+                    client_session_map.pop(user_id)
+                    break
+
+        @io.on('send_message')
+        def send_message(self, msg, client_id):
+            print(client_session_map)
+            if client_id in client_session_map:
+                emit('notification', msg, room=client_session_map[client_id])
+
+        @io.on('send_error')
+        def send_error(self, msg, client_id):
+            emit('error', msg, room=client_session_map[client_id])
+
+        @io.on('broadcast')
+        def send_broadcast(self, msg):
+            emit('broadcast', msg, broadcast=True)
+
+    return WebsocketNotifications()
 
 
-@io.on('send_message')
-def send_message(msg, client_id):
-    emit('notification', msg, room=domain.notifications.notifications.clients[client_id])
-
-
-@io.on('send_error')
-def send_error(msg, client_id):
-    emit('error', msg, room=domain.notifications.notifications[client_id])
-
-
-@io.on('broadcast')
-def send_broadcast(msg):
-    emit('broadcast', msg, broadcast=True)
-
-
-# If you are running it using python <filename> then below command will be used
 if __name__ == '__main__':
-    print("Server starting")
+    print("SocketIO Server starting")
+    ws_notification = create_socket_io_app()
     # io.run(app, port=5000)
-    io.run(app, port=int(5000), debug=True, certfile="../secrets/cert.pem", keyfile="../secrets/key.pem")
+    ws_notification.io.run(ws_notification.app, port=int(5001), debug=True)  # certfile="../secrets/cert.pem", keyfile="../secrets/key.pem")

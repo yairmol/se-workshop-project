@@ -1,12 +1,12 @@
 from datetime import datetime
 
 from domain.commerce_system.action import Action, ActionPool
-from domain.commerce_system.product import Product
+from domain.commerce_system.product import Product, BuyNow, PurchaseType, ProductInBag
 from domain.commerce_system.productDTO import ProductDTO
 from domain.commerce_system.purchase_conditions import ANDCondition
 from domain.commerce_system.shop import Shop
 
-from typing import Dict, List
+from typing import Dict, List, TypeVar, Optional
 
 from domain.commerce_system.transaction import Transaction
 from domain.delivery_module.delivery_system import IDeliveryFacade
@@ -19,14 +19,17 @@ SHOP_NAME = "shop_name"
 TOTAL = "total"
 
 
+T_PT = TypeVar('T_PT', bound=PurchaseType)
+
+
 class ShoppingBag:
     def __init__(self, shop: Shop):
         self.shop = shop
-        self.products: Dict[Product, int] = {}
+        self.products: Dict[Product, ProductInBag] = {}
         self.payment_facade = IPaymentsFacade.get_payment_facade()
         self.delivery_facade = IDeliveryFacade.get_delivery_facade()
 
-    def __setitem__(self, key: Product, value: int):
+    def __setitem__(self, key: Product, value: ProductInBag):
         self.products[key] = value
 
     def __iter__(self):
@@ -35,40 +38,47 @@ class ShoppingBag:
     def to_dict(self):
         return {
             SHOP_NAME: self.shop.name,
-            PRODUCTS: [ProductDTO(prod, amount).to_dict() for prod, amount in self.products.items()],
+            PRODUCTS: [
+                ProductDTO(prod, prod_in_bag).to_dict()
+                for prod, prod_in_bag in self.products.items()
+            ],
             TOTAL: self.calculate_price()
         }
 
-    def add_product(self, product: Product, amount_to_buy: int):
+    def add_product(self, product: Product, amount_to_buy: int,
+                    purchase_type_id: Optional[int] = None, **purchase_type_args):
         if product in self.products:
-            self.products[product] += amount_to_buy
+            self.products[product].amount += amount_to_buy
         else:
-            self.products[product] = amount_to_buy
+            purchase_type = product.get_purchase_type_of_type(BuyNow)
+            if purchase_type_id:
+                purchase_type = product.get_purchase_type(purchase_type_id)
+            self.products[product] = ProductInBag(product, amount_to_buy, purchase_type, **purchase_type_args)
 
     def remove_product(self, product: Product, amount_to_buy: int):
         assert product in self.products, "product not in the shopping bag"
-        assert self.products[product] >= amount_to_buy, "not enough items in the bag"
-        if self.products[product] == amount_to_buy:
+        assert self.products[product].amount >= amount_to_buy, "not enough items in the bag"
+        if self.products[product].amount == amount_to_buy:
             self.products.pop(product)
         else:
-            self.products[product] -= amount_to_buy
+            self.products[product].amount -= amount_to_buy
 
     def remove_all_products(self):
         self.products.clear()
 
     def calculate_price(self) -> int:
         total = 0
-        for product, amount in self.products.items():
-            total += amount * product.price
+        for product, prod_in_bag in self.products.items():
+            total += prod_in_bag.amount * prod_in_bag.purchase_type.get_price(**prod_in_bag.purchase_type_args)
         total = max(0, total - self.shop.discount.apply(self.products))
         return total
 
     def get_products_dtos(self):
         product = 0
-        amount = 1
-        return list(map(lambda kv: ProductDTO(kv[product], kv[amount]), self.products.items()))
+        bag_info = 1
+        return list(map(lambda kv: ProductDTO(kv[product], kv[bag_info]), self.products.items()))
 
-    def set_products(self, products: Dict[Product, int]) -> bool:
+    def set_products(self, products: Dict[Product, ProductInBag]) -> bool:
         self.products = products
         return True
 
@@ -78,10 +88,14 @@ class ShoppingBag:
 
     def resolve_shop_conditions(self) -> bool:
         conditions = ANDCondition({"conditions": self.shop.conditions})
-        return conditions.resolve(self.products)
+        return conditions.resolve({k: v.amount for k, v in self.products.items()})
 
     def purchase_bag(self, username, payment_details, delivery_details: dict) -> Transaction:
         assert self.resolve_shop_conditions(), f"condition exception: {self}"
+        assert all(
+            bag_info.purchase_type.can_purchase(**bag_info.purchase_type_args)
+            for bag_info in self.products.values()
+        ), "cannot purchase bag"
         total_price = self.calculate_price()
         products_dtos = self.get_products_dtos()
         transaction = Transaction(
@@ -110,6 +124,14 @@ class ShoppingBag:
     def cancel_transaction(transaction):
         transaction.cancel_transaction()
 
+    def change_product_purchase_type(self, product: Product, purchase_type_id: int, pt_args: dict) -> bool:
+        assert purchase_type_id in product.purchase_types, "purchase type doesn't exist"
+        # if we can get the price then it is valid for the cart owner to set this purchase type.
+        product.purchase_types[purchase_type_id].get_price(**pt_args)
+        self.products[product].purchase_type = product.purchase_types[purchase_type_id]
+        self.products[product].purchase_type_args = pt_args
+        return True
+
 
 class ShoppingCart:
     def __init__(self, cart_id):
@@ -129,17 +151,17 @@ class ShoppingCart:
             TOTAL: self.calculate_price(),
         }
 
-    def add_product(self, product: Product, shop: Shop, amount_to_buy: int):
+    def add_product(self, product: Product, shop: Shop, amount_to_buy: int, purchase_type_id=None, **pt_args):
         if shop not in self.shopping_bags:
             bag = ShoppingBag(shop)
-            bag.add_product(product, amount_to_buy)
+            bag.add_product(product, amount_to_buy, purchase_type_id, **pt_args)
             self.add_shopping_bag(bag)
         else:
-            self.add_to_shopping_bag(shop, product, amount_to_buy)
+            self.add_to_shopping_bag(shop, product, amount_to_buy, purchase_type_id, **pt_args)
         return True
 
-    def add_to_shopping_bag(self, shop: Shop, product: Product, amount_to_buy: int):
-        self.shopping_bags[shop].add_product(product, amount_to_buy)
+    def add_to_shopping_bag(self, shop: Shop, product: Product, amount_to_buy: int, purchase_type_id=None, **pt_args):
+        self.shopping_bags[shop].add_product(product, amount_to_buy, purchase_type_id, **pt_args)
 
     def remove_from_shopping_bag(self, shop: Shop, product: Product, amount: int):
         self.shopping_bags[shop].remove_product(product, amount)
@@ -183,3 +205,7 @@ class ShoppingCart:
         actions = ActionPool(actions)
         assert actions.execute_actions(do_what_you_can)
         return actions.get_return_values()[:-1]
+
+    def change_product_purchase_type(self, shop, product_id: int, purchase_type_id: int, pt_args: dict) -> bool:
+        product = shop.products[product_id]
+        return self.shopping_bags[shop].change_product_purchase_type(product, purchase_type_id, pt_args)

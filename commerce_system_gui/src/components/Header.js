@@ -94,7 +94,7 @@ export default function Header(props) {
   }
   const header = localStorage.getItem("header")
 
-  const [notifList, setNotifListData] = useState(["Hello", "Is this working ? ", "Maybe"]);
+  const [notifList, setNotifListData] = useState([]);
   const [notifSnackBarOpen, setNotifSnackBarOpen] = useState(false);
   const [notifDrawerOpen, setNotifDrawerOpen] = useState(false);
   const [anchorEl, setAnchorEl] = React.useState(null);
@@ -141,7 +141,7 @@ export default function Header(props) {
     </Menu>
   );
 
-  auth.registerNotifHandler(onNotifReceived);
+  auth.getNotif().registerNotifHandler(onNotifReceived);
 
   const signout = () => {
     auth.signout().then((res) => {
