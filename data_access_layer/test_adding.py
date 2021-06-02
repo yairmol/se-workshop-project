@@ -16,15 +16,27 @@ subscribed = Subscribed("aviv_the_king6")
 # print(subscribed_from_db.username)
 
 
-shop = Shop("Armani", "Dudu Faruk's favorite shop", "https://website/cool_image.jpg/")
+my_shop = Shop("Armani", "Dudu Faruk's favorite shop", "https://website/cool_image.jpg/")
+prod = Product("Bamba", 30.5,  "its osem", 10, ["snacks"], shop_id=my_shop.shop_id)
+with Session(engine) as session:
+    session.add(my_shop)
+    session.add(prod)
+    session.commit()
 # save_shop(shop)
 # # remove_shop(165)
 # shop_from_db = get_shop("Armani")
 # print(shop_from_db.description)
 shopping_cart = ShoppingCart(1)
-shoppingBag = ShoppingBag(shop)
-shopping_cart.shopping_bags = {shop: shoppingBag}
-save_shopping_cart(shopping_cart)
+# shopping_cart.add_shopping_bag(ShoppingBag(shop))
+# shopping_cart.add_to_shopping_bag(my_shop, prod, 5)
+with Session(engine) as session:
+    session.add(shopping_cart)
+    session.commit()
+# with Session(engine) as session:
+#     session.add(shopping_cart)
+#     session.commit()
+# shopping_cart.shopping_bags = {shop: shoppingBag}
+# save_shopping_cart(shopping_cart)
 
 # save_shopping_bag(shoppingBag)
 # subscribed
