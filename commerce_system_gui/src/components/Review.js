@@ -51,7 +51,7 @@ export default function Review({formik, cart, shoppingBag}) {
         {products.map((product) => (
           <ListItem className={classes.listItem} key={product.product_name}>
             <ListItemText primary={product.product_name} secondary={product.description} />
-            <Typography variant="body2">{product.price}₪</Typography>
+            <Typography variant="body2">{product.purchase_price}₪</Typography>
           </ListItem>
         ))}
         <ListItem className={classes.listItem}>

@@ -41,15 +41,15 @@ class DeliveryMock(IDeliveryFacade):
         return True
 
 
-class NotificationsMock(INotifications):
-    def send_notif(self, msg, client_id=-1, username=""):
-        pass
+class NotificationMock:
+    @staticmethod
+    def send_message(*args, **kwargs):
+        return True
 
-    def send_error(self, msg, client_id=-1, username=""):
-        pass
+    @staticmethod
+    def send_error(*args, **kwargs):
+        return True
 
-    def send_broadcast(self, msg):
-        pass
-
-    def enlist_sub(self, username):
-        pass
+    @staticmethod
+    def send_broadcast(*args, **kwargs):
+        return True

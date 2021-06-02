@@ -2,9 +2,9 @@ import threading
 from typing import Dict, List, TypeVar
 
 from domain.commerce_system.action import Action, ActionPool
-from domain.commerce_system.purchase_conditions import Condition
+from domain.commerce_system.purchase_conditions import Condition, CompositePurchaseCondition
 from domain.discount_module.discount_calculator import AdditiveDiscount, Discount
-from domain.commerce_system.product import Product
+from domain.commerce_system.product import Product, PurchaseType
 from domain.commerce_system.transaction import Transaction
 from data_model import ShopModel as Sm
 from domain.discount_module.discount_management import DiscountManagement, DiscountDict, ConditionRaw
@@ -41,7 +41,7 @@ class Shop:
         self.shop_owners = {}
         self.discount = AdditiveDiscount([])
         self.image_url = image_url
-        self.conditions = []
+        self.conditions: List[Condition] = []
 
     def to_dict(self, include_products=True):
         ret = {
@@ -81,6 +81,12 @@ class Shop:
                 if field == "quantity":
                     product.set_quantity(new_value)
                     continue
+                if field == "purchase_types":
+                    product.set_purchase_types(new_value)
+                    continue
+                if field == "categories":
+                    product.set_categories(new_value)
+                    continue
                 if not hasattr(product, field):
                     raise Exception("product has no field ", field)
                 setattr(product, field, new_value)
@@ -104,9 +110,9 @@ class Shop:
     def add_transaction(self, bag, transaction: Transaction) -> bool:
         with self.products_lock:
             product_update_actions = ActionPool([
-                Action(product.set_quantity, product.get_quantity() - amount)
+                Action(product.set_quantity, product.get_quantity() - bag_info.amount)
                 .set_reverse(Action(product.set_quantity, product.get_quantity()))
-                for product, amount in bag
+                for product, bag_info in bag
             ])
             product_update_actions.execute_actions()
             self.transaction_history.append(transaction)
@@ -114,8 +120,8 @@ class Shop:
 
     def cancel_transaction(self, bag: dict, transaction: Transaction) -> bool:
         with self.products_lock:
-            for product, amount in bag:
-                product.set_quantity(product.get_quantity() + amount)
+            for product, bag_info in bag:
+                product.set_quantity(product.get_quantity() + bag_info.amount)
             self.transaction_history.remove(transaction)
             return True
 
@@ -174,13 +180,32 @@ class Shop:
                 DiscountManagement.remove(self.discount, d_id)
         return True
 
+    def get_purchase_conditions(self) -> List[Condition]:
+        return self.conditions
+
     def add_purchase_condition(self, condition: Condition) -> bool:
         self.conditions.append(condition)
         return True
 
     def remove_purchase_condition(self, condition_id: int) -> bool:
-        for condition in self.conditions:
-            if condition.id == condition_id:
-                self.conditions.remove(condition)
-                return True
-        return False
+        def remove(conds: List[Condition], cond_id: int):
+            for c in conds:
+                if c.id == cond_id:
+                    conds.remove(c)
+                    return True
+                if isinstance(c, CompositePurchaseCondition):
+                    res = remove(c.conditions, cond_id)
+                    if res:
+                        return True
+            return False
+        success = remove(self.conditions, condition_id)
+        return success
+
+    def add_purchase_type(self, product_id: int, purchase_type_info: dict) -> PurchaseType:
+        return self.products[product_id].add_purchase_type(purchase_type_info)
+
+    def add_price_offer(self, username: str, product_id: int, offer: float) -> bool:
+        return self.products[product_id].add_price_offer(username, offer)
+
+    def reply_price_offer(self, product_id: int, offer_maker: str, action: str) -> bool:
+        return self.products[product_id].reply_price_offer(offer_maker, action)

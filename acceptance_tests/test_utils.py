@@ -6,7 +6,7 @@ from domain.delivery_module.delivery_system import IDeliveryFacade, DeliveryFaca
 from domain.payment_module.payment_system import IPaymentsFacade, PaymentsFacadeAlwaysTrue
 from test_data import users, shops, permissions, products, payment_details
 from service.system_service import SystemService
-from data_model import UserModel as Um, admin_credentials
+from data_model import UserModel as Um
 
 
 def get_credentials(user: dict):
@@ -188,3 +188,17 @@ def admin_login(commerce_system: SystemService):
     admin_session = commerce_system.enter()["result"]
     commerce_system.login(admin_session, admin_username, admin_password)
     return admin_session
+
+
+class NotificationMock:
+    @staticmethod
+    def send_message(*args, **kwargs):
+        return True
+
+    @staticmethod
+    def send_error(*args, **kwargs):
+        return True
+
+    @staticmethod
+    def send_broadcast(*args, **kwargs):
+        return True

@@ -3,7 +3,7 @@ import threading
 from typing import List, Dict, Iterable
 
 from domain.commerce_system.appointment import Appointment, ShopOwner
-from domain.commerce_system.product import Product
+from domain.commerce_system.product import Product, PurchaseType, PurchaseOffer
 from domain.commerce_system.purchase_conditions import Condition
 from domain.commerce_system.shop import Shop
 from domain.commerce_system.shopping_cart import ShoppingBag
@@ -11,7 +11,9 @@ from domain.commerce_system.transaction_repo import TransactionRepo
 from domain.commerce_system.transaction import Transaction
 from domain.commerce_system.shopping_cart import ShoppingCart
 from domain.discount_module.discount_calculator import Discount
+from data_model import UserModel as UserM
 from domain.discount_module.discount_management import DiscountDict, ConditionRaw
+from domain.notifications.notifications import Notifications
 
 
 class User:
@@ -25,6 +27,14 @@ class User:
         User.__id_counter = User.__id_counter + 1
         self.counter_lock.release()
         self.cart = ShoppingCart(self.id)
+        self.notifications = Notifications.get_notifications()
+        self.notifications.add_client(self.id)
+
+    def send_message(self, msg):
+        self.notifications.send_message(self.id, msg)
+
+    def send_error(self, msg):
+        self.notifications.send_error(self.id, msg)
 
     def get_name(self) -> str:
         return self.user_state.get_name(self.id)
@@ -32,6 +42,7 @@ class User:
     def login(self, sub_user: Subscribed) -> bool:
         self.user_state.login()
         self.user_state = sub_user
+        sub_user.on_login(self.id)
         return True
 
     def register(self, username: str, **user_details) -> Subscribed:
@@ -69,8 +80,9 @@ class User:
     def _remove_transaction(self, transaction: Transaction) -> None:
         self.user_state.remove_transaction(transaction)
 
-    def save_product_to_cart(self, shop: Shop, product: Product, amount_to_buy: int) -> bool:
-        return self.cart.add_product(product, shop, amount_to_buy)
+    def save_product_to_cart(self, shop: Shop, product: Product, amount_to_buy: int,
+                             purchase_type_id=None, **pt_args) -> bool:
+        return self.cart.add_product(product, shop, amount_to_buy, purchase_type_id, **pt_args)
 
     def remove_product_from_cart(self, shop: Shop, product: Product, amount: int) -> bool:
         return self.cart.remove_from_shopping_bag(shop, product, amount)
@@ -79,53 +91,84 @@ class User:
         return self.cart.to_dict()
 
     def open_shop(self, **shop_details) -> Shop:
-        raise NotImplementedError()
+        return self.user_state.open_shop(**shop_details)
 
     def get_personal_transactions_history(self) -> List[Transaction]:
         return self.user_state.get_personal_transaction_history()
 
     def add_product(self, shop: Shop, **product_details) -> Product:
-        raise NotImplementedError()
+        return self.user_state.add_product(shop, **product_details)
 
-    def edit_product(self, shop: Shop, **product_details) -> Product:
-        raise NotImplementedError()
+    def edit_product(self, shop: Shop, **product_details) -> bool:
+        return self.user_state.edit_product(shop, **product_details)
 
-    def delete_product(self, shop: Shop, product_id: str) -> Product:
-        raise NotImplementedError()
+    def delete_product(self, shop: Shop, product_id: int) -> bool:
+        return self.user_state.delete_product(shop, product_id)
 
-    def appoint_shop_owner(self, shop: Shop, user) -> Appointment:
-        raise NotImplementedError()
+    def appoint_shop_owner(self, shop: Shop, user: Subscribed) -> Appointment:
+        return self.user_state.appoint_owner(user, shop)
 
-    def appoint_shop_manager(self, shop: Shop, user, permissions: List[str]) -> Appointment:
-        raise NotImplementedError()
-
-    def unappoint_shop_worker(self, shop: Shop, user) -> bool:
-        raise NotImplementedError()
+    def appoint_shop_manager(self, shop: Shop, user: Subscribed, permissions: List[str]) -> Appointment:
+        return self.user_state.appoint_manager(user, shop, permissions)
 
     def get_shop_staff_info(self, shop: Shop) -> List[Appointment]:
         return self.user_state.get_shop_staff_info(shop)
 
     def get_shop_transaction_history(self, shop: Shop) -> List[Transaction]:
-        raise NotImplementedError()
+        return self.user_state.get_shop_transaction_history(shop)
 
     def add_purchase_condition(self, shop: Shop, condition: Condition) -> bool:
-        raise NotImplementedError()
+        return self.user_state.add_purchase_condition(shop, condition)
 
     def remove_purchase_condition(self, shop: Shop, condition_id: int) -> bool:
-        raise NotImplementedError()
+        return self.user_state.remove_purchase_condition(shop, condition_id)
 
     def get_shop_discounts(self, shop: Shop) -> Iterable[Discount]:
         return self.user_state.get_shop_discounts(shop)
 
-    def to_dict(self):
-        raise NotImplementedError()
+    def get_shop_purchase_conditions(self, shop: Shop) -> List[Condition]:
+        return self.user_state.get_shop_purchase_conditions(shop)
+
+    def to_dict(self) -> dict:
+        ret = {
+            "id": self.id
+        }
+        ret.update(self.user_state.to_dict())
+        return ret
+
+    def exit(self):
+        self.notifications.disconnect(self.id)
+
+    def add_purchase_type(self, shop: Shop, product_id: int, purchase_type_info: dict) -> PurchaseType:
+        return self.user_state.add_purchase_type(shop, product_id, purchase_type_info)
+
+    def offer_price(self, shop: Shop, product_id: int, offer: float) -> bool:
+        return self.user_state.offer_price(shop, product_id, offer)
+
+    def reply_price_offer(self, shop: Shop, product_id: int, offer_maker: str, action: str) -> bool:
+        return self.user_state.reply_price_offer(shop, product_id, offer_maker, action)
+
+    def change_product_purchase_type(self, shop: Shop, product_id: int, purchase_type_id: int, pt_args: dict) -> bool:
+        return self.cart.change_product_purchase_type(shop, product_id, purchase_type_id, pt_args)
+
+    def get_shop_info(self, shop: Shop):
+        self.user_state.get_shop_info(shop)
+
+    def get_offers(self, shop: Shop, product_id: int) -> List[PurchaseOffer]:
+        return self.user_state.get_offers(shop, product_id)
 
 
 class UserState:
-    def get_name(self, userid) -> str:
+    def get_name(self, userid=None) -> str:
         raise NotImplementedError()
 
-    def register(self, username: str, **user_details) -> Subscribed:
+    def send_error(self, msg):
+        raise NotImplementedError()
+
+    def send_message(self, msg):
+        raise NotImplementedError()
+
+    def register(self, username: str, **user_detail) -> Subscribed:
         raise Exception("Logged-in User cannot register")
 
     def login(self) -> bool:
@@ -183,7 +226,7 @@ class UserState:
         raise Exception("only system administrator can see the system transaction history")
 
     def get_shop_discounts(self, shop: Shop) -> Iterable[Discount]:
-        raise Exception("User doesn't have premissions to get shop transactions")
+        raise Exception("User doesn't have permissions to get shop discounts")
 
     def add_discount(self, shop: Shop, has_cond: bool, condition: ConditionRaw, discount: DiscountDict) -> Discount:
         raise Exception("User doesnt have permissions to manage discounts")
@@ -196,6 +239,9 @@ class UserState:
 
     def move_discount_to(self, shop: Shop, src_discount_id: int, dst_discount_id: int) -> bool:
         raise Exception("User doesnt have permissions to manage discounts")
+
+    def get_shop_purchase_conditions(self, shop: Shop) -> List[Condition]:
+        raise Exception("User doesn't have permissions to get shop purchase conditions")
 
     def add_purchase_condition(self, shop: Shop, condition: Condition) -> bool:
         raise Exception("User cannot perform this action")
@@ -218,19 +264,34 @@ class UserState:
     def get_system_transaction_history_of_user(self, username: str):
         raise Exception("User doesn't have system manager permissions")
 
-    def to_dict(self):
+    def to_dict(self) -> dict:
         raise NotImplementedError()
+
+    def add_purchase_type(self, shop: Shop, product_id: int, purchase_type_info: dict) -> PurchaseType:
+        raise Exception("User doesn't have permission to edit purchase types")
+
+    def offer_price(self, shop: Shop, product_id: int, offer: float) -> bool:
+        raise Exception("user must be signed in to make a purchase offer")
+
+    def reply_price_offer(self, shop: Shop, product_id: int, offer_maker: str, action: str) -> bool:
+        raise Exception("User doesn't have permission to reply to a price offer")
+
+    def get_shop_info(self, shop: Shop):
+        return shop.to_dict()
+
+    def get_offers(self, shop: Shop, product_id: int) -> List[PurchaseOffer]:
+        raise Exception("user doesn't have permission to get offers")
 
 
 class Guest(UserState):
-    def get_name(self, userid):
-        return f"Guest-{hash(userid)}"
+    def get_name(self, userid=None):
+        return f"Guest-{hash(userid) if userid else 'None'}"
 
     def register(self, username: str, **user_details):
         return Subscribed(username)
 
     def to_dict(self):
-        return {"username": "Guest"}
+        return {UserM.USERNAME: self.get_name()}
 
     def login(self):
         return True
@@ -242,17 +303,36 @@ class Subscribed(UserState):
         self.appointments: Dict[Shop, Appointment] = {}
         self.username = username
         self.transactions: List[Transaction] = []
+        self.pending_messages = []
+        self.logged_user = None
+        self.notifications = Notifications.get_notifications()
+
+    def on_login(self, logged_user):
+        self.logged_user = logged_user
+        self.notifications.on_sub_login(logged_user, self.username)
+        for msg in self.pending_messages:
+            self.send_message(msg)
+
+    def send_message(self, msg):
+        if self.logged_user:
+            self.notifications.send_message(self.logged_user, msg)
+        else:
+            self.pending_messages.append(msg)
+
+    def send_error(self, msg):
+        self.notifications.send_error(msg=msg)
 
     def to_dict(self):
-        return {"username": self.username, }
+        return {UserM.USERNAME: self.get_name()}
 
     def login(self) -> bool:
         raise Exception("Can't login while logged in")
 
     def logout(self):
+        self.logged_user = None
         return True
 
-    def get_name(self, userid):
+    def get_name(self, userid=None):
         return self.username
 
     def appoint_manager(self, sub: Subscribed, shop: Shop, permissions: List[str]):
@@ -331,6 +411,9 @@ class Subscribed(UserState):
         appointment = self.get_appointment(shop)
         return appointment.move_discount_to(src_discount_id, dst_discount_id)
 
+    def get_shop_purchase_conditions(self, shop: Shop) -> List[Condition]:
+        return self.get_appointment(shop).get_purchase_conditions()
+
     def add_purchase_condition(self, shop: Shop, condition: Condition) -> bool:
         appointment = self.get_appointment(shop)
         return appointment.add_purchase_condition(condition)
@@ -351,6 +434,18 @@ class Subscribed(UserState):
 
     def get_appointments(self):
         return list(self.appointments.values())
+
+    def add_purchase_type(self, shop: Shop, product_id: int, purchase_type_info: dict) -> PurchaseType:
+        return self.get_appointment(shop).add_purchase_type(product_id, purchase_type_info)
+
+    def offer_price(self, shop: Shop, product_id: int, offer: float) -> bool:
+        return shop.add_price_offer(self.username, product_id, offer)
+
+    def reply_price_offer(self, shop: Shop, product_id: int, offer_maker: str, action: str) -> bool:
+        return self.get_appointment(shop).reply_price_offer(product_id, offer_maker, action)
+
+    def get_offers(self, shop: Shop, product_id: int) -> List[PurchaseOffer]:
+        return self.get_appointment(shop).get_offers(product_id)
 
 
 class SystemManager(Subscribed):

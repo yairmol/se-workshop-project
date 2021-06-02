@@ -18,7 +18,7 @@ class ConfigFields:
     CERTIFICATE = "cert"
     KEY = "key"
     SEVER_PORT = "port"
-    WEBSOCKET_PORT = "ws_port"
+    NOTIFICATIONS_COMPONENT = "notifications"
 
 
 config = {
@@ -40,7 +40,10 @@ config = {
         ConfigFields.KEY: "secrets/key.pem"
     },
     ConfigFields.SEVER_PORT: 5000,
-    ConfigFields.WEBSOCKET_PORT: 5001,
+    ConfigFields.NOTIFICATIONS_COMPONENT: {
+        "name": "websockets",
+        "port": 5001,
+    }
 }
 
 
