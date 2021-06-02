@@ -1,10 +1,6 @@
-import json
-import os
-
-import eventlet
 from flask import Flask, request
-from flask_socketio import SocketIO, join_room, leave_room, emit
 from flask_cors import CORS
+from flask_socketio import SocketIO, emit
 
 # Initializing the flask object
 import domain.notifications.notifications

@@ -14,7 +14,6 @@ class Product:
     ):
         if categories is None:
             categories = []
-        Product.__id_lock.acquire()
         self.product_id = Product.__product_id
         Product.__product_id += 1
         Product.__id_lock.release()
@@ -25,6 +24,8 @@ class Product:
         self.set_quantity(quantity)
         self.categories: List[str] = categories
         self.shop_id = shop_id
+        Product.__id_lock.acquire()
+
 
     def to_dict(self):
         return {

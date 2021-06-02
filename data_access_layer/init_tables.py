@@ -1,8 +1,9 @@
 from datetime import datetime
 
 from sqlalchemy import create_engine, MetaData, Table, Column, Integer, String, ForeignKey
-from sqlalchemy.orm import registry
+from sqlalchemy.orm import registry, relationship
 
+from domain.commerce_system.purchase_conditions import Condition
 from domain.commerce_system.transaction import Transaction
 from domain.commerce_system.user import Subscribed
 from domain.commerce_system.shop import Shop
@@ -30,12 +31,21 @@ transaction = Table(
 )
 
 shops = Table(
-    'shops',
+    'shop',
     mapper_registry.metadata,
     Column('id', Integer, primary_key=True),
     Column('name', String),
     Column('description', String),
     Column('image_url', String),
+    # relationship("product")
+)
+
+categories_product_mtm = Table(
+    'product_categories_mtm',
+    mapper_registry.metadata,
+    Column('product_category_id', Integer, primary_key=True),
+    Column('category_id', Integer, ForeignKey('categories.category_id', ondelete='CASCADE')),
+    Column('product_id', Integer, ForeignKey("products.product_id", ondelete='CASCADE')),
 )
 
 products = Table(
@@ -46,8 +56,11 @@ products = Table(
     Column('price', Integer),
     Column('description', String),
     Column('quantity', Integer),
-    Column('shop_id', Integer, ForeignKey('categories.category_id', ondelete='CASCADE')),
+    Column('shop_id', Integer, ForeignKey('shop.id', ondelete='CASCADE')),
+    # Column('shop_id', Integer, ForeignKey('categories.category_id', ondelete='CASCADE')),
+    # relationship('categories', secondary=categories_product_mtm)
 )
+
 categories = Table(
     'categories',
     mapper_registry.metadata,
@@ -55,12 +68,13 @@ categories = Table(
     Column('category', String),
 )
 
-categories_product_mtm = Table(
-    'product_categories_mtm',
+
+complex_policies = Table(
+    'complex_policies',
     mapper_registry.metadata,
-    Column('product_category_id', Integer, primary_key=True),
-    Column('category_id', Integer, ForeignKey('categories.category_id', ondelete='CASCADE')),
-    Column('product_id', Integer, ForeignKey("products.product_id", ondelete='CASCADE')),
+    Column('id', Integer, primary_key=True),
+    Column('complexParent', Integer, ForeignKey('purchase_policies.policy_id')),
+    Column('complexChild', Integer, ForeignKey('purchase_policies.policy_id'))
 )
 
 shop_manager_appointments = Table(
@@ -91,7 +105,9 @@ shopping_cart = Table(
     mapper_registry.metadata,
     Column('cart_id', Integer, primary_key=True),
     Column('username', String, ForeignKey("subscribed.username", ondelete='CASCADE'))
+    Column('id', Integer, primary_key=True),
 )
+
 shopping_bag = Table(
     'shopping_bag',
     mapper_registry.metadata,
@@ -107,12 +123,17 @@ purchase_policies = Table(
     Column('condition_type', String),
     Column('max_quantity', Integer),
     Column('product', Integer, ForeignKey('products.product_id', ondelete='CASCADE')),
-    # Column('category', String), TODO: check if category is string or integer
+    Column('category', String),
     Column('min_time', String),
     Column('max_time', String),
     Column('min_date', String),
     Column('max_date', String),
-    Column('conditions', list),
+    relationship(
+        'purchase_policies',
+        secondary=complex_policies,
+        primaryjoin=policy_id == complex_policies.c.complexParent,
+
+    )
 
 )
 
@@ -133,8 +154,11 @@ discounts = Table(
 # )
 
 mapper_registry.map_imperatively(Subscribed, subscribed)
-mapper_registry.map_imperatively(Shop, shops)
-mapper_registry.map_imperatively(Product, products)
-mapper_registry.map_imperatively(Transaction, transaction)
+mapper_registry.map_imperatively(Shop, shop, properties={
+    "product": relationship(Product, backref='shop'),
+})
+mapper_registry.map_imperatively(Product, product, properties={
+    "categories": relationship(Category, backref='product', secondary=categories_product_mtm)
+})
 
-mapper_registry.metadata.create_all(engine)
+mapper_registry.map_imperatively(Category, categories)
