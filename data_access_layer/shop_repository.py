@@ -2,6 +2,7 @@ from typing import TypeVar
 
 from sqlalchemy import delete
 
+from domain.commerce_system.category import Category
 from domain.commerce_system.product import Product
 from domain.commerce_system.purchase_conditions import Condition
 from domain.commerce_system.shop import Shop
@@ -87,14 +88,14 @@ def save_policy(policy: Condition):
 def get_policy(policy_id: int):
     # get_x(policy_id, Condition, policy_id)
     with Session(engine) as session:
-        policy = session.query(Condition).filter_by(policy_id=policy_id).first()
+        policy = session.query(Condition).filter_by(id=policy_id).first()
         return policy
 
 
 def remove_policy(policy_id: int):
     # remove_x(policy_id, Condition, policy_id)
     with Session(engine) as session:
-        policy = session.query(Condition).filter_by(policy_id=policy_id).first()
+        policy = session.query(Condition).filter_by(id=policy_id).first()
         session.delete(policy)
         session.commit()
 
@@ -125,16 +126,14 @@ def save_category(category: Category):
     save_x(category)
 
 
-def get_catogory(discount_id: int):
-    # get_x(discount_id, Discount, discount_id)
+def get_category(category_id: str):
     with Session(engine) as session:
-        discount = session.query(Discount).filter_by(discount_id=discount_id).first()
-        return discount
+        category = session.query(Category).filter_by(category=category_id).first()
+        return category
 
 
-def remove_discount(discount_id: int):
-    # get_x(discount_id, Discount, discount_id)
+def remove_category(category_id: str):
     with Session(engine) as session:
-        discount = session.query(Discount).filter_by(discount_id=discount_id).first()
-        session.delete(discount)
+        category = session.query(Category).filter_by(category=category_id).first()
+        session.delete(category)
         session.commit()

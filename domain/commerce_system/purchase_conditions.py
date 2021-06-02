@@ -12,12 +12,13 @@ from data_model import ConditionsModel as CondM
 class Condition:
     _id_counter = 1
     counter_lock = threading.Lock()
-    type = None
+    # type = None
 
-    def __init__(self):
+    def __init__(self, condition_dict: dict):
         with Condition.counter_lock:
             self.id = Condition._id_counter
             Condition._id_counter += 1
+        self.condition_type = condition_dict[CondM.CONDITION_TYPE]
 
     def resolve(self, products: Dict[Product, int]) -> bool:
         raise NotImplementedError()
@@ -54,7 +55,7 @@ class MaxQuantityForProductCondition(ProductCondition):
     type = CondM.MAX_QUANTITY_FOR_PRODUCT
 
     def __init__(self, condition_dict: dict):
-        super().__init__()
+        super().__init__(condition_dict)
         self.max_quantity = condition_dict[CondM.MAX_QUANTITY]
         self.product_id = condition_dict[CondM.PRODUCT]
 
