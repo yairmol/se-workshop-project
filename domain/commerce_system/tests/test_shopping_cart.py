@@ -47,15 +47,15 @@ class ShoppingCartTests(unittest.TestCase):
 
     def test_add_product_to_cart1(self):
         self.user.save_product_to_cart(self.shop1, self.bamba, 1)
-        self.assertTrue(self.user.cart.shopping_bags[self.shop1].products[self.bamba] == 1)
+        self.assertTrue(self.user.cart.shopping_bags[self.shop1].products[self.bamba].amount == 1)
 
     def test_add_product_to_cart2(self):
         self.user.save_product_to_cart(self.shop1, self.bamba, 1)
         self.user.save_product_to_cart(self.shop1, self.bisli, 1)
         self.user.save_product_to_cart(self.shop2, self.humus, 2)
-        self.assertTrue(self.user.cart.shopping_bags[self.shop1].products[self.bamba] == 1)
-        self.assertTrue(self.user.cart.shopping_bags[self.shop1].products[self.bisli] == 1)
-        self.assertTrue(self.user.cart.shopping_bags[self.shop2].products[self.humus] == 2)
+        self.assertTrue(self.user.cart.shopping_bags[self.shop1].products[self.bamba].amount == 1)
+        self.assertTrue(self.user.cart.shopping_bags[self.shop1].products[self.bisli].amount == 1)
+        self.assertTrue(self.user.cart.shopping_bags[self.shop2].products[self.humus].amount == 2)
 
     def test_add_product_to_cart3(self):
         self.user.save_product_to_cart(self.shop1, self.bamba, 1)
@@ -63,9 +63,9 @@ class ShoppingCartTests(unittest.TestCase):
         self.user.save_product_to_cart(self.shop1, self.bamba, 2)
         self.user.save_product_to_cart(self.shop1, self.bisli, 1)
         self.user.save_product_to_cart(self.shop2, self.humus, 1)
-        self.assertTrue(self.user.cart.shopping_bags[self.shop1].products[self.bamba] == 4)
-        self.assertTrue(self.user.cart.shopping_bags[self.shop1].products[self.bisli] == 1)
-        self.assertTrue(self.user.cart.shopping_bags[self.shop2].products[self.humus] == 1)
+        self.assertTrue(self.user.cart.shopping_bags[self.shop1].products[self.bamba].amount == 4)
+        self.assertTrue(self.user.cart.shopping_bags[self.shop1].products[self.bisli].amount == 1)
+        self.assertTrue(self.user.cart.shopping_bags[self.shop2].products[self.humus].amount == 1)
 
     def save_to_cart(self):
         amounts_bought = {
@@ -84,14 +84,14 @@ class ShoppingCartTests(unittest.TestCase):
         self.save_to_cart()
         self.user.cart.remove_shopping_bag(self.shop1)
         self.assertTrue(len(self.user.cart.shopping_bags) == 2)
-        self.assertTrue(self.user.cart.shopping_bags[self.shop2].products[self.humus] == 1)
+        self.assertTrue(self.user.cart.shopping_bags[self.shop2].products[self.humus].amount == 1)
 
     def test_remove_bag_from_cart2(self):
         self.save_to_cart()
         self.user.cart.remove_shopping_bag(self.shop2)
         self.assertTrue(len(self.user.cart.shopping_bags) == 2)
-        self.assertTrue(self.user.cart.shopping_bags[self.shop1].products[self.bamba] == 1)
-        self.assertTrue(self.user.cart.shopping_bags[self.shop1].products[self.bisli] == 1)
+        self.assertTrue(self.user.cart.shopping_bags[self.shop1].products[self.bamba].amount == 1)
+        self.assertTrue(self.user.cart.shopping_bags[self.shop1].products[self.bisli].amount == 1)
 
     def check_bags(self, bags: List[ShoppingBag]):
         for bag in bags:

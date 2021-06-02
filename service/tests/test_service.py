@@ -9,7 +9,7 @@ from service.system_service import SystemService
 
 class TestService(unittest.TestCase):
     def setUp(self) -> None:
-        self.service = SystemService(CommerceSystemFacade(Authenticator(), Notifications()), Tokenizer())
+        self.service = SystemService(CommerceSystemFacade(Authenticator()), Tokenizer())
 
     def test_register1(self):
         token = self.service.enter()["result"]

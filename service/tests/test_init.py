@@ -2,7 +2,6 @@ import unittest
 import copy
 from domain.authentication_module.authenticator import Authenticator
 from domain.commerce_system.commerce_system_facade import CommerceSystemFacade
-from domain.notifications.notifications import Notifications
 from domain.token_module.tokenizer import Tokenizer
 from service.init_dict import InitDict
 from service.system_service import SystemService, InitError
@@ -32,7 +31,7 @@ additional_actions = [
 
 class TestInit(unittest.TestCase):
     def setUp(self) -> None:
-        self.service = SystemService(CommerceSystemFacade(Authenticator(), Notifications()), Tokenizer())
+        self.service = SystemService(CommerceSystemFacade(Authenticator()), Tokenizer())
 
     def test_init_enter_register_login(self):
         bindings = self.service.init(init_enter_register_login)

@@ -4,7 +4,7 @@ from typing import Dict, List, TypeVar
 from domain.commerce_system.action import Action, ActionPool
 from domain.commerce_system.purchase_conditions import Condition, CompositePurchaseCondition
 from domain.discount_module.discount_calculator import AdditiveDiscount, Discount
-from domain.commerce_system.product import Product
+from domain.commerce_system.product import Product, PurchaseType
 from domain.commerce_system.transaction import Transaction
 from data_model import ShopModel as Sm
 from domain.discount_module.discount_management import DiscountManagement, DiscountDict, ConditionRaw
@@ -81,6 +81,12 @@ class Shop:
                 if field == "quantity":
                     product.set_quantity(new_value)
                     continue
+                if field == "purchase_types":
+                    product.set_purchase_types(new_value)
+                    continue
+                if field == "categories":
+                    product.set_categories(new_value)
+                    continue
                 if not hasattr(product, field):
                     raise Exception("product has no field ", field)
                 setattr(product, field, new_value)
@@ -104,9 +110,9 @@ class Shop:
     def add_transaction(self, bag, transaction: Transaction) -> bool:
         with self.products_lock:
             product_update_actions = ActionPool([
-                Action(product.set_quantity, product.get_quantity() - amount)
+                Action(product.set_quantity, product.get_quantity() - bag_info.amount)
                 .set_reverse(Action(product.set_quantity, product.get_quantity()))
-                for product, amount in bag
+                for product, bag_info in bag
             ])
             product_update_actions.execute_actions()
             self.transaction_history.append(transaction)
@@ -114,8 +120,8 @@ class Shop:
 
     def cancel_transaction(self, bag: dict, transaction: Transaction) -> bool:
         with self.products_lock:
-            for product, amount in bag:
-                product.set_quantity(product.get_quantity() + amount)
+            for product, bag_info in bag:
+                product.set_quantity(product.get_quantity() + bag_info.amount)
             self.transaction_history.remove(transaction)
             return True
 
@@ -194,3 +200,12 @@ class Shop:
             return False
         success = remove(self.conditions, condition_id)
         return success
+
+    def add_purchase_type(self, product_id: int, purchase_type_info: dict) -> PurchaseType:
+        return self.products[product_id].add_purchase_type(purchase_type_info)
+
+    def add_price_offer(self, username: str, product_id: int, offer: float) -> bool:
+        return self.products[product_id].add_price_offer(username, offer)
+
+    def reply_price_offer(self, product_id: int, offer_maker: str, action: str) -> bool:
+        return self.products[product_id].reply_price_offer(offer_maker, action)

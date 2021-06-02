@@ -1,3 +1,6 @@
+from typing import TypedDict
+
+
 class UserModel:
     USERNAME = "username"
     PASSWORD = "password"
@@ -21,6 +24,9 @@ class ProductModel:
     CATEGORIES = "categories"
     AMOUNT = "amount"  # for ShoppingBag
     SHOP_ID = "shop_id"
+    PURCHASE_TYPES = "purchase_types"
+    PURCHASE_TYPE = "purchase_type"
+    PURCHASE_PRICE = "purchase_price"
 
 
 class TransactionModel:
@@ -38,6 +44,7 @@ class PermissionsModel:
     WATCH_TRANSACTIONS_PERM = "watch_transactions"
     WATCH_STAFF_PERM = "watch_staff"
     MANAGE_PURCHASE_CONDITIONS = "manage_purchase_condition"
+    PURCHASE_TYPES_PERM = "purchase_types"
 
 
 class ConditionsModel:
@@ -66,6 +73,21 @@ class AppointmentModel:
     WORKER_TITLE = "title"
     WORKER_APPOINTER = "appointer"
     PERMISSIONS = "permissions"
+
+
+class PurchaseTypes:
+    BUY_NOW = "buy_now"
+    OFFER = "offer"
+    PURCHASE_TYPE = "purchase_type"
+    APPROVE = "approve"
+    REJECT = "reject"
+    FOR_SUBS_ONLY = "for_subs_only"
+    OFFER_MAKER = "offer_maker"
+    STATE = "offer_state"
+
+
+class PurchaseTypeDict(TypedDict):
+    purchase_type: str
 
 
 admin_credentials = {
