@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import create_engine, MetaData, Table, Column, Integer, String, ForeignKey,  DATE, FLOAT
+from sqlalchemy import create_engine, MetaData, Table, Column, Integer, String, ForeignKey, DATE, FLOAT
 from sqlalchemy.orm import registry, relationship
 from sqlalchemy.orm.collections import attribute_mapped_collection
 
@@ -10,7 +10,7 @@ from domain.commerce_system.shopping_cart import ShoppingCart, ShoppingBag
 from domain.commerce_system.transaction import Transaction
 from domain.commerce_system.user import Subscribed
 from domain.commerce_system.shop import Shop
-from domain.commerce_system.product import Product
+from domain.commerce_system.product import Product, ProductInBag
 
 engine = create_engine('sqlite:///ahla_super.db', echo=False)
 meta = MetaData()
@@ -35,7 +35,7 @@ transaction = Table(
 shop = Table(
     'shop',
     mapper_registry.metadata,
-    Column('id', Integer, primary_key=True),
+    Column('shop_id', Integer, primary_key=True),
     Column('name', String),
     Column('description', String),
     Column('image_url', String),
@@ -89,12 +89,14 @@ shop_owner_appointments = Table(
     Column('shop_id', Integer, ForeignKey("shop.id", ondelete='CASCADE')),
     Column('appointer', String, ForeignKey("subscribed.username", ondelete='CASCADE')),
 )
+
 shopping_cart = Table(
     'shopping_cart',
     mapper_registry.metadata,
     Column('cart_id', Integer, primary_key=True),
     # Column('username', String, ForeignKey('subscribed.name')),
 )
+
 shopping_bag = Table(
     'shopping_bag',
     mapper_registry.metadata,
@@ -115,8 +117,9 @@ mapper_registry.map_imperatively(Subscribed, subscribed, properties={
     "transactions": relationship(Transaction, backref='subscribed')
 })
 mapper_registry.map_imperatively(Shop, shop, properties={
-    "product": relationship(Product, backref='shop'),
-    "shopping_bag": relationship(ShoppingBag, backref='shop')
+    "product": relationship(Product, backref='shop', collection_class=attribute_mapped_collection('product_id')),
+    "shopping_bag": relationship(ShoppingBag, backref='shop'),
+    "transactions_history": relationship(Transaction, backref='shop')
 })
 mapper_registry.map_imperatively(Product, product, properties={
     "categories": relationship(Category, backref='product', secondary=categories_product_mtm)
