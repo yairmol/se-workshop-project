@@ -50,6 +50,18 @@ class DeliveryFacadeAlwaysTrue(IDeliveryFacade):
         return True
 
 
+def represents_int(s):
+    try:
+        int(s)
+        return True
+    except ValueError:
+        return False
+
+
+def is_valid_transaction_id(value: int):
+    return 10000 <= value <= 100000
+
+
 class DeliveryFacadeWSEP(IDeliveryFacade):
     url = config[cf.DELIVERY_SYSTEM_URL]
     SUCCESSFUL_HANDSHAKE = 'OK'
@@ -70,16 +82,20 @@ class DeliveryFacadeWSEP(IDeliveryFacade):
             data.update(contact_details)
             try:
                 response = requests.post(self.url, data, timeout=5)
-                if response.text == self.ERROR:
+                text = response.text
+                if represents_int(text):
+                    value = int(text)
+                    if is_valid_transaction_id(value):
+                        return text
                     return False
-                return response.text
+                return False
             except Timeout:
                 return False
         return False
 
     def cancel_delivery(self, delivery_id: str) -> bool:
         if self.handshake():
-            data = {"action_type": "cancel_pay", "transaction_id": delivery_id}
+            data = {"action_type": "cancel_supply", "transaction_id": delivery_id}
             try:
                 response = requests.post(self.url, data, timeout=5)
                 return response.text == self.SUCCESSFUL_DELIVERY_CANCEL

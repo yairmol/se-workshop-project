@@ -3,6 +3,9 @@ import unittest
 from unittest import TestCase
 import threading as th
 
+import requests
+
+from domain.delivery_module.delivery_system import DeliveryFacadeWSEP
 from domain.discount_module.discount_management import DiscountDict, SimpleCond
 from driver import Driver
 from service.init_dict import InitDict
@@ -22,6 +25,7 @@ from data_model import (
 )
 from config.config import load_config
 import init_generator as ig
+import responses
 
 TESTS_CONFIG_PATH = "./acceptance-tests-config.json"
 
@@ -849,7 +853,8 @@ class PurchasesTests(TestCase):
         ), prods[:num_prods])))
         self.assertTrue(self.commerce_system.purchase_cart(u1, payment_details[0], delivery_details)['status'])
 
-    def add_purchase_offer_type_and_make_offer(self, token, shop_id, prod_id, offer_price, to_reply=True, to_approve=True):
+    def add_purchase_offer_type_and_make_offer(self, token, shop_id, prod_id, offer_price, to_reply=True,
+                                               to_approve=True):
         purchase_offer_type_id = self.commerce_system.add_purchase_type(
             self.shop_to_owners[shop_id], shop_id, prod_id, **offer_purchase_type_dict.copy()
         )["result"]
@@ -867,7 +872,7 @@ class PurchasesTests(TestCase):
         u1 = self.sessions[self.U1]
         shop_id = get_shops_not_owned_by_user(u1, self.shop_ids, self.shop_to_staff)[0]
         prod = self.shops_to_products[shop_id][0]
-        offer_price = self.pid_to_product[prod]["price"]/2
+        offer_price = self.pid_to_product[prod]["price"] / 2
         amount = 2
         purchase_offer_type_id = self.add_purchase_offer_type_and_make_offer(u1, shop_id, prod, offer_price)
         self.assertTrue(self.commerce_system.save_product_to_cart(
@@ -931,6 +936,98 @@ class PurchasesTests(TestCase):
         self.make_purchases_and_check_transactions(u1, prods, num_prods)
 
 
+class RobustnessTests(TestCase):
+    NUM_USERS = len(users)
+    NUM_SHOPS = len(shops)
+    NUM_PRODUCTS = len(products)
+    U1, U2 = 0, 1
+    url = "http://localhost:5000/"
+    config_url = "http://localhost:5000/config"
+
+    def setUp(self) -> None:
+
+        load_config(TESTS_CONFIG_PATH)
+        self.commerce_system = Driver.get_system_service()
+
+
+        # set_delivery_facade(DeliveryFacadeWSEP())
+        # set_payment_facade(PaymentFacadeMocks.ALWAYS_TRUE)
+
+        # CODE FROM SET UP ABOVE
+        self.sessions_to_users = register_login_users(self.commerce_system, self.NUM_USERS)
+        self.sessions = list(self.sessions_to_users.keys())
+        self.shop_id_to_shop, self.shop_to_opener = open_shops(self.commerce_system, self.sessions, self.NUM_SHOPS)
+        self.shop_ids = list(self.shop_id_to_shop.keys())
+        self.pid_to_product, self.product_to_shop = add_products(
+            self.commerce_system, self.shop_to_opener, self.shop_ids, self.NUM_PRODUCTS
+        )
+        self.shop_to_owners, self.shop_to_managers = appoint_owners_and_managers(
+            self.commerce_system, self.sessions, self.sessions_to_users, self.shop_ids
+        )
+        self.shops_to_products = shop_to_products(self.product_to_shop, self.shop_ids)
+        self.shop_to_staff, self.session_to_shops = sessions_to_shops(
+            self.shop_to_opener, self.shop_to_owners, self.shops_to_products, self.sessions
+        )
+
+    def test_purchase_product_fail_external_payment_system_bad_response(self):
+        data = {'pay': False}
+        requests.post(self.config_url, data)
+
+        u1 = self.sessions[self.U1]
+        shop_id = get_shops_not_owned_by_user(u1, self.shop_ids, self.shop_to_staff)[0]
+        prod_id = self.shops_to_products[shop_id][0]
+        transaction_status = self.commerce_system.purchase_product(
+            u1, shop_id, prod_id, 1, payment_details[0], delivery_details
+        )
+        self.assertFalse(transaction_status["status"])
+
+    def test_purchase_product_fail_external_delivery_system_bad_response(self):
+        data = {'supply': False}
+        requests.post(self.config_url, data)
+
+        u1 = self.sessions[self.U1]
+        shop_id = get_shops_not_owned_by_user(u1, self.shop_ids, self.shop_to_staff)[0]
+        prod_id = self.shops_to_products[shop_id][0]
+        transaction_status = self.commerce_system.purchase_product(
+            u1, shop_id, prod_id, 1, payment_details[0], delivery_details
+        )
+        self.assertFalse(transaction_status["status"])
+
+    def test_purchase_product_success_after_fail(self):
+        data = {'handshake': False}
+        requests.post(self.config_url, data)
+
+        u1 = self.sessions[self.U1]
+        shop_id = get_shops_not_owned_by_user(u1, self.shop_ids, self.shop_to_staff)[0]
+        prod_id = self.shops_to_products[shop_id][0]
+        transaction_status = self.commerce_system.purchase_product(
+            u1, shop_id, prod_id, 1, payment_details[0], delivery_details
+        )
+        self.assertFalse(transaction_status["status"])
+
+        data = {'handshake': True}
+        requests.post(self.config_url, data)
+
+        transaction_status = self.commerce_system.purchase_product(
+            u1, shop_id, prod_id, 1, payment_details[0], delivery_details
+        )
+        self.assertTrue(transaction_status["status"])
+
+    # checks time out in our modules
+    def test_purchase_product_external_system_delayed_response(self):
+        data = {'to_wait': True}
+        requests.post(self.config_url, data)
+
+        u1 = self.sessions[self.U1]
+        shop_id = get_shops_not_owned_by_user(u1, self.shop_ids, self.shop_to_staff)[0]
+        prod_id = self.shops_to_products[shop_id][0]
+        transaction_status = self.commerce_system.purchase_product(
+            u1, shop_id, prod_id, 1, payment_details[0], delivery_details
+        )
+        self.assertFalse(transaction_status["status"])
+
+
+
 class GuestTestsWithData(TestCase):
     NUM_USERS = len(users)
     NUM_GUESTS = 3
@@ -942,6 +1039,9 @@ class GuestTestsWithData(TestCase):
     S1 = 0
 
     def setUp(self):
+        self.responses = responses.RequestsMock()
+        self.responses.start()
+
         load_config(TESTS_CONFIG_PATH)
         self.commerce_system = Driver.get_system_service()
         self.guest_sess, self.subs_sess, self.sids_to_shop, self.sid_to_sess, self.pid_to_sid = fill_with_data(
@@ -1050,11 +1150,13 @@ class ParallelismTests(TestCase):
 
             def buyer1():
                 results.append(
-                    self.commerce_system.purchase_product(u_buyer1, sid, pid, 1, payment_details[0], delivery_details)["status"])
+                    self.commerce_system.purchase_product(u_buyer1, sid, pid, 1, payment_details[0], delivery_details)[
+                        "status"])
 
             def buyer2():
                 results.append(
-                    self.commerce_system.purchase_product(u_buyer2, sid, pid, 1, payment_details[0], delivery_details)["status"])
+                    self.commerce_system.purchase_product(u_buyer2, sid, pid, 1, payment_details[0], delivery_details)[
+                        "status"])
 
             self.run_parallel_test(buyer1, buyer2)
             self.assertTrue(any(results))
@@ -1076,7 +1178,8 @@ class ParallelismTests(TestCase):
             results = {}
 
             def buyer():
-                results[u_buyer] = self.commerce_system.purchase_product(u_buyer, sid, pid, 1, payment_details, delivery_details)
+                results[u_buyer] = self.commerce_system.purchase_product(u_buyer, sid, pid, 1, payment_details,
+                                                                         delivery_details)
 
             def opener():
                 results[u_opener] = self.commerce_system.delete_product(u_opener, sid, pid)
