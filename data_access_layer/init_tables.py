@@ -25,8 +25,8 @@ transaction = Table(
     Column('id', Integer, primary_key=True),
     Column('username', String),
     Column('shop_id', Integer),
-    # Column('date', ), TODO: how to save date?
-    # Column('price', ), TODO: how to save double/ float
+    Column('date', DATE),
+    Column('price', FLOAT),
 )
 
 shops = Table(
@@ -46,7 +46,7 @@ products = Table(
     Column('price', Integer),
     Column('description', String),
     Column('quantity', Integer),
-    Column('shop_id', Integer),
+    Column('shop_id', Integer, ForeignKey('categories.category_id', ondelete='CASCADE')),
 )
 categories = Table(
     'categories',
@@ -58,10 +58,47 @@ categories = Table(
 categories_product_mtm = Table(
     'product_categories_mtm',
     mapper_registry.metadata,
-    Column('product_category_id', Integer, ForeignKey('categories.category_id', ondelete='CASCADE'), primary_key=True),
-    Column('product_id', Integer, ForeignKey("products.product_id")),
+    Column('product_category_id', Integer, primary_key=True),
+    Column('category_id', Integer, ForeignKey('categories.category_id', ondelete='CASCADE')),
+    Column('product_id', Integer, ForeignKey("products.product_id", ondelete='CASCADE')),
 )
 
+shop_manager_appointments = Table(
+    'shop_manager_appointments',
+    mapper_registry.metadata,
+    Column('appointee', String, ForeignKey("subscribed.username", ondelete='CASCADE'), primary_key=True),
+    Column('shop_id', Integer, ForeignKey("shop.id")),
+    Column('appointer', String, ForeignKey("subscribed.username", ondelete='CASCADE')),
+    Column('delete_product', Integer),
+    Column('edit_product', Integer),
+    Column('add_product', Integer),
+    Column('discount', Integer),
+    Column('purchase_condition', Integer),
+    Column('get_trans_history', Integer),
+    Column('get_staff_permission', Integer),
+)
+
+shop_owner_appointments = Table(
+    'shop_owner_appointments',
+    mapper_registry.metadata,
+    Column('appointee', String, ForeignKey("subscribed.username", ondelete='CASCADE'), primary_key=True),
+    Column('shop_id', Integer, ForeignKey("shop.id", ondelete='CASCADE')),
+    Column('appointer', String, ForeignKey("subscribed.username", ondelete='CASCADE')),
+
+)
+shopping_cart = Table(
+    'shopping_cart',
+    mapper_registry.metadata,
+    Column('cart_id', Integer, primary_key=True),
+    Column('username', String, ForeignKey("subscribed.username", ondelete='CASCADE'))
+)
+shopping_bag = Table(
+    'shopping_bag',
+    mapper_registry.metadata,
+    Column('shop_id', Integer, ForeignKey("shop.id", ondelete='CASCADE'), primary_key=True),
+    Column('cart_id', Integer, ForeignKey("shopping_cart.cart_id", ondelete='CASCADE')),
+    Column('product_id', Integer, ForeignKey("products.product_id", ondelete='CASCADE'))
+)
 purchase_policies = Table(
     'purchase_policies',
     mapper_registry.metadata,
