@@ -69,7 +69,7 @@ categories = Table(
     'categories',
     mapper_registry.metadata,
     Column('category_id', Integer, primary_key=True),
-    Column('category', String),
+    Column('name', String),
 )
 
 # shop_manager_appointments = Table(
@@ -143,16 +143,18 @@ mapper_registry.map_imperatively(Category, categories)
 
 mapper_registry.map_imperatively(ShoppingCart, shopping_cart, properties={
     "shopping_bags": relationship(
-        ShoppingBag, backref='shopping_cart', collection_class=attribute_mapped_collection('shop')
+        ShoppingBag, backref='shopping_cart', collection_class=attribute_mapped_collection('shop.shop_id')
     ),
     # "subscribed": relationship(Subscribed, backref='shopping_cart')
 })
 
-mapper_registry.map_imperatively(ProductInBag, shopping_bag_products)
+mapper_registry.map_imperatively(ProductInBag, shopping_bag_products, properties={
+    "product": relationship(Product)
+})
 
 mapper_registry.map_imperatively(ShoppingBag, shopping_bag, properties={
     "products": relationship(ProductInBag, backref='shopping_bag_products',
-                             collection_class=attribute_mapped_collection('products')),
+                             collection_class=attribute_mapped_collection('product')),
     # "shop": relationship(Shop, backref='shop'),
 })
 
