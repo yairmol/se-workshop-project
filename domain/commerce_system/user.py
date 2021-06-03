@@ -2,6 +2,7 @@ from __future__ import annotations
 import threading
 from typing import List, Dict, Iterable
 
+from data_access_layer.subscribed_repository import save_subscribed
 from domain.commerce_system.appointment import Appointment, ShopOwner
 from domain.commerce_system.product import Product, PurchaseType, PurchaseOffer
 from domain.commerce_system.purchase_conditions import Condition
@@ -26,7 +27,7 @@ class User:
         self.id = self.__id_counter
         User.__id_counter = User.__id_counter + 1
         self.counter_lock.release()
-        self.cart = ShoppingCart(self.id)
+        self.cart = ShoppingCart()
         self.notifications = Notifications.get_notifications()
         self.notifications.add_client(self.id)
 
@@ -288,7 +289,9 @@ class Guest(UserState):
         return f"Guest-{hash(userid) if userid else 'None'}"
 
     def register(self, username: str, **user_details):
-        return Subscribed(username)
+        sub = Subscribed(username)
+        # save_subscribed(sub, Subscribed)
+        return sub
 
     def to_dict(self):
         return {UserM.USERNAME: self.get_name()}

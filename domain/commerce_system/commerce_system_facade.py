@@ -2,6 +2,7 @@ import threading
 from typing import Dict, List, Union, Optional
 
 from config.config import config, ConfigFields as cf
+from data_access_layer.subscribed_repository import get_subscribed, get_all_subscribed, remove_all_subscribed
 from data_model import ConditionsModel as Cm
 from domain.authentication_module.authenticator import Authenticator
 from domain.commerce_system.ifacade import ICommerceSystemFacade
@@ -69,6 +70,7 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         self.authenticator.login(username, password)
         with self.registered_users_lock:
             sub_user = self.registered_users.get(username)
+        # sub_user = get_subscribed(username, Subscribed)
 
         with self.active_users_lock:
             self.active_users.get(user_id).login(sub_user)
@@ -96,6 +98,7 @@ class CommerceSystemFacade(ICommerceSystemFacade):
 
     def get_all_user_names(self) -> List[str]:
         names: List[str] = list(self.registered_users.keys())
+        # names = [sub.username for sub in get_all_subscribed(Subscribed)]
         return names
 
     def get_all_categories(self) -> List[str]:
@@ -357,6 +360,7 @@ class CommerceSystemFacade(ICommerceSystemFacade):
     def is_username_exists(self, username: str) -> bool:
         with self.registered_users_lock:
             return username in self.registered_users
+        # return get_subscribed(username, Subscribed) is None
 
     def get_user(self, user_id) -> User:
         with self.active_users_lock:
@@ -367,6 +371,7 @@ class CommerceSystemFacade(ICommerceSystemFacade):
     def get_subscribed(self, username) -> Subscribed:
         with self.registered_users_lock:
             return self.registered_users[username]
+        # return get_subscribed(username, Subscribed)
 
     def get_shop(self, shop_id) -> Shop:
         with self.shops_lock:
@@ -423,6 +428,7 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         self.shops.clear()
         self.registered_users.clear()
         self.active_users.clear()
+        # remove_all_subscribed(Subscribed)
 
     def change_product_purchase_type(self, user_id: int, shop_id: int, product_id: int,
                                      purchase_type_id: int, pt_args: dict) -> bool:
