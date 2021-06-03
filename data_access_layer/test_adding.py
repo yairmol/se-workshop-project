@@ -4,7 +4,8 @@ from data_access_layer.shop_repository import save_shop, remove_shop, get_shop, 
 from data_access_layer.subscribed_repository import save_subscribed, get_subscribed, remove_subscribed
 from domain.commerce_system.category import Category
 from domain.commerce_system.product import Product
-from domain.commerce_system.purchase_conditions import MaxQuantityForProductCondition
+from domain.commerce_system.purchase_conditions import MaxQuantityForProductCondition, TimeWindowForCategoryCondition, \
+    TimeWindowForProductCondition, DateWindowForCategoryCondition, DateWindowForProductCondition
 from domain.commerce_system.shop import Shop
 from domain.commerce_system.transaction import Transaction
 from domain.commerce_system.user import Subscribed
@@ -40,18 +41,35 @@ print("ggggggggggggggggggggggg",product_id)
 # }
 
 condition_dict = {CondM.MAX_QUANTITY: 5, CondM.PRODUCT: product_id, CondM.CONDITION_TYPE: CondM.MAX_QUANTITY_FOR_PRODUCT}
-policy = MaxQuantityForProductCondition(condition_dict)
-print(policy.id)
-print(policy.product_id)
+condition_dict2 = {CondM.MIN_TIME: '00:00', CondM.MAX_TIME: '23:59', CondM.CATEGORY: "c", CondM.CONDITION_TYPE: CondM.TIME_WINDOW_FOR_CATEGORY}
+condition_dict3 = {CondM.MIN_TIME: '00:00', CondM.MAX_TIME: '23:59', CondM.PRODUCT: product_id, CondM.CONDITION_TYPE: CondM.TIME_WINDOW_FOR_PRODUCT}
+condition_dict4 = {CondM.MIN_DATE: '1/5/2021', CondM.MAX_DATE: '30/7/2021', CondM.CATEGORY: "c", CondM.CONDITION_TYPE: CondM.DATE_WINDOW_FOR_CATEGORY}
+condition_dict5 = {CondM.MIN_DATE: '1/5/2021', CondM.MAX_DATE: '30/7/2021', CondM.PRODUCT: product_id, CondM.CONDITION_TYPE: CondM.DATE_WINDOW_FOR_PRODUCT}
+
+policy1 = MaxQuantityForProductCondition(condition_dict)
+policy2 = TimeWindowForCategoryCondition(condition_dict2)
+policy3 = TimeWindowForProductCondition(condition_dict3)
+policy4 = DateWindowForCategoryCondition(condition_dict4)
+policy5 = DateWindowForProductCondition(condition_dict5)
+
+and_condition_dict = {CondM.CONDITIONS: [policy1, policy2, policy3, policy4, policy5], CondM.CONDITION_TYPE: CondM.AND}
+
+# print(policy.id)
+# print(policy.product_id)
 
 # save_shop(shop)
 # save_product(product)
 # save_category(category)
-# save_policy(policy)
+# save_policy(policy1)
+# save_policy(policy2)
+# save_policy(policy3)
+# save_policy(policy4)
+# save_policy(policy5)
+
 
 # remove_policy(1)
-# remove_product(1)
-remove_shop(1)
+remove_product(1)
+# remove_shop(1)
 # remove_category(1)
 # shop_from_db = get_shop("Armani")
 # print(shop_from_db.description)

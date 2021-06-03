@@ -87,7 +87,7 @@ class TimeWindowForCategoryCondition(CategoryCondition):
     type = CondM.TIME_WINDOW_FOR_CATEGORY
 
     def __init__(self, condition_dict: dict):
-        super().__init__()
+        super().__init__(condition_dict)
         self.min_time = datetime.strptime(condition_dict[CondM.MIN_TIME], CondM.TIME_FORMAT).time()
         self.max_time = datetime.strptime(condition_dict[CondM.MAX_TIME], CondM.TIME_FORMAT).time()
         self.category = condition_dict[CondM.CATEGORY]
@@ -114,7 +114,7 @@ class TimeWindowForProductCondition(CategoryCondition):
     type = CondM.TIME_WINDOW_FOR_PRODUCT
 
     def __init__(self, condition_dict: dict):
-        super().__init__()
+        super().__init__(condition_dict)
         self.min_time = datetime.strptime(condition_dict[CondM.MIN_TIME], CondM.TIME_FORMAT).time()
         self.max_time = datetime.strptime(condition_dict[CondM.MAX_TIME], CondM.TIME_FORMAT).time()
         self.product_id = condition_dict["product"]
@@ -141,7 +141,7 @@ class DateWindowForCategoryCondition(CategoryCondition):
     type = CondM.DATE_WINDOW_FOR_CATEGORY
 
     def __init__(self, condition_dict: dict):
-        super().__init__()
+        super().__init__(condition_dict)
         self.min_date = datetime.strptime(condition_dict[CondM.MIN_DATE], CondM.DATE_FORMAT)
         self.max_date = datetime.strptime(condition_dict[CondM.MAX_DATE], CondM.DATE_FORMAT)
         self.category = condition_dict[CondM.CATEGORY]
@@ -168,7 +168,7 @@ class DateWindowForProductCondition(CategoryCondition):
     type = CondM.DATE_WINDOW_FOR_PRODUCT
 
     def __init__(self, condition_dict: dict):
-        super().__init__()
+        super().__init__(condition_dict)
         self.min_date = datetime.strptime(condition_dict[CondM.MIN_DATE], CondM.DATE_FORMAT)
         self.max_date = datetime.strptime(condition_dict[CondM.MAX_DATE], CondM.DATE_FORMAT)
         self.product_id = condition_dict[CondM.PRODUCT]
@@ -193,7 +193,7 @@ class DateWindowForProductCondition(CategoryCondition):
 
 class CompositePurchaseCondition(Condition, ABC):
     def __init__(self, condition_dict: dict):
-        super().__init__()
+        super().__init__(condition_dict)
         self.conditions = condition_dict["conditions"]
 
     def to_dict(self):

@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import create_engine, MetaData, Table, Column, Integer, String, ForeignKey, DATE, FLOAT
+from sqlalchemy import create_engine, MetaData, Table, Column, Integer, String, ForeignKey, DATE, FLOAT, TIME
 from sqlalchemy.orm import registry, relationship, backref, polymorphic_union
 
 from domain.commerce_system.appointment import ShopManager, ShopOwner
@@ -121,10 +121,10 @@ purchase_policies = Table(
     Column('shop_id', Integer, ForeignKey('shop.id', ondelete='CASCADE')),
     Column('condition_type', String),
     Column('category', String, ForeignKey('categories.name', ondelete='CASCADE')),
-    Column('min_time', String),
-    Column('max_time', String),
-    Column('min_date', String),
-    Column('max_date', String),
+    Column('min_time', TIME),
+    Column('max_time', TIME),
+    Column('min_date', DATE),
+    Column('max_date', DATE),
     Column('product_id', Integer, ForeignKey('product.product_id', ondelete='CASCADE')),
     Column('max_quantity', Integer),
     Column('parent_policy', Integer, ForeignKey('purchase_policies.id', ondelete='CASCADE'))
