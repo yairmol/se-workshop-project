@@ -26,7 +26,7 @@ class User:
         self.id = self.__id_counter
         User.__id_counter = User.__id_counter + 1
         self.counter_lock.release()
-        self.cart = ShoppingCart(self.id)
+        self.cart = ShoppingCart()
         self.notifications = Notifications.get_notifications()
         self.notifications.add_client(self.id)
 

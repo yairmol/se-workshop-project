@@ -143,7 +143,7 @@ mapper_registry.map_imperatively(Category, categories)
 
 mapper_registry.map_imperatively(ShoppingCart, shopping_cart, properties={
     "shopping_bags": relationship(
-        ShoppingBag, backref='shopping_cart', collection_class=attribute_mapped_collection('shop.shop_id')
+        ShoppingBag, backref='shopping_cart', collection_class=attribute_mapped_collection('shop')
     ),
     # "subscribed": relationship(Subscribed, backref='shopping_cart')
 })
