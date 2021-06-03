@@ -1,11 +1,17 @@
 import unittest
-
+import threading as th
 from domain.commerce_system.appointment import ShopOwner
 from domain.commerce_system.shop import Shop
 
 shop_dict = {"shop_name": "s1", "description": "desc"}
 tost = {"product_name": "tost", "price": 115, "description": "tost taim", "quantity": 3}
 tost2 = {"product_name": "tost2", "price": 116, "description": "tost2 taim", "quantity": 4}
+
+
+def run_parallel_test(f1, f2):
+    t1, t2 = th.Thread(target=f1), th.Thread(target=f2)
+    t1.start(), t2.start()
+    t1.join(), t2.join()
 
 
 class TestShopOwner(unittest.TestCase):
@@ -25,6 +31,16 @@ class TestShopOwner(unittest.TestCase):
         self.shop_owner.add_product(**tost2)
         assert self.shop.has_product("tost") and self.shop.has_product("tost2")
 
+    def test_add_product_parallel(self):
+        def add1(x):
+            return lambda: x.shop_owner.add_product(**tost)
+
+        def add2(x):
+            return lambda: x.shop_owner.add_product(**tost2)
+
+        run_parallel_test(add1(self), add2(self))
+        assert self.shop.has_product("tost") and self.shop.has_product("tost2")
+
     def test_delete_product(self):
         self.shop.add_product(**tost)
         self.shop.add_product(**tost2)
@@ -32,6 +48,25 @@ class TestShopOwner(unittest.TestCase):
         tost2_id = self.shop.get_id("tost2")
         self.shop_owner.delete_product(tost_id)
         self.shop_owner.delete_product(tost2_id)
+        assert not self.shop.has_product("tost") and not self.shop.has_product("tost2")
+
+    def test_delete_product_parallel(self):
+        self.shop.add_product(**tost)
+        self.shop.add_product(**tost2)
+
+        def del1(x):
+            def a():
+                tost_id = x.shop.get_id("tost")
+                x.shop_owner.delete_product(tost_id)
+            return a
+
+        def del2(x):
+            def a():
+                tost_id = x.shop.get_id("tost2")
+                x.shop_owner.delete_product(tost_id)
+            return a
+
+        run_parallel_test(del1(self), del2(self))
         assert not self.shop.has_product("tost") and not self.shop.has_product("tost2")
 
     def test_edit_product(self):

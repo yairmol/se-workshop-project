@@ -1,11 +1,17 @@
 import unittest
-
+import threading as th
 from domain.commerce_system.appointment import ShopOwner, ShopManager
 from domain.commerce_system.shop import Shop
 from domain.commerce_system.user import Subscribed
 
 
 shop_dict = {"shop_name": "s1", "description": "desc"}
+
+
+def run_parallel_test(f1, f2):
+    t1, t2 = th.Thread(target=f1), th.Thread(target=f2)
+    t1.start(), t2.start()
+    t1.join(), t2.join()
 
 
 class TestShopOwner(unittest.TestCase):
@@ -47,6 +53,18 @@ class TestShopOwner(unittest.TestCase):
         self.owner_sub.appoint_manager(new_sub, self.test_shop, [])
         self.owner_sub.un_appoint_manager(new_sub, self.test_shop)
         self.assertNotIn(self.test_shop, new_sub.appointments.keys())
+
+    def remove_manager_parallel(self):
+        def a(x):
+            def f():
+                new_sub = Subscribed("new sub")
+                x.owner_sub.appoint_manager(new_sub, self.test_shop, [])
+                x.owner_sub.un_appoint_manager(new_sub, self.test_shop)
+                x.assertNotIn(self.test_shop, new_sub.appointments.keys())
+        return a(self)
+
+    def test_remove_manager_parallel(self):
+        run_parallel_test(self.remove_manager_parallel(), self.remove_manager_parallel())
 
     def test_unappoint_from_non_appointer(self):
         new_sub = Subscribed("new sub")

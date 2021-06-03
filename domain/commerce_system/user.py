@@ -2,6 +2,7 @@ from __future__ import annotations
 import threading
 from typing import List, Dict, Iterable
 
+# from data_access_layer.subscribed_repository import save_subscribed
 from domain.commerce_system.appointment import Appointment, ShopOwner
 from domain.commerce_system.product import Product
 from domain.commerce_system.purchase_conditions import Condition
@@ -242,6 +243,7 @@ class Subscribed(UserState):
         self.appointments: Dict[Shop, Appointment] = {}
         self.username = username
         self.transactions: List[Transaction] = []
+        # save_subscribed(self)
 
     def to_dict(self):
         return {"username": self.username, }
