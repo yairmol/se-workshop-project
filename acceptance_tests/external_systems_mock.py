@@ -22,36 +22,33 @@ import sys
 from time import sleep
 
 from flask import Flask, request
+from flask_cors import CORS
+
 app = Flask(__name__)
 
-config = {'to_exit': False, 'to_wait': False, 'handshake': True, 'pay': True, 'cancel_payment': True, 'supply': True, 'cancel_supply': True}
-supply_counter = 10001
-pay_counter = 10001
+config = {'to_exit': False, 'to_wait': False, 'handshake': True, 'pay': True, 'cancel_payment': True, 'supply': True,
+          'cancel_supply': True}
+counters = {"supply_counter": 10001, "pay_counter": 10001}
+# CORS(app, resources={
+#     r"/.*": {
+#         "origins": "*",
+#         "Content-Type": "application/json"
+#     }
+# })
+
 
 @app.route('/config', methods=['post'])
 def set_config():
-    dic = request.data.decode()
-    if 'to_exit' in dic:
-        config['to_exit'] = dic['to_exit']
-    if 'to_wait' in dic:
-        config['to_wait'] = dic['to_wait']
-    if 'handshake' in dic:
-        config['handshake'] = dic['handshake']
-    if 'pay' in dic:
-        config['pay'] = dic['pay']
-    if 'cancel_payment' in dic:
-        config['cancel_payment'] = dic['cancel_payment']
-    if 'deliver' in dic:
-        config['deliver'] = dic['deliver']
-    if 'cancel_delivery' in dic:
-        config['cancel_delivery'] = dic['cancel_delivery']
-
+    print("data", request.data)
+    dic = json.loads(request.data.decode())
+    config.update(dic)
     return 'CONFIG'
 
 
-@app.route('/')
+@app.route('/', methods=['POST'])
 def action():
-    action = request.data.decode()
+    print("action", request.data)
+    action = json.loads(request.data.decode())
     if config['to_exit']:
         exit()
     if config['to_wait']:
@@ -65,8 +62,8 @@ def action():
 
     if action['action_type'] == "pay":
         if config['pay']:
-            pay_counter += 1
-            return pay_counter
+            counters["pay_counter"] += 1
+            return str(counters["pay_counter"])
         else:
             return '-1'
 
@@ -77,9 +74,10 @@ def action():
             return '-1'
 
     if action['action_type'] == "supply":
+        print(config['supply'])
         if config['supply']:
-            supply_counter += 1
-            return supply_counter
+            counters["supply_counter"] += 1
+            return str(counters["supply_counter"])
         else:
             return '-1'
 
@@ -90,5 +88,4 @@ def action():
             return '-1'
 
 
-
-app.run(port=5000)
+app.run(port=8080)

@@ -2,10 +2,8 @@ import copy
 import unittest
 from unittest import TestCase
 import threading as th
-
 import requests
 
-from domain.delivery_module.delivery_system import DeliveryFacadeWSEP
 from domain.discount_module.discount_management import DiscountDict, SimpleCond
 from driver import Driver
 from service.init_dict import InitDict
@@ -23,11 +21,12 @@ from data_model import (
     UserModel as Um, ProductModel as Pm, ConditionsModel as Cm,
     PermissionsModel as PermM, PurchaseTypes as Pt
 )
-from config.config import load_config
+from config.config import load_config, reset_config
 import init_generator as ig
 import responses
 
 TESTS_CONFIG_PATH = "./acceptance-tests-config.json"
+ROBUSTNESS_TESTS_CONFIG = "./robustness-tests-config.json"
 
 
 # 2. Guest Functional Requirements tests
@@ -43,6 +42,7 @@ class GuestTests(TestCase):
         status = self.commerce_system.exit(self.session_id)['status']
         self.assertTrue(status)
         self.commerce_system.cleanup()
+        reset_config()
 
     # 2.1 enter + 2.2 exit
     def test_enter_exit(self):
@@ -107,6 +107,7 @@ class SubscribedTests(TestCase):
         status = self.commerce_system.exit(self.session_id)['status']
         self.assertTrue(status)
         self.commerce_system.cleanup()
+        reset_config()
 
     # 3.1 logout
     def test_logout(self):
@@ -147,6 +148,7 @@ class ShopOwnerOperations(TestCase):
 
     def tearDown(self) -> None:
         self.commerce_system.cleanup()
+        reset_config()
 
     # 4.1 add product to shop
     def test_add_product_to_shop(self):
@@ -307,6 +309,7 @@ class ShopManagerOperations(TestCase):
 
     def tearDown(self) -> None:
         self.commerce_system.cleanup()
+        reset_config()
 
     # 4.6 edit manager permissions
     def edit_manager_permissions(self, m_permissions):
@@ -458,6 +461,7 @@ class PurchasesTests(TestCase):
 
     def tearDown(self) -> None:
         self.commerce_system.cleanup()
+        reset_config()
 
     # 2.7 save product to cart
     def test_save_product_to_cart(self):
@@ -941,14 +945,17 @@ class RobustnessTests(TestCase):
     NUM_SHOPS = len(shops)
     NUM_PRODUCTS = len(products)
     U1, U2 = 0, 1
-    url = "http://localhost:5000/"
-    config_url = "http://localhost:5000/config"
+    url = "http://localhost:8080/"
+    config_url = "http://localhost:8080/config"
 
     def setUp(self) -> None:
-
-        load_config(TESTS_CONFIG_PATH)
+        load_config(ROBUSTNESS_TESTS_CONFIG)
         self.commerce_system = Driver.get_system_service()
 
+        data = {'to_exit': False, 'to_wait': False, 'handshake': True,
+                'pay': True, 'cancel_payment': True, 'supply': True,
+                'cancel_supply': True}
+        requests.post(self.config_url, json=data)
 
         # set_delivery_facade(DeliveryFacadeWSEP())
         # set_payment_facade(PaymentFacadeMocks.ALWAYS_TRUE)
@@ -969,9 +976,13 @@ class RobustnessTests(TestCase):
             self.shop_to_opener, self.shop_to_owners, self.shops_to_products, self.sessions
         )
 
+    def tearDown(self) -> None:
+        self.commerce_system.cleanup()
+        reset_config()
+
     def test_purchase_product_fail_external_payment_system_bad_response(self):
         data = {'pay': False}
-        requests.post(self.config_url, data)
+        requests.post(self.config_url, json=data)
 
         u1 = self.sessions[self.U1]
         shop_id = get_shops_not_owned_by_user(u1, self.shop_ids, self.shop_to_staff)[0]
@@ -983,8 +994,7 @@ class RobustnessTests(TestCase):
 
     def test_purchase_product_fail_external_delivery_system_bad_response(self):
         data = {'supply': False}
-        requests.post(self.config_url, data)
-
+        requests.post(self.config_url, json=data)
         u1 = self.sessions[self.U1]
         shop_id = get_shops_not_owned_by_user(u1, self.shop_ids, self.shop_to_staff)[0]
         prod_id = self.shops_to_products[shop_id][0]
@@ -995,7 +1005,7 @@ class RobustnessTests(TestCase):
 
     def test_purchase_product_success_after_fail(self):
         data = {'handshake': False}
-        requests.post(self.config_url, data)
+        requests.post(self.config_url, json=data)
 
         u1 = self.sessions[self.U1]
         shop_id = get_shops_not_owned_by_user(u1, self.shop_ids, self.shop_to_staff)[0]
@@ -1006,7 +1016,7 @@ class RobustnessTests(TestCase):
         self.assertFalse(transaction_status["status"])
 
         data = {'handshake': True}
-        requests.post(self.config_url, data)
+        requests.post(self.config_url, json=data)
 
         transaction_status = self.commerce_system.purchase_product(
             u1, shop_id, prod_id, 1, payment_details[0], delivery_details
@@ -1016,7 +1026,7 @@ class RobustnessTests(TestCase):
     # checks time out in our modules
     def test_purchase_product_external_system_delayed_response(self):
         data = {'to_wait': True}
-        requests.post(self.config_url, data)
+        requests.post(self.config_url, json=data)
 
         u1 = self.sessions[self.U1]
         shop_id = get_shops_not_owned_by_user(u1, self.shop_ids, self.shop_to_staff)[0]
@@ -1025,7 +1035,6 @@ class RobustnessTests(TestCase):
             u1, shop_id, prod_id, 1, payment_details[0], delivery_details
         )
         self.assertFalse(transaction_status["status"])
-
 
 
 class GuestTestsWithData(TestCase):
@@ -1051,6 +1060,7 @@ class GuestTestsWithData(TestCase):
 
     def tearDown(self) -> None:
         self.commerce_system.cleanup()
+        reset_config()
 
     # 2.5 get shop info
     def test_get_shop_info(self):
@@ -1127,6 +1137,7 @@ class ParallelismTests(TestCase):
 
     def tearDown(self) -> None:
         self.commerce_system.cleanup()
+        reset_config()
 
     @staticmethod
     def run_parallel_test(f1, f2):
@@ -1207,6 +1218,9 @@ class ParallelismTests(TestCase):
 class TestInit(unittest.TestCase):
     def setUp(self) -> None:
         self.service = Driver.get_system_service()
+
+    def tearDown(self) -> None:
+        reset_config()
 
     def test_init_enter_register_login(self):
         bindings = self.service.init(init_enter_register_login)

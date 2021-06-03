@@ -1,0 +1,6 @@
+{
+  "payment_system_url": "http://localhost:8080/",
+  "delivery_system_url": "http://localhost:8080/",
+  "payment_facade": "real",
+  "delivery_facade": "real"
+}

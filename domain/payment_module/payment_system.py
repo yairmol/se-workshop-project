@@ -66,7 +66,6 @@ def is_valid_transaction_id(value: int):
 
 
 class PaymentsFacadeWSEP(IPaymentsFacade):
-    url = config[cf.PAYMENT_SYSTEM_URL]
     SUCCESSFUL_HANDSHAKE = 'OK'
     SUCCESSFUL_PAY_CANCEL = '1'
     ERROR = '-1'
@@ -74,7 +73,7 @@ class PaymentsFacadeWSEP(IPaymentsFacade):
     def handshake(self) -> bool:
         data = {"action_type": "handshake"}
         try:
-            response = requests.post(self.url, data, timeout=5)
+            response = requests.post(config[cf.PAYMENT_SYSTEM_URL], data, timeout=5)
             return response.text == self.SUCCESSFUL_HANDSHAKE
         except Timeout:
             return False
@@ -84,7 +83,7 @@ class PaymentsFacadeWSEP(IPaymentsFacade):
             data = {"action_type": "pay"}
             data.update(payment_details)
             try:
-                response = requests.post(self.url, data, timeout=5)
+                response = requests.post(config[cf.PAYMENT_SYSTEM_URL], data, timeout=5)
                 text = response.text
                 if represents_int(text):
                     value = int(text)
@@ -100,7 +99,7 @@ class PaymentsFacadeWSEP(IPaymentsFacade):
         if self.handshake():
             data = {"action_type": "cancel_pay", "transaction_id": transaction_id}
             try:
-                response = requests.post(self.url, data, timeout=5)
+                response = requests.post(config[cf.PAYMENT_SYSTEM_URL], data, timeout=5)
                 return response.text == self.SUCCESSFUL_PAY_CANCEL
             except Timeout:
                 return False
