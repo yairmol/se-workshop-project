@@ -43,13 +43,26 @@ def save_shop(shop: Shop):
 
 def get_shop(shop_name: str):
     # get_x(shop_name, Shop, name)
+from sqlalchemy import delete
+
+from domain.commerce_system.shop import Shop
+from init_tables import engine
+from sqlalchemy.orm import Session
+
+
+def save_shop(shop: Shop):
+    with Session(engine) as session:
+        session.add(shop)
+        session.commit()
+
+
+def get_shop(shop_name: str):
     with Session(engine) as session:
         shop = session.query(Shop).filter_by(name=shop_name).first()
         return shop
 
 
 def remove_shop(shop_id: int):
-    # remove_x(shop_id, Shop, id)
     with Session(engine) as session:
         shop = session.query(Shop).filter_by(id=shop_id).first()
         session.delete(shop)

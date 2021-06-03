@@ -140,6 +140,7 @@ class Product:
 class ProductInBag:
     def __init__(self, product: Product, amount: int, purchase_type: T_PT, **purchase_type_args):
         self.product = product
+        self.product_id = product.product_id
         self.amount = amount
         self.purchase_type = purchase_type
         self.purchase_type_args = purchase_type_args
