@@ -5,6 +5,9 @@ from sqlalchemy.orm import registry, relationship, backref, polymorphic_union
 
 from domain.commerce_system.appointment import ShopManager, ShopOwner
 from domain.commerce_system.category import Category
+from domain.commerce_system.shopping_cart import ShoppingCart, ShoppingBag
+from domain.commerce_system.appointment import ShopManager, ShopOwner
+from domain.commerce_system.category import Category
 from domain.commerce_system.purchase_conditions import Condition, MaxQuantityForProductCondition, \
     DateWindowForProductCondition, DateWindowForCategoryCondition, TimeWindowForProductCondition, \
     TimeWindowForCategoryCondition
@@ -28,8 +31,8 @@ transaction = Table(
     'transaction',
     mapper_registry.metadata,
     Column('id', Integer, primary_key=True),
-    Column('username', String, ForeignKey('subscribed.username')),
-    Column('shop_id', Integer),
+    Column('username', ForeignKey("subscribed.username"), String, ondelete='NO ACTION'),
+    Column('shop_id', ForeignKey("shop.shop_id"), Integer, ondelete='NO ACTION'),
     Column('date', DATE),
     Column('price', FLOAT),
 )
@@ -60,7 +63,7 @@ product = Table(
     Column('description', String),
     Column('quantity', Integer),
     Column('shop_id', Integer, ForeignKey('shop.id', ondelete='CASCADE')),
-    # Column('shop_id', Integer, ForeignKey('categories.category_id', ondelete='CASCADE')),
+    # Column('shop_id', Integer, ForeignKey('shop.shop_id', ondelete='CASCADE')),
     # relationship('categories', secondary=categories_product_mtm)
 )
 
@@ -93,17 +96,26 @@ shop_owner_appointments = Table(
     Column('shop_id', Integer, ForeignKey("shop.id", ondelete='CASCADE')),
     Column('appointer', String, ForeignKey("subscribed.username", ondelete='CASCADE')),
 )
-# shopping_cart = Table(
-#     'shopping_cart',
-#     mapper_registry.metadata,
-#     Column('cart_id', Integer, primary_key=True),
-# )
+shopping_cart = Table(
+    'shopping_cart',
+    mapper_registry.metadata,
+    Column('cart_id', Integer, primary_key=True),
+    # Column('username', String, ForeignKey('subscribed.name')),
+)
 shopping_bag = Table(
     'shopping_bag',
     mapper_registry.metadata,
-    Column('shop_id', Integer, ForeignKey("shop.id", ondelete='CASCADE'), primary_key=True),
-    Column('username', String, ForeignKey("subscribed.username", ondelete="CASCADE"), primary_key=True),
-    Column('product_id', Integer, ForeignKey("product.product_id", ondelete='CASCADE'))
+    Column('bag_id', Integer, primary_key=True),
+    Column('shop_id', Integer, ForeignKey("shop.shop_id", ondelete='CASCADE')),
+    Column('cart_id', String, ForeignKey("shopping_cart.cart_id", ondelete="CASCADE")),
+)
+
+shopping_bag_products = Table(
+    'shopping_bag_products',
+    mapper_registry.metadata,
+    Column('bag_id', Integer, ForeignKey("shopping_bag.bag_id", ondelete='CASCADE'), primary_key=True),
+    Column('product_id', Integer, ForeignKey("products.product_id"), nullable=False),
+    Column('amount', Integer)
 )
 
 # complex_policies = Table(
@@ -244,4 +256,18 @@ mapper_registry.map_imperatively(
     }
 )
 
+mapper_registry.map_imperatively(Category, categories)
+mapper_registry.map_imperatively(ShopManager, shop_manager_appointments)
+mapper_registry.map_imperatively(ShopOwner, shop_owner_appointments)
+mapper_registry.map_imperatively(ShoppingCart, shopping_cart, properties={
+    "shopping_bags": relationship(ShoppingBag, backref='shopping_cart',
+                                  collection_class=attribute_mapped_collection('cart_id')),
+    # "subscribed": relationship(Subscribed, backref='shopping_cart')
+})
+mapper_registry.map_imperatively(ProductInBag, shopping_bag_products)
+mapper_registry.map_imperatively(ShoppingBag, shopping_bag, properties={
+    "products": relationship(ProductInBag, backref='shopping_bag_products',
+                             collection_class=attribute_mapped_collection('products.product_id')),
+    # "shop": relationship(Shop, backref='shop'),
+})
 mapper_registry.metadata.create_all(engine)
