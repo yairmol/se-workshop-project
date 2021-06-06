@@ -2,7 +2,6 @@ const io = require('socket.io-client');
 
 export default function startNotifications() {
   const socket = io.connect('http://localhost:5000');
-
   function registerNotifHandler(onNotificationReceived) {
     socket.on('notification', (msg) => {
       onNotificationReceived(msg);

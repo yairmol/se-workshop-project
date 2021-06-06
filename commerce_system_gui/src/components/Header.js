@@ -94,7 +94,6 @@ export default function Header(props) {
   }
   const header = localStorage.getItem("header")
 
-  const [notifList, setNotifListData] = useState([]);
   const [notifSnackBarOpen, setNotifSnackBarOpen] = useState(false);
   const [notifDrawerOpen, setNotifDrawerOpen] = useState(false);
   const [anchorEl, setAnchorEl] = React.useState(null);
@@ -109,11 +108,6 @@ export default function Header(props) {
     setAnchorEl(null);
   };
 
-  const onNotifReceived = (msg) => {
-    notifList.push(msg)
-    setNotifListData(notifList);
-    setNotifSnackBarOpen(true);
-  }
   const handleCloseNotif = () => {
     setNotifSnackBarOpen(false);
   }
@@ -141,8 +135,6 @@ export default function Header(props) {
     </Menu>
   );
 
-  auth.getNotif().registerNotifHandler(onNotifReceived);
-
   const signout = () => {
     auth.signout().then((res) => {
       if (res) {
@@ -150,6 +142,7 @@ export default function Header(props) {
       }
     })
   }
+
   return (
     <React.Fragment>
       <Toolbar className={classes.toolbar}>
@@ -200,7 +193,7 @@ export default function Header(props) {
 
         }
         <IconButton onClick={handleNotifClick}>
-          <Badge badgeContent={notifList.length} color="secondary">
+          <Badge badgeContent={(Array.from(new Set(auth.notifList))).length} color="secondary">
             <EmailIcon/>
           </Badge>
         </IconButton>
@@ -225,8 +218,8 @@ export default function Header(props) {
       <Snackbar open={notifSnackBarOpen} autoHideDuration={5000} onClose={handleCloseNotif}>
         <Alert severity="info">Received a new message</Alert>
       </Snackbar>
-      <NotificationDrawer open={notifDrawerOpen} setOpen={setNotifDrawerOpen} msgs={notifList}
-                          setMsgs={setNotifListData}/>
+      <NotificationDrawer open={notifDrawerOpen} setOpen={setNotifDrawerOpen} msgs={Array.from(new Set(auth.notifList))}
+                          setMsgs={auth.setNotifList}/>
       {renderMenu}
     </React.Fragment>
   );
