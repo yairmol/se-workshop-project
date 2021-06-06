@@ -25,6 +25,7 @@ function useProvideAuth() {
   const [userId, setUserId] = useState(localStorage.getItem("userId"));
   const [notif, setNotif] = useState({})
   const [loadedNotif, setLoadedNotif] = useState(false)
+  const [notifList, setNotifList] = useState([]);
   const history = useHistory();
 
   const refresh = () => {
@@ -103,6 +104,13 @@ function useProvideAuth() {
     return notif;
   }
 
+  const onNotifReceived = (msg) => {
+    notifList.push(msg);
+    setNotifList(notifList);
+  }
+
+  getNotif().registerNotifHandler(onNotifReceived);
+
   useEffect(async () => {
     // localStorage.clear();
     await getToken();
@@ -127,6 +135,7 @@ function useProvideAuth() {
     signin,
     signup,
     signout,
-    getNotif,
+    notifList,
+    setNotifList
   };
 }

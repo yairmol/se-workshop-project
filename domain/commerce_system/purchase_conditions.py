@@ -55,14 +55,15 @@ class MaxQuantityForProductCondition(ProductCondition):
 
     def __init__(self, condition_dict: dict):
         super().__init__()
-        self.max_quantity = condition_dict[CondM.MAX_QUANTITY]
-        self.product_id = condition_dict[CondM.PRODUCT]
+        self.max_quantity = int(condition_dict[CondM.MAX_QUANTITY])
+        self.product_id = int(condition_dict[CondM.PRODUCT])
 
     def resolve(self, products: Dict[Product, int]) -> bool:
         for product in products:
             if product.product_id == self.product_id:
                 if self.max_quantity < products[product]:
-                    return False
+                    raise AssertionError(f"product '{product.product_name}' quantity is {products[product]} but"
+                                         f" the maximum allowed amount is {self.max_quantity}")
         return True
 
     def to_dict(self):
@@ -96,7 +97,9 @@ class TimeWindowForCategoryCondition(CategoryCondition):
         for product in products:
             if product.get_category_names().__contains__(self.category):
                 if cur_time > self.max_time or cur_time < self.min_time:
-                    return False
+                    raise AssertionError(f"products from category '{self.category}' are only purchasable between "
+                                         f"{self.min_time.strftime(CondM.TIME_FORMAT)} and "
+                                         f"{self.max_time.strftime(CondM.TIME_FORMAT)}")
         return True
 
     def to_dict(self):
@@ -109,21 +112,23 @@ class TimeWindowForCategoryCondition(CategoryCondition):
         return ret
 
 
-class TimeWindowForProductCondition(CategoryCondition):
+class TimeWindowForProductCondition(ProductCondition):
     type = CondM.TIME_WINDOW_FOR_PRODUCT
 
     def __init__(self, condition_dict: dict):
         super().__init__()
         self.min_time = datetime.strptime(condition_dict[CondM.MIN_TIME], CondM.TIME_FORMAT).time()
         self.max_time = datetime.strptime(condition_dict[CondM.MAX_TIME], CondM.TIME_FORMAT).time()
-        self.product_id = condition_dict["product"]
+        self.product_id = int(condition_dict["product"])
 
     def resolve(self, products: Dict[Product, int]) -> bool:
         cur_time = datetime.now().time()
         for product in products:
             if product.product_id == self.product_id:
                 if cur_time > self.max_time or cur_time < self.min_time:
-                    return False
+                    raise AssertionError(f"product '{product.product_name}' is only purchasable between "
+                                         f"{self.min_time.strftime(CondM.TIME_FORMAT)} and "
+                                         f"{self.max_time.strftime(CondM.TIME_FORMAT)}")
         return True
 
     def to_dict(self):
@@ -150,7 +155,9 @@ class DateWindowForCategoryCondition(CategoryCondition):
         for product in products:
             if product.get_category_names().__contains__(self.category):
                 if cur_date > self.max_date or cur_date < self.min_date:
-                    return False
+                    raise AssertionError(f"products from category '{self.category}' are only purchasable between "
+                                         f"{self.min_date.strftime(CondM.DATE_FORMAT)} and "
+                                         f"{self.max_date.strftime(CondM.DATE_FORMAT)}")
         return True
 
     def to_dict(self):
@@ -163,21 +170,23 @@ class DateWindowForCategoryCondition(CategoryCondition):
         return ret
 
 
-class DateWindowForProductCondition(CategoryCondition):
+class DateWindowForProductCondition(ProductCondition):
     type = CondM.DATE_WINDOW_FOR_PRODUCT
 
     def __init__(self, condition_dict: dict):
         super().__init__()
         self.min_date = datetime.strptime(condition_dict[CondM.MIN_DATE], CondM.DATE_FORMAT)
         self.max_date = datetime.strptime(condition_dict[CondM.MAX_DATE], CondM.DATE_FORMAT)
-        self.product_id = condition_dict[CondM.PRODUCT]
+        self.product_id = int(condition_dict[CondM.PRODUCT])
 
     def resolve(self, products: Dict[Product, int]) -> bool:
         cur_date = datetime.now()
         for product in products:
             if product.product_id == self.product_id:
                 if cur_date > self.max_date or cur_date < self.min_date:
-                    return False
+                    raise AssertionError(f"product '{product.product_name}' is only purchasable between "
+                                         f"{self.min_date.strftime(CondM.DATE_FORMAT)} and "
+                                         f"{self.max_date.strftime(CondM.DATE_FORMAT)}")
         return True
 
     def to_dict(self):
