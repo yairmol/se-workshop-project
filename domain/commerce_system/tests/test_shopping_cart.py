@@ -1,4 +1,5 @@
 import unittest
+import threading as th
 from datetime import datetime
 from typing import List, Dict
 
@@ -29,6 +30,12 @@ payment_details = {
 delivery_details = {}
 
 username = "aviv"
+
+
+def run_parallel_test(f1, f2):
+    t1, t2 = th.Thread(target=f1), th.Thread(target=f2)
+    t1.start(), t2.start()
+    t1.join(), t2.join()
 
 
 class ShoppingCartTests(unittest.TestCase):
@@ -90,8 +97,20 @@ class ShoppingCartTests(unittest.TestCase):
         self.save_to_cart()
         self.user.cart.remove_shopping_bag(self.shop2)
         self.assertTrue(len(self.user.cart.shopping_bags) == 2)
-        self.assertTrue(self.user.cart.shopping_bags[self.shop1].products[self.bamba].amount == 1)
-        self.assertTrue(self.user.cart.shopping_bags[self.shop1].products[self.bisli].amount == 1)
+        self.assertTrue(self.user.cart.shopping_bags[self.shop1].products[self.bamba] == 1)
+        self.assertTrue(self.user.cart.shopping_bags[self.shop1].products[self.bisli] == 1)
+
+    def test_remove_bag_from_cart_parallel(self):
+        self.save_to_cart()
+
+        def remove1(x):
+            return lambda: x.user.cart.remove_shopping_bag(self.shop1)
+
+        def remove2(x):
+            return lambda: x.user.cart.remove_shopping_bag(self.shop2)
+
+        run_parallel_test(remove1(self), remove2(self))
+        self.assertTrue(len(self.user.cart.shopping_bags) == 1)
 
     def check_bags(self, bags: List[ShoppingBag]):
         for bag in bags:
@@ -145,6 +164,11 @@ class ShoppingCartTests(unittest.TestCase):
         self.init_purchase_data()
         self.user.cart.shopping_bags[self.shop3].payment_facade = PaymentMock(False)
         self.check_purchase_failure()
+
+    def test_purchase_cart_fails_in_the_middle_due_to_payment_parallel(self):
+        def f(x):
+            return lambda: x.test_purchase_cart_fails_in_the_middle_due_to_payment()
+        run_parallel_test(f(self), f(self))
 
     def test_purchase_cart_fails_in_the_middle_due_to_delivery(self):
         self.init_purchase_data()
