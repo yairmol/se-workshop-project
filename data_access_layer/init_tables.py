@@ -124,7 +124,7 @@ mapper_registry.map_imperatively(Subscribed, subscribed, properties={
 })
 
 mapper_registry.map_imperatively(Shop, shop, properties={
-    "product": relationship(Product, backref='shop', collection_class=attribute_mapped_collection('product_id')),
+    "products": relationship(Product, backref='shop', collection_class=attribute_mapped_collection('product_id')),
     "shopping_bag": relationship(ShoppingBag, backref='shop'),
     "transactions_history": relationship(Transaction, backref='shop')
 })

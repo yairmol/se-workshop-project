@@ -1,8 +1,10 @@
 import threading
-from typing import Dict, List, Union, Optional
+import data_access_layer.init_tables
 
+from typing import Dict, List, Union, Optional
 from config.config import config, ConfigFields as cf
-from data_access_layer.subscribed_repository import get_subscribed, get_all_subscribed, remove_all_subscribed
+from data_access_layer.subscribed_repository import get_subscribed, get_all_subscribed, remove_all_subscribed, \
+    save_subscribed
 from data_model import ConditionsModel as Cm
 from domain.authentication_module.authenticator import Authenticator
 from domain.commerce_system.ifacade import ICommerceSystemFacade
@@ -65,13 +67,16 @@ class CommerceSystemFacade(ICommerceSystemFacade):
             self.registered_users[username] = new_subscribe
         return True
 
+    def get_subscribed(self, username: str):
+        with self.registered_users_lock:
+            sub_user = self.registered_users.get(username)
+        if not sub_user:
+            sub_user = get_subscribed(username, Subscribed)
+
     # 2.4
     def login(self, user_id: int, username: str, password: str) -> bool:
         self.authenticator.login(username, password)
-        with self.registered_users_lock:
-            sub_user = self.registered_users.get(username)
-        # sub_user = get_subscribed(username, Subscribed)
-
+        sub_user = self.get_subscribed(username)
         with self.active_users_lock:
             self.active_users.get(user_id).login(sub_user)
         return True
@@ -98,7 +103,7 @@ class CommerceSystemFacade(ICommerceSystemFacade):
 
     def get_all_user_names(self) -> List[str]:
         names: List[str] = list(self.registered_users.keys())
-        # names = [sub.username for sub in get_all_subscribed(Subscribed)]
+        names = [sub.username for sub in get_all_subscribed(Subscribed)]
         return names
 
     def get_all_categories(self) -> List[str]:
@@ -391,9 +396,9 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         admin_un = config[cf.ADMIN_CREDENTIALS][cf.ADMIN_USERNAME]
         admin_password = config[cf.ADMIN_CREDENTIALS][cf.ADMIN_PASSWORD]
         self.authenticator.register_new_user(admin_un, admin_password)
-        self.registered_users[admin_un] = SystemManager(
-            admin_password, self.transaction_repo
-        )
+        # self.registered_users[admin_un] = SystemManager(
+        #     admin_password, self.transaction_repo
+        # )
 
     def get_product_info(self, shop_id, product_id):
         return self.shops.get(shop_id).get_product_info(product_id).to_dict()

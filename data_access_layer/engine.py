@@ -1,3 +1,7 @@
+import os
+
 from sqlalchemy import create_engine
 
-engine = create_engine('sqlite:///ahla_super.db', echo=True)
+path = '/'.join(__file__.split('\\')[:-1])
+
+engine = create_engine('sqlite:///{}/ahla_super.db'.format(path), echo=True)

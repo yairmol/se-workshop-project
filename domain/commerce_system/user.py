@@ -1,6 +1,7 @@
 from __future__ import annotations
 import threading
 from typing import List, Dict, Iterable
+from sqlalchemy import orm
 
 from data_access_layer.subscribed_repository import save_subscribed
 from domain.commerce_system.appointment import Appointment, ShopOwner
@@ -290,7 +291,7 @@ class Guest(UserState):
 
     def register(self, username: str, **user_details):
         sub = Subscribed(username)
-        # save_subscribed(sub, Subscribed)
+        save_subscribed(sub, Subscribed)
         return sub
 
     def to_dict(self):
@@ -309,6 +310,12 @@ class Subscribed(UserState):
         self.pending_messages = []
         self.logged_user = None
         self.notifications = Notifications.get_notifications()
+
+    @orm.reconstructor
+    def init_on_load(self):
+        self.notifications = Notifications.get_notifications()
+        self.pending_messages = []
+        self.appointments: Dict[Shop, Appointment] = {} # TODO Remove this whe commiting
 
     def on_login(self, logged_user):
         self.logged_user = logged_user

@@ -1,51 +1,52 @@
-from domain.commerce_system.shopping_cart import ShoppingBag, ShoppingCart
-from domain.commerce_system.transaction import Transaction
-from init_tables import engine, shopping_bag
+from data_access_layer.engine import engine
 from sqlalchemy.orm import Session
 
-def save_shopping_cart(shopping_cart: ShoppingCart):
+
+def save_shopping_cart(shopping_cart):
     with Session(engine) as session:
         session.add(shopping_cart)
         session.commit()
 
-def get_shopping_cart(username: str):
+
+def get_shopping_cart(username: str, shopping_cart_type):
     with Session(engine) as session:
-        shopping_cart = session.query(ShoppingCart).filter_by(username=username).first()
+        shopping_cart = session.query(shopping_cart_type).filter_by(username=username).first()
         return shopping_cart
 
 
-def remove_shopping_cart(username: str):
+def remove_shopping_cart(username: str, shopping_cart_type):
     with Session(engine) as session:
-        shopping_cart = session.query(ShoppingCart).filter_by(username=username).first()
+        shopping_cart = session.query(shopping_cart_type).filter_by(username=username).first()
         session.delete(shopping_cart)
         session.commit()
 
 
-def save_shopping_bag(shoppingBag: ShoppingBag):
+def save_shopping_bag(shoppingBag):
     with Session(engine) as session:
         session.add(shoppingBag)
         session.commit()
 
-def get_all_shopping_bags(cart_id: int):
+
+def get_all_shopping_bags(cart_id: int, shopping_bag_type):
     with Session(engine) as session:
-        shopping_bags = session.query(ShoppingBag).filter_by(cart_id=cart_id)
+        shopping_bags = session.query(shopping_bag_type).filter_by(cart_id=cart_id)
         return shopping_bags
 
 
-def remove_shopping_bag(shop_id: int):
+def remove_shopping_bag(shop_id: int, shopping_bag_type):
     with Session(engine) as session:
-        shopping_bag = session.query(ShoppingBag).filter_by(shop_id=shop_id).first()
+        shopping_bag = session.query(shopping_bag_type).filter_by(shop_id=shop_id).first()
         session.delete(shopping_bag)
         session.commit()
 
-def save_transaction(transaction: Transaction):
+def save_transaction(transaction):
     with Session(engine) as session:
         session.add(transaction)
         session.commit()
 
-def get_all_transactions(username: str):
+def get_all_transactions(username: str, transaction_type):
     with Session(engine) as session:
-        transactions = session.query(Transaction).filter_by(username=username)
+        transactions = session.query(transaction_type).filter_by(username=username)
         return transactions
 
 
