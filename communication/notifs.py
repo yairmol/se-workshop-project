@@ -1,92 +1,66 @@
-import json
-import os
-
 from flask import Flask, request
-from flask_socketio import SocketIO, join_room, leave_room, emit
+from flask_socketio import SocketIO, emit
 from flask_cors import CORS
 
+
 # Initializing the flask object
-app = Flask(__name__)
-# by default runs on port 5000
-#  Initializing the flask-websocketio
-
-CORS(app)
-
-CORS(app, resources={
-    r"/.*": {
-        "origins": "*",
-        "Content-Type": "application/json"
-    }
-})
-app.config['CORS_HEADERS'] = 'Content-Type'
-io = SocketIO(app, cors_allowed_origins='*')
-
-# app.config['SECRET_KEY'] = '../secrets/cert.pem'
-# app.config['SECRET_CERT'] = '../secrets/cert.pem'
-
-clients = {}
-subscribed_clients = {}
-
-@io.on('connect')
-def connect():
-    print("%s connected" % request.namespace)
 
 
-@io.on('enlist')
-def enlist(data):
-    print("client id %s enlisting " % data["client_id"])
-    print("%s sid" % request.sid)
-    clients[data["client_id"]] = request.sid
-    if data["username"] not in list(subscribed_clients.keys()):
-        subscribed_clients[data["username"]] = {"client_id": data["client_id"], "msgs": []}
-    elif data["username"]:
-        subscribed_clients[data["username"]].client_id = data["client_id"]
-        for msg in subscribed_clients["msgs"]:
-            send_notif(data["client_id"], msg)
+def create_socket_io_app():
+    app = Flask(__name__)
+    CORS(app)
+    CORS(app, resources={
+        r"/.*": {
+            "origins": "*",
+            "Content-Type": "application/json"
+        }
+    })
+    app.config['CORS_HEADERS'] = 'Content-Type'
+    io = SocketIO(app, cors_allowed_origins='*')
+    client_session_map = {}
 
-def enlist_sub(username):
-    if username not in list(subscribed_clients.keys()):
-        subscribed_clients[username] = {"client_id": -1, "msgs": []}
+    class WebsocketNotifications:
+        def __init__(self):
+            self.io = io
+            self.app = app
 
-@io.on('disconnect')
-def disconnect():
-    print("%s disconnected" % request.sid)
-    for k in clients.copy():
-        if clients[k] == request.sid:
-            del clients[k]
+        @io.on('connect')
+        def connect(self):
+            print("%s connected" % request.namespace)
 
+        @io.on('enlist')
+        def enlist(self, data):
+            print("here")
+            client_session_map[data["client_id"]] = request.sid
 
-@io.on('send_notif')
-def send_notif(msg, client_id, username=""):
-    print(clients)
-    if client_id in list(clients.keys()):
-        emit('notification', msg, room=clients[client_id])
-    elif username in subscribed_clients and username != "":
-        subscribed_clients[username]["msgs"] += msg
-    elif username != "":
-        subscribed_clients[username] = {"client_id": client_id, "msgs": []}
-    else:
-        print("Guest is not enlisted")
+        @io.on('disconnect')
+        def disconnect(self):
+            print("%s disconnected" % request.sid)
+            for user_id, sid in client_session_map.items():
+                if request.sid == sid:
+                    print(f"disconnecting {user_id}")
+                    client_session_map.pop(user_id)
+                    break
 
+        @io.on('send_message')
+        def send_message(self, msg, client_id):
+            print(client_session_map)
+            if client_id in client_session_map:
+                emit('notification', msg, room=client_session_map[client_id])
 
-@io.on('send_error')
-def send_error(msg, client_id, username):
-    if client_id in list(clients.keys()):
-        emit('error', msg, room=clients[client_id])
-    elif username in subscribed_clients.keys() and username != "":
-        subscribed_clients[username]["msgs"] += msg
-    elif username != "":
-        subscribed_clients[username] = {"client_id": client_id, "msgs": []}
-    else:
-        print("Guest is not enlisted")
+        @io.on('send_error')
+        def send_error(self, msg, client_id):
+            emit('error', msg, room=client_session_map[client_id])
 
+        @io.on('broadcast')
+        def send_broadcast(self, msg):
+            emit('broadcast', msg, broadcast=True)
 
-@io.on('broadcast')
-def send_broadcast(msg):
-    emit('broadcast', msg, broadcast=True)
+    return WebsocketNotifications()
 
 
-# If you are running it using python <filename> then below command will be used
 if __name__ == '__main__':
-    print("Server starting")
-    io.run(app, port=5000)
+    print("SocketIO Server starting")
+    ws_notification = create_socket_io_app()
+    # io.run(app, port=5000)
+    ws_notification.io.run(ws_notification.app, port=int(5001), debug=True)  # certfile="../secrets/cert.pem", keyfile="../secrets/key.pem")

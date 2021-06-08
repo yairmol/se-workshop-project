@@ -1,6 +1,6 @@
 from __future__ import annotations
-from typing import Callable, Optional, Any, Generic, TypeVar, Iterable, List
-T= TypeVar('T')
+from typing import Callable, Optional, Any, Generic, TypeVar, Iterable
+T = TypeVar('T')
 U = TypeVar('U')
 
 
@@ -18,6 +18,7 @@ class Action(Generic[T]):
         self.return_value = None
         self.use_return_value = False
         self.return_value_name = None
+        self.error_msg = "action failed"
 
     def set_reverse(
             self, reverse_action: Action[U], use_return_value=False, return_value_name=None
@@ -32,6 +33,13 @@ class Action(Generic[T]):
         self.reverse_action = reverse_action
         self.use_return_value = use_return_value
         self.return_value_name = return_value_name
+        return self
+
+    def set_error_message(self, error_msg):
+        """
+        :param error_msg error message to be raised in case of failure (False value returned from action execution)
+        """
+        self.error_msg = error_msg
         return self
 
     def preform_action(self):
@@ -85,7 +93,7 @@ class ActionPool:
                     raise exception
                 if assertion_error:
                     raise assertion_error
-                return False
+                assert result, action.error_msg
             self.successful_actions_stack.append(action)
         return True
 

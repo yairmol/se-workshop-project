@@ -8,6 +8,8 @@ from domain.commerce_system.shop import Shop
 from domain.commerce_system.shopping_cart import ShoppingBag
 from domain.commerce_system.tests.mocks import PaymentMock, DeliveryMock
 from domain.commerce_system.user import User
+from domain.delivery_module.delivery_system import IDeliveryFacade
+from domain.payment_module.payment_system import IPaymentsFacade
 
 shops = [
     {"shop_name": "s1", "description": "desc"},
@@ -24,12 +26,15 @@ products = [
 payment_details = {
     "credit_card_number": "4580-0000-1111-2222", "cvv": "012", "expiration_date": datetime(2024, 6, 1).timestamp()
 }
+delivery_details = {}
 
 username = "aviv"
 
 
 class ShoppingCartTests(unittest.TestCase):
     def setUp(self) -> None:
+        IPaymentsFacade.get_payment_facade = lambda: PaymentMock(True)
+        IDeliveryFacade.get_delivery_facade = lambda: DeliveryMock(True)
         self.shop1 = Shop(**shops[0])
         self.shop2 = Shop(**shops[1])
         self.shop3 = Shop(**shops[2])
@@ -42,15 +47,15 @@ class ShoppingCartTests(unittest.TestCase):
 
     def test_add_product_to_cart1(self):
         self.user.save_product_to_cart(self.shop1, self.bamba, 1)
-        self.assertTrue(self.user.cart.shopping_bags[self.shop1].products[self.bamba] == 1)
+        self.assertTrue(self.user.cart.shopping_bags[self.shop1].products[self.bamba].amount == 1)
 
     def test_add_product_to_cart2(self):
         self.user.save_product_to_cart(self.shop1, self.bamba, 1)
         self.user.save_product_to_cart(self.shop1, self.bisli, 1)
         self.user.save_product_to_cart(self.shop2, self.humus, 2)
-        self.assertTrue(self.user.cart.shopping_bags[self.shop1].products[self.bamba] == 1)
-        self.assertTrue(self.user.cart.shopping_bags[self.shop1].products[self.bisli] == 1)
-        self.assertTrue(self.user.cart.shopping_bags[self.shop2].products[self.humus] == 2)
+        self.assertTrue(self.user.cart.shopping_bags[self.shop1].products[self.bamba].amount == 1)
+        self.assertTrue(self.user.cart.shopping_bags[self.shop1].products[self.bisli].amount == 1)
+        self.assertTrue(self.user.cart.shopping_bags[self.shop2].products[self.humus].amount == 2)
 
     def test_add_product_to_cart3(self):
         self.user.save_product_to_cart(self.shop1, self.bamba, 1)
@@ -58,9 +63,9 @@ class ShoppingCartTests(unittest.TestCase):
         self.user.save_product_to_cart(self.shop1, self.bamba, 2)
         self.user.save_product_to_cart(self.shop1, self.bisli, 1)
         self.user.save_product_to_cart(self.shop2, self.humus, 1)
-        self.assertTrue(self.user.cart.shopping_bags[self.shop1].products[self.bamba] == 4)
-        self.assertTrue(self.user.cart.shopping_bags[self.shop1].products[self.bisli] == 1)
-        self.assertTrue(self.user.cart.shopping_bags[self.shop2].products[self.humus] == 1)
+        self.assertTrue(self.user.cart.shopping_bags[self.shop1].products[self.bamba].amount == 4)
+        self.assertTrue(self.user.cart.shopping_bags[self.shop1].products[self.bisli].amount == 1)
+        self.assertTrue(self.user.cart.shopping_bags[self.shop2].products[self.humus].amount == 1)
 
     def save_to_cart(self):
         amounts_bought = {
@@ -79,18 +84,18 @@ class ShoppingCartTests(unittest.TestCase):
         self.save_to_cart()
         self.user.cart.remove_shopping_bag(self.shop1)
         self.assertTrue(len(self.user.cart.shopping_bags) == 2)
-        self.assertTrue(self.user.cart.shopping_bags[self.shop2].products[self.humus] == 1)
+        self.assertTrue(self.user.cart.shopping_bags[self.shop2].products[self.humus].amount == 1)
 
     def test_remove_bag_from_cart2(self):
         self.save_to_cart()
         self.user.cart.remove_shopping_bag(self.shop2)
         self.assertTrue(len(self.user.cart.shopping_bags) == 2)
-        self.assertTrue(self.user.cart.shopping_bags[self.shop1].products[self.bamba] == 1)
-        self.assertTrue(self.user.cart.shopping_bags[self.shop1].products[self.bisli] == 1)
+        self.assertTrue(self.user.cart.shopping_bags[self.shop1].products[self.bamba].amount == 1)
+        self.assertTrue(self.user.cart.shopping_bags[self.shop1].products[self.bisli].amount == 1)
 
     def check_bags(self, bags: List[ShoppingBag]):
         for bag in bags:
-            self.assertEquals(bag.products, {})
+            self.assertEqual(bag.products, {})
             self.assertTrue(bag.delivery_facade.delivery_called and not bag.delivery_facade.delivery_cancelled)
             self.assertTrue(bag.payment_facade.pay_called and not bag.payment_facade.pay_cancelled)
 
@@ -99,7 +104,7 @@ class ShoppingCartTests(unittest.TestCase):
             amounts_bought: Dict[Product, int]
     ):
         for product in self.products:
-            self.assertEquals(
+            self.assertEqual(
                 product.get_quantity(),
                 previous_quantities[product] - amounts_bought[product]
             )
@@ -117,9 +122,9 @@ class ShoppingCartTests(unittest.TestCase):
         amounts_bought = self.init_purchase_data()
         quantities = {p: p.get_quantity() for p in self.products}
         bags = list(self.user.cart.shopping_bags.values())
-        transactions = self.user.cart.purchase_cart(username, payment_details)
-        self.assertEquals(len(transactions), len(bags))
-        self.assertEquals(self.user.cart.shopping_bags, {})
+        transactions = self.user.cart.purchase_cart(username, payment_details, delivery_details)
+        self.assertEqual(len(transactions), len(bags))
+        self.assertEqual(self.user.cart.shopping_bags, {})
         self.check_bags(bags)
         self.check_updated_quantities(quantities, amounts_bought)
 
@@ -127,14 +132,14 @@ class ShoppingCartTests(unittest.TestCase):
         quantities = {p: p.get_quantity() for p in self.products}
         bags = self.user.cart.shopping_bags.copy()
         bags_products = {shop: bag.products.copy() for shop, bag in bags.items()}
-        self.assertRaises(AssertionError, self.user.cart.purchase_cart, username, payment_details)
+        self.assertRaises(AssertionError, self.user.cart.purchase_cart, username, payment_details, delivery_details)
         # check that products quantities weren't changed
         amounts_bought = dict(zip(self.products, [0] * len(products)))
         self.check_updated_quantities(quantities, amounts_bought)
         # check bags are unchanged
-        self.assertEquals(len(bags), len(self.user.cart.shopping_bags))
+        self.assertEqual(len(bags), len(self.user.cart.shopping_bags))
         for shop, bag in bags.items():
-            self.assertEquals(self.user.cart.shopping_bags[shop].products, bags_products[shop])
+            self.assertEqual(self.user.cart.shopping_bags[shop].products, bags_products[shop])
 
     def test_purchase_cart_fails_in_the_middle_due_to_payment(self):
         self.init_purchase_data()
@@ -169,15 +174,15 @@ class ShoppingCartTests(unittest.TestCase):
         bags = self.user.cart.shopping_bags.copy()
         bag_fails = bags.pop(shop_fails)
         bag_fails_products = bag_fails.products.copy()
-        transactions = self.user.cart.purchase_cart(username, payment_details, do_what_you_can=True)
+        transactions = self.user.cart.purchase_cart(username, payment_details, delivery_details, do_what_you_can=True)
         # check that products quantities were changed except from the one in shop_fails
         self.check_updated_quantities(quantities, amounts_bought)
-        self.assertEquals(len(self.user.cart.shopping_bags), 1)
+        self.assertEqual(len(self.user.cart.shopping_bags), 1)
         # check that the shopping bags are emptied except for bag_fails
         self.check_bags(bags.values())
-        self.assertEquals(self.user.cart.shopping_bags[shop_fails].products, bag_fails_products)
+        self.assertEqual(self.user.cart.shopping_bags[shop_fails].products, bag_fails_products)
         # check that the number of successful transactions is correct
-        self.assertEquals(len(bags), len(list(filter(lambda x: x is not None, transactions))))
+        self.assertEqual(len(bags), len(list(filter(lambda x: x is not None, transactions))))
 
 
 if __name__ == '__main__':

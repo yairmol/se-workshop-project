@@ -1,8 +1,12 @@
-from typing import Tuple, List, Dict
+from enum import Enum, auto
+from typing import Tuple, List, Dict, Union
 
-from .test_data import users, shops, permissions, products, payment_details
+from config.config import config, ConfigFields as cf
+from domain.delivery_module.delivery_system import IDeliveryFacade, DeliveryFacadeAlwaysTrue
+from domain.payment_module.payment_system import IPaymentsFacade, PaymentsFacadeAlwaysTrue
+from test_data import users, shops, permissions, products, payment_details
 from service.system_service import SystemService
-from data_model import UserModel as Um, ShopModel as Sm, ProductModel as Pm, admin_credentials
+from data_model import UserModel as Um
 
 
 def get_credentials(user: dict):
@@ -32,7 +36,7 @@ def register_login_users(commerce_system, num_users) -> Dict[str, dict]:
 
 
 def enter_guests(commerce_system: SystemService, num_guests) -> List[str]:
-    return [commerce_system.enter()['result'] for i in range(num_guests)]
+    return [commerce_system.enter()['result'] for _ in range(num_guests)]
 
 
 def open_shops(commerce_system: SystemService, sessions, num_shops) -> (Dict[int, dict], Dict[int, str]):
@@ -50,13 +54,15 @@ def open_shops(commerce_system: SystemService, sessions, num_shops) -> (Dict[int
 
 def add_products(commerce_system: SystemService, shop_id_to_sess, shop_ids, num_products):
     num_shops = len(shop_ids)
-    product_ids_to_shop_ids = {
+    pid_to_product_and_sid = {
         add_product(
             shop_id_to_sess[shop_ids[i % num_shops]], commerce_system, shop_ids[i % num_shops], products[i]
-        ): shop_ids[i % num_shops]
+        ): (products[i], shop_ids[i % num_shops])
         for i in range(num_products)
     }
-    return product_ids_to_shop_ids
+    pid_to_product = {pid: product for pid, (product, sid) in pid_to_product_and_sid.items()}
+    pid_to_sid = {pid: sid for pid, (product, sid) in pid_to_product_and_sid.items()}
+    return pid_to_product, pid_to_sid
 
 
 def appoint_owners_and_managers(
@@ -109,11 +115,11 @@ def get_shops_not_owned_by_user(user_sess: str, shop_ids: List[int], shop_to_sta
 
 def make_purchases(
         commerce_system: SystemService, session: str,
-        product_to_shop: Dict[int, int], products: List[int]
+        product_to_shop: Dict[int, int], products_to_buy: List[int]
 ):
     return all(map(lambda p: commerce_system.purchase_product(
         session, product_to_shop[p], p, 1, payment_details[0], {}
-    )["status"], products))
+    )["status"], products_to_buy))
 
 
 def fill_with_data(
@@ -124,11 +130,75 @@ def fill_with_data(
     subs_sessions = list(sess_to_users.keys())
     sid_to_shop, sid_to_sess = open_shops(commerce_system, subs_sessions, num_shops)
     shop_ids = list(sid_to_shop.keys())
-    pid_to_sid = add_products(commerce_system, sid_to_sess, shop_ids, num_products)
+    pid_product, pid_to_sid = add_products(commerce_system, sid_to_sess, shop_ids, num_products)
     return guest_sessions, subs_sessions, sid_to_shop, sid_to_sess, pid_to_sid
 
 
+class PaymentFacadeMocks(Enum):
+    ALWAYS_TRUE = auto()
+    ALWAYS_FALSE = auto()
+
+
+class DeliveryFacadeMocks(Enum):
+    ALWAYS_TRUE = auto()
+    ALWAYS_FALSE = auto()
+
+
+class PaymentFacadeAlwaysFalse(IPaymentsFacade):
+
+    def pay(self, total_price: int, payment_details: dict, contact_details: dict = None) -> Union[str, bool]:
+        return False
+
+    def cancel_payment(self, transaction_id: str) -> bool:
+        return True
+
+
+class DeliveryFacadeAlwaysFalse(IDeliveryFacade):
+
+    def deliver_to(self, contact_details: dict = None) -> Union[str, bool]:
+        return False
+
+    def cancel_delivery(self, delivery_id: str) -> bool:
+        return True
+
+
+def set_payment_facade(mock_type: PaymentFacadeMocks) -> None:
+    facade = IPaymentsFacade.get_payment_facade()
+    mock = {
+        PaymentFacadeMocks.ALWAYS_FALSE: PaymentFacadeAlwaysFalse,
+        PaymentFacadeMocks.ALWAYS_TRUE: PaymentsFacadeAlwaysTrue
+    }[mock_type]()
+    facade.pay = mock.pay
+    facade.cancel_payment = mock.cancel_payment
+
+
+def set_delivery_facade(mock_type: DeliveryFacadeMocks) -> None:
+    facade = IDeliveryFacade.get_delivery_facade()
+    mock = {
+        DeliveryFacadeMocks.ALWAYS_FALSE: DeliveryFacadeAlwaysFalse,
+        DeliveryFacadeMocks.ALWAYS_TRUE: DeliveryFacadeAlwaysTrue
+    }[mock_type]()
+    facade.deliver_to = mock.deliver_to
+    facade.cancel_delivery = mock.cancel_delivery
+
+
 def admin_login(commerce_system: SystemService):
+    admin_username = config[cf.ADMIN_CREDENTIALS][cf.ADMIN_USERNAME]
+    admin_password = config[cf.ADMIN_CREDENTIALS][cf.ADMIN_PASSWORD]
     admin_session = commerce_system.enter()["result"]
-    commerce_system.login(admin_session, **admin_credentials)
+    commerce_system.login(admin_session, admin_username, admin_password)
     return admin_session
+
+
+class NotificationMock:
+    @staticmethod
+    def send_message(*args, **kwargs):
+        return True
+
+    @staticmethod
+    def send_error(*args, **kwargs):
+        return True
+
+    @staticmethod
+    def send_broadcast(*args, **kwargs):
+        return True

@@ -1,6 +1,10 @@
 from datetime import datetime
 
-from data_model import UserModel as Um, ShopModel as Sm, ProductModel as Pm
+from data_model import (
+    UserModel as Um, ShopModel as Sm, ProductModel as Pm, PermissionsModel as PermM,
+    ConditionsModel as Cm, PurchaseTypes as Pt
+)
+import init_generator as ig
 
 users = [
     {
@@ -62,15 +66,48 @@ admin_credentials = {
 }
 
 permissions = [
-    ["add_product", "edit_product", "delete_product"],
-    ["add_product", "edit_product"],
-    ["delete_product"]
+    [PermM.ADD_PRODUCT_PERM, PermM.EDIT_PRODUCT_PERM, PermM.DELETE_PRODUCT_PERM],
+    [PermM.ADD_PRODUCT_PERM, PermM.EDIT_PRODUCT_PERM],
+    [PermM.DELETE_PRODUCT_PERM]
 ]
+
+simple_condition_dict = {
+    Cm.CONDITION_TYPE: Cm.DATE_WINDOW_FOR_CATEGORY, Cm.MIN_DATE: '1/5/2021', Cm.MAX_DATE: '20/7/2021',
+    Cm.CATEGORY: "c1"
+}
 
 payment_details = [
     {
-        "credit_card_number": "4580-1111-1111-1111",
-        "expiration_date": int(datetime(year=2024, month=6, day=1).timestamp()),
-        "card_holder_name": "Ligma"
+        "card_number": "4580-1111-1111-1111",
+        "year": "2024",
+        "month": "6",
+        "holder": "Ligma",
+        "cvv": "111",
+        "id": "111111111"
     }
 ]
+
+delivery_details = {}
+
+offer_purchase_type_dict = {Pt.PURCHASE_TYPE: Pt.OFFER}
+init_enter_register_login = {
+    "users": ["u1"],
+    "actions": [
+        ig.enter("u1"),
+        ig.register("u1", "user1", "password"),
+        ig.login("u1", "user1", "password")
+    ]
+}
+
+additional_users = ["u2"]
+
+additional_actions = [
+    ig.enter("u2"),
+    ig.register("u2", "user2", "password"),
+    ig.login("u2", "user2", "password"),
+    ig.open_shop("u1", "shop1", "the one and only shop in the entire commerce system", add_ref="s1"),
+    ig.add_product_to_shop("u1", "s1", "Bamba", "Its Osem", 30, 20, ["snacks"], add_ref="p1"),
+    ig.save_product_to_cart("u2", "s1", "p1", 3),
+    ig.purchase_cart("u2", {}, {}, add_ref="t1"),
+]
+

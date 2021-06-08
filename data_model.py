@@ -1,3 +1,6 @@
+from typing import TypedDict
+
+
 class UserModel:
     USERNAME = "username"
     PASSWORD = "password"
@@ -21,6 +24,9 @@ class ProductModel:
     CATEGORIES = "categories"
     AMOUNT = "amount"  # for ShoppingBag
     SHOP_ID = "shop_id"
+    PURCHASE_TYPES = "purchase_types"
+    PURCHASE_TYPE = "purchase_type"
+    PURCHASE_PRICE = "purchase_price"
 
 
 class TransactionModel:
@@ -37,9 +43,12 @@ class PermissionsModel:
     MANAGE_DISCOUNT_PERM = "manage_discounts"
     WATCH_TRANSACTIONS_PERM = "watch_transactions"
     WATCH_STAFF_PERM = "watch_staff"
+    MANAGE_PURCHASE_CONDITIONS = "manage_purchase_condition"
+    PURCHASE_TYPES_PERM = "purchase_types"
 
 
 class ConditionsModel:
+    CONDITION_TYPE = "condition_type"
     MAX_QUANTITY = "max_quantity"
     PRODUCT = "product"
     CATEGORY = "category"
@@ -47,11 +56,16 @@ class ConditionsModel:
     MAX_TIME = "max_time"
     MIN_DATE = "min_date"
     MAX_DATE = "max_date"
-    MAX_QUANTITY_FOR_PRODUCT = "MaxQuantityForProductCondition"
-    TIME_WINDOW_FOR_CATEGORY = "TimeWindowForCategoryCondition"
-    TIME_WINDOW_FOR_PRODUCT = "TimeWindowForProductCondition"
-    DATE_WINDOW_FOR_CATEGORY = "DateWindowForCategoryCondition"
-    DATE_WINDOW_FOR_PRODUCT = "DateWindowForProductCondition"
+    CONDITIONS = "conditions"  # for composite conditions
+    AND = "and_condition"
+    OR = "or_condition"
+    MAX_QUANTITY_FOR_PRODUCT = "max_quantity_for_product_condition"
+    TIME_WINDOW_FOR_CATEGORY = "time_window_for_category_condition"
+    TIME_WINDOW_FOR_PRODUCT = "time_window_for_product_condition"
+    DATE_WINDOW_FOR_CATEGORY = "date_window_for_category_condition"
+    DATE_WINDOW_FOR_PRODUCT = "date_window_for_product_condition"
+    TIME_FORMAT = "%H:%M"
+    DATE_FORMAT = "%d/%m/%Y"
 
 
 class AppointmentModel:
@@ -59,6 +73,21 @@ class AppointmentModel:
     WORKER_TITLE = "title"
     WORKER_APPOINTER = "appointer"
     PERMISSIONS = "permissions"
+
+
+class PurchaseTypes:
+    BUY_NOW = "buy_now"
+    OFFER = "offer"
+    PURCHASE_TYPE = "purchase_type"
+    APPROVE = "approve"
+    REJECT = "reject"
+    FOR_SUBS_ONLY = "for_subs_only"
+    OFFER_MAKER = "offer_maker"
+    STATE = "offer_state"
+
+
+class PurchaseTypeDict(TypedDict):
+    purchase_type: str
 
 
 admin_credentials = {

@@ -1,6 +1,7 @@
 from typing import Union, List
 
 from domain.delivery_module.delivery_system import IDeliveryFacade
+from domain.notifications.notifications import INotifications
 from domain.payment_module.payment_system import IPaymentsFacade
 
 
@@ -29,12 +30,26 @@ class DeliveryMock(IDeliveryFacade):
         self.delivery_cancelled = False
         self.delivery_works = delivery_works
 
-    def deliver_to(self, products: List[dict], address: str, contact_details: dict = None) -> Union[str, bool]:
+    def deliver_to(self, contact_details: dict = None) -> Union[str, bool]:
         self.delivery_called = True
         if self.delivery_works:
-            return str(hash(tuple([p["product_name"] for p in products])))
+            return str(hash(frozenset(contact_details.items())))
         return False
 
     def cancel_delivery(self, delivery_id: str) -> bool:
         self.delivery_cancelled = True
+        return True
+
+
+class NotificationMock:
+    @staticmethod
+    def send_message(*args, **kwargs):
+        return True
+
+    @staticmethod
+    def send_error(*args, **kwargs):
+        return True
+
+    @staticmethod
+    def send_broadcast(*args, **kwargs):
         return True

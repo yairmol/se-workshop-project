@@ -206,14 +206,13 @@ const useStyles = makeStyles((theme) => ({
   }
 }));
 
-function SimpleDiscount({discount, classname}) {
+function SimpleDiscount({discount, classname, productNames}) {
   const classes = useStyles();
   // alert(`identifier ${JSON.stringify(discount.target_identifier)}`)
-
   const parseCond = (cond) => {
     return `the ${conditionTypes[cond.condition] || "__"} of ${
       cond.type === "category" ? `all products of category ${cond.identifier || "__"}` :
-        cond.type === "product" ? `product ${cond.identifier || "__"}` :
+        cond.type === "product" ? `product ${productNames[cond.identifier] || "__"}` :
           cond.type === "shop" ? "the entire shopping bag" : "__"
     } is more then ${cond.num || "__"}`
   }
@@ -234,7 +233,7 @@ function SimpleDiscount({discount, classname}) {
     <>
       <Typography variant="h6" className={classes[classname]}>
         {discount.percentage || "__"}% discount on
-        {discount.type === "product" ? ` ${discount.identifier || "__"}` :
+        {discount.type === "product" ? ` ${productNames[discount.identifier] || "__"}` :
           discount.type === "category" ? ` all products from ${discount.identifier || "__"}` :
             discount.type === "shop" ? " on the entire shop!" : "__"}
       </Typography>
@@ -246,7 +245,7 @@ function SimpleDiscount({discount, classname}) {
   )
 }
 
-function CompositeDiscount({discount, onDrop, removeDiscount}) {
+function CompositeDiscount({discount, onDrop, removeDiscount, productNames}) {
   const classes = useStyles();
 
   const [collected, drop] = useDrop(() => ({
@@ -260,7 +259,8 @@ function CompositeDiscount({discount, onDrop, removeDiscount}) {
       <List>
         {discount.discounts.map((discount, index) => (
           <ListItem>
-            <DiscountView onDrop={onDrop} removeDiscount={removeDiscount} discount={discount} index={index} key={discount.id}/>
+            <DiscountView productsNames={productNames} onDrop={onDrop} removeDiscount={removeDiscount} discount={discount} index={index}
+                          key={discount.id}/>
           </ListItem>
         ))}
       </List>
@@ -269,7 +269,7 @@ function CompositeDiscount({discount, onDrop, removeDiscount}) {
   )
 }
 
-function DiscountView({discount, index, onDrop, removeDiscount}) {
+function DiscountView({discount, index, onDrop, removeDiscount, productsNames}) {
   const classes = useStyles();
   const [{isDragging}, drag, dragPreview] = useDrag(
     () => ({
@@ -287,8 +287,9 @@ function DiscountView({discount, index, onDrop, removeDiscount}) {
       <Paper style={{maxHeight: 500, overflow: 'auto'}} className={classes.discount} elevation={2}>
         {/*<DragHandleIcon/>*/}
         {!discount.composite ?
-          <SimpleDiscount discount={discount} classname={"discountText"}/> :
-            <CompositeDiscount removeDiscount={removeDiscount} discount={discount} onDrop={onDrop}/>}
+          <SimpleDiscount discount={discount} classname={"discountText"} productNames={productsNames}/> :
+          <CompositeDiscount removeDiscount={removeDiscount} discount={discount} onDrop={onDrop}
+                             productNames={productsNames}/>}
         <IconButton onClick={() => removeDiscount(discount)}>
           <DeleteIcon/>
         </IconButton>
@@ -318,6 +319,10 @@ export const Discounts = () => {
   const classes = useStyles();
   const [discounts, setDiscounts] = useState([]);
   const [shop, setShop] = useState({products: []});
+  const product_id_to_name = {}
+  shop.products.forEach((prod, i) => {
+    product_id_to_name[prod.product_id] = prod.product_name;
+  })
   const [loaded, setLoaded] = useState(false);
   const [addComp, setAddComp] = useState(null);
   const auth = useAuth();
@@ -378,7 +383,7 @@ export const Discounts = () => {
   return (
     loaded ?
       <div>
-        <DiscountForm shop={shop} saveDiscount={saveDiscount}/>
+        <DiscountForm shop={shop} saveDiscount={saveDiscount} productNames={product_id_to_name}/>
         <Divider style={{color: "black", margin: 20}}/>
         <Grid container className={classes.root} spacing={2} style={{marginBottom: 100}}>
           <Grid item>
@@ -390,7 +395,7 @@ export const Discounts = () => {
               <DndProvider backend={HTML5Backend}>
                 {discounts.map((discount, index) => (
                   <Grid item>
-                    <DiscountView discount={discount} index={index} key={discount.id}
+                    <DiscountView discount={discount} index={index} key={discount.id} productsNames={product_id_to_name}
                                   onDrop={(d, i, m) => onDrop(d, i, m)} removeDiscount={removeDiscount}/>
                   </Grid>
                 ))}
@@ -434,7 +439,7 @@ export const Discounts = () => {
   )
 };
 
-function DiscountForm({shop, saveDiscount}) {
+function DiscountForm({shop, saveDiscount, productNames}) {
   const classes = useStyles();
   const [conditions, setConditions] = useState([]);
   const [rators, setRators] = useState([]);
@@ -509,7 +514,6 @@ function DiscountForm({shop, saveDiscount}) {
               <Typography align="center" variant="h5">Add Simple Discount</Typography>
             </Grid>
             <div style={{width: "100%"}}/>
-            {/*<CssBaseline/>*/}
             <Grid item>
               <FormControl variant="outlined" required className={classes.formControl}>
                 <InputLabel id="discount-target-label">Discount Target</InputLabel>
@@ -636,7 +640,7 @@ function DiscountForm({shop, saveDiscount}) {
           <Grid container spacing={2}>
             <Paper className={classes.discount} elevation={2}>
               <Grid item>
-                Preview: <SimpleDiscount classname={"discountText2"} discount={{
+                Preview: <SimpleDiscount productNames={productNames} classname={classes.discountText2} discount={{
                 ...formik.values, condition: parseCondition(conditions, rators)
               }}/>
               </Grid>

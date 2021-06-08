@@ -1,0 +1,83 @@
+{
+  "users": [
+    "u1",
+    "u2"
+  ],
+  "actions": [
+    {
+      "action": "enter",
+      "user": "u1",
+      "params": {}
+    },
+    {
+      "action": "register",
+      "user": "u1",
+      "params": {
+        "username": "user1",
+        "password": "password"
+      }
+    },
+    {
+      "action": "login",
+      "user": "u1",
+      "params": {
+        "username": "user1",
+        "password": "password"
+      }
+    },
+    {
+      "action": "enter",
+      "user": "u2",
+      "params": {}
+    },
+    {
+      "action": "register",
+      "user": "u2",
+      "params": {
+        "username": "user2",
+        "password": "password"
+      }
+    },
+    {
+      "action": "open_shop",
+      "user": "u1",
+      "params": {
+        "shop_name": "shop1",
+        "description": "the one and only shop in the entire commerce system"
+      },
+      "ref_id": "s1"
+    },
+    {
+      "action": "add_product_to_shop",
+      "user": "u1",
+      "params": {
+        "shop_id": {
+          "ref": "s1"
+        },
+        "product_name": "Bamba",
+        "description": "Its Osem",
+        "categories": [
+          "snacks"
+        ],
+        "price": 30,
+        "quantity": 20
+      },
+      "ref_id": "p1"
+    },
+    {
+      "action": "appoint_shop_manager",
+      "user": "u1",
+      "params": {
+        "shop_id": {
+          "ref": "s1"
+        },
+        "username": "user2",
+        "permissions": [
+          "edit_product",
+          "add_product",
+          "delete_product"
+        ]
+      }
+    }
+  ]
+}
