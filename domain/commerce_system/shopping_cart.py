@@ -148,7 +148,7 @@ class ShoppingCart:
         with ShoppingCart.__idlock:
             self.cart_id = ShoppingCart.__cart_id
             ShoppingCart.__cart_id += 1
-        self.shopping_bags: Dict[int, ShoppingBag] = {}
+        self.shopping_bags: Dict[Shop, ShoppingBag] = {}
 
     def __getitem__(self, item):
         return self.shopping_bags[item]
@@ -158,7 +158,7 @@ class ShoppingCart:
 
     def to_dict(self) -> dict:
         return {
-            SHOPPING_BAGS: {shop_id: sb.to_dict() for shop_id, sb in self.shopping_bags.items()},
+            SHOPPING_BAGS: {shop.shop_id: sb.to_dict() for shop, sb in self.shopping_bags.items()},
             CART_ID: self.cart_id,
             TOTAL: self.calculate_price(),
         }
@@ -173,18 +173,18 @@ class ShoppingCart:
         return True
 
     def add_to_shopping_bag(self, shop: Shop, product: Product, amount_to_buy: int, purchase_type_id=None, **pt_args):
-        self.shopping_bags[shop.shop_id].add_product(product, amount_to_buy, purchase_type_id, **pt_args)
+        self.shopping_bags[shop].add_product(product, amount_to_buy, purchase_type_id, **pt_args)
 
     def remove_from_shopping_bag(self, shop: Shop, product: Product, amount: int):
-        self.shopping_bags[shop.shop_id].remove_product(product, amount)
+        self.shopping_bags[shop].remove_product(product, amount)
 
     def add_shopping_bag(self, bag: ShoppingBag):
         assert bag.shop not in self.shopping_bags, "bag already exists"
-        self.shopping_bags[bag.shop.shop_id] = bag
+        self.shopping_bags[bag.shop] = bag
 
     def remove_shopping_bag(self, shop: Shop):
         assert shop in self.shopping_bags, "no shopping bag to remove"
-        self.shopping_bags.pop(shop.shop_id)
+        self.shopping_bags.pop(shop)
 
     def remove_shopping_bags(self, shops):
         for shop in shops:
@@ -210,8 +210,8 @@ class ShoppingCart:
         actions = [
             Action(self._purchase_shopping_bag, username, bag, payment_details, purchased_shops, delivery_details)
             .set_reverse(Action(ShoppingBag.cancel_transaction), use_return_value=True)
-            .set_error_message(f"failed to purchase shopping bag for shop {bag.shop.name}")
-            for shop_id, bag in self
+            .set_error_message(f"failed to purchase shopping bag for shop {shop.name}")
+            for shop, bag in self
         ]
         actions += [Action(self.remove_shopping_bags, purchased_shops)]
         actions = ActionPool(actions)

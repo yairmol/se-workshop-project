@@ -4,6 +4,7 @@ from sqlalchemy import create_engine, MetaData, Table, Column, Integer, String, 
 from sqlalchemy.orm import registry, relationship
 from sqlalchemy.orm.collections import attribute_mapped_collection
 
+from domain.authentication_module.authenticator import Password
 from domain.commerce_system.appointment import ShopManager, ShopOwner
 from domain.commerce_system.category import Category
 from domain.commerce_system.shopping_cart import ShoppingCart, ShoppingBag
@@ -24,6 +25,14 @@ subscribed = Table(
     'subscribed',
     mapper_registry.metadata,
     Column('username', String, primary_key=True),
+)
+
+passwords = Table(
+    'password',
+    mapper_registry.metadata,
+    Column('username', String, ForeignKey("subscribed.username"), primary_key=True),
+    Column('password_hash', String),
+    Column('salt', String),
 )
 
 transaction = Table(
@@ -120,8 +129,10 @@ shopping_bag_products = Table(
 # Mappings
 
 mapper_registry.map_imperatively(Subscribed, subscribed, properties={
-    "transactions": relationship(Transaction, backref='subscribed')
+    "transactions": relationship(Transaction, backref='subscribed'),
 })
+
+mapper_registry.map_imperatively(Password, passwords)
 
 mapper_registry.map_imperatively(Shop, shop, properties={
     "products": relationship(Product, backref='shop', collection_class=attribute_mapped_collection('product_id')),
@@ -142,7 +153,7 @@ mapper_registry.map_imperatively(Category, categories)
 
 mapper_registry.map_imperatively(ShoppingCart, shopping_cart, properties={
     "shopping_bags": relationship(
-        ShoppingBag, backref='shopping_cart', collection_class=attribute_mapped_collection('shop.shop_id')
+        ShoppingBag, backref='shopping_cart', collection_class=attribute_mapped_collection('shop')
     ),
     # "subscribed": relationship(Subscribed, backref='shopping_cart')
 })
