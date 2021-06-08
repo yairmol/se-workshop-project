@@ -55,6 +55,7 @@ class DeliveryFacadeWSEP(IDeliveryFacade):
     SUCCESSFUL_HANDSHAKE = 'OK'
     SUCCESSFUL_DELIVERY_CANCEL = '1'
     ERROR = '-1'
+    DELIVERY_FIELDS = {"name", "address", "city", "country", "zip"}
 
     def handshake(self) -> bool:
         data = {"action_type": "handshake"}
@@ -68,6 +69,8 @@ class DeliveryFacadeWSEP(IDeliveryFacade):
         if self.handshake():
             data = {"action_type": "supply"}
             data.update(contact_details)
+            if not self.DELIVERY_FIELDS.issubset(set(contact_details.keys())):
+                return False
             try:
                 response = requests.post(self.url, data, timeout=5)
                 if response.text == self.ERROR:

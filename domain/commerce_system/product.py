@@ -46,7 +46,7 @@ class Product:
         self.product_name = product_name
         self.price = price
         self.description = description
-        self._quantity = 0
+        self.quantity = 0
         self.set_quantity(quantity)
         self.categories: List[Category] = [Category(name) for name in categories]
         self.shop_id = shop_id
@@ -60,7 +60,7 @@ class Product:
             Pm.PRODUCT_NAME: self.product_name,
             Pm.PRODUCT_DESC: self.description,
             Pm.PRICE: self.price,
-            Pm.QUANTITY: self._quantity,
+            Pm.QUANTITY: self.quantity,
             Pm.CATEGORIES: [category.name for category in self.categories],
             Pm.SHOP_ID: self.shop_id,
         }
@@ -70,11 +70,11 @@ class Product:
 
     def set_quantity(self, new_quantity):
         assert new_quantity >= 0, "product quantity must be non-negative"
-        self._quantity = new_quantity
+        self.quantity = new_quantity
         return True
 
     def get_quantity(self):
-        return self._quantity
+        return self.quantity
 
     def get_category_names(self):
         return [category.name for category in self.categories]
@@ -140,6 +140,7 @@ class Product:
 class ProductInBag:
     def __init__(self, product: Product, amount: int, purchase_type: T_PT, **purchase_type_args):
         self.product = product
+        self.product_id = product.product_id
         self.amount = amount
         self.purchase_type = purchase_type
         self.purchase_type_args = purchase_type_args

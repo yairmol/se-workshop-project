@@ -1,3 +1,4 @@
+import threading
 from datetime import datetime
 
 from domain.commerce_system.action import Action, ActionPool
@@ -23,7 +24,13 @@ T_PT = TypeVar('T_PT', bound=PurchaseType)
 
 
 class ShoppingBag:
+    __bag_id = 1
+    __idlock = threading.Lock()
+
     def __init__(self, shop: Shop):
+        with ShoppingBag.__idlock:
+            self.bag_id = ShoppingBag.__bag_id
+            ShoppingBag.__bag_id += 1
         self.shop = shop
         self.products: Dict[Product, ProductInBag] = {}
         self.payment_facade = IPaymentsFacade.get_payment_facade()
@@ -134,8 +141,13 @@ class ShoppingBag:
 
 
 class ShoppingCart:
-    def __init__(self, cart_id):
-        self.cart_id = cart_id
+    __cart_id = 1
+    __idlock = threading.Lock()
+
+    def __init__(self):
+        with ShoppingCart.__idlock:
+            self.cart_id = ShoppingCart.__cart_id
+            ShoppingCart.__cart_id += 1
         self.shopping_bags: Dict[Shop, ShoppingBag] = {}
 
     def __getitem__(self, item):
