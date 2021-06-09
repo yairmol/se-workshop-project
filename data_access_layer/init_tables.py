@@ -25,6 +25,7 @@ from domain.commerce_system.transaction import Transaction
 from domain.commerce_system.user import Subscribed
 from domain.commerce_system.shop import Shop
 from domain.commerce_system.product import Product, ProductInBag
+from domain.discount_module.discount_calculator import Discount
 
 
 # Engine
@@ -155,6 +156,31 @@ purchase_policies = Table(
     Column('max_quantity', Integer),
     Column('parent_policy', Integer, ForeignKey('purchase_policies.id', ondelete='CASCADE'))
 )
+
+discount_condition = Table(
+    'discount_condition',
+    mapper_registry.metadata,
+    Column('id', Integer, primary_key=True),
+    Column('type', String),
+    Column('minimum', Integer),
+    Column('conditioned_product_id', Integer),
+    Column('conditioned_category', String),
+
+)
+
+discount = Table(
+    'discount',
+    mapper_registry.metadata,
+    Column('id', Integer, primary_key=True),
+    Column('shop_id', Integer, ForeignKey('shop.shop_id', ondelete='CASCADE')),
+    Column('condition', Integer, ForeignKey('discount_conditions.id', ondelete='CASCADE')),
+
+)
+
+
+mapper_registry.map_imperatively(Discount, discount, properties={
+    "condition": relationship(Condition)
+})
 
 # mapper_registry.map_imperatively(Subscribed, subscribed, properties={
 #     "shoppingBag": relationship(ShoppingBag, backref='subscribed', cascade='all, delete, delete-orphan'),

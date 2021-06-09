@@ -59,6 +59,7 @@ class PaymentsFacadeWSEP(IPaymentsFacade):
     SUCCESSFUL_HANDSHAKE = 'OK'
     SUCCESSFUL_PAY_CANCEL = '1'
     ERROR = '-1'
+    PAYMENT_FIELDS = {"card_number", "month", "year", "holder", "ccv", "id"}
 
     def handshake(self) -> bool:
         data = {"action_type": "handshake"}
@@ -72,6 +73,8 @@ class PaymentsFacadeWSEP(IPaymentsFacade):
         if self.handshake():
             data = {"action_type": "pay"}
             data.update(payment_details)
+            if not self.PAYMENT_FIELDS.issubset(set(contact_details.keys())):
+                return False
             try:
                 response = requests.post(self.url, data, timeout=5)
                 if response.text == self.ERROR:
