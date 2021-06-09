@@ -12,7 +12,7 @@ from domain.commerce_system.category import Category
 from domain.commerce_system.shopping_cart import ShoppingCart, ShoppingBag
 from domain.commerce_system.appointment import ShopManager, ShopOwner
 from domain.commerce_system.category import Category
-from domain.commerce_system.purchase_conditions import Condition, MaxQuantityForProductCondition, \
+from domain.commerce_system.purchase_conditions import Policy, MaxQuantityForProductCondition, \
     DateWindowForProductCondition, DateWindowForCategoryCondition, TimeWindowForProductCondition, \
     TimeWindowForCategoryCondition, CompositePurchaseCondition, ANDCondition, ORCondition
 from domain.commerce_system.shopping_cart import ShoppingCart, ShoppingBag
@@ -25,8 +25,9 @@ from domain.commerce_system.transaction import Transaction
 from domain.commerce_system.user import Subscribed
 from domain.commerce_system.shop import Shop
 from domain.commerce_system.product import Product, ProductInBag
-from domain.discount_module.discount_calculator import Discount
-
+from domain.discount_module.discount_calculator import Discount, Condition, ProductQuantityCondition, \
+    CategoryQuantityCondition, SumSimpleCondition, TotalSumCondition, CategorySumCondition, AdditiveDiscount, \
+    MaxDiscount, XorDiscount, StoreDiscount, CategoryDiscount, ProductDiscount
 
 # Engine
 
@@ -133,13 +134,6 @@ shopping_bag_products = Table(
     Column('amount', Integer)
 )
 
-# complex_policies = Table(
-#     'complex_policies',
-#     mapper_registry.metadata,
-#     Column('id', Integer, primary_key=True),
-#     Column('parent_policy', Integer, ForeignKey('purchase_policies.policy_id', ondelete='CASCADE')),
-#     Column('child_policy', Integer, ForeignKey('purchase_policies.policy_id', ondelete='CASCADE')),
-# )
 
 purchase_policies = Table(
     'purchase_policies',
@@ -155,6 +149,13 @@ purchase_policies = Table(
     Column('product_id', Integer, ForeignKey('products.product_id', ondelete='CASCADE')),
     Column('max_quantity', Integer),
     Column('parent_policy', Integer, ForeignKey('purchase_policies.id', ondelete='CASCADE'))
+)
+
+composite_policies = Table(
+    'composite_policies',
+    mapper_registry.metadata,
+    Column('parent_policy', Integer, ForeignKey('purchase_policies.policy_id', ondelete='CASCADE'), primary_key=True),
+    Column('child_policy', Integer, ForeignKey('purchase_policies.policy_id', ondelete='CASCADE'), primary_key=True),
 )
 
 discount_condition = Table(
@@ -177,6 +178,42 @@ discount = Table(
 
 )
 
+composite_discounts = Table(
+    'composite_discounts',
+    mapper_registry.metadata,
+    Column('parent_discount', Integer, ForeignKey('discount.id', ondelete='CASCADE'), primary_key=True),
+    Column('child_discount', Integer, ForeignKey('discount.id', ondelete='CASCADE'), primary_key=True),
+)
+
+composite_discount_conditions = Table(
+    'composite_discount_conditions',
+    mapper_registry.metadata,
+    Column('parent_condition', Integer, ForeignKey('discount_condition.id', ondelete='CASCADE'), primary_key=True),
+    Column('child_condition', Integer, ForeignKey('discount_condition.id', ondelete='CASCADE'), primary_key=True),
+)
+
+# mapper_registry.map_imperatively(Condition, discount_condition)
+# mapper_registry.map_imperatively(SimpleCondition, discount_condition)
+# mapper_registry.map_imperatively(QuantitySimpleCondition, discount_condition)
+mapper_registry.map_imperatively(ProductQuantityCondition, discount_condition)
+mapper_registry.map_imperatively(CategoryQuantityCondition, discount_condition)
+mapper_registry.map_imperatively(SumSimpleCondition, discount_condition)
+mapper_registry.map_imperatively(TotalSumCondition, discount_condition)
+mapper_registry.map_imperatively(CategorySumCondition, discount_condition)
+# mapper_registry.map_imperatively(ANDCondition, discount_condition)
+# mapper_registry.map_imperatively(ORCondition, discount_condition)
+
+
+# mapper_registry.map_imperatively(Discount, discount)
+# mapper_registry.map_imperatively(ConditionalDiscount, discount)
+mapper_registry.map_imperatively(ProductDiscount, discount)
+mapper_registry.map_imperatively(CategoryDiscount, discount)
+mapper_registry.map_imperatively(StoreDiscount, discount)
+# mapper_registry.map_imperatively(CompositeDiscount, discount)
+mapper_registry.map_imperatively(XorDiscount, discount)
+mapper_registry.map_imperatively(MaxDiscount, discount)
+mapper_registry.map_imperatively(AdditiveDiscount, discount)
+
 
 mapper_registry.map_imperatively(Discount, discount, properties={
     "condition": relationship(Condition)
@@ -189,7 +226,7 @@ mapper_registry.map_imperatively(Discount, discount, properties={
 mapper_registry.map_imperatively(Shop, shop, properties={
     "product": relationship(Product, backref='shop', cascade='all, delete, delete-orphan'),
     "shopping_bag": relationship(ShoppingBag, backref='shop', cascade='all, delete, delete-orphan'),
-    "policies": relationship(Condition, backref='shop')
+    "policies": relationship(Policy, backref='shop')
 })
 mapper_registry.map_imperatively(Product, product, properties={
     "categories": relationship(Category, backref='product', secondary=categories_product_mtm),
@@ -216,11 +253,11 @@ mapper_registry.map_imperatively(Category, categories, properties={
 mapper_registry.map_imperatively(ShoppingBag, shopping_bag)
 
 mapper_registry.map_imperatively(
-    Condition,
+    Policy,
     purchase_policies,
     properties={
         "complex_children": relationship(
-            Condition,
+            Policy,
             backref=backref(
                 'purchase_policies',
                 remote_side=[purchase_policies.c.id],
