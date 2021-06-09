@@ -5,7 +5,7 @@ from data_access_layer.subscribed_repository import save_subscribed, get_subscri
 from domain.commerce_system.category import Category
 from domain.commerce_system.product import Product
 from domain.commerce_system.purchase_conditions import MaxQuantityForProductCondition, TimeWindowForCategoryCondition, \
-    TimeWindowForProductCondition, DateWindowForCategoryCondition, DateWindowForProductCondition
+    TimeWindowForProductCondition, DateWindowForCategoryCondition, DateWindowForProductCondition, ANDCondition
 from domain.commerce_system.shop import Shop
 from domain.commerce_system.transaction import Transaction
 from domain.commerce_system.user import Subscribed
@@ -52,8 +52,15 @@ policy3 = TimeWindowForProductCondition(condition_dict3)
 policy4 = DateWindowForCategoryCondition(condition_dict4)
 policy5 = DateWindowForProductCondition(condition_dict5)
 
-and_condition_dict = {CondM.CONDITIONS: [policy1, policy2, policy3, policy4, policy5], CondM.CONDITION_TYPE: CondM.AND}
+# shop.add_purchase_condition(policy1)
+# shop.add_purchase_condition(policy2)
+# shop.add_purchase_condition(policy3)
+# shop.add_purchase_condition(policy4)
+# shop.add_purchase_condition(policy5)
 
+# and_condition_dict = {CondM.CONDITIONS: [policy1, policy2, policy3, policy4, policy5],
+# CondM.CONDITION_TYPE: CondM.AND}
+# and_policy = ANDCondition(and_condition_dict)
 # print(policy.id)
 # print(policy.product_id)
 
@@ -65,11 +72,12 @@ and_condition_dict = {CondM.CONDITIONS: [policy1, policy2, policy3, policy4, pol
 # save_policy(policy3)
 # save_policy(policy4)
 # save_policy(policy5)
+# save_policy(and_policy)
 
 
 # remove_policy(1)
-remove_product(1)
-# remove_shop(1)
+# remove_product(1)
+remove_shop(1)
 # remove_category(1)
 # shop_from_db = get_shop("Armani")
 # print(shop_from_db.description)

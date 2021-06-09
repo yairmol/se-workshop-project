@@ -10,6 +10,13 @@ from domain.discount_module.discount_calculator import Discount
 from init_tables import engine
 from sqlalchemy.orm import Session
 
+from sqlalchemy import delete
+
+from domain.commerce_system.shop import Shop
+from init_tables import engine
+from sqlalchemy.orm import Session
+
+
 T = TypeVar('T')
 TYPE = TypeVar('TYPE')
 FIELD = TypeVar('FIELD')
@@ -41,15 +48,6 @@ def save_shop(shop: Shop):
     #     session.commit()
 
 
-def get_shop(shop_name: str):
-    # get_x(shop_name, Shop, name)
-from sqlalchemy import delete
-
-from domain.commerce_system.shop import Shop
-from init_tables import engine
-from sqlalchemy.orm import Session
-
-
 def save_shop(shop: Shop):
     with Session(engine) as session:
         session.add(shop)
@@ -64,7 +62,7 @@ def get_shop(shop_name: str):
 
 def remove_shop(shop_id: int):
     with Session(engine) as session:
-        shop = session.query(Shop).filter_by(id=shop_id).first()
+        shop = session.query(Shop).filter_by(shop_id=shop_id).first()
         session.delete(shop)
         session.commit()
 
