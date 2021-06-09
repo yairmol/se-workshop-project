@@ -463,10 +463,31 @@ class SystemService:
         return make_status_dict(True, "", res)
 
     @handler
-    def reply_price_offer(self, user_id: int, shop_id: int, product_id: int, offer_maker: str, action: str):
+    def reply_price_offer(self, user_id: int, shop_id: int, product_id: int, offer_maker: str, action: str, **kwargs):
         event_logger.info(f"User: {user_id} tries to reply to offer for product {product_id}")
-        res = self.commerce_system_facade.reply_price_offer(user_id, shop_id, product_id, offer_maker, action)
+        res = self.commerce_system_facade.reply_price_offer(user_id, shop_id, product_id, offer_maker, action, **kwargs)
         event_logger.info(f"User: {user_id} replied successfully")
+        return make_status_dict(True, "", res)
+
+    @handler
+    def get_user_purchase_offer(self, user_id: int):
+        event_logger.info(f"User: {user_id} tries to reply to get his purchase offers")
+        res = self.commerce_system_facade.get_user_purchase_offers(user_id)
+        event_logger.info(f"User: {user_id} retrieved purchase offers successfully")
+        return make_status_dict(True, "", res)
+
+    @handler
+    def delete_purchase_offer(self, user_id: int, shop_id: int, product_id: int):
+        event_logger.info(f"User: {user_id} tries to delete a purchase offer")
+        res = self.commerce_system_facade.delete_purchase_offer(user_id, shop_id, product_id)
+        event_logger.info(f"User: {user_id} successfully deleted purchase offer")
+        return make_status_dict(True, "", res)
+
+    @handler
+    def accept_counter_offer(self, user_id: int, shop_id: int, product_id: int):
+        event_logger.info(f"User: {user_id} tries to a counter offer")
+        res = self.commerce_system_facade.accept_counter_offer(user_id, shop_id, product_id)
+        event_logger.info(f"User: {user_id} accepted counter offer")
         return make_status_dict(True, "", res)
 
     def cleanup(self):

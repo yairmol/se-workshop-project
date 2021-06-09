@@ -3,7 +3,6 @@ import threading
 from typing import List, Dict, Iterable
 from sqlalchemy import orm
 
-from data_access_layer.engine import add_to_session, save
 from domain.commerce_system.appointment import Appointment, ShopOwner
 from domain.commerce_system.product import Product, PurchaseType, PurchaseOffer
 from domain.commerce_system.purchase_conditions import Policy
@@ -16,6 +15,7 @@ from domain.discount_module.discount_calculator import Discount
 from data_model import UserModel as UserM
 from domain.discount_module.discount_management import DiscountDict, ConditionRaw
 from domain.notifications.notifications import Notifications
+from domain.observer import Observer
 
 
 class User:
@@ -28,7 +28,7 @@ class User:
         self.id = self.__id_counter
         User.__id_counter = User.__id_counter + 1
         self.counter_lock.release()
-        self.cart = ShoppingCart()
+        self.cart = ShoppingCart(self.id)
         self.notifications = Notifications.get_notifications()
         self.notifications.add_client(self.id)
 
@@ -44,7 +44,7 @@ class User:
     def login(self, sub_user: Subscribed) -> bool:
         self.user_state.login()
         self.user_state = sub_user
-        sub_user.on_login(self.id, self.cart)
+        sub_user.on_login(self.id)
         return True
 
     def register(self, username: str, **user_details) -> Subscribed:
@@ -159,8 +159,8 @@ class User:
     def offer_price(self, shop: Shop, product_id: int, offer: float) -> bool:
         return self.user_state.offer_price(shop, product_id, offer)
 
-    def reply_price_offer(self, shop: Shop, product_id: int, offer_maker: str, action: str) -> bool:
-        return self.user_state.reply_price_offer(shop, product_id, offer_maker, action)
+    def reply_price_offer(self, shop: Shop, product_id: int, offer_maker: str, action: str, **kwargs) -> bool:
+        return self.user_state.reply_price_offer(shop, product_id, offer_maker, action, **kwargs)
 
     def change_product_purchase_type(self, shop: Shop, product_id: int, purchase_type_id: int, pt_args: dict) -> bool:
         return self.cart.change_product_purchase_type(shop, product_id, purchase_type_id, pt_args)
@@ -306,7 +306,7 @@ class UserState:
     def offer_price(self, shop: Shop, product_id: int, offer: float) -> bool:
         raise Exception("user must be signed in to make a purchase offer")
 
-    def reply_price_offer(self, shop: Shop, product_id: int, offer_maker: str, action: str) -> bool:
+    def reply_price_offer(self, shop: Shop, product_id: int, offer_maker: str, action: str, **kwargs) -> bool:
         raise Exception("User doesn't have permission to reply to a price offer")
 
     def get_shop_info(self, shop: Shop):
@@ -332,7 +332,7 @@ class Guest(UserState):
         return True
 
 
-class Subscribed(UserState):
+class Subscribed(UserState, Observer):
 
     def __init__(self, username: str):
         self.appointments: Dict[Shop, Appointment] = {}
@@ -341,6 +341,7 @@ class Subscribed(UserState):
         self.pending_messages = []
         self.logged_user = None
         self.notifications = Notifications.get_notifications()
+        self.offers: Dict[int, PurchaseOffer] = {}  # from product_io to purchase offer
         self.cart = None
 
     def get_self(self):
@@ -352,8 +353,12 @@ class Subscribed(UserState):
         self.cart.of_subscribed = True
         self.logged_user = logged_user
         self.notifications.on_sub_login(logged_user, self.username)
+        to_remove = []
         for msg in self.pending_messages:
-            self.send_message(msg)
+            if self.send_message(msg):
+                to_remove.append(msg)
+        for msg in to_remove:
+            self.pending_messages.remove(msg)
 
     def purchase_shopping_bag(self, shop: Shop, payment_details: dict, delivery_details: dict) -> Transaction:
         bag = self.cart[shop]
@@ -388,9 +393,17 @@ class Subscribed(UserState):
     # @add_to_session
     def send_message(self, msg):
         if self.logged_user:
+    def get_my_offers(self) -> List[PurchaseOffer]:
+        return list(self.offers.values())
+
+    def send_message(self, msg) -> bool:
+        try:
+            assert self.logged_user is not None, "subscribed is not logged in"
             self.notifications.send_message(self.logged_user, msg)
-        else:
+            return True
+        except Exception:
             self.pending_messages.append(msg)
+            return False
 
     # @add_to_session
     def send_error(self, msg):
@@ -521,10 +534,21 @@ class Subscribed(UserState):
         return self.get_appointment(shop).add_purchase_type(product_id, purchase_type_info)
 
     def offer_price(self, shop: Shop, product_id: int, offer: float) -> bool:
-        return shop.add_price_offer(self.username, product_id, offer)
+        ret = shop.add_price_offer(self, product_id, offer)
+        assert ret, "couldn't make price offer"
+        self.offers[product_id] = ret
+        return True
 
-    def reply_price_offer(self, shop: Shop, product_id: int, offer_maker: str, action: str) -> bool:
-        return self.get_appointment(shop).reply_price_offer(product_id, offer_maker, action)
+    def delete_offer(self, shop: Shop, product_id: int) -> bool:
+        self.offers.pop(product_id)
+        return shop.delete_offer(self.username, product_id)
+
+    def accept_counter_offer(self, shop: Shop, product_id: int):
+        assert product_id in self.offers, "user doesn't have an existing offer for given product"
+        return shop.accept_counter_offer(self.username, product_id)
+
+    def reply_price_offer(self, shop: Shop, product_id: int, offer_maker: str, action: str, **kwargs) -> bool:
+        return self.get_appointment(shop).reply_price_offer(product_id, offer_maker, action, **kwargs)
 
     def get_offers(self, shop: Shop, product_id: int) -> List[PurchaseOffer]:
         return self.get_appointment(shop).get_offers(product_id)

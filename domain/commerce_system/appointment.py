@@ -93,7 +93,7 @@ class Appointment:
     def add_purchase_type(self, product_id: int, purchase_type_info: dict) -> PurchaseType:
         raise Exception("Cannot manage purchase types")
 
-    def reply_price_offer(self, product_id: int, offer_maker: str, action: str) -> bool:
+    def reply_price_offer(self, product_id: int, offer_maker: str, action: str, **kwargs) -> bool:
         raise Exception("Cannot reply to price offer")
 
     def get_offers(self, product_id: int) -> List[PurchaseOffer]:
@@ -205,9 +205,9 @@ class ShopManager(Appointment):
         assert self.purchase_type_permission, "manager user does not have permission to manage purchase types"
         return self.shop.add_purchase_type(product_id, purchase_type_info)
 
-    def reply_price_offer(self, product_id: int, offer_maker: str, action: str) -> bool:
+    def reply_price_offer(self, product_id: int, offer_maker: str, action: str, **kwargs) -> bool:
         assert self.purchase_type_permission, "manager user does not have permission to manage purchase types"
-        return self.shop.reply_price_offer(product_id, offer_maker, action)
+        return self.shop.reply_price_offer(product_id, offer_maker, action, action_maker=self.username, **kwargs)
 
     def get_offers(self, product_id: int) -> List[PurchaseOffer]:
         assert self.purchase_type_permission, "manager user does not have permission to manage purchase types"
@@ -362,8 +362,8 @@ class ShopOwner(Appointment):
     def add_purchase_type(self, product_id: int, purchase_type_info: dict) -> PurchaseType:
         return self.shop.add_purchase_type(product_id, purchase_type_info)
 
-    def reply_price_offer(self, product_id: int, offer_maker: str, action: str) -> bool:
-        return self.shop.reply_price_offer(product_id, offer_maker, action)
+    def reply_price_offer(self, product_id: int, offer_maker: str, action: str, **kwargs) -> bool:
+        return self.shop.reply_price_offer(product_id, offer_maker, action, action_maker=self.username, **kwargs)
 
     def get_offers(self, product_id: int) -> List[PurchaseOffer]:
         return self.shop.products[product_id].get_offers()

@@ -57,20 +57,19 @@ function Transactions({transactions_getter, width}) {
   }, [])
 
   return (
-    <>
-      <Grid item xs={6}>
-        <Typography className={classes.heading}>Transactions</Typography>
-        {(transactions && transactions.length > 0) ?
-          transactions.sort((t1, t2) => t1.date > t2.date ? -1 : t1.date === t2.date ? 0 : 1).map((transaction, index) =>
-            <div style={{width: width}}><Transaction key={index} transaction={transaction}/></div>
-          )
-          :
-          <Typography align="center">
-            You currently have no transactions, start shopping <Link to={{pathname: "/", header: "Main"}}>
-            here</Link>
-          </Typography>
-        }
-      </Grid></>
+    <Grid item xs={6}>
+      <Typography className={classes.heading}>Transactions</Typography>
+      {(transactions && transactions.length > 0) ?
+        transactions.sort((t1, t2) => t1.date > t2.date ? -1 : t1.date === t2.date ? 0 : 1).map((transaction, index) =>
+          <div style={{width: width}}><Transaction key={index} transaction={transaction}/></div>
+        )
+        :
+        <Typography align="center">
+          You currently have no transactions, start shopping <Link to={{pathname: "/", header: "Main"}}>
+          here</Link>
+        </Typography>
+      }
+    </Grid>
   );
 }
 

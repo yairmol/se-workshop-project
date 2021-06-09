@@ -3,14 +3,14 @@ from typing import Dict, List, TypeVar
 
 from sqlalchemy import orm
 
-from data_access_layer.engine import add_to_session
 from domain.commerce_system.action import Action, ActionPool
 from domain.commerce_system.purchase_conditions import Policy, CompositePurchaseCondition
 from domain.discount_module.discount_calculator import AdditiveDiscount, Discount
-from domain.commerce_system.product import Product, PurchaseType
+from domain.commerce_system.product import Product, PurchaseType, PurchaseOfferType, PurchaseOffer
 from domain.commerce_system.transaction import Transaction
 from data_model import ShopModel as Sm
 from domain.discount_module.discount_management import DiscountManagement, DiscountDict, ConditionRaw
+from data_model import PurchaseTypes as Pt
 
 SHOP_ID = "shopId"
 SHOP_NAME = "shopName"
@@ -44,6 +44,13 @@ class Shop:
         self.image_url = image_url
         self.conditions: List[Policy] = []
 
+    @property
+    def shop_owners(self):
+        return {
+            username: app for username, app in self.workers.items() if
+            app.get_permissions()['owner']
+        }
+
     def __hash__(self):
         return hash(self.shop_id)
 
@@ -68,6 +75,8 @@ class Shop:
                 f"product name {product_info['product_name']} is not unique"
             product = Product(**product_info, shop_id=self.shop_id)
             self.products[product.product_id] = product
+            for obs in self.shop_owners.values():
+                product.add_observer(obs)
             return product
 
     def delete_product(self, product_id: int) -> bool:
@@ -89,7 +98,7 @@ class Shop:
                     product.set_quantity(new_value)
                     continue
                 if field == "purchase_types":
-                    product.set_purchase_types(new_value)
+                    product.set_purchase_types(new_value, owners=self.shop_owners.keys())
                     continue
                 if field == "categories":
                     product.set_categories(new_value)
@@ -133,15 +142,27 @@ class Shop:
             self.transaction_history.remove(transaction)
             return True
 
-    def add_manager(self, manager_app) -> bool:  #########################
+    def add_manager(self, manager_sub) -> bool:
+        app = manager_sub.get_appointment(self)
         with self.workers_lock:
-            self.workers[manager_app.username] = manager_app
+            self.workers[app.username] = app
             return True
 
-    def add_owner(self, owner_app) -> bool:     #########################
+    def add_owner(self, owner_sub) -> bool:
+        app = owner_sub.get_appointment(self)
         with self.workers_lock:
-            self.workers[owner_app.username] = owner_app
-            return True
+            self.workers[app.username] = app
+        self._register_owner_notifications(owner_sub)
+        self._update_owners_in_purchase_policies()
+        return True
+
+    def _update_owners_in_purchase_policies(self):
+        for prod in self.products.values():
+            try:
+                pot = prod.get_purchase_type_of_type(PurchaseOfferType)
+                pot.update_owners(self.shop_owners.keys())
+            except AssertionError:
+                pass
 
     def remove_manager(self, manager_sub) -> bool:
         with self.workers_lock:
@@ -151,7 +172,9 @@ class Shop:
     def remove_owner(self, owner_sub) -> bool:
         with self.workers_lock:
             self.workers.pop(owner_sub.username)
-            return True
+        self._update_owners_in_purchase_policies()
+        self._remove_owner_notifications(owner_sub)
+        return True
 
     def get_staff_info(self) -> List[T_app]:
         with self.workers_lock:
@@ -210,10 +233,28 @@ class Shop:
         return success
 
     def add_purchase_type(self, product_id: int, purchase_type_info: dict) -> PurchaseType:
-        return self.products[product_id].add_purchase_type(purchase_type_info)
+        args = purchase_type_info.copy()
+        if args[Pt.PURCHASE_TYPE] == Pt.OFFER:
+            args["owners"] = self.shop_owners.keys()
+        print("args", args)
+        return self.products[product_id].add_purchase_type(args)
 
-    def add_price_offer(self, username: str, product_id: int, offer: float) -> bool:
-        return self.products[product_id].add_price_offer(username, offer)
+    def add_price_offer(self, user_sub, product_id: int, offer: float) -> PurchaseOffer:
+        return self.products[product_id].add_price_offer(user_sub, offer)
 
-    def reply_price_offer(self, product_id: int, offer_maker: str, action: str) -> bool:
-        return self.products[product_id].reply_price_offer(offer_maker, action)
+    def reply_price_offer(self, product_id: int, offer_maker: str, action: str, **kwargs) -> bool:
+        return self.products[product_id].reply_price_offer(offer_maker, action, **kwargs)
+
+    def _register_owner_notifications(self, owner_sub):
+        for prod in self.products.values():
+            prod.add_observer(owner_sub)
+
+    def _remove_owner_notifications(self, owner_sub):
+        for prod in self.products.values():
+            prod.remove_observer(owner_sub)
+
+    def delete_offer(self, offer_maker: str, product_id: int) -> bool:
+        return self.products[product_id].delete_offer(offer_maker)
+
+    def accept_counter_offer(self, offer_maker: str, product_id: int) -> bool:
+        return self.products.get(product_id).accept_counter_offer(offer_maker)

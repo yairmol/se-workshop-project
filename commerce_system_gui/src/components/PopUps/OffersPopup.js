@@ -1,10 +1,10 @@
-import {useEffect, useState} from "react";
+import React, {useEffect, useState} from "react";
 import {
   Checkbox,
   Dialog,
   DialogActions,
   DialogContent,
-  DialogTitle, TableCell,
+  DialogTitle, TableCell, TextField,
 } from "@material-ui/core";
 import Button from "@material-ui/core/Button";
 import {useAuth} from "../use-auth";
@@ -25,9 +25,9 @@ const useStyles = makeStyles({
 });
 
 const columns = [
-  {id: 'offer_maker', label: 'Offer Maker'},
-  {id: 'offer', label: 'Offer'},
-  {id: 'offer_state', label: 'Offer State'}
+  {id: 'offer_maker', label: 'Offer Maker', type: 'text'},
+  {id: 'offer', label: 'Offer', type: 'text-field'},
+  {id: 'offer_state', label: 'Offer State', type: 'text'}
 ]
 
 export default function OffersPopup({shopId, product, close}) {
@@ -50,14 +50,21 @@ export default function OffersPopup({shopId, product, close}) {
   })
 
   const reply = (offer, action) => {
+    const additional_params = action === 'counter' ? {counter_offer: offer.offer} : {};
     auth.getToken().then((token) =>
-      reply_offer(token, shopId, product.product_id, offer.offer_maker, action).then((res) => {
+      reply_offer(token, shopId, product.product_id, offer.offer_maker, action, additional_params).then((res) => {
         if (res) {
           alert(`offer was ${action}ed successfully`);
         }
         setLoaded(false);
       })
     )
+  }
+
+  const onOfferChange = (e, i) => {
+    const newOffers = offers.slice(0);
+    newOffers[i].offer = e.target.value;
+    setOffers(newOffers);
   }
 
   return (
@@ -79,14 +86,19 @@ export default function OffersPopup({shopId, product, close}) {
             {columns.map((col) => <TableCell>{col.label}</TableCell>)}
             <TableCell>Approve</TableCell>
             <TableCell>Reject</TableCell>
+            <TableCell>Counter</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
-          {offers.map((offer) => (
+          {offers.map((offer, i) => (
             <TableRow key={offer.offer_maker}>
               {columns.map((col) =>
                 <TableCell component="th" scope="row">
-                  {offer[col.id]}
+                  {col.type === 'text' ? offer[col.id] :
+                    col.type === 'text-field' ?
+                      <TextField id={`${offer.offer_maker}-${col.id}`} label="offer" value={offer[col.id]}
+                       onChange={(e) => onOfferChange(e, i)} /> : offer[col.id]
+                  }
                 </TableCell>)
               }
               <TableCell>
@@ -97,6 +109,11 @@ export default function OffersPopup({shopId, product, close}) {
               <TableCell>
                 <Button variant="outlined" onClick={() => reply(offer, "reject")}>
                   Reject
+                </Button>
+              </TableCell>
+              <TableCell>
+                <Button variant="outlined" onClick={() => reply(offer, "counter")}>
+                  Counter
                 </Button>
               </TableCell>
             </TableRow>
