@@ -27,6 +27,7 @@ import {ShopForCustomer} from "./components/ShopForCustomer";
 import ProfilePage from "./components/ProfilePage";
 import {Checkout} from "./components/Checkout";
 import {PurchasePolicies} from "./components/PurchasePolicies";
+import {Offers} from "./components/Offers";
 
 const useStyles = makeStyles((theme) => ({
   mainGrid: {
@@ -157,6 +158,9 @@ export default function Blog() {
                   </Route>
                   <Route path="/cart">
                     <Cart/>
+                  </Route>
+                  <Route path="/offers">
+                    <Offers />
                   </Route>
                   <Route path="/cart/:shop_id">
                     <ShoppingBag/> {/* This means shopping bag of shop shop_id*/}
