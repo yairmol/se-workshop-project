@@ -3,6 +3,7 @@ import data_access_layer.init_tables
 
 from typing import Dict, List, Union, Optional
 from config.config import config, ConfigFields as cf
+from data_access_layer.engine import add_to_session, get_first, get_all_of_field
 from data_access_layer.subscribed_repository import get_subscribed, get_all_subscribed, remove_all_subscribed, \
     save_subscribed
 from data_model import ConditionsModel as Cm
@@ -71,12 +72,14 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         with self.registered_users_lock:
             sub_user = self.registered_users.get(username)
         if not sub_user:
-            sub_user = get_subscribed(username, Subscribed)
+            sub_user = get_first(Subscribed, username=username)
+            self.registered_users[username] = sub_user
+        return sub_user
 
     # 2.4
     def login(self, user_id: int, username: str, password: str) -> bool:
         self.authenticator.login(username, password)
-        sub_user = self.get_subscribed(username)
+        sub_user = self.get_subscribed(username=username)
         with self.active_users_lock:
             self.active_users.get(user_id).login(sub_user)
         return True
@@ -102,9 +105,9 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         return ret
 
     def get_all_user_names(self) -> List[str]:
-        names: List[str] = list(self.registered_users.keys())
-        names = [sub.username for sub in get_all_subscribed(Subscribed)]
-        return names
+        # names: List[str] = list(self.registered_users.keys())
+        # names = [sub.username for sub in get_all_subscribed(Subscribed)]
+        return get_all_of_field(Subscribed, lambda x: x.username)
 
     def get_all_categories(self) -> List[str]:
         cats = set()
@@ -373,10 +376,10 @@ class CommerceSystemFacade(ICommerceSystemFacade):
 
         return ret
 
-    def get_subscribed(self, username) -> Subscribed:
-        with self.registered_users_lock:
-            return self.registered_users[username]
-        # return get_subscribed(username, Subscribed)
+    # def get_subscribed(self, username) -> Subscribed:
+    #     with self.registered_users_lock:
+    #         return self.registered_users[username]
+    #     # return get_subscribed(username, Subscribed)
 
     def get_shop(self, shop_id) -> Shop:
         with self.shops_lock:
@@ -433,7 +436,7 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         self.shops.clear()
         self.registered_users.clear()
         self.active_users.clear()
-        # remove_all_subscribed(Subscribed)
+        remove_all_subscribed(Subscribed)
 
     def change_product_purchase_type(self, user_id: int, shop_id: int, product_id: int,
                                      purchase_type_id: int, pt_args: dict) -> bool:

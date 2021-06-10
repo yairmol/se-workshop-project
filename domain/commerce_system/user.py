@@ -3,6 +3,7 @@ import threading
 from typing import List, Dict, Iterable
 from sqlalchemy import orm
 
+from data_access_layer.engine import add_to_session, save
 from data_access_layer.subscribed_repository import save_subscribed
 from domain.commerce_system.appointment import Appointment, ShopOwner
 from domain.commerce_system.product import Product, PurchaseType, PurchaseOffer
@@ -291,7 +292,7 @@ class Guest(UserState):
 
     def register(self, username: str, **user_details):
         sub = Subscribed(username)
-        save_subscribed(sub, Subscribed)
+        save(sub)
         return sub
 
     def to_dict(self):
@@ -315,20 +316,26 @@ class Subscribed(UserState):
     def init_on_load(self):
         self.notifications = Notifications.get_notifications()
         self.pending_messages = []
-        self.appointments: Dict[Shop, Appointment] = {} # TODO Remove this whe commiting
+        self.appointments: Dict[Shop, Appointment] = {} # TODO Remove this when commiting
 
+    def get_self(self): return self
+
+    @add_to_session
     def on_login(self, logged_user):
         self.logged_user = logged_user
+        # print("on login")
         self.notifications.on_sub_login(logged_user, self.username)
         for msg in self.pending_messages:
             self.send_message(msg)
 
+    @add_to_session
     def send_message(self, msg):
         if self.logged_user:
             self.notifications.send_message(self.logged_user, msg)
         else:
             self.pending_messages.append(msg)
 
+    @add_to_session
     def send_error(self, msg):
         self.notifications.send_error(msg=msg)
 
@@ -357,6 +364,7 @@ class Subscribed(UserState):
         session_app: Appointment = self.get_appointment(shop)
         return session_app.promote_manager_to_owner(manager_sub)
 
+    @add_to_session
     def get_appointment(self, shop: Shop):
         if shop in self.appointments:
             return self.appointments[shop]
@@ -383,6 +391,7 @@ class Subscribed(UserState):
         owner_app = self.get_appointment(shop)
         return owner_app.edit_manager_permissions(manager_sub, permissions)
 
+    # @add_to_session
     def open_shop(self, shop_details):
         new_shop = Shop(**shop_details)
         owner = ShopOwner(new_shop, username=self.username)
@@ -395,10 +404,12 @@ class Subscribed(UserState):
         app = self.get_appointment(shop)
         return app.get_shop_transaction_history()
 
+    @add_to_session
     def add_transaction(self, transaction: Transaction):
         self.transactions.append(transaction)
         return True
 
+    @add_to_session
     def get_personal_transaction_history(self):
         return self.transactions
 
@@ -442,6 +453,7 @@ class Subscribed(UserState):
         appointment = self.get_appointment(shop)
         return appointment.get_shop_staff_info()
 
+    @add_to_session
     def get_appointments(self):
         return list(self.appointments.values())
 
@@ -463,11 +475,14 @@ class SystemManager(Subscribed):
         super().__init__(username)
         self.system_transactions = system_transactions
 
+    @add_to_session
     def get_system_transaction_history(self):
         return self.system_transactions.get_transactions()
 
+    @add_to_session
     def get_system_transaction_history_of_shop(self, shop_id: int):
         return self.system_transactions.get_transactions_of_shop(shop_id)
 
+    @add_to_session
     def get_system_transaction_history_of_user(self, username: str):
         return self.system_transactions.get_transactions_of_user(username)

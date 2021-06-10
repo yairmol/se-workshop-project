@@ -34,10 +34,10 @@ def handler(func):
                 user_id = self.tokenizer.get_id_by_token(token)
                 return func(self, user_id, *args, **kwargs)
             except AssertionError as e:
-                print("assdertion", e)
+                print("assertion", e)
                 return handle_assertion(e)
             except Exception as e:
-                print("errpor", e)
+                print("error", e)
                 return handle_exception(e)
         return make_status_dict(False, "Invalid Token", "")
 

@@ -4,7 +4,7 @@ from sqlalchemy import create_engine, MetaData, Table, Column, Integer, String, 
 from sqlalchemy.orm import registry, relationship
 from sqlalchemy.orm.collections import attribute_mapped_collection
 
-from domain.authentication_module.authenticator import Password
+# from domain.authentication_module.authenticator import Password
 from domain.commerce_system.appointment import ShopManager, ShopOwner
 from domain.commerce_system.category import Category
 from domain.commerce_system.shopping_cart import ShoppingCart, ShoppingBag
@@ -132,7 +132,7 @@ mapper_registry.map_imperatively(Subscribed, subscribed, properties={
     "transactions": relationship(Transaction, backref='subscribed'),
 })
 
-mapper_registry.map_imperatively(Password, passwords)
+# mapper_registry.map_imperatively(Password, passwords)
 
 mapper_registry.map_imperatively(Shop, shop, properties={
     "products": relationship(Product, backref='shop', collection_class=attribute_mapped_collection('product_id')),

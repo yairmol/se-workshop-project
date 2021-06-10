@@ -1,6 +1,7 @@
 import threading
 from typing import Dict, List, TypeVar
 
+from data_access_layer.engine import add_to_session
 from domain.commerce_system.action import Action, ActionPool
 from domain.commerce_system.purchase_conditions import Condition, CompositePurchaseCondition
 from domain.discount_module.discount_calculator import AdditiveDiscount, Discount
@@ -92,6 +93,7 @@ class Shop:
                 setattr(product, field, new_value)
         return True
 
+    @add_to_session
     def has_product(self, product_name: str):
         """ return true if shop has product named product_name"""
         found = False
