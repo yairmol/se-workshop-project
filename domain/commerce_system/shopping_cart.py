@@ -2,6 +2,9 @@
 import threading
 from datetime import datetime
 
+from sqlalchemy import orm
+
+from data_access_layer.engine import add_to_session, add_shop_to_session, save, delete
 from domain.commerce_system.action import Action, ActionPool
 from domain.commerce_system.product import Product, BuyNow, PurchaseType, ProductInBag
 from domain.commerce_system.productDTO import ProductDTO
@@ -37,6 +40,11 @@ class ShoppingBag:
         self.payment_facade = IPaymentsFacade.get_payment_facade()
         self.delivery_facade = IDeliveryFacade.get_delivery_facade()
 
+    @orm.reconstructor
+    def init_on_load(self):
+        self.payment_facade = IPaymentsFacade.get_payment_facade()
+        self.delivery_facade = IDeliveryFacade.get_delivery_facade()
+
     def __setitem__(self, key: Product, value: ProductInBag):
         self.products[key] = value
 
@@ -57,6 +65,7 @@ class ShoppingBag:
                     purchase_type_id: Optional[int] = None, **purchase_type_args):
         if product in self.products:
             self.products[product].amount += amount_to_buy
+
         else:
             purchase_type = product.get_purchase_type_of_type(BuyNow)
             if purchase_type_id:
@@ -150,6 +159,11 @@ class ShoppingCart:
             self.cart_id = ShoppingCart.__cart_id
             ShoppingCart.__cart_id += 1
         self.shopping_bags: Dict[Shop, ShoppingBag] = {}
+        self.of_subscribed = False
+
+    @orm.reconstructor
+    def init_on_load(self):
+        self.of_subscribed = True
 
     def __getitem__(self, item):
         return self.shopping_bags[item]
@@ -181,15 +195,18 @@ class ShoppingCart:
 
     def add_shopping_bag(self, bag: ShoppingBag):
         assert bag.shop not in self.shopping_bags, "bag already exists"
+        save(bag)
         self.shopping_bags[bag.shop] = bag
 
     def remove_shopping_bag(self, shop: Shop):
         assert shop in self.shopping_bags, "no shopping bag to remove"
+        delete(ShoppingBag, shop_id=shop.shop_id)
         self.shopping_bags.pop(shop)
 
     def remove_shopping_bags(self, shops):
         for shop in shops:
             self.remove_shopping_bag(shop)
+            delete(ShoppingBag, shop_id=shop.shop_id)
         return True
 
     def calculate_price(self):

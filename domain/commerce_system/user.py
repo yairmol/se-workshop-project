@@ -45,7 +45,7 @@ class User:
     def login(self, sub_user: Subscribed) -> bool:
         self.user_state.login()
         self.user_state = sub_user
-        sub_user.on_login(self.id)
+        sub_user.on_login(self.id, self.cart)
         return True
 
     def register(self, username: str, **user_details) -> Subscribed:
@@ -65,19 +65,23 @@ class User:
         return transaction
 
     def purchase_shopping_bag(self, shop: Shop, payment_details: dict, delivery_details: dict) -> Transaction:
+        if isinstance(self.user_state, Subscribed):
+            return self.user_state.purchase_shopping_bag(shop, payment_details, delivery_details)
         bag = self.cart[shop]
         transaction = bag.purchase_bag(self.get_name(), payment_details, delivery_details)
         self._add_transaction(transaction)
         return transaction
 
     def purchase_cart(self, payment_details: dict, delivery_details: dict, do_what_you_can=False) -> List[Transaction]:
+        if isinstance(self.user_state, Subscribed):
+            return self.user_state.purchase_cart(payment_details, delivery_details, do_what_you_can)
+
         transactions = self.cart.purchase_cart(self.get_name(), payment_details, delivery_details, do_what_you_can)
         for transaction in transactions:
             self._add_transaction(transaction)
         return transactions
 
     def _add_transaction(self, transaction: Transaction) -> None:
-        TransactionRepo.get_transaction_repo().add_transaction(transaction)
         self.user_state.add_transaction(transaction)
 
     def _remove_transaction(self, transaction: Transaction) -> None:
@@ -85,12 +89,20 @@ class User:
 
     def save_product_to_cart(self, shop: Shop, product: Product, amount_to_buy: int,
                              purchase_type_id=None, **pt_args) -> bool:
+        if isinstance(self.user_state, Subscribed):
+            return self.user_state.save_product_to_cart(shop, product, amount_to_buy,
+                                                        purchase_type_id, **pt_args)
         return self.cart.add_product(product, shop, amount_to_buy, purchase_type_id, **pt_args)
 
     def remove_product_from_cart(self, shop: Shop, product: Product, amount: int) -> bool:
+        if isinstance(self.user_state, Subscribed):
+            return self.user_state.remove_product_from_cart(shop, product, amount)
+
         return self.cart.remove_from_shopping_bag(shop, product, amount)
 
     def get_cart_info(self) -> dict:
+        if isinstance(self.user_state, Subscribed):
+            return self.user_state.get_cart_info()
         return self.cart.to_dict()
 
     def open_shop(self, **shop_details) -> Shop:
@@ -162,6 +174,25 @@ class User:
 
 
 class UserState:
+    def purchase_shopping_bag(self, shop: Shop, payment_details: dict, delivery_details: dict) -> Transaction:
+        raise NotImplementedError()
+
+    def purchase_cart(self, payment_details: dict, delivery_details: dict, do_what_you_can=False) -> List[Transaction]:
+        raise NotImplementedError()
+
+    def save_product_to_cart(self, shop: Shop, product: Product, amount_to_buy: int, purchase_type_id=None,
+                             **pt_args) -> bool:
+        raise NotImplementedError()
+
+    def remove_product_from_cart(self, shop: Shop, product: Product, amount: int) -> bool:
+        raise NotImplementedError()
+
+    def get_cart_info(self) -> dict:
+        raise NotImplementedError()
+
+    def change_product_purchase_type(self, shop: Shop, product_id: int, purchase_type_id: int, pt_args: dict) -> bool:
+        raise NotImplementedError()
+
     def get_name(self, userid=None) -> str:
         raise NotImplementedError()
 
@@ -217,7 +248,7 @@ class UserState:
         raise Exception("Guest User cannot edit manager permissions")
 
     def add_transaction(self, transaction: Transaction) -> bool:
-        pass
+        TransactionRepo.get_transaction_repo().add_transaction(transaction)
 
     def logout(self) -> bool:
         raise Exception("User cannot logout in current state")
@@ -311,22 +342,55 @@ class Subscribed(UserState):
         self.pending_messages = []
         self.logged_user = None
         self.notifications = Notifications.get_notifications()
+        self.cart = None
 
     @orm.reconstructor
     def init_on_load(self):
         self.notifications = Notifications.get_notifications()
         self.pending_messages = []
-        self.appointments: Dict[Shop, Appointment] = {} # TODO Remove this when commiting
+        self.appointments: Dict[Shop, Appointment] = {}  # TODO Remove this when commiting
 
-    def get_self(self): return self
+    def get_self(self):
+        return self
 
     @add_to_session
-    def on_login(self, logged_user):
+    def on_login(self, logged_user, cart):
+        self.cart = cart
+        self.cart.of_subscribed = True
         self.logged_user = logged_user
-        # print("on login")
         self.notifications.on_sub_login(logged_user, self.username)
         for msg in self.pending_messages:
             self.send_message(msg)
+
+    def purchase_shopping_bag(self, shop: Shop, payment_details: dict, delivery_details: dict) -> Transaction:
+        bag = self.cart[shop]
+        transaction = bag.purchase_bag(self.get_name(), payment_details, delivery_details)
+        self._add_transaction(transaction)
+        return transaction
+
+    @add_to_session
+    def purchase_cart(self, payment_details: dict, delivery_details: dict, do_what_you_can=False) -> List[Transaction]:
+        transactions = self.cart.purchase_cart(self.get_name(), payment_details, delivery_details, do_what_you_can)
+        for transaction in transactions:
+            self.add_transaction(transaction)
+        return transactions
+
+    @add_to_session
+    def save_product_to_cart(self, shop: Shop, product: Product, amount_to_buy: int,
+                             purchase_type_id=None, **pt_args) -> bool:
+        return self.cart.add_product(product, shop, amount_to_buy, purchase_type_id, **pt_args)
+
+    @add_to_session
+    def remove_product_from_cart(self, shop: Shop, product: Product, amount: int) -> bool:
+        return self.cart.remove_from_shopping_bag(shop, product, amount)
+
+    @add_to_session
+    def get_cart_info(self) -> dict:
+        return self.cart.to_dict()
+
+    @add_to_session
+    def change_product_purchase_type(self, shop: Shop, product_id: int, purchase_type_id: int, pt_args: dict) -> bool:
+        return self.cart.change_product_purchase_type(shop, product_id, purchase_type_id, pt_args)
 
     @add_to_session
     def send_message(self, msg):
@@ -347,6 +411,7 @@ class Subscribed(UserState):
 
     def logout(self):
         self.logged_user = None
+        self.cart.of_subscribed = False
         return True
 
     def get_name(self, userid=None):
@@ -391,7 +456,6 @@ class Subscribed(UserState):
         owner_app = self.get_appointment(shop)
         return owner_app.edit_manager_permissions(manager_sub, permissions)
 
-    # @add_to_session
     def open_shop(self, shop_details):
         new_shop = Shop(**shop_details)
         owner = ShopOwner(new_shop, username=self.username)
@@ -406,7 +470,9 @@ class Subscribed(UserState):
 
     @add_to_session
     def add_transaction(self, transaction: Transaction):
+        TransactionRepo.get_transaction_repo().add_transaction(transaction)
         self.transactions.append(transaction)
+        save(transaction)
         return True
 
     @add_to_session

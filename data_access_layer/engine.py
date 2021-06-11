@@ -35,6 +35,18 @@ def add_to_session(func):
             func(*args, **kwargs)
     return wrapper
 
+def add_shop_to_session(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        self = args[0]
+        if self.of_subscribed:
+            with Session(engine) as session:
+                session.add(self)
+                func(*args, **kwargs)
+        else:
+            func(*args, **kwargs)
+    return wrapper
+
 
 def get_first(obj_type, **kwargs):
     with Session(engine) as session:
