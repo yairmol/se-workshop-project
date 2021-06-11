@@ -9,7 +9,6 @@ import {
   FormGroup
 } from "@material-ui/core";
 import Button from "@material-ui/core/Button";
-import {edit_product} from "../../api";
 
 export default function EditWorkerPermissions({worker, close_window_func, edit_perms_func, promote_manager}) {
   const permissions = worker.permissions

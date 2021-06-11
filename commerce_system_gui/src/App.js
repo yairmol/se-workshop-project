@@ -1,17 +1,15 @@
-import React, {useState, useEffect, useLayoutEffect} from 'react';
+import React from 'react';
 import {makeStyles} from '@material-ui/core/styles';
 import CssBaseline from '@material-ui/core/CssBaseline';
 import Grid from '@material-ui/core/Grid';
 import Container from '@material-ui/core/Container';
 import Header from './components/Header';
 import {UserTransactions} from "./components/Transactions";
-import {Typography} from "@material-ui/core";
 import SignIn from "./components/SignIn";
 import {
   BrowserRouter as Router,
   Switch,
   Route,
-  Link
 } from "react-router-dom";
 import Register from "./components/Register";
 import {Product} from "./components/Product";
@@ -21,7 +19,7 @@ import {Cart} from "./components/Cart";
 import {ProvideAuth} from "./components/use-auth.js";
 import {MainPage} from "./components/MainPage";
 import {Discounts} from "./components/Discounts";
-import System_manager_transaction_history from "./components/system_manager_transaction_history";
+import SystemManagerTransactionHistory from "./components/systemManagerTransactionHistory";
 import SearchProducts from "./components/SearchProducts";
 import {ShopForCustomer} from "./components/ShopForCustomer";
 import ProfilePage from "./components/ProfilePage";
@@ -40,101 +38,9 @@ const categories = [
   {title: 'Search products', url: 'search'},
 ];
 
-const transactions = [
-  {
-    id: 1,
-    "shop": {
-      "shop_id": 2,
-      "shop_name": "shop2",
-      "description": "shop2 desc"
-    },
-    "products": [
-      {
-        "product_id": 2,
-        "product_name": "p2",
-        "price": 2.5,
-        "description": "a product",
-        "amount": 1
-      },
-      {
-        "product_id": 3,
-        "product_name": "p3",
-        "price": 3,
-        "description": "a product",
-        "amount": 2
-      }
-    ],
-    "date": 1619448651.712134,
-    "username" : "Moshe",
-    "price": 2.5
-  },
-  {
-    id: 2,
-    "username" : "Moshe",
-    "shop": {
-      "shop_id": 2,
-      "shop_name": "shop2",
-      "description": "shop2 desc"
-    },
-    "products": [
-      {
-        "product_id": 6,
-        "product_name": "p6",
-        "price": 200,
-        "description": "a product",
-        "amount": 1
-      }
-    ],
-    "date": 1619448651.712134,
-    "price": 200
-  },
-  {
-    id: 3,
-    "username" : "Moshe",
-    "shop": {
-      "shop_id": 2,
-      "shop_name": "shop2",
-      "description": "shop2 desc"
-    },
-    "products": [
-      {
-        "product_id": 10,
-        "product_name": "p10",
-        "price": 96,
-        "description": "a product",
-        "amount": 1
-      }
-    ],
-    "date": 1619448651.713111,
-    "price": 96
-  }
-]
-
-const pages = {
-  userTransactions: {
-    name: "User Transactions",
-  },
-  signIn: {
-    name: "Sign In",
-  },
-  signUp: {
-    name: "Sign Up",
-  },
-  mainPage: {
-    name: "Main Page",
-  },
-}
-
 
 export default function Blog() {
   const classes = useStyles();
-  const [selected, setSelected] = useState(pages.userTransactions);
-
-  const setSelectedPage = (page) => {
-    localStorage.setItem("page", page.name)
-    setSelected(page)
-  }
-
 
   return (
       <ProvideAuth>
@@ -142,7 +48,7 @@ export default function Blog() {
         <React.Fragment>
           <CssBaseline/>
           <Container maxWidth="lg" className={`site-layout-wrapper=modal-active`}>
-            <Header title={selected.name} categories={categories} />
+            <Header categories={categories} />
             <main>
               <Grid container justify="center" spacing={5} className={classes.mainGrid}>
                 <Switch>
@@ -196,7 +102,7 @@ export default function Blog() {
                     <SearchProducts/>
                   </Route>
                   <Route path="/system_transactions" exact>
-                    <System_manager_transaction_history />
+                    <SystemManagerTransactionHistory />
                   </Route>
                   }
                 </Switch>

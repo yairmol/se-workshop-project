@@ -53,7 +53,7 @@ class Appointment:
     def un_appoint_owner(self, owner_sub, cascading=False) -> bool:
         raise Exception("Subscribed user does not have permission to perform action")
 
-    def get_shop_staff_info(self) -> List[Appointment]:
+    def get_shop_staff_info(self) -> List:
         raise Exception("Subscribed user does not have permission to perform action")
 
     def get_shop_transaction_history(self) -> List[Transaction]:
@@ -196,7 +196,7 @@ class ShopManager(Appointment):
             'owner': False
         }
 
-    def get_shop_staff_info(self) -> List[Appointment]:
+    def get_shop_staff_info(self) -> List:
         assert self.get_staff_permission, "manager user does not have permission to see shop staff"
         return self.shop.get_staff_info()
 
@@ -316,7 +316,7 @@ class ShopOwner(Appointment):
     def get_shop_transaction_history(self) -> List[Transaction]:
         return self.shop.get_shop_transaction_history()
 
-    def get_shop_staff_info(self) -> List[Appointment]:
+    def get_shop_staff_info(self) -> List:
         return self.shop.get_staff_info()
 
     def get_discounts(self) -> List[Discount]:

@@ -70,39 +70,6 @@ const columns = [
   {id: 'purchase_type', label: 'Purchase Type', getter: (p) => p.purchase_type.purchase_type}
 ];
 
-const cart_info = {
-  "cart_id": 5,
-  "shopping_bags": {
-    "1": {
-      "products": [
-        {
-          "amount": 1,
-          "description": "a product",
-          "price": 1,
-          "product_id": 1,
-          "product_name": "p1"
-        }
-      ],
-      "shop_name": "shop1",
-      "total": 1
-    },
-    "2": {
-      "products": [
-        {
-          "amount": 1,
-          "description": "a product",
-          "price": 1,
-          "product_id": 1,
-          "product_name": "p1"
-        }
-      ],
-      "shop_name": "shop2",
-      "total": 1
-    }
-  },
-  "total": 1
-}
-
 const useStyles = makeStyles((theme) => ({
   root: {
     width: '100%',
@@ -393,24 +360,21 @@ export const Cart = () => {
   const [cart, setCart] = useState({shopping_bags: {}});
 
   const refresh = () => {
-    auth.getToken().then((token) => get_cart_info(token).then((res) => {
-      if (res) {
-        setCart(res);
-      }
-      setLoaded(true)
-    }))
+    setLoaded(false);
   }
 
-  useEffect(async () => {
+  useEffect(() => {
     if (!loaded) {
-      await get_cart_info(await auth.getToken()).then((res) => {
-        if (res) {
-          setCart(res);
-        }
-      })
+      auth.getToken().then((token) =>
+        get_cart_info(token).then((res) => {
+          if (res) {
+            setCart(res);
+          }
+        })
+      )
       setLoaded(true);
     }
-  }, []);
+  }, [loaded]);
 
   return (
     <div className={classes.root}>

@@ -31,7 +31,7 @@ def create_app(init=None):
 
     @socketio.on('connect')
     def connect():
-        print("%s connected" % request.namespace)
+        print(f"{request.sid} connected", request.namespace)
 
     @socketio.on('enlist')
     def enlist(data):
@@ -75,14 +75,19 @@ def create_app(init=None):
     # 2.1
     @app.route(f'{API_BASE}/validate_token')
     def is_valid_token() -> dict:
+        print(f"validating token {request.args.get('token')}")
+        is_valid = __system_service.is_valid_token(request.args.get("token"))
+        print("is_valid:", is_valid)
         return {
-            "is_valid": __system_service.is_valid_token(request.args.get("token"))
+            "is_valid": is_valid
         }
 
     # 2.1
     @app.route(f'{API_BASE}/enter', methods=['POST'])
     def enter() -> dict:
-        return __system_service.enter()
+        ret = __system_service.enter()
+        print(f"user entered {ret}")
+        return ret
 
     # 2.2
     @app.route(f'{API_BASE}/exit', methods=['DELETE'])

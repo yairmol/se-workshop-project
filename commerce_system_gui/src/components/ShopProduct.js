@@ -2,11 +2,6 @@ import {
     Accordion,
     AccordionDetails,
     AccordionSummary,
-    Card,
-    Divider,
-    Link,
-    List,
-    ListItem,
     Paper,
     Button, Tooltip
 } from "@material-ui/core";

@@ -1,16 +1,13 @@
 import React, {useState} from 'react';
-import PropTypes from 'prop-types';
 import {fade, makeStyles} from '@material-ui/core/styles';
 import Toolbar from '@material-ui/core/Toolbar';
 import Button from '@material-ui/core/Button';
 import IconButton from '@material-ui/core/IconButton';
-import SearchIcon from '@material-ui/icons/Search';
 import Typography from '@material-ui/core/Typography';
 import {Link as RouteLink, useHistory, useLocation} from 'react-router-dom';
 import Link from '@material-ui/core/Link'
-import {Badge, InputBase, Menu, MenuItem, Snackbar} from "@material-ui/core";
+import {Badge, Menu, MenuItem, Snackbar} from "@material-ui/core";
 import AccountCircle from '@material-ui/icons/AccountCircle';
-import NotificationsIcon from '@material-ui/icons/Notifications';
 import {useAuth} from "./use-auth";
 import ShoppingCartIcon from '@material-ui/icons/ShoppingCart';
 import {Alert} from "@material-ui/lab";
@@ -193,7 +190,7 @@ export default function Header(props) {
 
         }
         <IconButton onClick={handleNotifClick}>
-          <Badge badgeContent={(Array.from(new Set(auth.notifList))).length} color="secondary">
+          <Badge badgeContent={auth.notificationsList.length} color="secondary">
             <EmailIcon/>
           </Badge>
         </IconButton>
@@ -218,8 +215,8 @@ export default function Header(props) {
       <Snackbar open={notifSnackBarOpen} autoHideDuration={5000} onClose={handleCloseNotif}>
         <Alert severity="info">Received a new message</Alert>
       </Snackbar>
-      <NotificationDrawer open={notifDrawerOpen} setOpen={setNotifDrawerOpen} msgs={Array.from(new Set(auth.notifList))}
-                          setMsgs={auth.setNotifList}/>
+      <NotificationDrawer open={notifDrawerOpen} setOpen={setNotifDrawerOpen} msgs={auth.notificationsList}
+                          setMsgs={auth.setNotificationsList}/>
       {renderMenu}
     </React.Fragment>
   );

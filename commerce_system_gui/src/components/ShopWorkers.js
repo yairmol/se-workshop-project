@@ -1,20 +1,8 @@
-import {
-  Accordion,
-  AccordionDetails,
-  AccordionSummary,
-  Card,
-  Divider, Fab,
-  Link,
-  List,
-  ListItem,
-  Paper
-} from "@material-ui/core";
-import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
+import {Fab} from "@material-ui/core";
 import Typography from "@material-ui/core/Typography";
 import {makeStyles} from "@material-ui/core/styles";
-import React, {useEffect, useState} from "react";
+import React, {useCallback, useEffect, useState} from "react";
 import Grid from "@material-ui/core/Grid";
-import {useAuth} from "./use-auth";
 import {
   appoint_shop_manager,
   appoint_shop_owner,
@@ -66,20 +54,21 @@ export function ShopWorkers({shop_id, auth}) {
   const [workers, set_workers] = useState([])
   const [load_workers_bool, set_load_workers] = useState(true)
 
-  const load_workers_func = async () => {
-    await auth.getToken().then((token) => {
+  const load_workers_func = useCallback(() =>
+    auth.getToken().then((token) =>
       get_shop_staff_info(token, shop_id).then((staff_info) => {
         set_workers(staff_info)
       })
-    })
-  }
+    )
+  , [auth, shop_id])
 
-  useEffect(async () => {
+  useEffect(() => {
     if (load_workers_bool) {
-      await load_workers_func()
+      load_workers_func().then((_) => {
+        set_load_workers(false)
+      })
     }
-    set_load_workers(false)
-  }, [])
+  }, [load_workers_bool, load_workers_func])
 
   // for add appointment
   const [open_add_appointment, set_add_appointment] = useState(false)

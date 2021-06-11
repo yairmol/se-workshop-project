@@ -54,7 +54,7 @@ function Transactions({transactions_getter, width}) {
       transactions_getter(token).then((res) => {
         setTransactions(res || [])
       }).catch((err) => setTransactions([])))
-  }, [])
+  }, [auth, transactions_getter])
 
   return (
     <Grid item xs={6}>
