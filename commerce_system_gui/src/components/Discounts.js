@@ -205,16 +205,17 @@ export const Discounts = () => {
   const auth = useAuth();
   const {shop_id} = useParams();
   // alert(JSON.stringify(discounts))
-  useEffect(async () => {
+  useEffect(() => {
     if (!loaded) {
-      await get_shop_info(await auth.getToken(), shop_id).then((shopInfo) => {
-        setShop(shopInfo);
-      })
-      await get_shop_discounts(await auth.getToken(), shop_id).then((discounts) => {
-        // alert(`discounts ${JSON.stringify(discounts)}`)
-        setDiscounts(discounts);
-      })
-      setLoaded(true);
+      auth.getToken().then((token) =>
+        get_shop_info(token, shop_id).then((shopInfo) =>
+          get_shop_discounts(token, shop_id).then((discounts) => {
+            setShop(shopInfo);
+            setDiscounts(discounts);
+            setLoaded(true);
+          })
+        )
+      )
     }
   })
 

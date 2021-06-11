@@ -93,20 +93,20 @@ export default function SystemManagerTransactionHistory() {
       const token = await auth.getToken();
       await get_all_user_names(token)
         .then((res) => {
-          setAllUserNames(res || allUserNames)
+          setAllUserNames(res || [])
         })
-        .catch((_) => setAllUserNames(allUserNames))
+        .catch((_) => setAllUserNames([]))
       await get_all_shops_ids_and_names(token)
         .then((res) => {
-          setAllShopNames(res || allShopNames)
+          setAllShopNames(res || [])
         })
-        .catch((_) => setAllShopNames(allShopNames))
-      setLoaded(false);
+        .catch((_) => setAllShopNames([]))
+      setLoaded(true);
     }
     fetchData();
-  }, [])
+  }, [auth])
 
-  return(
+  return(loaded &&
       <Grid container >
         <Grid item xs = {3}>
           <FormControl className={classes.formControl}>

@@ -133,11 +133,8 @@ export default function Header(props) {
   );
 
   const signout = () => {
-    auth.signout().then((res) => {
-      if (res) {
-        history.replace({pathname: "/login", header: "Login"})
-      }
-    })
+    history.replace({pathname: "/login", header: "Login"});
+    auth.signout()
   }
 
   return (

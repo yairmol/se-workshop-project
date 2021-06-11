@@ -156,7 +156,8 @@ class Product(Observable):
         purchase_offer_type = self.get_purchase_type_of_type(
             PurchaseOfferType, "can't accept counter offer for a product without a purchase offer option"
         )
-        self.notify(f"counter offer for product {self.product_name} was accepted")
+        self.notify(f"THe counter offer for product {self.product_name} "
+                    f"(originally made by {offer_maker}) was accepted")
         return purchase_offer_type.accept_counter_offer(offer_maker)
 
 
@@ -284,7 +285,7 @@ class PurchaseOfferType(PurchaseType, Observable):
         original_offer = self.offers[offer_maker].offer
         self.offers[offer_maker].counter_offer(float(counter_offer))
         self.notify_observer(offer_maker, f"offer for product {self.product.product_name} with price "
-                                          f"{original_offer} was countered with a new pricer of {counter_offer}")
+                                          f"{original_offer} was countered with a new price of {counter_offer}")
 
     def can_purchase(self, offer_maker: str) -> bool:
         assert offer_maker in self.offers, "You must first make an offer before you purchase"

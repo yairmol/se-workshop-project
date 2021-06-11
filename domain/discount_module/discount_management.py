@@ -35,7 +35,7 @@ class DiscountManagement:
         if new_discount_dict["composite"]:
             discount_to_add = DiscountManagement.create_comp_discount_from_dict(new_discount_dict, shop_discount)
             shop_discount.add_discount(discount_to_add)
-            return discount_to_add.discount_id
+            return discount_to_add
         if has_cond:
             cond: Optional[Condition] = DiscountManagement.create_cond(condition)
         else:

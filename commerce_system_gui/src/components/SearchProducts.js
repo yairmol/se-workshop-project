@@ -114,13 +114,15 @@ export default function SearchProducts() {
     else if (!Number.isNaN(parseInt(val))) setToPrice(parseInt(val));
   }
 
-  useEffect(async () => {
-    await get_all_categories(await auth.getToken())
+  useEffect(() => {
+    auth.getToken().then((token) =>
+      get_all_categories(token)
       .then((res) => {
-        setAllCategories(res || allCategories)
+        setAllCategories(res || [])
       })
-      .catch((err) => setAllCategories(allCategories))
-  }, [])
+      .catch((err) => setAllCategories([]))
+    )
+  }, [auth])
 
   return (
     <>
