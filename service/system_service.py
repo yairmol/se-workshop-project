@@ -81,6 +81,7 @@ class SystemService:
 
     def is_valid_token(self, token: str):
         if self.tokenizer.is_token_expired(token):
+            print(f"token {token} expired")
             user_id = self.tokenizer.get_id_by_token(token)
             if user_id > 0:
                 self.commerce_system_facade.remove_active_user(user_id)

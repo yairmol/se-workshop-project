@@ -2,6 +2,7 @@ const io = require('socket.io-client');
 
 export default function startNotifications() {
   const socket = io.connect('http://localhost:5000');
+  console.log("start notifications");
   function registerNotifHandler(onNotificationReceived) {
     socket.on('notification', (msg) => {
       onNotificationReceived(msg);
@@ -20,12 +21,16 @@ export default function startNotifications() {
     })
   }
 
-  function enlist(client_id, username) {
-    socket.emit('enlist', {client_id: client_id, username: username})
+  function enlist(client_id) {
+    socket.emit('enlist', {client_id: client_id})
   }
 
   function unregisterHandler() {
     socket.off('notification')
+  }
+
+  function isConnected() {
+    return socket.connected;
   }
 
   socket.on('error', function (err) {
@@ -38,7 +43,8 @@ export default function startNotifications() {
     registerNotifErrorHandler,
     registerBroadcastHandler,
     unregisterHandler,
-    enlist
+    enlist,
+    isConnected,
   }
 }
 // const a = start();

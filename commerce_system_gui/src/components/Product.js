@@ -1,27 +1,18 @@
 import {useEffect, useState} from "react";
 import {
-  delete_product,
-  edit_product,
-  get_permissions,
   get_product_info,
   make_offer,
   save_product_to_cart
 } from "../api";
 import React from "react";
-import {
-  useParams, Link as RouteLink
-} from "react-router-dom";
+import {useParams} from "react-router-dom";
 import {useAuth} from "./use-auth";
 import Button from "@material-ui/core/Button";
 import {makeStyles} from '@material-ui/core/styles';
 import {
-  Checkbox,
   Dialog, DialogActions,
   DialogContent,
   DialogTitle,
-  FormControlLabel,
-  FormGroup,
-  InputAdornment,
   Paper,
   TextField
 } from "@material-ui/core";
@@ -44,10 +35,15 @@ const useStyles = makeStyles((theme) => ({
 
 
 const OfferPriceDialog = ({shopId, product, close}) => {
-  const [price, setPrice] = useState(0);
+  const [price, setPrice] = useState("0");
   const auth = useAuth();
 
   const onSubmit = () => {
+    const _price = parseFloat(price);
+    if (Number.isNaN(_price)){
+      alert("pleas enter a number");
+      return;
+    }
     auth.getToken().then((token) => make_offer(token, shopId, product.product_id, price)).then((res) => {
       if (res) {
         alert('offer successfully made')
@@ -69,7 +65,7 @@ const OfferPriceDialog = ({shopId, product, close}) => {
         <DialogContent>
         <form autoComplete="off">
             <TextField autoFocus margin="dense" id="price" label="Offered Price" fullWidth value={price}
-                       onChange={(e) => setPrice(parseInt(e.target.value))} />
+                       onChange={(e) => setPrice(e.target.value)} />
         </form>
         </DialogContent>
         <DialogActions>
@@ -92,15 +88,9 @@ export const Product = ({shop_name}) => {
 
   const [product, setProduct] = useState(false);
   let {shop_id, product_id} = useParams();
-
-  // const [permissions, setPermissions] = useState(false);
-  const [name, setName] = useState(product.product_name);
-  const [price, setPrice] = useState(product.price);
   const [loaded, setLoaded] = useState(false);
-  const [description, setDescription] = useState(product.description);
-  const [categories, setCategories] = useState(product.categories);
   const [purchaseTypeDialogOpen, setPTDOpen] = useState(false);
-
+  // alert(JSON.stringify(product))
   const purchaseTypes = {
     'offer': {label: 'Make Offer', action: () => setPTDOpen(true)},
     'buy_now': {label: 'Buy Now', action: () => {}},
@@ -113,27 +103,9 @@ export const Product = ({shop_name}) => {
           setProduct(res)
         });
       }
-      // if (!permissions) {
-      //   await get_permissions(await auth.getToken(), shop_id).then((res) => {
-      //     setPermissions(res)
-      //   });
-      // }
       setLoaded(true);
     }
   })
-
-
-  const onSubmitEdit = async (e) => {
-    e.preventDefault()
-    // WHAT TO DO WITH then.. ?
-    edit_product(await auth.getToken(), shop_id, product_id, name, price, description, categories)
-      .then((res) => res.status ? alert("edit product successfully") : alert(res.description))
-
-  }
-  const onSubmitDelete = async (e) => {
-    e.preventDefault()
-    await delete_product(await auth.getToken, shop_id, product_id)
-  }
 
   const onSubmitBuy = (e) => {
     e.preventDefault()

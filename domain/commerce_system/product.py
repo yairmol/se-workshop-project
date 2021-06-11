@@ -156,6 +156,7 @@ class Product(Observable):
         purchase_offer_type = self.get_purchase_type_of_type(
             PurchaseOfferType, "can't accept counter offer for a product without a purchase offer option"
         )
+        self.notify(f"counter offer for product {self.product_name} was accepted")
         return purchase_offer_type.accept_counter_offer(offer_maker)
 
 
@@ -316,7 +317,6 @@ class PurchaseOfferType(PurchaseType, Observable):
     def accept_counter_offer(self, offer_maker: str) -> bool:
         offer = self.offers[offer_maker]
         offer.accept_counter_offer()
-        self.notify(f"counter offer for product {self.product.product_name} was accepted")
         self.approve_if_all_approved(offer)
         return True
 

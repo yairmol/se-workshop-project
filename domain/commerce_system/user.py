@@ -354,7 +354,7 @@ class Subscribed(UserState, Observer):
         self.logged_user = logged_user
         self.notifications.on_sub_login(logged_user, self.username)
         to_remove = []
-        for msg in self.pending_messages:
+        for msg in self.pending_messages.copy():
             if self.send_message(msg):
                 to_remove.append(msg)
         for msg in to_remove:
@@ -524,7 +524,7 @@ class Subscribed(UserState, Observer):
 
     def get_shop_staff_info(self, shop: Shop) -> List[Appointment]:
         appointment = self.get_appointment(shop)
-        return appointment.get_shop_staff_info()
+        return [sub.get_appointment(shop) for sub in appointment.get_shop_staff_info()]
 
     # @add_to_session
     def get_appointments(self):

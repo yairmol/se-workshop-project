@@ -8,8 +8,6 @@ import {
   FormControl,
   IconButton,
   InputLabel,
-  List,
-  ListItem,
   MenuItem,
   Paper,
   Select,
@@ -134,18 +132,6 @@ function getPolicyPath(policies, id) {
     }
   }
   return null;
-}
-
-const getFromPath = (policies, path) => {
-  let a = policies;
-  for (let i = 0; i < path.length - 1; i++) {
-    if (i === 0) {
-      a = a[path[i]]
-    } else {
-      a = a.conditions[path[i]]
-    }
-  }
-  return a[path[path.length - 1]]
 }
 
 const remove = (policies, path) => {
@@ -293,14 +279,6 @@ function PolicyView({policy, index, onDrop, removePolicy, productNames}) {
     }),
     []
   )
-  const [size, setSize] = useState({})
-  useEffect(() => {
-    // alert(JSON.stringify(policy))
-  })
-
-  const handleSizeChanged = size => {
-    setSize({size});
-  };
 
   return (
     // <ResizeConsumer

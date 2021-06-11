@@ -1,12 +1,8 @@
-import {Transaction} from "./Transaction";
 import {
   Card,
   CardContent,
   CardHeader,
   CardMedia,
-  FormControl,
-  InputLabel,
-  Select,
   TextField,
   Typography
 } from "@material-ui/core";
@@ -14,19 +10,8 @@ import React, {useEffect, useState} from 'react';
 import {makeStyles} from '@material-ui/core/styles';
 import Autocomplete from '@material-ui/lab/Autocomplete';
 import Grid from '@material-ui/core/Grid';
-import {
-  get_all_categories,
-  get_all_shops_ids_and_names,
-  get_all_shops_info,
-  get_all_user_names,
-  get_system_transactions_of_shops,
-  get_system_transactions_of_user,
-  get_user_transactions, search_products
-} from "../api";
+import {get_all_categories, search_products} from "../api";
 import {useAuth} from "./use-auth";
-import {Link} from "react-router-dom";
-import IconButton from "@material-ui/core/IconButton";
-import SearchIcon from "@material-ui/icons/Search";
 import Divider from "@material-ui/core/Divider";
 import {Link as RouteLink} from "react-router-dom";
 
@@ -99,16 +84,12 @@ export default function SearchProducts() {
   const [fromPrice, setFromPrice] = useState(0);
   const [toPrice, setToPrice] = useState(Infinity);
   const [searchProducts, setSearchProducts] = useState([]);
-  //   useState([{product_name: "p1",description: "a product", price: 1, quantity: 10, categories:[0,1]},
-  // {product_name: "p2",description: "a product", price: 2.5, quantity: 10,
-  // categories: [1,2]},]);
   const [categories, setCategories] = useState([]);
   const [allCategories, setAllCategories] = useState([]);
-  const [keywords, setKeywords] = useState("");
+  const keywords = "";
   const auth = useAuth();
 
   const onCategoriesChange = (event, value) => {
-    console.log(value);
     setCategories(value);
   }
   const handleSearchChange = (event) => {
@@ -117,10 +98,9 @@ export default function SearchProducts() {
       search_products(token, event.target.value, keywords, categories,
         [{type: "price_range", "from": fromPrice, "to": toPrice === Infinity ? Number.MAX_SAFE_INTEGER : toPrice}])
         .then((res) => {
-          // alert(JSON.stringify(res))
           setSearchProducts(res)
         })
-        .catch((err) => setSearchProducts(searchProducts))
+        .catch((_) => setSearchProducts(searchProducts))
     })
   }
   const handleFromChange = (event) => {
@@ -135,13 +115,6 @@ export default function SearchProducts() {
   }
 
   useEffect(async () => {
-    // await search_products(await auth.getToken(), searchVal, keywords, categories,[{"from": fromPrice, "to":toPrice}] )
-    //     .then((res) => {
-    //       alert(JSON.stringify(res))
-    //       setSearchProducts(res || searchProducts)
-    //     })
-    //     .catch((err) => setSearchProducts(searchProducts))
-
     await get_all_categories(await auth.getToken())
       .then((res) => {
         setAllCategories(res || allCategories)
