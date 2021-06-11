@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useContext, createContext, useCallback} from "react";
+import React, {useState, useEffect, useContext, createContext, useCallback, useRef} from "react";
 import {enter, isValidToken, login, logout, register} from "../api";
 import startNotifications from "../notifs";
 import {useHistory} from "react-router-dom";
@@ -24,15 +24,23 @@ function useProvideAuth() {
   const [user, setUser] = useState(localStorage.getItem("user"));
   const [userId, setUserId] = useState(localStorage.getItem("userId"));
   const [notifications, setNotifications] = useState(null);
-  const [notificationsList, setNotificationsList] = useState([]);
+  const [numNotifications, setNumNotifications] = useState(0);
+  const notificationsList = useRef([]);
   const history = useHistory();
+
+  const setNotificationsList = useCallback((_notificationsList) => {
+    console.log(`setting notifications list to ${JSON.stringify(_notificationsList)}`)
+    notificationsList.current = _notificationsList
+    setNumNotifications(_notificationsList.length);
+  }, [])
 
   const onNotificationReceived = useCallback((msg) => {
     // alert("got message");
     console.log(`notifications: ${JSON.stringify(notificationsList)}`)
     console.log(`got message ${msg}`);
-    setNotificationsList([msg, ...notificationsList]);
-  }, [notificationsList])
+    notificationsList.current.push(msg)
+    setNumNotifications(notificationsList.current.length)
+  }, [])
 
   const getToken = useCallback(() => {
     // alert("in get token");
@@ -48,6 +56,7 @@ function useProvideAuth() {
           _notifications.enlist(data.id);
           _notifications.registerNotifHandler(onNotificationReceived);
           console.log("registered notifications handler");
+          console.log(_notifications.isConnected());
           setNotifications(_notifications)
         }
         localStorage.setItem("token", data.result)
@@ -100,20 +109,17 @@ function useProvideAuth() {
         })
     )
   };
-
   useEffect(() => {
     console.log("in use effect");
     isValidToken(token).then((res) => {
       if (res) {
-        if ((!notifications || !notifications.isConnected()) && userId) {
+        if ((!notifications) && userId) {
           const _notifications = startNotifications();
           _notifications.enlist(userId);
           _notifications.registerNotifHandler(onNotificationReceived);
           console.log("reconnected notifications");
+          console.log(_notifications.isConnected());
           setNotifications(_notifications);
-        } else {
-          console.log("updating notifications handler");
-          notifications.registerNotifHandler(onNotificationReceived);
         }
       }
     })
@@ -132,6 +138,7 @@ function useProvideAuth() {
     logout(token).then((res) => {
       localStorage.removeItem("user")
       setUser(null);
+      setNotificationsList([]);
       return res
     });
 
@@ -143,7 +150,8 @@ function useProvideAuth() {
     signin,
     signup,
     signout,
-    notificationsList,
+    notificationsList: notificationsList.current,
+    numNotifications,
     setNotificationsList,
   };
 }

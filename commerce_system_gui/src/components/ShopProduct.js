@@ -62,6 +62,8 @@ export default function Product({product, remove_product_func, edit_product_func
         setExpanded(!expanded)
     }
 
+    console.log(JSON.stringify(permissions))
+
     return (
         <Accordion expanded={expanded} onChange={onChange}>
             <AccordionSummary
@@ -130,7 +132,7 @@ export default function Product({product, remove_product_func, edit_product_func
                         </Grid>
                     }
                     <Grid item align="center" style={{padding: '5px'}}>
-                        <Button disabled={permissions.purchase_types} onClick={() => {manage_offers_func(product)}}
+                        <Button disabled={!permissions.purchase_types} onClick={() => {manage_offers_func(product)}}
                                 size="small" className={classes.button} variant="contained" color="primary">
                             Manage Offers
                         </Button>

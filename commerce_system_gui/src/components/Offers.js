@@ -150,7 +150,7 @@ export function Offers() {
         setOffers(res || []);
         setLoaded(true);
       }).catch((err) => setOffers([])))
-  }, [loaded])
+  }, [loaded, auth])
 
   const refresh = () => {
     setLoaded(false);

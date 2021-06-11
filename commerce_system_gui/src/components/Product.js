@@ -96,16 +96,16 @@ export const Product = ({shop_name}) => {
     'buy_now': {label: 'Buy Now', action: () => {}},
   }
 
-  useEffect(async () => {
-    if (!loaded) {
-      if (!product) {
-        await get_product_info(await auth.getToken(), shop_id, product_id).then((res) => {
+  useEffect(() => {
+    if (!loaded && !product) {
+      auth.getToken().then((token) =>
+        get_product_info(token, shop_id, product_id).then((res) => {
           setProduct(res)
-        });
-      }
-      setLoaded(true);
+          setLoaded(true);
+        })
+      )
     }
-  })
+  }, [loaded, product, auth, product_id, shop_id])
 
   const onSubmitBuy = (e) => {
     e.preventDefault()
