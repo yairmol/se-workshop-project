@@ -57,7 +57,7 @@ class QuantitySimpleCondition(SimpleCondition):
 class ProductQuantityCondition(QuantitySimpleCondition):
 
     def __init__(self, min_product_quantity: int, conditioned_product_id: int):
-        self.min_product_quantity = min_product_quantity
+        self.minimum = min_product_quantity
         self.conditioned_product_id = conditioned_product_id
 
     def to_dict(self):
@@ -65,20 +65,20 @@ class ProductQuantityCondition(QuantitySimpleCondition):
             "condition": "quantity",
             "type": "product",
             "identifier": self.conditioned_product_id,
-            "num": self.min_product_quantity
+            "num": self.minimum
         }
 
     def resolve(self, products: Dict[Product, ProductInBag]) -> bool:
         for product, bag_info in products.items():
             if product.product_id == self.conditioned_product_id:
-                return bag_info.amount >= self.min_product_quantity
+                return bag_info.amount >= self.minimum
         return False
 
 
 class CategoryQuantityCondition(QuantitySimpleCondition):
 
     def __init__(self, min_category_quantity: int, conditioned_category: str):
-        self.min_category_quantity = min_category_quantity
+        self.minimum = min_category_quantity
         self.conditioned_category = conditioned_category
 
     def to_dict(self):
@@ -86,7 +86,7 @@ class CategoryQuantityCondition(QuantitySimpleCondition):
             "condition": "quantity",
             "type": "category",
             "identifier": self.conditioned_category,
-            "num": self.min_category_quantity
+            "num": self.minimum
         }
 
     def resolve(self, products: Dict[Product, ProductInBag]) -> bool:
@@ -94,7 +94,7 @@ class CategoryQuantityCondition(QuantitySimpleCondition):
         for product, bag_info in products.items():
             if self.conditioned_category in product.get_category_names():
                 quantity += bag_info.amount
-        return quantity >= self.min_category_quantity
+        return quantity >= self.minimum
 
 
 class SumSimpleCondition(SimpleCondition, ABC):
@@ -106,35 +106,35 @@ class SumSimpleCondition(SimpleCondition, ABC):
 class TotalSumCondition(SumSimpleCondition):
 
     def __init__(self, min_sum: int):
-        self.min_sum = min_sum
+        self.minimum = min_sum
 
     def resolve(self, products: Dict[Product, ProductInBag]) -> bool:
-        return calculate_total_sum(products) >= self.min_sum
+        return calculate_total_sum(products) >= self.minimum
 
     def to_dict(self):
         return {
             "condition": "sum",
             "type": "shop",
             "identifier": None,
-            "num": self.min_sum
+            "num": self.minimum
         }
 
 
 class CategorySumCondition(SumSimpleCondition):
 
     def __init__(self, min_sum: int, conditioned_category: str):
-        self.min_sum = min_sum
+        self.minimum = min_sum
         self.conditioned_category = conditioned_category
 
     def resolve(self, products: Dict[Product, ProductInBag]) -> bool:
-        return calculate_category_sum(products, self.conditioned_category) >= self.min_sum
+        return calculate_category_sum(products, self.conditioned_category) >= self.minimum
 
     def to_dict(self):
         return {
             "condition": "sum",
             "type": "category",
             "identifier": self.conditioned_category,
-            "num": self.min_sum
+            "num": self.minimum
         }
 
 
