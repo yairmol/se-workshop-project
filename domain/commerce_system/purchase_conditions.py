@@ -229,8 +229,11 @@ class ORCondition(CompositePurchaseCondition):
     # returns OR between all conditions
     def resolve(self, products: Dict[Product, int]) -> bool:
         for cond in self.conditions:
-            if cond.resolve(products):
-                return True
+            try:
+                if cond.resolve(products):
+                    return True
+            except AssertionError:
+                continue
         return False
 
 # class ConditioningCondition(Condition):

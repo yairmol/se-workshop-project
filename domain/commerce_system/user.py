@@ -92,7 +92,7 @@ class User:
         return self.cart.to_dict()
 
     def open_shop(self, **shop_details) -> Shop:
-        return self.user_state.open_shop(**shop_details)
+        return self.user_state.open_shop(shop_details)
 
     def get_personal_transactions_history(self) -> List[Transaction]:
         return self.user_state.get_personal_transaction_history()
@@ -283,6 +283,9 @@ class UserState:
     def get_offers(self, shop: Shop, product_id: int) -> List[PurchaseOffer]:
         raise Exception("user doesn't have permission to get offers")
 
+    def accept_counter_offer(self, shop: Shop, product_id: int) -> bool:
+        raise Exception("user cannot accept counter offer")
+
 
 class Guest(UserState):
     def get_name(self, userid=None):
@@ -460,7 +463,7 @@ class Subscribed(UserState, Observer):
         self.offers.pop(product_id)
         return shop.delete_offer(self.username, product_id)
 
-    def accept_counter_offer(self, shop: Shop, product_id: int):
+    def accept_counter_offer(self, shop: Shop, product_id: int) -> bool:
         assert product_id in self.offers, "user doesn't have an existing offer for given product"
         return shop.accept_counter_offer(self.username, product_id)
 
