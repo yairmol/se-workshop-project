@@ -1,4 +1,4 @@
-from data_access_layer.engine import get_first, save
+from data_access_layer.engine import get_first, save, delete_all_rows_from_tables
 from data_access_layer.purchasing_repository import save_transaction, save_shopping_bag, save_shopping_cart
 from data_access_layer.shop_repository import save_shop, remove_shop, get_shop, get_product
 from data_access_layer.shop_repository import save_shop
@@ -34,9 +34,13 @@ my_shop = sub.open_shop({"shop_name": "shop1", "description": "the one and only 
 # prod = my_shop.add_product(product_name="Bamba", price=30.5, description="its osem", quantity=10, categories=["snacks"])
 #
 # prod_in_bag = ProductInBag(prod, 1, prod.get_purchase_type_of_type(BuyNow))
-save(sub)
-u = get_first(Subscribed, username=sub.username)
-print(u.username)
+# save(sub)
+# u = get_first(Subscribed, username=sub.username)
+# print(u.username)
+
+# drop_tables()
+# delete_all_rows_from_tables()
+
 # save(my_shop)
 # # remove_shop(165)
 # u = get_first(Subscribed)

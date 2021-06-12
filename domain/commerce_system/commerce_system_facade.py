@@ -3,7 +3,8 @@ import data_access_layer.init_tables
 
 from typing import Dict, List, Union, Optional
 from config.config import config, ConfigFields as cf
-from data_access_layer.engine import add_to_session, get_first, get_all_of_field
+from data_access_layer.engine import add_to_session, get_first, get_all_of_field, delete_all, drop_all_tables, \
+    delete_all_rows_from_tables
 from data_access_layer.subscribed_repository import get_subscribed, get_all_subscribed, remove_all_subscribed, \
     save_subscribed
 from data_model import ConditionsModel as Cm
@@ -436,7 +437,7 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         self.shops.clear()
         self.registered_users.clear()
         self.active_users.clear()
-        remove_all_subscribed(Subscribed)
+        delete_all_rows_from_tables()
 
     def change_product_purchase_type(self, user_id: int, shop_id: int, product_id: int,
                                      purchase_type_id: int, pt_args: dict) -> bool:

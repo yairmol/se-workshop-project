@@ -1,12 +1,14 @@
 from functools import wraps
 
-from sqlalchemy import create_engine
-from sqlalchemy.orm import Session
+from sqlalchemy import create_engine, MetaData, delete
+from sqlalchemy.orm import Session, registry
 
 path = '/'.join(__file__.split('\\')[:-1])
 
 engine = create_engine('sqlite:///{}/ahla_super.db'.format(path), echo=True)
 
+meta = MetaData()
+mapper_registry = registry()
 # def add_to_session(func, objects_to_add=None, self=None):
 #     if not objects_to_add:
 #         objects_to_add = []
@@ -77,3 +79,14 @@ def get_all(obj_type):
 def get_all_of_field(obj_type, func):
     with Session(engine) as session:
         return map(func, session.query(obj_type).all())
+
+def delete_all_rows_from_tables():
+    with Session(engine) as session:
+        for table in mapper_registry.metadata.tables:
+           # mapper_registry.metadata.tables[table].delete()
+            session.query(mapper_registry.metadata.tables[table]).delete()
+            session.commit()
+
+def drop_all_tables():
+    for name in mapper_registry.metadata.tables:
+        mapper_registry.metadata.tables[name].drop(engine, checkfirst=True)

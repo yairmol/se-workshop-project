@@ -3,6 +3,8 @@ import threading
 from typing import List, Dict, TypeVar, Type
 from enum import Enum, auto
 
+from sqlalchemy import orm
+
 from data_model import ProductModel as Pm, PurchaseTypes as Pt
 from domain.commerce_system.category import Category
 
@@ -144,6 +146,11 @@ class ProductInBag:
         self.amount = amount
         self.purchase_type = purchase_type
         self.purchase_type_args = purchase_type_args
+
+    @orm.reconstructor
+    def init_on_load(self):
+        self.purchase_type = None # TODO change this
+        self.purchase_type_args = None # TODO change this
 
 
 class BuyNow(PurchaseType):

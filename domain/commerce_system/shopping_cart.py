@@ -65,19 +65,23 @@ class ShoppingBag:
                     purchase_type_id: Optional[int] = None, **purchase_type_args):
         if product in self.products:
             self.products[product].amount += amount_to_buy
-
+            save(ProductInBag, self.products[product])
         else:
             purchase_type = product.get_purchase_type_of_type(BuyNow)
             if purchase_type_id:
                 purchase_type = product.get_purchase_type(purchase_type_id)
-            self.products[product] = ProductInBag(product, amount_to_buy, purchase_type, **purchase_type_args)
+            pib = ProductInBag(product, amount_to_buy, purchase_type, **purchase_type_args)
+            save(ProductInBag, pib)
+            self.products[product] = pib
 
     def remove_product(self, product: Product, amount_to_buy: int):
         assert product in self.products, "product not in the shopping bag"
         assert self.products[product].amount >= amount_to_buy, "not enough items in the bag"
         if self.products[product].amount == amount_to_buy:
+            delete(ProductInBag, self.products[product])
             self.products.pop(product)
         else:
+            save(ProductInBag, self.products[product])
             self.products[product].amount -= amount_to_buy
 
     def remove_all_products(self):
@@ -97,10 +101,12 @@ class ShoppingBag:
 
     def set_products(self, products: Dict[Product, ProductInBag]) -> bool:
         self.products = products
+        save(ShoppingBag, self)
         return True
 
     def clear_bag(self) -> bool:
         self.products.clear()
+        save(ShoppingBag, self)
         return True
 
     def resolve_shop_conditions(self) -> bool:
@@ -147,6 +153,7 @@ class ShoppingBag:
         product.purchase_types[purchase_type_id].get_price(**pt_args)
         self.products[product].purchase_type = product.purchase_types[purchase_type_id]
         self.products[product].purchase_type_args = pt_args
+        save(ShoppingBag, self.products[product])
         return True
 
 

@@ -12,12 +12,11 @@ from domain.commerce_system.transaction import Transaction
 from domain.commerce_system.user import Subscribed
 from domain.commerce_system.shop import Shop
 from domain.commerce_system.product import Product, ProductInBag
-from data_access_layer.engine import engine
+from data_access_layer.engine import engine, mapper_registry, meta
 
 # Engine
 
-meta = MetaData()
-mapper_registry = registry()
+
 
 # Tables
 

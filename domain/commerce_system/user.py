@@ -429,14 +429,15 @@ class Subscribed(UserState):
         session_app: Appointment = self.get_appointment(shop)
         return session_app.promote_manager_to_owner(manager_sub)
 
-    @add_to_session
+    # @add_to_session
     def get_appointment(self, shop: Shop):
         if shop in self.appointments:
             return self.appointments[shop]
         raise Exception("no appointment for shop. shop id - ", shop.shop_id)
 
     def add_product(self, shop: Shop, **product_info) -> Product:
-        return self.get_appointment(shop).add_product(**product_info)
+        app = self.get_appointment(shop)
+        return app.add_product(**product_info)
 
     def edit_product(self, shop: Shop, product_id: int, **to_edit):
         return self.get_appointment(shop).edit_product(product_id, **to_edit)
