@@ -3,7 +3,7 @@ from datetime import datetime
 from domain.commerce_system.action import Action, ActionPool
 from domain.commerce_system.product import Product, BuyNow, PurchaseType, ProductInBag
 from domain.commerce_system.productDTO import ProductDTO
-from domain.commerce_system.purchase_conditions import ANDCondition
+from domain.commerce_system.purchase_conditions import ANDPolicy
 from domain.commerce_system.shop import Shop
 
 from typing import Dict, List, TypeVar, Optional
@@ -87,7 +87,7 @@ class ShoppingBag:
         return True
 
     def resolve_shop_conditions(self) -> bool:
-        conditions = ANDCondition({"conditions": self.shop.conditions})
+        conditions = ANDPolicy({"conditions": self.shop.conditions})
         return conditions.resolve({k: v.amount for k, v in self.products.items()})
 
     def purchase_bag(self, username, payment_details, delivery_details: dict) -> Transaction:

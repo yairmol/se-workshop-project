@@ -203,7 +203,7 @@ class CompositePurchaseCondition(Policy, ABC):
         return ret
 
 
-class ANDCondition(CompositePurchaseCondition):
+class ANDPolicy(CompositePurchaseCondition):
     type = CondM.AND
 
     # returns AND between all conditions
@@ -214,7 +214,7 @@ class ANDCondition(CompositePurchaseCondition):
         return True
 
 
-class ORCondition(CompositePurchaseCondition):
+class ORPolicy(CompositePurchaseCondition):
     type = CondM.OR
 
     # returns OR between all conditions

@@ -5,8 +5,8 @@ from unittest import TestCase
 from data_model import ConditionsModel as Cm
 from domain.commerce_system.product import Product
 from domain.commerce_system.purchase_conditions import MaxQuantityForProductCondition, TimeWindowForCategoryCondition, \
-    TimeWindowForProductCondition, DateWindowForCategoryCondition, DateWindowForProductCondition, ANDCondition, \
-    ORCondition
+    TimeWindowForProductCondition, DateWindowForCategoryCondition, DateWindowForProductCondition, ANDPolicy, \
+    ORPolicy
 from domain.commerce_system.shop import Shop
 from domain.commerce_system.shopping_cart import ShoppingBag
 from domain.commerce_system.tests.mocks import DeliveryMock, PaymentMock
@@ -146,8 +146,8 @@ class PurchaseConditionTests(TestCase):
         and_condition_dict = {Cm.CONDITIONS: [condition1, condition2, condition3, condition4, condition5]}
         or_condition_dict = {Cm.CONDITIONS: [condition6, condition7, condition8, condition9, condition10, condition5]}
 
-        and_condition = ANDCondition(and_condition_dict)
-        or_condition = ORCondition(or_condition_dict)
+        and_condition = ANDPolicy(and_condition_dict)
+        or_condition = ORPolicy(or_condition_dict)
 
         self.shop.add_purchase_condition(condition1)
         self.shop.add_purchase_condition(condition2)
