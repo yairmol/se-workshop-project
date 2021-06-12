@@ -5,6 +5,7 @@ import domain.commerce_system.valdiation as validate
 import hashlib
 import os
 
+from config.config import config, ConfigFields as cf
 from data_access_layer.subscribed_repository import save_password
 
 
@@ -15,9 +16,13 @@ class Password:
         self.salt = salt
 
 
-def encrypt_password(plaintext_password: str) -> Dict:
-    salt = os.urandom(32)  # A new salt for this user
-    key = hashlib.pbkdf2_hmac('sha256', plaintext_password.encode('utf-8'), salt, 100000)
+def encrypt_password(plaintext_password: str, salt=None) -> Dict:
+    if not salt:
+        salt = os.urandom(32)  # A new salt for this user
+    if config[cf.HASH_ALG] == "modulo":
+        key = int.from_bytes(plaintext_password.encode() + salt, 'big', signed=False) % int(1E10)
+    else:
+        key = hashlib.pbkdf2_hmac(config[cf.HASH_ALG], plaintext_password.encode('utf-8'), salt, 100000)
     return {'salt': salt, 'key': key}
 
 
@@ -46,5 +51,5 @@ class Authenticator:
 
             salt = self.users_passwords[username]['salt']  # Get the salt
             key = self.users_passwords[username]['key']  # Get the correct key
-            new_key = hashlib.pbkdf2_hmac('sha256', plaintext_password.encode('utf-8'), salt, 100000)
+            new_key = encrypt_password(plaintext_password, salt=salt)["key"]
             assert key == new_key, "Wrong password"
