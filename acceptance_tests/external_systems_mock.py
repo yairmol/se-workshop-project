@@ -40,7 +40,7 @@ counters = {"supply_counter": 10001, "pay_counter": 10001}
 @app.route('/config', methods=['post'])
 def set_config():
     print("data", request.data)
-    dic = json.loads(request.data.decode())
+    dic = json.loads(request.data.decode() or '{}')
     config.update(dic)
     return 'CONFIG'
 
@@ -48,7 +48,10 @@ def set_config():
 @app.route('/', methods=['POST'])
 def action():
     print("action", request.data)
-    action = json.loads(request.data.decode())
+    action = json.loads(request.data.decode() or '{}')
+    if 'action_type' not in action:
+        print("bad action")
+        return "bad action"
     if config['to_exit']:
         exit()
     if config['to_wait']:

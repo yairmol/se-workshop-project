@@ -37,7 +37,9 @@ class BagTests(TestCase):
     def setUp(self) -> None:
         IPaymentsFacade.get_payment_facade = lambda: PaymentMock(True)
         IDeliveryFacade.get_delivery_facade = lambda: DeliveryMock(True)
-        self.shop = Shop(**shop1)
+        self.owner = User()
+        self.owner.login(Subscribed("u_owner"))
+        self.shop = self.owner.open_shop(**shop1)
         self.bag = ShoppingBag(self.shop)
         self.products = [Product(**p) for p in products]
         self.product = self.products[0]
@@ -236,11 +238,12 @@ class BagTests(TestCase):
             self.product.product_id, offer_purchase_type_dict.copy()
         )
         self.assertTrue(self.shop.add_price_offer(
-            self.buyer.get_name(), self.product.product_id, offer_price
+            self.buyer.user_state, self.product.product_id, offer_price
         ))
         if to_reply:
             self.assertTrue(self.shop.reply_price_offer(
-                self.product.product_id, self.buyer.get_name(), Pt.APPROVE if to_approve else Pt.REJECT
+                self.product.product_id, self.buyer.get_name(), Pt.APPROVE if to_approve else Pt.REJECT,
+                action_maker=self.owner.get_name()
             ))
         return purchase_offer_type, offer_price
 
