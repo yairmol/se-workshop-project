@@ -2,7 +2,7 @@ import threading
 from abc import ABC
 
 from domain.commerce_system.product import Product, ProductInBag
-from typing import Dict, List
+from typing import Dict, List, Union
 
 
 def calculate_total_sum(products: Dict[Product, ProductInBag]) -> float:
@@ -56,9 +56,9 @@ class QuantitySimpleCondition(SimpleCondition):
 
 class ProductQuantityCondition(QuantitySimpleCondition):
 
-    def __init__(self, min_product_quantity: int, conditioned_product_id: int):
-        self.min_product_quantity = min_product_quantity
-        self.conditioned_product_id = conditioned_product_id
+    def __init__(self, min_product_quantity: Union[str, int], conditioned_product_id: Union[str, int]):
+        self.min_product_quantity = int(min_product_quantity)
+        self.conditioned_product_id = int(conditioned_product_id)
 
     def to_dict(self):
         return {
@@ -77,8 +77,8 @@ class ProductQuantityCondition(QuantitySimpleCondition):
 
 class CategoryQuantityCondition(QuantitySimpleCondition):
 
-    def __init__(self, min_category_quantity: int, conditioned_category: str):
-        self.min_category_quantity = min_category_quantity
+    def __init__(self, min_category_quantity: Union[int, str], conditioned_category: str):
+        self.min_category_quantity = int(min_category_quantity)
         self.conditioned_category = conditioned_category
 
     def to_dict(self):
@@ -105,8 +105,8 @@ class SumSimpleCondition(SimpleCondition, ABC):
 
 class TotalSumCondition(SumSimpleCondition):
 
-    def __init__(self, min_sum: int):
-        self.min_sum = min_sum
+    def __init__(self, min_sum: Union[str, int, float]):
+        self.min_sum = float(min_sum)
 
     def resolve(self, products: Dict[Product, ProductInBag]) -> bool:
         return calculate_total_sum(products) >= self.min_sum
@@ -122,8 +122,8 @@ class TotalSumCondition(SumSimpleCondition):
 
 class CategorySumCondition(SumSimpleCondition):
 
-    def __init__(self, min_sum: int, conditioned_category: str):
-        self.min_sum = min_sum
+    def __init__(self, min_sum: Union[str, int, float], conditioned_category: str):
+        self.min_sum = float(min_sum)
         self.conditioned_category = conditioned_category
 
     def resolve(self, products: Dict[Product, ProductInBag]) -> bool:
@@ -190,20 +190,20 @@ class Discount:
 
 
 class ConditionalDiscount(Discount, ABC):
-    def __init__(self, has_cond: bool, condition: Condition, percentage: int):
+    def __init__(self, has_cond: bool, condition: Condition, percentage: Union[str, float]):
         super().__init__()
         self.has_cond = has_cond
         self.condition = condition
-        self.percentage = percentage
+        self.percentage = float(percentage)
 
     def apply(self, products: Dict[Product, ProductInBag]) -> float:
         raise NotImplementedError()
 
 
 class ProductDiscount(ConditionalDiscount):
-    def __init__(self, has_cond: bool, condition: Condition, percentage: int, product_id: int):
+    def __init__(self, has_cond: bool, condition: Condition, percentage: Union[str, float], product_id: Union[int, str]):
         super().__init__(has_cond, condition, percentage)
-        self.product_id = product_id
+        self.product_id = int(product_id)
 
     def apply(self, products: Dict[Product, ProductInBag]) -> float:
         if (not self.has_cond) or self.condition.resolve(products):
@@ -222,7 +222,7 @@ class ProductDiscount(ConditionalDiscount):
 
 
 class CategoryDiscount(ConditionalDiscount):
-    def __init__(self, has_cond: bool, condition: Condition, percentage: int, category: str):
+    def __init__(self, has_cond: bool, condition: Condition, percentage: Union[str, float], category: str):
         super().__init__(has_cond, condition, percentage)
         self.category = category
 
@@ -243,7 +243,7 @@ class CategoryDiscount(ConditionalDiscount):
 
 
 class StoreDiscount(ConditionalDiscount):
-    def __init__(self, has_cond: bool, condition: Condition, percentage: int):
+    def __init__(self, has_cond: bool, condition: Condition, percentage: Union[str, float]):
         super().__init__(has_cond, condition, percentage)
 
     def apply(self, products: Dict[Product, ProductInBag]) -> float:

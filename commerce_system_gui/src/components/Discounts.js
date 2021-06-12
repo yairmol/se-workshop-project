@@ -16,7 +16,6 @@ import {
   Typography
 } from "@material-ui/core";
 import Divider from "@material-ui/core/Divider";
-import DragHandleIcon from '@material-ui/icons/DragHandle';
 import {useDrag, useDrop} from "react-dnd";
 import {HTML5Backend} from 'react-dnd-html5-backend'
 import {DndProvider} from 'react-dnd'
@@ -24,130 +23,13 @@ import DeleteIcon from '@material-ui/icons/Delete';
 import {add_discount, get_shop_discounts, get_shop_info, move_discount_to, remove_discount} from "../api";
 import {useAuth} from "./use-auth";
 import {useParams} from "react-router-dom";
-import {instanceOf} from "prop-types";
 
 const conditionTypes = {
   "sum": "Total Price",
   "quantity": "Number of Products"
 }
 
-function getDiscountPath(discounts, id) {
-  for (let i = 0; i < discounts.length; i++) {
-    if (id === discounts[i].id) {
-      return [i];
-    } else if (discounts[i].type === "composite") {
-      const path = getDiscountPath(discounts[i].discounts, id);
-      if (path) {
-        return [i, ...path];
-      }
-    }
-  }
-  return null;
-}
-
-const getFromPath = (discounts, path) => {
-  let a = discounts;
-  for (let i = 0; i < path.length - 1; i++) {
-    if (i === 0) {
-      a = a[path[i]]
-    } else {
-      a = a.discounts[path[i]]
-    }
-  }
-  return a[path[path.length - 1]]
-}
-
-const remove = (discounts, path) => {
-  let a = discounts;
-  for (let i = 0; i < path.length - 1; i++) {
-    a = a[path[i]].discounts
-  }
-  const [removed] = a.splice(path[path.length - 1], 1)
-  return removed
-}
-
-const add = (discount, discounts, path) => {
-  let a = discounts;
-  for (let i = 0; i < path.length; i++) {
-    a = a[path[i]].discounts
-  }
-  a.push(discount)
-}
-
-const moveItem = (discounts, discountId, destId) => {
-  // alert(discountId)
-  // alert(destId)
-  const oldPath = getDiscountPath(discounts, discountId)
-  // alert(JSON.stringify(oldPath))
-  // alert(JSON.stringify(discounts))
-  const discount = remove(discounts, oldPath);
-  // alert(JSON.stringify(discounts))
-  const newPath = getDiscountPath(discounts, destId)
-  // alert(JSON.stringify(newPath))
-  add(discount, discounts, newPath)
-  // alert(JSON.stringify(discounts))
-  // const result = Array.from(list);
-  // result.splice(endIndex, 0, removed);
-
-  return discounts;
-};
-
 let nextid = 3;
-
-const shop_info1 = {
-  "description": "shop1 desc",
-  "discounts": [
-    {
-      id: `id-${1}`,
-      "type": "simple",
-      "target_type": "product",
-      "target_identifier": 1,
-      "percentage": 20
-    },
-    {
-      id: `id-${2}`,
-      "type": "simple",
-      "target_type": "product",
-      "target_identifier": 2,
-      "percentage": 20
-    }
-  ],
-  "products": [
-    {
-      "categories": [
-        "c1"
-      ],
-      "description": "a product",
-      "price": 1,
-      "product_id": 1,
-      "product_name": "p1",
-      "quantity": 9
-    },
-    {
-      "categories": [
-        "c1"
-      ],
-      "description": "a product",
-      "price": 1.25,
-      "product_id": 3,
-      "product_name": "p3",
-      "quantity": 9
-    },
-    {
-      "categories": [
-        "c1"
-      ],
-      "description": "a product",
-      "price": 32,
-      "product_id": 5,
-      "product_name": "p5",
-      "quantity": 10
-    }
-  ],
-  "shopImage": "",
-  "shop_id": 1,
-  "shop_name": "shop1"
-}
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -298,11 +180,6 @@ function DiscountView({discount, index, onDrop, removeDiscount, productsNames}) 
   )
 }
 
-function useForceUpdate() {
-  const [value, setValue] = useState(0); // integer state
-  return () => setValue(value => value + 1); // update the state to force render
-}
-
 const parseCondition = (conditions, rators, sendToApi) => {
   if (conditions.length === 0) {
     return []
@@ -326,19 +203,19 @@ export const Discounts = () => {
   const [loaded, setLoaded] = useState(false);
   const [addComp, setAddComp] = useState(null);
   const auth = useAuth();
-  const forceUpdate = useForceUpdate();
   const {shop_id} = useParams();
   // alert(JSON.stringify(discounts))
-  useEffect(async () => {
+  useEffect(() => {
     if (!loaded) {
-      await get_shop_info(await auth.getToken(), shop_id).then((shopInfo) => {
-        setShop(shopInfo);
-      })
-      await get_shop_discounts(await auth.getToken(), shop_id).then((discounts) => {
-        // alert(`discounts ${JSON.stringify(discounts)}`)
-        setDiscounts(discounts);
-      })
-      setLoaded(true);
+      auth.getToken().then((token) =>
+        get_shop_info(token, shop_id).then((shopInfo) =>
+          get_shop_discounts(token, shop_id).then((discounts) => {
+            setShop(shopInfo);
+            setDiscounts(discounts);
+            setLoaded(true);
+          })
+        )
+      )
     }
   })
 

@@ -11,6 +11,10 @@ class IDeliveryFacade:
     __instance = None
 
     @staticmethod
+    def reset():
+        IDeliveryFacade.__instance = None
+
+    @staticmethod
     def delivery_facade_from_config():
         if config[cf.PAYMENT_FACADE] == "real":
             return DeliveryFacadeWSEP()

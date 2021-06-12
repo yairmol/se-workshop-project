@@ -31,7 +31,7 @@ def create_app(init=None):
 
     @socketio.on('connect')
     def connect():
-        print("%s connected" % request.namespace)
+        print(f"{request.sid} connected", request.namespace)
 
     @socketio.on('enlist')
     def enlist(data):
@@ -53,9 +53,9 @@ def create_app(init=None):
         @staticmethod
         def send_message(msg, client_id):
             print(f"sending message {msg} to {client_id}", client_session_map)
-            if client_id in client_session_map:
-                print("client id in client session map")
-                socketio.emit('notification', msg, room=client_session_map[client_id])
+            assert client_id in client_session_map, "client is not connected"
+            print("client id in client session map")
+            socketio.emit('notification', msg, room=client_session_map[client_id])
 
         @staticmethod
         def send_error(msg, client_id):
@@ -75,14 +75,19 @@ def create_app(init=None):
     # 2.1
     @app.route(f'{API_BASE}/validate_token')
     def is_valid_token() -> dict:
+        print(f"validating token {request.args.get('token')}")
+        is_valid = __system_service.is_valid_token(request.args.get("token"))
+        print("is_valid:", is_valid)
         return {
-            "is_valid": __system_service.is_valid_token(request.args.get("token"))
+            "is_valid": is_valid
         }
 
     # 2.1
     @app.route(f'{API_BASE}/enter', methods=['POST'])
     def enter() -> dict:
-        return __system_service.enter()
+        ret = __system_service.enter()
+        print(f"user entered {ret}")
+        return ret
 
     # 2.2
     @app.route(f'{API_BASE}/exit', methods=['DELETE'])
@@ -350,6 +355,22 @@ def create_app(init=None):
     @app.route(f'{API_BASE}/shops/<int:shop_id>/purchase_policies', methods=["GET"])
     def get_shop_purchase_policies(shop_id: int):
         return __system_service.get_purchase_conditions(token=request.args.get("token"), shop_id=shop_id)
+
+    @app.route(f'{API_BASE}/offers', methods=["GET"])
+    def get_user_purchase_offers():
+        return __system_service.get_user_purchase_offer(request.args.get("token"))
+
+    @app.route(f'{API_BASE}/offers/<int:product_id>', methods=["PUT"])
+    def accept_counter_offer(product_id: int):
+        return apply_request_on_function(
+            __system_service.accept_counter_offer, product_id=product_id
+        )
+
+    @app.route(f'{API_BASE}/shops/<int:shop_id>/<int:product_id>/offers', methods=['DELETE'])
+    def delete_offer(shop_id: int, product_id: int):
+        return apply_request_on_function(
+            __system_service.delete_purchase_offer, shop_id=shop_id, product_id=product_id
+        )
 
     @app.errorhandler(404)
     def server_error(e):

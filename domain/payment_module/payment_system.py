@@ -11,6 +11,10 @@ class IPaymentsFacade:
     __instance = None
 
     @staticmethod
+    def reset():
+        IPaymentsFacade.__instance = None
+
+    @staticmethod
     def payment_facade_from_config():
         if config[cf.PAYMENT_FACADE] == "real":
             return PaymentsFacadeWSEP()
@@ -73,17 +77,18 @@ class PaymentsFacadeWSEP(IPaymentsFacade):
     def handshake(self) -> bool:
         data = {"action_type": "handshake"}
         try:
-            response = requests.post(config[cf.PAYMENT_SYSTEM_URL], data, timeout=5)
+            response = requests.post(config[cf.PAYMENT_SYSTEM_URL], json=data, timeout=5)
             return response.text == self.SUCCESSFUL_HANDSHAKE
         except Timeout:
             return False
 
     def pay(self, total_price: int, payment_details: dict, contact_details: dict = None) -> Union[str, bool]:
+        print(config[cf.PAYMENT_SYSTEM_URL])
         if self.handshake():
             data = {"action_type": "pay"}
             data.update(payment_details)
             try:
-                response = requests.post(config[cf.PAYMENT_SYSTEM_URL], data, timeout=5)
+                response = requests.post(config[cf.PAYMENT_SYSTEM_URL], json=data, timeout=5)
                 text = response.text
                 if represents_int(text):
                     value = int(text)
@@ -99,7 +104,7 @@ class PaymentsFacadeWSEP(IPaymentsFacade):
         if self.handshake():
             data = {"action_type": "cancel_pay", "transaction_id": transaction_id}
             try:
-                response = requests.post(config[cf.PAYMENT_SYSTEM_URL], data, timeout=5)
+                response = requests.post(config[cf.PAYMENT_SYSTEM_URL], json=data, timeout=5)
                 return response.text == self.SUCCESSFUL_PAY_CANCEL
             except Timeout:
                 return False

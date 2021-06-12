@@ -1,4 +1,3 @@
-import React, {useState} from 'react';
 import Button from '@material-ui/core/Button';
 import CssBaseline from '@material-ui/core/CssBaseline';
 import TextField from '@material-ui/core/TextField';
@@ -36,7 +35,7 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-export default function SignIn({}) {
+export default function SignIn() {
   const classes = useStyles();
   const auth = useAuth();
   let history = useHistory();
