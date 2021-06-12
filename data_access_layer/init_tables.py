@@ -134,7 +134,6 @@ shopping_bag_products = Table(
     Column('amount', Integer)
 )
 
-
 purchase_policies = Table(
     'purchase_policies',
     mapper_registry.metadata,
@@ -148,15 +147,9 @@ purchase_policies = Table(
     Column('max_date', DATE),
     Column('product_id', Integer, ForeignKey('products.product_id', ondelete='CASCADE')),
     Column('max_quantity', Integer),
-    Column('parent_policy', Integer, ForeignKey('purchase_policies.id', ondelete='CASCADE'))
+    Column('parent_policy', Integer, ForeignKey('purchase_policies.id', ondelete='CASCADE')),
 )
 
-composite_policies = Table(
-    'composite_policies',
-    mapper_registry.metadata,
-    Column('parent_policy', Integer, ForeignKey('purchase_policies.policy_id', ondelete='CASCADE'), primary_key=True),
-    Column('child_policy', Integer, ForeignKey('purchase_policies.policy_id', ondelete='CASCADE'), primary_key=True),
-)
 
 discount_condition = Table(
     'discount_condition',
@@ -166,7 +159,7 @@ discount_condition = Table(
     Column('minimum', Integer),
     Column('conditioned_product_id', Integer),
     Column('conditioned_category', String),
-
+    Column('parent_condition', Integer, ForeignKey('discount_condition.id', ondelete='CASCADE')),
 )
 
 discount = Table(
@@ -175,49 +168,51 @@ discount = Table(
     Column('id', Integer, primary_key=True),
     Column('shop_id', Integer, ForeignKey('shop.shop_id', ondelete='CASCADE')),
     Column('condition', Integer, ForeignKey('discount_conditions.id', ondelete='CASCADE')),
+    Column('parent_discount', Integer, ForeignKey('discount.id', ondelete='CASCADE')),
 
 )
+#
+# composite_discounts = Table(
+#     'composite_discounts',
+#     mapper_registry.metadata,
+#     Column('parent_discount', Integer, ForeignKey('discount.id', ondelete='CASCADE'), primary_key=True),
+#     Column('child_discount', Integer, ForeignKey('discount.id', ondelete='CASCADE'), primary_key=True),
+# )
+#
+# composite_discount_conditions = Table(
+#     'composite_discount_conditions',
+#     mapper_registry.metadata,
+#     Column('parent_condition', Integer, ForeignKey('discount_condition.id', ondelete='CASCADE'), primary_key=True),
+#     Column('child_condition', Integer, ForeignKey('discount_condition.id', ondelete='CASCADE'), primary_key=True),
+# )
 
-composite_discounts = Table(
-    'composite_discounts',
-    mapper_registry.metadata,
-    Column('parent_discount', Integer, ForeignKey('discount.id', ondelete='CASCADE'), primary_key=True),
-    Column('child_discount', Integer, ForeignKey('discount.id', ondelete='CASCADE'), primary_key=True),
-)
-
-composite_discount_conditions = Table(
-    'composite_discount_conditions',
-    mapper_registry.metadata,
-    Column('parent_condition', Integer, ForeignKey('discount_condition.id', ondelete='CASCADE'), primary_key=True),
-    Column('child_condition', Integer, ForeignKey('discount_condition.id', ondelete='CASCADE'), primary_key=True),
-)
 
 # mapper_registry.map_imperatively(Condition, discount_condition)
 # mapper_registry.map_imperatively(SimpleCondition, discount_condition)
 # mapper_registry.map_imperatively(QuantitySimpleCondition, discount_condition)
-mapper_registry.map_imperatively(ProductQuantityCondition, discount_condition)
-mapper_registry.map_imperatively(CategoryQuantityCondition, discount_condition)
-mapper_registry.map_imperatively(SumSimpleCondition, discount_condition)
-mapper_registry.map_imperatively(TotalSumCondition, discount_condition)
-mapper_registry.map_imperatively(CategorySumCondition, discount_condition)
+# mapper_registry.map_imperatively(ProductQuantityCondition, discount_condition)
+# mapper_registry.map_imperatively(CategoryQuantityCondition, discount_condition)
+# mapper_registry.map_imperatively(SumSimpleCondition, discount_condition)
+# mapper_registry.map_imperatively(TotalSumCondition, discount_condition)
+# mapper_registry.map_imperatively(CategorySumCondition, discount_condition)
 # mapper_registry.map_imperatively(ANDCondition, discount_condition)
 # mapper_registry.map_imperatively(ORCondition, discount_condition)
 
 
 # mapper_registry.map_imperatively(Discount, discount)
 # mapper_registry.map_imperatively(ConditionalDiscount, discount)
-mapper_registry.map_imperatively(ProductDiscount, discount)
-mapper_registry.map_imperatively(CategoryDiscount, discount)
-mapper_registry.map_imperatively(StoreDiscount, discount)
-# mapper_registry.map_imperatively(CompositeDiscount, discount)
-mapper_registry.map_imperatively(XorDiscount, discount)
-mapper_registry.map_imperatively(MaxDiscount, discount)
-mapper_registry.map_imperatively(AdditiveDiscount, discount)
+# mapper_registry.map_imperatively(ProductDiscount, discount)
+# mapper_registry.map_imperatively(CategoryDiscount, discount)
+# mapper_registry.map_imperatively(StoreDiscount, discount)
+# # mapper_registry.map_imperatively(CompositeDiscount, discount)
+# mapper_registry.map_imperatively(XorDiscount, discount)
+# mapper_registry.map_imperatively(MaxDiscount, discount)
+# mapper_registry.map_imperatively(AdditiveDiscount, discount)
 
-
-mapper_registry.map_imperatively(Discount, discount, properties={
-    "condition": relationship(Condition)
-})
+#
+# mapper_registry.map_imperatively(Discount, discount, properties={
+#     "condition": relationship(Condition)
+# })
 
 # mapper_registry.map_imperatively(Subscribed, subscribed, properties={
 #     "shoppingBag": relationship(ShoppingBag, backref='subscribed', cascade='all, delete, delete-orphan'),
@@ -226,23 +221,21 @@ mapper_registry.map_imperatively(Discount, discount, properties={
 mapper_registry.map_imperatively(Shop, shop, properties={
     "product": relationship(Product, backref='shop', cascade='all, delete, delete-orphan'),
     "shopping_bag": relationship(ShoppingBag, backref='shop', cascade='all, delete, delete-orphan'),
-    "policies": relationship(Policy, backref='shop')
+    "conditions": relationship(Policy, backref='shop', cascade='all, delete, delete-orphan')
 })
 mapper_registry.map_imperatively(Product, product, properties={
     "categories": relationship(Category, backref='product', secondary=categories_product_mtm),
-    "max_policies": relationship(MaxQuantityForProductCondition, back_populates='max_policy_product',
-                                 cascade='all, delete, delete-orphan'),
-    "p_time_policies": relationship(TimeWindowForProductCondition, back_populates='time_policy_product',
-                                    cascade='all, delete, delete-orphan'),
-    "p_date_policies": relationship(DateWindowForProductCondition, back_populates='date_policy_product',
-                                    cascade='all, delete, delete-orphan')
+    "policies": relationship(Policy, backref='product', cascade='all, delete, delete-orphan'),
+    # "p_time_policies": relationship(TimeWindowForProductCondition, back_populates='time_policy_product',
+    #                                 cascade='all, delete, delete-orphan'),
+    # "p_date_policies": relationship(DateWindowForProductCondition, back_populates='date_policy_product',
+    #                                 cascade='all, delete, delete-orphan')
 })
 # mapper_registry.map_imperatively(Transaction, transaction)
 mapper_registry.map_imperatively(Category, categories, properties={
-    "c_time_policies": relationship(TimeWindowForCategoryCondition, back_populates='time_policy_category',
-                                    cascade='all, delete, delete-orphan'),
-    "c_date_policies": relationship(DateWindowForCategoryCondition, back_populates='date_policy_category',
-                                    cascade='all, delete, delete-orphan')
+    "policies": relationship(Policy, backref='categories', cascade='all, delete, delete-orphan')
+    # "c_date_policies": relationship(DateWindowForCategoryCondition, back_populates='date_policy_category',
+    #                                 cascade='all, delete, delete-orphan')
 })
 # mapper_registry.map_imperatively(ShopManager, shop_manager_appointments)
 # mapper_registry.map_imperatively(ShopOwner, shop_owner_appointments)
@@ -255,100 +248,115 @@ mapper_registry.map_imperatively(ShoppingBag, shopping_bag)
 mapper_registry.map_imperatively(
     Policy,
     purchase_policies,
-    properties={
-        "complex_children": relationship(
-            Policy,
-            backref=backref(
-                'purchase_policies',
-                remote_side=[purchase_policies.c.id],
-            )
-        ),
-    },
-    # polymorphic_on=purchase_policies.c.type,
-    # polymorphic_identity='condition',
+    # properties={
+    #     "complex_children": relationship(
+    #         Policy,
+    #         backref=backref(
+    #             'purchase_policies',
+    #             remote_side=[purchase_policies.c.id],
+    #         )
+    #     ),
+    #     # "conditioned_product": relationship(Product, backref='purchase_policies'),
+    #     # "conditioned_category": relationship(Category, backref='purchase_policies')
+    # },
+    polymorphic_on=purchase_policies.c.condition_type,
 
 )
 
 mapper_registry.map_imperatively(
     MaxQuantityForProductCondition,
     purchase_policies,
-    # polymorphic_identity='max_quantity_for_product_condition',
-    properties={
-        "max_policy_product": relationship(
-            Product,
-            back_populates='max_policies',
-            cascade='all, delete'
-        )
-    }
+    polymorphic_identity='max_quantity_for_product_condition',
+    inherits=Policy,
+    # properties={
+    #     "max_policy_product": relationship(
+    #         Product,
+    #         back_populates='policies',
+    #         cascade='all, delete'
+    #     )
+    # }
 )
 
 mapper_registry.map_imperatively(
     TimeWindowForCategoryCondition,
     purchase_policies,
-    # polymorphic_identity='max_quantity_for_product_condition',
-    properties={
-        "time_policy_category": relationship(
-            Category,
-            back_populates='c_time_policies',
-            cascade='all, delete'
-        )
-    }
+    polymorphic_identity='time_window_for_category_condition',
+    inherits=Policy,
+    # properties={
+    #     "time_policy_category": relationship(
+    #         Category,
+    #         back_populates='policies',
+    #         cascade='all, delete'
+    #     )
+    # }
 )
 
 mapper_registry.map_imperatively(
     TimeWindowForProductCondition,
     purchase_policies,
-    # polymorphic_identity='max_quantity_for_product_condition',
-    properties={
-        "time_policy_product": relationship(
-            Product,
-            back_populates='p_time_policies',
-            cascade='all, delete'
-        )
-    }
+    polymorphic_identity='time_window_for_product_condition',
+    inherits=Policy,
+    # properties={
+    #     "time_policy_product": relationship(
+    #         Product,
+    #         back_populates='policies',
+    #         cascade='all, delete'
+    #     )
+    # }
 )
 
 mapper_registry.map_imperatively(
     DateWindowForCategoryCondition,
     purchase_policies,
-    # polymorphic_identity='max_quantity_for_product_condition',
-    properties={
-        "date_policy_category": relationship(
-            Category,
-            back_populates='c_date_policies',
-            cascade='all, delete'
-        )
-    }
+    polymorphic_identity="date_window_for_category_condition",
+    inherits=Policy,
+    # properties={
+    #     "date_policy_category": relationship(
+    #         Category,
+    #         back_populates='policies',
+    #         cascade='all, delete'
+    #     )
+    # }
 )
 
 mapper_registry.map_imperatively(
     DateWindowForProductCondition,
     purchase_policies,
-    # polymorphic_identity='max_quantity_for_product_condition',
+    polymorphic_identity="date_window_for_product_condition",
+    inherits=Policy,
+    # properties={
+    #     "date_policy_product": relationship(
+    #         Product,
+    #         back_populates='policies',
+    #         cascade='all, delete'
+    #     )
+    # }
+)
+
+mapper_registry.map_imperatively(
+    CompositePurchaseCondition,
+    purchase_policies,
+    polymorphic_identity="compositeCondition",
+    inherits=Policy,
     properties={
-        "date_policy_product": relationship(
-            Product,
-            back_populates='p_date_policies',
-            cascade='all, delete'
-        )
+        "conditions": relationship(Policy, backref=backref('policies', remote_side=[purchase_policies.c.id]),
+                                   cascade='all, delete, delete-orphan')
     }
 )
 
-mapper_registry.map_imperatively(ANDCondition, purchase_policies)
-mapper_registry.map_imperatively(ORCondition, purchase_policies)
+mapper_registry.map_imperatively(
+    ANDCondition,
+    purchase_policies,
+    polymorphic_identity='and_condition',
+    inherits=CompositePurchaseCondition,
+)
 
-
-# mapper_registry.map_imperatively(
-#     CompositePurchaseCondition,
-#     purchase_policies,
-#     # polymorphic_identity='max_quantity_for_product_condition',
-#     properties={
-#         "composite_policy": relationship(
-#             Condition,
-#             backref='purchase_policies',
-#         )
-#     }
-# )
+mapper_registry.map_imperatively(
+    ORCondition,
+    purchase_policies,
+    polymorphic_identity='or_condition',
+    inherits=CompositePurchaseCondition,
+)
 
 # mapper_registry.map_imperatively(ShopManager, shop_manager_appointments)
 # mapper_registry.map_imperatively(ShopOwner, shop_owner_appointments)

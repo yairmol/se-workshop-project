@@ -4,16 +4,16 @@ from sqlalchemy import delete
 
 from domain.commerce_system.category import Category
 from domain.commerce_system.product import Product
-from domain.commerce_system.purchase_conditions import Condition
+from domain.commerce_system.purchase_conditions import Policy
 from domain.commerce_system.shop import Shop
 from domain.discount_module.discount_calculator import Discount
-from init_tables import engine
+# from init_tables import engine
 from sqlalchemy.orm import Session
 
 from sqlalchemy import delete
 
 from domain.commerce_system.shop import Shop
-from init_tables import engine
+from data_access_layer.init_tables import engine
 from sqlalchemy.orm import Session
 
 
@@ -33,8 +33,12 @@ def get_x(x_id: T, type: TYPE, field: FIELD):
         x = session.query(TYPE).filter_by(FIELD=x_id).first()
         return x
 
+def remove_x(x: T):
+    with Session(engine) as session:
+        session.delete(x)
+        session.commit()
 
-def remove_x(x_id: T, type: TYPE, field: FIELD):
+def remove_x_by_id(x_id: T, type: TYPE, field: FIELD):
     with Session(engine) as session:
         x = session.query(TYPE).filter_by(FIELD=x_id).first()
         session.delete(x)
@@ -89,24 +93,21 @@ def get_product(product_id: int):
         return product
 
 
-def save_policy(policy: Condition):
+def save_policy(policy: Policy):
     save_x(policy)
-    # with Session(engine) as session:
-    #     session.add(policy)
-    #     session.commit()
 
 
 def get_policy(policy_id: int):
     # get_x(policy_id, Condition, policy_id)
     with Session(engine) as session:
-        policy = session.query(Condition).filter_by(id=policy_id).first()
+        policy = session.query(Policy).filter_by(id=policy_id).first()
         return policy
 
 
 def remove_policy(policy_id: int):
     # remove_x(policy_id, Condition, policy_id)
     with Session(engine) as session:
-        policy = session.query(Condition).filter_by(id=policy_id).first()
+        policy = session.query(Policy).filter_by(id=policy_id).first()
         session.delete(policy)
         session.commit()
 

@@ -12,12 +12,12 @@ from data_model import ConditionsModel as CondM
 class Policy:
     _id_counter = 1
     counter_lock = threading.Lock()
-    type = None
+    # type = None
 
     def __init__(self, condition_dict: dict):
-        with Condition.counter_lock:
-            self.id = Condition._id_counter
-            Condition._id_counter += 1
+        with Policy.counter_lock:
+            self.id = Policy._id_counter
+            Policy._id_counter += 1
         self.condition_type = condition_dict[CondM.CONDITION_TYPE]
 
     def resolve(self, products: Dict[Product, int]) -> bool:
@@ -51,7 +51,7 @@ class ShoppingBagCondition(Policy, ABC):
 #         raise NotImplementedError()
 
 
-class MaxQuantityForProductCondition(ProductCondition):
+class MaxQuantityForProductCondition(Policy):
     type = CondM.MAX_QUANTITY_FOR_PRODUCT
 
     def __init__(self, condition_dict: dict):
@@ -83,7 +83,7 @@ class MaxQuantityForProductCondition(ProductCondition):
 #     def resolve(self, user: User, products: Dict[Product, int]) -> bool:
 
 
-class TimeWindowForCategoryCondition(CategoryCondition):
+class TimeWindowForCategoryCondition(Policy):
     type = CondM.TIME_WINDOW_FOR_CATEGORY
 
     def __init__(self, condition_dict: dict):
@@ -110,7 +110,7 @@ class TimeWindowForCategoryCondition(CategoryCondition):
         return ret
 
 
-class TimeWindowForProductCondition(CategoryCondition):
+class TimeWindowForProductCondition(Policy):
     type = CondM.TIME_WINDOW_FOR_PRODUCT
 
     def __init__(self, condition_dict: dict):
@@ -137,7 +137,7 @@ class TimeWindowForProductCondition(CategoryCondition):
         return ret
 
 
-class DateWindowForCategoryCondition(CategoryCondition):
+class DateWindowForCategoryCondition(Policy):
     type = CondM.DATE_WINDOW_FOR_CATEGORY
 
     def __init__(self, condition_dict: dict):
@@ -164,7 +164,7 @@ class DateWindowForCategoryCondition(CategoryCondition):
         return ret
 
 
-class DateWindowForProductCondition(CategoryCondition):
+class DateWindowForProductCondition(Policy):
     type = CondM.DATE_WINDOW_FOR_PRODUCT
 
     def __init__(self, condition_dict: dict):
