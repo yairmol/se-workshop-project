@@ -10,7 +10,7 @@ from domain.authentication_module.authenticator import Authenticator
 from domain.commerce_system.ifacade import ICommerceSystemFacade
 from domain.commerce_system.product import Product
 from domain.commerce_system.purchase_conditions import (
-    TimeWindowForCategoryCondition, MaxQuantityForProductCondition, ORCondition, ANDCondition,
+    TimeWindowForCategoryCondition, MaxQuantityForProductCondition, ORPolicy, ANDPolicy,
     DateWindowForProductCondition, TimeWindowForProductCondition, DateWindowForCategoryCondition,
 )
 from domain.commerce_system.search_engine import search, Filter
@@ -26,8 +26,8 @@ condition_map = {
     Cm.TIME_WINDOW_FOR_PRODUCT: TimeWindowForProductCondition,
     Cm.DATE_WINDOW_FOR_CATEGORY: DateWindowForCategoryCondition,
     Cm.DATE_WINDOW_FOR_PRODUCT: DateWindowForProductCondition,
-    Cm.AND: ANDCondition,
-    Cm.OR: ORCondition
+    Cm.AND: ANDPolicy,
+    Cm.OR: ORPolicy
 }
 
 
