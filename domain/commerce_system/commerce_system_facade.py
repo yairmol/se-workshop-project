@@ -64,6 +64,7 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         new_subscribe = user.register(username)
         # saving registered user_sess's details
         with self.registered_users_lock:
+
             self.registered_users[username] = new_subscribe
         return True
 
@@ -72,6 +73,7 @@ class CommerceSystemFacade(ICommerceSystemFacade):
             sub_user = self.registered_users.get(username)
         if not sub_user:
             sub_user = get_subscribed(username, Subscribed)
+        return sub_user
 
     # 2.4
     def login(self, user_id: int, username: str, password: str) -> bool:

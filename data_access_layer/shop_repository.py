@@ -23,6 +23,7 @@ def remove_shop(shop_id: int, shop_type):
         session.delete(shop)
         session.commit()
 
+
 def get_product(prod_name: str, product_type):
     with Session(engine) as session:
         shop = session.query(product_type).filter_by(product_name=prod_name).first()

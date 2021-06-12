@@ -4,10 +4,13 @@ from domain.commerce_system.appointment import Appointment
 from sqlalchemy.orm import Session
 from data_access_layer.engine import engine
 
-def save_subscribed(sub, subscribed_type):
+
+def save_subscribed(sub):
     with Session(engine) as session:
+        print("adding")
         session.add(sub)
         session.commit()
+        print("done")
 
 
 def get_subscribed(username: str, subscribed_type):
