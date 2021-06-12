@@ -2,7 +2,7 @@ import threading
 from typing import Dict, List, TypeVar
 
 from domain.commerce_system.action import Action, ActionPool
-from domain.commerce_system.purchase_conditions import Condition, CompositePurchaseCondition
+from domain.commerce_system.purchase_conditions import Policy, CompositePurchaseCondition
 from domain.discount_module.discount_calculator import AdditiveDiscount, Discount
 from domain.commerce_system.product import Product, PurchaseType
 from domain.commerce_system.transaction import Transaction
@@ -41,7 +41,7 @@ class Shop:
         self.shop_owners = {}
         self.discount = AdditiveDiscount([])
         self.image_url = image_url
-        self.conditions: List[Condition] = []
+        self.conditions: List[Policy] = []
 
     def to_dict(self, include_products=True):
         ret = {
@@ -180,15 +180,15 @@ class Shop:
                 DiscountManagement.remove(self.discount, d_id)
         return True
 
-    def get_purchase_conditions(self) -> List[Condition]:
+    def get_purchase_conditions(self) -> List[Policy]:
         return self.conditions
 
-    def add_purchase_condition(self, condition: Condition) -> bool:
+    def add_purchase_condition(self, condition: Policy) -> bool:
         self.conditions.append(condition)
         return True
 
     def remove_purchase_condition(self, condition_id: int) -> bool:
-        def remove(conds: List[Condition], cond_id: int):
+        def remove(conds: List[Policy], cond_id: int):
             for c in conds:
                 if c.id == cond_id:
                     conds.remove(c)

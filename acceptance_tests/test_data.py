@@ -78,9 +78,12 @@ simple_condition_dict = {
 
 payment_details = [
     {
-        "credit_card_number": "4580-1111-1111-1111",
-        "expiration_date": int(datetime(year=2024, month=6, day=1).timestamp()),
-        "card_holder_name": "Ligma"
+        "card_number": "4580-1111-1111-1111",
+        "year": "2024",
+        "month": "6",
+        "holder": "Ligma",
+        "cvv": "111",
+        "id": "111111111"
     }
 ]
 

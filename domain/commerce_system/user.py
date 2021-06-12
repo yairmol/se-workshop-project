@@ -6,7 +6,7 @@ from sqlalchemy import orm
 from data_access_layer.subscribed_repository import save_subscribed
 from domain.commerce_system.appointment import Appointment, ShopOwner
 from domain.commerce_system.product import Product, PurchaseType, PurchaseOffer
-from domain.commerce_system.purchase_conditions import Condition
+from domain.commerce_system.purchase_conditions import Policy
 from domain.commerce_system.shop import Shop
 from domain.commerce_system.shopping_cart import ShoppingBag
 from domain.commerce_system.transaction_repo import TransactionRepo
@@ -119,7 +119,7 @@ class User:
     def get_shop_transaction_history(self, shop: Shop) -> List[Transaction]:
         return self.user_state.get_shop_transaction_history(shop)
 
-    def add_purchase_condition(self, shop: Shop, condition: Condition) -> bool:
+    def add_purchase_condition(self, shop: Shop, condition: Policy) -> bool:
         return self.user_state.add_purchase_condition(shop, condition)
 
     def remove_purchase_condition(self, shop: Shop, condition_id: int) -> bool:
@@ -128,7 +128,7 @@ class User:
     def get_shop_discounts(self, shop: Shop) -> Iterable[Discount]:
         return self.user_state.get_shop_discounts(shop)
 
-    def get_shop_purchase_conditions(self, shop: Shop) -> List[Condition]:
+    def get_shop_purchase_conditions(self, shop: Shop) -> List[Policy]:
         return self.user_state.get_shop_purchase_conditions(shop)
 
     def to_dict(self) -> dict:
@@ -242,10 +242,10 @@ class UserState:
     def move_discount_to(self, shop: Shop, src_discount_id: int, dst_discount_id: int) -> bool:
         raise Exception("User doesnt have permissions to manage discounts")
 
-    def get_shop_purchase_conditions(self, shop: Shop) -> List[Condition]:
+    def get_shop_purchase_conditions(self, shop: Shop) -> List[Policy]:
         raise Exception("User doesn't have permissions to get shop purchase conditions")
 
-    def add_purchase_condition(self, shop: Shop, condition: Condition) -> bool:
+    def add_purchase_condition(self, shop: Shop, condition: Policy) -> bool:
         raise Exception("User cannot perform this action")
 
     def remove_purchase_condition(self, shop: Shop, condition_id: int) -> bool:
@@ -421,10 +421,10 @@ class Subscribed(UserState):
         appointment = self.get_appointment(shop)
         return appointment.move_discount_to(src_discount_id, dst_discount_id)
 
-    def get_shop_purchase_conditions(self, shop: Shop) -> List[Condition]:
+    def get_shop_purchase_conditions(self, shop: Shop) -> List[Policy]:
         return self.get_appointment(shop).get_purchase_conditions()
 
-    def add_purchase_condition(self, shop: Shop, condition: Condition) -> bool:
+    def add_purchase_condition(self, shop: Shop, condition: Policy) -> bool:
         appointment = self.get_appointment(shop)
         return appointment.add_purchase_condition(condition)
 

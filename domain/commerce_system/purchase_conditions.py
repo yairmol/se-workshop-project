@@ -9,10 +9,10 @@ from data_model import ConditionsModel as CondM
 # from domain.commerce_system.user import User
 
 
-class Condition:
+class Policy:
     _id_counter = 1
     counter_lock = threading.Lock()
-    # type = None
+    type = None
 
     def __init__(self, condition_dict: dict):
         with Condition.counter_lock:
@@ -27,19 +27,19 @@ class Condition:
         return {CondM.CONDITION_TYPE: self.type, "id": self.id}
 
 
-class ProductCondition(Condition, ABC):
+class ProductCondition(Policy, ABC):
 
     def resolve(self, products: Dict[Product, int]) -> bool:
         raise NotImplementedError()
 
 
-class CategoryCondition(Condition, ABC):
+class CategoryCondition(Policy, ABC):
 
     def resolve(self, products: Dict[Product, int]) -> bool:
         raise NotImplementedError()
 
 
-class ShoppingBagCondition(Condition, ABC):
+class ShoppingBagCondition(Policy, ABC):
 
     def resolve(self, products: Dict[Product, int]) -> bool:
         raise NotImplementedError()
@@ -191,7 +191,7 @@ class DateWindowForProductCondition(CategoryCondition):
         return ret
 
 
-class CompositePurchaseCondition(Condition, ABC):
+class CompositePurchaseCondition(Policy, ABC):
     def __init__(self, condition_dict: dict):
         super().__init__(condition_dict)
         self.conditions = condition_dict["conditions"]

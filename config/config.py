@@ -1,3 +1,4 @@
+import copy
 import json
 from typing import Union
 
@@ -45,6 +46,13 @@ config = {
         "port": 5001,
     }
 }
+
+
+base_config = copy.deepcopy(config)
+
+
+def reset_config():
+    config.update(base_config)
 
 
 def load_config(new_config=Union[dict, str]):
