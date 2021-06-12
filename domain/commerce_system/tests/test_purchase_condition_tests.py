@@ -120,6 +120,7 @@ class PurchaseConditionTests(TestCase):
         self.bag.add_product(self.product, amount)
         self.assertFalse(self.bag.resolve_shop_conditions())
 
+
     def test_all_conditions(self):
         condition_dict1 = {Cm.MAX_QUANTITY: 5, Cm.PRODUCT: self.product.product_id}
         condition1 = MaxQuantityForProductCondition(condition_dict1)
