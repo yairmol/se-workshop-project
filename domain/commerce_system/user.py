@@ -158,6 +158,9 @@ class User:
     def get_offers(self, shop: Shop, product_id: int) -> List[PurchaseOffer]:
         return self.user_state.get_offers(shop, product_id)
 
+    def get_system_activity(self) -> bool:
+        return self.user_state.get_system_activity()
+
 
 class UserState:
     def get_name(self, userid=None) -> str:
@@ -285,6 +288,9 @@ class UserState:
 
     def accept_counter_offer(self, shop: Shop, product_id: int) -> bool:
         raise Exception("user cannot accept counter offer")
+
+    def get_system_activity(self) -> bool:
+        raise Exception("User cannot acces the system activity reports")
 
 
 class Guest(UserState):
@@ -487,3 +493,6 @@ class SystemManager(Subscribed):
 
     def get_system_transaction_history_of_user(self, username: str):
         return self.system_transactions.get_transactions_of_user(username)
+
+    def get_system_activity(self) -> bool:
+        return True

@@ -491,5 +491,20 @@ class SystemService:
         event_logger.info(f"User: {user_id} accepted counter offer")
         return make_status_dict(True, "", res)
 
+    @handler
+    def get_all_system_actions(self, user_id: int, time_window=None):
+        res = self.commerce_system_facade.get_all_system_actions(user_id, time_window)
+        return make_status_dict(True, "", res)
+
+    @handler
+    def get_user_actions(self, user_id: int, username: str, time_window=None):
+        res = self.commerce_system_facade.get_user_actions(user_id, username, time_window)
+        return make_status_dict(True, "", res)
+
+    @handler
+    def get_action(self, user_id: int, action_name: str, time_window=None):
+        res = self.commerce_system_facade.get_action(user_id, action_name, time_window)
+        return make_status_dict(True, "", res)
+
     def cleanup(self):
         self.commerce_system_facade.clean_up()

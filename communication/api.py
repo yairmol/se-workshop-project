@@ -372,6 +372,24 @@ def create_app(init=None):
             __system_service.delete_purchase_offer, shop_id=shop_id, product_id=product_id
         )
 
+    @app.route(f'{API_BASE}/stats')
+    def get_all_system_actions():
+        return apply_request_on_function(
+            __system_service.get_all_system_actions
+        )
+
+    @app.route(f'{API_BASE}/stats/users/<username>')
+    def get_user_actions(username: str):
+        return apply_request_on_function(
+            __system_service.get_user_actions, username=username
+        )
+
+    @app.route(f'{API_BASE}/stats/actions/<action_name>')
+    def get_action(action_name: str):
+        return apply_request_on_function(
+            __system_service.get_action, action_name=action_name
+        )
+
     @app.errorhandler(404)
     def server_error(e):
         return jsonify(error=str(e)), 404
