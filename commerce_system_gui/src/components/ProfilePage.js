@@ -2,21 +2,17 @@ import React, {useEffect, useState} from 'react';
 import {useAuth} from "./use-auth";
 import {UserTransactions} from "./Transactions";
 import Grid from "@material-ui/core/Grid";
-import {Fab, Paper} from "@material-ui/core";
+import {Paper} from "@material-ui/core";
 import {makeStyles} from "@material-ui/core/styles";
 import {get_appointments, open_shop} from "../api";
 import Typography from "@material-ui/core/Typography";
-import AddIcon from "@material-ui/icons/Add";
-import Worker from "./Worker";
 import Button from "@material-ui/core/Button";
 import {Link as RouteLink} from "react-router-dom";
 import {useFormik} from "formik";
-import Container from "@material-ui/core/Container";
 import CssBaseline from "@material-ui/core/CssBaseline";
 import TextField from "@material-ui/core/TextField";
-import FormControlLabel from "@material-ui/core/FormControlLabel";
-import Checkbox from "@material-ui/core/Checkbox";
 import Link from "@material-ui/core/Link";
+import {Offers} from "./Offers";
 
 const useStyles = makeStyles((theme) => ({
   paper: {
@@ -51,21 +47,13 @@ const useStyles = makeStyles((theme) => ({
   }
 }));
 
-function ProfileView({username}) {
-  const classes = useStyles()
-
-  return (<Paper className={classes.paper}>
-    username: {username}
-  </Paper>)
-}
-
 function UserAppointments({appointments}) {
   const classes = useStyles();
 
   return (<div>
       <Typography className={classes.heading2}>Appointments</Typography>
       {(appointments instanceof Array && appointments.length > 0) ?
-        appointments.map((appointment, index) => {
+        appointments.map((appointment) => {
           return (
             <Grid container direction="column">
               <Paper className={classes.paper}>
@@ -125,15 +113,14 @@ function OpenShopForm({openShop}) {
 export default function ProfilePage() {
   const classes = useStyles();
   const auth = useAuth();
-  const [username, setUsername] = useState("Guest");
   const [appointments, setAppointments] = useState(false)
   const [openingShop, setOpeningShop] = useState(false);
 
   const openShop = (shop_details) => {
     auth.getToken().then((token) => {
-      open_shop(token, shop_details).then((res) => {
+      open_shop(token, shop_details).then((_) => {
         setOpeningShop(false);
-        setAppointments(false)
+        setAppointments(false);
       })
     })
   }
@@ -161,6 +148,7 @@ export default function ProfilePage() {
                 <Button color="primary" variant="outlined" onClick={() => setOpeningShop(true)}>Open Shop</Button>}
             </Grid>
           </Grid>
+          <Offers />
         </Grid>
       </Grid>
     </Grid>

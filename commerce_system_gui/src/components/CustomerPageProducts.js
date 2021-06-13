@@ -1,13 +1,8 @@
-import {Fab, Paper, Typography} from "@material-ui/core";
-import React, {useEffect, useState} from 'react';
+import {Typography} from "@material-ui/core";
+import React from 'react';
 import {makeStyles} from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
-import {get_user_transactions, get_shop_transactions} from "../api";
-import {Link} from "react-router-dom";
-import AddIcon from '@material-ui/icons/Add';
-import ShopProduct from "./ShopProduct";
 import Button from "@material-ui/core/Button";
-import BuyProductPopup from "./PopUps/BuyProductPopup";
 
 const useStyles = makeStyles((theme) => ({
   mainFeaturedPost: {

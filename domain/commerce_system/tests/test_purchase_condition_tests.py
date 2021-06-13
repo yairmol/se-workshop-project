@@ -86,7 +86,7 @@ class PurchaseConditionTests(TestCase):
         self.shop.add_purchase_condition(condition)
         amount = 4
         self.bag.add_product(self.product, amount)
-        self.assertFalse(self.bag.resolve_shop_conditions())
+        self.assertRaises(AssertionError, self.bag.resolve_shop_conditions)
 
     def test_Fail_TimeWindowForCategoryCondition(self):
         condition_dict = {Cm.MIN_TIME: '08:00', Cm.MAX_TIME: '9:00', Cm.CATEGORY: "aaa"}
@@ -94,7 +94,7 @@ class PurchaseConditionTests(TestCase):
         self.shop.add_purchase_condition(condition)
         amount = 4
         self.bag.add_product(self.product, amount)
-        self.assertFalse(self.bag.resolve_shop_conditions())
+        self.assertRaises(AssertionError, self.bag.resolve_shop_conditions)
 
     def test_Fail_TimeWindowForProductCondition(self):
         condition_dict = {Cm.MIN_TIME: '08:00', Cm.MAX_TIME: '9:00', Cm.PRODUCT: self.product.product_id}
@@ -102,7 +102,7 @@ class PurchaseConditionTests(TestCase):
         self.shop.add_purchase_condition(condition)
         amount = 4
         self.bag.add_product(self.product, amount)
-        self.assertFalse(self.bag.resolve_shop_conditions())
+        self.assertRaises(AssertionError, self.bag.resolve_shop_conditions)
 
     def test_Fail_DateWindowForCategoryCondition(self):
         condition_dict = {Cm.MIN_DATE: '20/5/2022', Cm.MAX_DATE: '30/5/2022', Cm.CATEGORY: "aaa"}
@@ -110,7 +110,7 @@ class PurchaseConditionTests(TestCase):
         self.shop.add_purchase_condition(condition)
         amount = 4
         self.bag.add_product(self.product, amount)
-        self.assertFalse(self.bag.resolve_shop_conditions())
+        self.assertRaises(AssertionError, self.bag.resolve_shop_conditions)
 
     def test_Fail_DateWindowForProductCondition(self):
         condition_dict = {Cm.MIN_DATE: '20/5/2022', Cm.MAX_DATE: '30/5/2022', Cm.PRODUCT: self.product.product_id}
@@ -118,7 +118,7 @@ class PurchaseConditionTests(TestCase):
         self.shop.add_purchase_condition(condition)
         amount = 4
         self.bag.add_product(self.product, amount)
-        self.assertFalse(self.bag.resolve_shop_conditions())
+        self.assertRaises(AssertionError, self.bag.resolve_shop_conditions)
 
     def test_all_conditions(self):
         condition_dict1 = {Cm.MAX_QUANTITY: 5, Cm.PRODUCT: self.product.product_id}

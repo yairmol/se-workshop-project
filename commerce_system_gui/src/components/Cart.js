@@ -8,7 +8,7 @@ import {
   Select,
   MenuItem, FormControl
 } from "@material-ui/core";
-import React, {useEffect, useState} from "react";
+import React, {useCallback, useEffect, useState} from "react";
 import {makeStyles} from '@material-ui/core/styles';
 import Accordion from '@material-ui/core/Accordion';
 import AccordionSummary from '@material-ui/core/AccordionSummary';
@@ -69,39 +69,6 @@ const columns = [
   },
   {id: 'purchase_type', label: 'Purchase Type', getter: (p) => p.purchase_type.purchase_type}
 ];
-
-const cart_info = {
-  "cart_id": 5,
-  "shopping_bags": {
-    "1": {
-      "products": [
-        {
-          "amount": 1,
-          "description": "a product",
-          "price": 1,
-          "product_id": 1,
-          "product_name": "p1"
-        }
-      ],
-      "shop_name": "shop1",
-      "total": 1
-    },
-    "2": {
-      "products": [
-        {
-          "amount": 1,
-          "description": "a product",
-          "price": 1,
-          "product_id": 1,
-          "product_name": "p1"
-        }
-      ],
-      "shop_name": "shop2",
-      "total": 1
-    }
-  },
-  "total": 1
-}
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -252,42 +219,43 @@ const ShoppingBagView = ({shopId, shoppingBag, refresh}) => {
   const [productsState, setProducts] = useState(JSON.parse(JSON.stringify(shoppingBag.products)));
   const [edited, setEdited] = useState(false);
 
-  const onSaveChanges = async (products) => {
-    if (products.length === 0) {
-      shoppingBag.products.map(async (product) => {
-        await remove_product_from_cart(
-          await auth.getToken(), shopId, product.product_id, product.amount
-        )
-      })
-    } else {
-      let j = 0;  // new shoppingBag index
-      for (let i = 0; i < shoppingBag.products.length; i++) {
-        while (products[j].product_id !== shoppingBag.products[i].product_id) {
-          await remove_product_from_cart(
-            await auth.getToken(), shopId, shoppingBag.products[i].product_id, shoppingBag.products[i].amount
-          );
-          i++;
+  const onSaveChanges = useCallback((products) => {
+    auth.getToken().then(async (token) => {
+      if (products.length === 0) {
+        await Promise.all(shoppingBag.products.map((product) =>
+          remove_product_from_cart(token, shopId, product.product_id, product.amount)
+        ))
+        console.log("finished removing all products from cart")
+      } else {
+        let j = 0;  // new shoppingBag index
+        for (let i = 0; i < shoppingBag.products.length; i++) {
+          while (products[j].product_id !== shoppingBag.products[i].product_id) {
+            await remove_product_from_cart(
+              token, shopId, shoppingBag.products[i].product_id, shoppingBag.products[i].amount
+            );
+            i++;
+            console.log(`finished removing product ${shoppingBag.products[i].product_id}`);
+          }
+          let func = (x) => x;
+          const additional_amount = parseInt(products[j].amount) - parseInt(shoppingBag.products[i].amount);
+          if (additional_amount > 0) {
+            func = save_product_to_cart;
+          } else if (additional_amount < 0) {
+            func = remove_product_from_cart;
+          }
+          await func(token, shopId, products[j].product_id, Math.abs(additional_amount));
+          console.log(`finished changing quantity of product ${shoppingBag.products[i].product_id}`);
+          if (products[j].purchase_type.purchase_type !== shoppingBag.products[i].purchase_type.purchase_type) {
+            const pt_args = products[j].purchase_type.purchase_type === 'offer' ? {offer_maker: auth.user} : {}
+            await change_purchase_type(token, shopId, products[j].product_id, products[j].purchase_type.id, pt_args)
+            console.log(`finished changing purchase type of product ${shoppingBag.products[i].product_id}`);
+          }
+          j++
         }
-        let func = (x) => x;
-        const additional_amount = parseInt(products[j].amount) - parseInt(shoppingBag.products[i].amount);
-        if (additional_amount > 0) {
-          func = save_product_to_cart;
-        } else if (additional_amount < 0) {
-          func = remove_product_from_cart;
-        }
-        await func(await auth.getToken(), shopId, products[j].product_id, Math.abs(additional_amount));
-        if (products[j].purchase_type.purchase_type !== shoppingBag.products[i].purchase_type.purchase_type){
-          const pt_args = products[j].purchase_type.purchase_type === 'offer' ? {offer_maker: auth.user} : {}
-          await auth.getToken().then((token) =>
-            change_purchase_type(token, shopId, products[j].product_id, products[j].purchase_type.id, pt_args)
-          )
-        }
-        j++
       }
-    }
-    setEdited(false);
-    refresh();
-  }
+      refresh();
+    })
+  }, [shopId, shoppingBag.products, refresh, auth])
 
   const onProductChange = (prod_id, val) => {
     if (val < 0) {
@@ -393,24 +361,24 @@ export const Cart = () => {
   const [cart, setCart] = useState({shopping_bags: {}});
 
   const refresh = () => {
-    auth.getToken().then((token) => get_cart_info(token).then((res) => {
-      if (res) {
-        setCart(res);
-      }
-      setLoaded(true)
-    }))
+    console.log("refreshing");
+    setLoaded(false);
   }
 
-  useEffect(async () => {
+  useEffect(() => {
     if (!loaded) {
-      await get_cart_info(await auth.getToken()).then((res) => {
-        if (res) {
-          setCart(res);
-        }
-      })
+      console.log("in cart use effect")
+      auth.getToken().then((token) =>
+        get_cart_info(token).then((res) => {
+          if (res) {
+            console.log(`cart ${JSON.stringify(res)}`);
+            setCart(res);
+          }
+        })
+      )
       setLoaded(true);
     }
-  }, []);
+  }, [loaded, auth]);
 
   return (
     <div className={classes.root}>

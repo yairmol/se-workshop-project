@@ -20,6 +20,7 @@ class ConfigFields:
     KEY = "key"
     SEVER_PORT = "port"
     NOTIFICATIONS_COMPONENT = "notifications"
+    HASH_ALG = "hash_algorithm"
 
 
 config = {
@@ -44,7 +45,8 @@ config = {
     ConfigFields.NOTIFICATIONS_COMPONENT: {
         "name": "websockets",
         "port": 5001,
-    }
+    },
+    ConfigFields.HASH_ALG: "modulo"
 }
 
 
@@ -62,5 +64,7 @@ def load_config(new_config=Union[dict, str]):
     """
     if isinstance(new_config, str):
         with open(new_config, "r") as f:
-            new_config = json.load(f)
-    config.update(new_config)
+            new_config_json = json.load(f)
+            assert new_config_json.get(ConfigFields.HASH_ALG, "sha256").lower() in ["sha256", "sha2", "md5", "modulo"],\
+                "bad hash algorithm"
+            config.update(new_config_json)

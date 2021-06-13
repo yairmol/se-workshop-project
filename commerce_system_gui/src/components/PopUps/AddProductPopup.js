@@ -1,12 +1,10 @@
 import React, {useState} from "react";
 import {
-  Checkbox,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
-  FormControlLabel,
-  FormGroup, InputAdornment, TextField
+  InputAdornment, TextField
 } from "@material-ui/core";
 import Button from "@material-ui/core/Button";
 import NumberFormat from 'react-number-format';

@@ -1,6 +1,6 @@
 import Typography from "@material-ui/core/Typography";
 import {makeStyles} from "@material-ui/core/styles";
-import {useEffect, useState} from "react";
+import {useCallback, useEffect, useState} from "react";
 import Grid from "@material-ui/core/Grid";
 import {useAuth} from "./use-auth";
 import {
@@ -45,38 +45,38 @@ export const Shop = () => {
   const [worker_permissions, set_perms] = useState({'edit_product': false, 'delete_product': true})
   const auth = useAuth();
 
-  const load_perms_func = async () => {
-    return await auth.getToken().then(async (token) => {
+  const load_perms_func = useCallback(() => {
+    return auth.getToken().then(async (token) => {
       return await get_permissions(token, shop_id).then((permissions) => {
         set_perms(permissions)
         return permissions
       })
     })
-  }
+  }, [auth, shop_id])
 
-  const load_info_func = async () => {
-    await auth.getToken().then((token) => {
+  const load_info_func = useCallback(() =>
+    auth.getToken().then((token) => {
       get_shop_info(token, shop_id).then((info) => {
         set_info(info)
         return info
       })
     })
-  }
+  , [auth, shop_id])
 
-  useEffect(async () => {
+  useEffect(() => {
     if (load_perms) {
-      await load_perms_func().then(async (perms) => {
+      load_perms_func().then((perms) => {
         if (perms) {
           if (load_shop_info_bool) {
-            await load_info_func().then(_ => {
+            load_info_func().then(_ => {
               set_load_info(false);
+              set_load_perms(false);
             });
           }
-          set_load_perms(false);
         }
       })
     }
-  }, [])
+  }, [load_info_func, load_perms, load_perms_func, load_shop_info_bool])
 
   return (!load_perms ?
     <div className={classes.root}>

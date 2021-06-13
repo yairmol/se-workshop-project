@@ -1,10 +1,11 @@
 from __future__ import annotations
 import threading
-from typing import List, Dict, TypeVar, Type
+from typing import List, Dict, TypeVar, Type, Union, Set
 from enum import Enum, auto
 
 from data_model import ProductModel as Pm, PurchaseTypes as Pt
 from domain.commerce_system.category import Category
+from domain.observer import Observable
 
 
 class PurchaseType:
@@ -30,14 +31,13 @@ class PurchaseType:
 T_PT = TypeVar('T_PT', bound=PurchaseType)
 
 
-class Product:
+class Product(Observable):
     __product_id = 1
     __id_lock = threading.Lock()
 
-    def __init__(
-            self, product_name: str, price: float, description: str = "",
-            quantity: int = 0, categories: List[str] = None, shop_id=None, image_url=None
-    ):
+    def __init__(self, product_name: str, price: float, description: str = "", quantity: int = 0,
+                 categories: List[str] = None, shop_id=None, image_url=None):
+        super().__init__()
         if categories is None:
             categories = []
         with Product.__id_lock:
@@ -79,8 +79,10 @@ class Product:
     def get_category_names(self):
         return [category.name for category in self.categories]
 
-    def add_purchase_type(self, purchase_type_info: dict) -> PurchaseType:
+    def add_purchase_type(self, purchase_type_info: dict, **kwargs) -> PurchaseType:
         ptype = purchase_type_info[Pt.PURCHASE_TYPE]
+        if purchase_type_info[Pt.PURCHASE_TYPE] == Pt.OFFER and 'owners' in kwargs:
+            purchase_type_info['owners'] = kwargs['owners']
         purchase_type_info.pop(Pt.PURCHASE_TYPE)
         new_ptype = purchase_types_factory(ptype, self, **purchase_type_info)
         self.purchase_types[new_ptype.id] = new_ptype
@@ -91,17 +93,23 @@ class Product:
         assert len(ret) > 0, not_found_message
         return ret[0]
 
-    def add_price_offer(self, username: str, offer: float) -> bool:
+    def add_price_offer(self, user_sub, offer: float) -> PurchaseOffer:
         purchase_offer_type = self.get_purchase_type_of_type(PurchaseOfferType)
-        return purchase_offer_type.offer_price(username, offer)
+        self.notify(f"user {user_sub.username} offers {offer} for product {self.product_name}")
+        return purchase_offer_type.offer_price(user_sub, offer)
 
-    def reply_price_offer(self, offer_maker: str, action: str) -> bool:
-        assert action in [Pt.APPROVE, Pt.REJECT], "bad action"
+    def reply_price_offer(self, offer_maker: str, action: str, **kwargs) -> bool:
         purchase_offer_type = self.get_purchase_type_of_type(PurchaseOfferType)
         if action == Pt.APPROVE:
-            purchase_offer_type.approve(offer_maker)
+            assert 'action_maker' in kwargs, "missing owner name"
+            purchase_offer_type.approve(offer_maker, kwargs['action_maker'])
         elif action == Pt.REJECT:
             purchase_offer_type.reject(offer_maker)
+        elif action == Pt.COUNTER:
+            assert 'counter_offer' in kwargs, "missing counter offer value"
+            purchase_offer_type.counter_offer(offer_maker, kwargs['counter_offer'])
+        else:
+            raise AssertionError("bad action")
         return True
 
     def get_price(self, purchase_type_type: Type[T_PT], **kwargs) -> float:
@@ -115,7 +123,7 @@ class Product:
     def get_purchase_type(self, purchase_type_id: int) -> PurchaseType:
         return self.purchase_types[purchase_type_id]
 
-    def set_purchase_types(self, purchase_types: list):
+    def set_purchase_types(self, purchase_types: list, **kwargs):
         to_remove = []
         for ptid, pt in self.purchase_types.items():
             if all("id" not in other_pt or other_pt["id"] != ptid for other_pt in purchase_types):
@@ -124,7 +132,7 @@ class Product:
             self.purchase_types.pop(ptid)
         for pt in purchase_types:
             if "id" not in pt or all(other_pt != pt["id"] for other_pt in self.purchase_types.keys()):
-                self.add_purchase_type(pt)
+                self.add_purchase_type(pt, **kwargs)
 
     def get_offers(self) -> List[PurchaseOffer]:
         try:
@@ -135,6 +143,20 @@ class Product:
 
     def set_categories(self, categories):
         self.categories = [Category(c) for c in categories]
+
+    def delete_offer(self, offer_maker: str) -> bool:
+        purchase_offer_type = self.get_purchase_type_of_type(
+            PurchaseOfferType, "can't delete offer for a product without a purchase offer option"
+        )
+        return purchase_offer_type.delete_offer(offer_maker)
+
+    def accept_counter_offer(self, offer_maker: str) -> bool:
+        purchase_offer_type = self.get_purchase_type_of_type(
+            PurchaseOfferType, "can't accept counter offer for a product without a purchase offer option"
+        )
+        self.notify(f"THe counter offer for product {self.product_name} "
+                    f"(originally made by {offer_maker}) was accepted")
+        return purchase_offer_type.accept_counter_offer(offer_maker)
 
 
 class ProductInBag:
@@ -163,49 +185,99 @@ class OfferState(Enum):
     WAITING = auto()
     APPROVED = auto()
     REJECTED = auto()
+    COUNTER = auto()
 
 
 class PurchaseOffer:
-    def __init__(self, offer_maker: str, offer: float):
+    def __init__(self, product: Product, offer_maker: str, offer: float):
+        self.product = product
         self.offer_maker = offer_maker
         self.offer = offer
         self.offer_state: OfferState = OfferState.WAITING
+        self.approvals: Set[str] = set()
+
+    def approve_by(self, approving_owner):
+        assert self.offer_state in [OfferState.WAITING, OfferState.COUNTER], \
+            "cannot approve an offer which was already accepted or rejected"
+        self.approvals.add(approving_owner)
 
     def approve(self):
+        assert self.offer_state in [OfferState.WAITING, OfferState.COUNTER], \
+            "cannot approve an offer which was already accepted or rejected"
         self.offer_state = OfferState.APPROVED
 
     def reject(self):
+        assert self.offer_state in [OfferState.WAITING, OfferState.COUNTER], \
+            "cannot reject an offer which was already accepted or rejected"
         self.offer_state = OfferState.REJECTED
 
-    def to_dict(self) -> dict:
-        return {
+    def to_dict(self, include_product=False) -> dict:
+        ret = {
             Pt.OFFER_MAKER: self.offer_maker,
             Pt.OFFER: self.offer,
             Pt.STATE: self.offer_state.name
         }
+        if include_product:
+            ret.update({"product": self.product.to_dict(include_purchase_types=False)})
+        return ret
+
+    def counter_offer(self, counter_offer):
+        assert self.offer_state in [OfferState.WAITING, OfferState.COUNTER], \
+            "cannot counter an offer which was already accepted or rejected"
+        self.offer = counter_offer
+        self.offer_state = OfferState.COUNTER
+
+    def accept_counter_offer(self):
+        assert self.offer_state == OfferState.COUNTER, "cannot accept counter offer when there is no counter offer"
+        self.offer_state = OfferState.WAITING
 
 
-class PurchaseOfferType(PurchaseType):
+class PurchaseOfferType(PurchaseType, Observable):
 
-    def __init__(self, product: Product):
-        super().__init__(product)
+    def __init__(self, product: Product, owners: List[str] = None):
+        PurchaseType.__init__(self, product)
+        Observable.__init__(self)
         # map between usernames and purchase offers
         self.offers: Dict[str, PurchaseOffer] = {}
+        self.shop_owners = set(owners) if owners else set()
 
-    def offer_price(self, offer_maker: str, offer: float) -> bool:
+    def update_owners(self, owners):
+        self.shop_owners.update(owners)
+
+    def offer_price(self, offer_maker, offer: float) -> PurchaseOffer:
         # we can allow re offers
         # assert offer_maker not in self.offers  self.offers[offer_maker].offer_state == OfferState.REJECTED,\
         #     "Can't make two simultaneous offers for the same product"
-        self.offers[offer_maker] = PurchaseOffer(offer_maker, offer)
-        return True
+        self.offers[offer_maker.username] = PurchaseOffer(self.product, offer_maker.username, offer)
+        self.add_keyed_observer(offer_maker.username, offer_maker)
+        return self.offers[offer_maker.username]
 
-    def approve(self, offer_maker: str):
+    def approve(self, offer_maker: str, action_maker: str):
         assert offer_maker in self.offers, f"There is no existing offer for {offer_maker}"
-        self.offers[offer_maker].approve()
+        offer = self.offers[offer_maker]
+        offer.approve_by(action_maker)
+        self.approve_if_all_approved(offer)
+
+    def approve_if_all_approved(self, offer: PurchaseOffer):
+        if offer.approvals == self.shop_owners and offer.offer_state != OfferState.COUNTER:
+            offer.approve()
+            self.notify_observer(
+                offer.offer_maker,
+                f"offer for product {self.product.product_name} with price {offer.offer} was approved"
+            )
 
     def reject(self, offer_maker: str):
         assert offer_maker in self.offers, f"There is no existing offer for {offer_maker}"
         self.offers[offer_maker].reject()
+        self.notify_observer(offer_maker, f"offer for product {self.product.product_name} with price "
+                                          f"{self.offers[offer_maker].offer} was rejected")
+
+    def counter_offer(self, offer_maker: str, counter_offer: Union[str, float]):
+        assert offer_maker in self.offers, f"There is no existing offer for {offer_maker}"
+        original_offer = self.offers[offer_maker].offer
+        self.offers[offer_maker].counter_offer(float(counter_offer))
+        self.notify_observer(offer_maker, f"offer for product {self.product.product_name} with price "
+                                          f"{original_offer} was countered with a new price of {counter_offer}")
 
     def can_purchase(self, offer_maker: str) -> bool:
         assert offer_maker in self.offers, "You must first make an offer before you purchase"
@@ -228,6 +300,18 @@ class PurchaseOfferType(PurchaseType):
         if include_offers:
             ret.update({"offers": [offer.to_dict() for offer in self.offers.values()]})
         return ret
+
+    def delete_offer(self, offer_maker: str) -> bool:
+        self.remove_keyed_observer(offer_maker)
+        assert offer_maker in self.offers
+        self.offers.pop(offer_maker)
+        return True
+
+    def accept_counter_offer(self, offer_maker: str) -> bool:
+        offer = self.offers[offer_maker]
+        offer.accept_counter_offer()
+        self.approve_if_all_approved(offer)
+        return True
 
 
 ptype_str_to_ptype = {

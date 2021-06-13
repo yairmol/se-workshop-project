@@ -1,5 +1,5 @@
-import React, {useState, useEffect, useContext, createContext} from "react";
-import {enter, exit, isValidToken, login, logout, register} from "../api";
+import React, {useState, useEffect, useContext, createContext, useCallback, useRef} from "react";
+import {enter, isValidToken, login, logout, register} from "../api";
 import startNotifications from "../notifs";
 import {useHistory} from "react-router-dom";
 
@@ -23,35 +23,67 @@ function useProvideAuth() {
   const [token, setToken] = useState(localStorage.getItem("token"));
   const [user, setUser] = useState(localStorage.getItem("user"));
   const [userId, setUserId] = useState(localStorage.getItem("userId"));
-  const [notif, setNotif] = useState({})
-  const [loadedNotif, setLoadedNotif] = useState(false)
+  const [notifications, setNotifications] = useState(null);
+  const [numNotifications, setNumNotifications] = useState(0);
+  const notificationsList = useRef([]);
   const history = useHistory();
 
-  const refresh = () => {
-    localStorage.clear();
-    return enter().then((data) => {
-      localStorage.setItem("token", data.result)
-      setToken(data.result);
-      localStorage.setItem("userId", data.id)
-      setUserId(data.id);
-      const _notif = startNotifications();
-      _notif.enlist(userId, user);
-      setNotif(_notif);
-      return data.result;
-    })
-  }
-  const getToken = () => {
+  const setNotificationsList = useCallback((_notificationsList) => {
+    console.log(`setting notifications list to ${JSON.stringify(_notificationsList)}`)
+    notificationsList.current = _notificationsList
+    setNumNotifications(_notificationsList.length);
+  }, [])
+
+  const onNotificationReceived = useCallback((msg) => {
+    // alert("got message");
+    console.log(`notifications: ${JSON.stringify(notificationsList)}`)
+    console.log(`got message ${msg}`);
+    notificationsList.current.push(msg)
+    setNumNotifications(notificationsList.current.length)
+  }, [])
+
+  const getToken = useCallback(() => {
+    // alert("in get token");
+
+    const refresh = () => {
+      // alert("in refresh")
+      localStorage.clear();
+      setUser(null);
+      setUserId(null);
+      return enter().then((data) => {
+        if (data.id) {
+          const _notifications = startNotifications();
+          _notifications.enlist(data.id);
+          _notifications.registerNotifHandler(onNotificationReceived);
+          console.log("registered notifications handler");
+          console.log(_notifications.isConnected());
+          setNotifications(_notifications)
+        }
+        localStorage.setItem("token", data.result)
+        localStorage.setItem("userId", data.id)
+        setToken(data.result)
+        setUserId(data.id)
+        return data.result;
+      })
+    }
+
     if (token) {
       return isValidToken(token).then((res) => {
         if (res) {
           return token
         } else {
-          return refresh().then(_ => history && history.replace({ pathname: "/", header: "Main Page"}))
+          // alert("res is false")
+          return refresh().then((token) => {
+            history && history.replace({pathname: "/", header: "Main Page"})
+            return token;
+          })
         }
       })
     } else {
-      return refresh().then(_ => history && history.replace({ pathname: "/", header: "Main Page"}))
+      // alert("token is null")
+      return refresh().then(_ => history && history.replace({pathname: "/", header: "Main Page"}))
     }
+  }, [history, token, onNotificationReceived])
     // if (!token || !(await isValidToken(token))) {
     //   localStorage.clear();
     //   await enter().then((data) => {
@@ -64,60 +96,51 @@ function useProvideAuth() {
     //   })
     // }
     // return token;
-  }
 
-  const signin = async (username, password) => {
-    return login(await getToken(), username, password)
-      .then((response) => {
-        if (response) {
-          setUser(username);
-          localStorage.setItem("user", username)
-          return username;
-        }
-      });
+  const signin = (username, password) => {
+    return getToken().then((_token) =>
+      login(_token, username, password)
+        .then((response) => {
+          if (response) {
+            setUser(username)
+            localStorage.setItem("user", username)
+            return username;
+          }
+        })
+    )
   };
+  useEffect(() => {
+    console.log("in use effect");
+    isValidToken(token).then((res) => {
+      if (res) {
+        if ((!notifications) && userId) {
+          const _notifications = startNotifications();
+          _notifications.enlist(userId);
+          _notifications.registerNotifHandler(onNotificationReceived);
+          console.log("reconnected notifications");
+          console.log(_notifications.isConnected());
+          setNotifications(_notifications);
+        }
+      }
+    })
+  }, [token, user, userId, notifications, onNotificationReceived])
 
-  const signup = async (userData) => {
-    return register(await getToken(), userData)
-      .then((response) => {
-        return response;
-      });
+  const signup = (userData) => {
+    return getToken().then((_token) =>
+      register(_token, userData)
+        .then((response) => {
+          return response;
+        })
+    )
   };
 
   const signout = () =>
     logout(token).then((res) => {
       localStorage.removeItem("user")
       setUser(null);
+      setNotificationsList([]);
       return res
     });
-
-  const getNotif = () => {
-    if (!loadedNotif) {
-      const _notif = startNotifications();
-      _notif.enlist(userId, user);
-      setNotif(_notif);
-      setLoadedNotif(true)
-      // alert('here')
-      return _notif
-    }
-    return notif;
-  }
-
-  useEffect(async () => {
-    // localStorage.clear();
-    await getToken();
-
-    if (user) {
-      setUser(user);
-    }
-
-    // return () => {
-    //   alert(`exiting ${localStorage.getItem("token")}`)
-    //   exit(localStorage.getItem("token"));
-    //   localStorage.clear();
-    // }
-  }, []);
-
 
   // Return the user object and auth methods
   return {
@@ -127,6 +150,8 @@ function useProvideAuth() {
     signin,
     signup,
     signout,
-    getNotif,
+    notificationsList: notificationsList.current,
+    numNotifications,
+    setNotificationsList,
   };
 }

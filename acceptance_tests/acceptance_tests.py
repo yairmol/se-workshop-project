@@ -1,4 +1,5 @@
 import copy
+import json
 import unittest
 from unittest import TestCase
 import threading as th
@@ -15,7 +16,7 @@ from test_utils import (
     enter_register_and_login, add_product, make_purchases, register_login_users,
     open_shops, add_products, appoint_owners_and_managers, shop_to_products,
     sessions_to_shops, get_shops_not_owned_by_user, fill_with_data, admin_login, get_credentials,
-    set_delivery_facade, set_payment_facade, PaymentFacadeMocks, DeliveryFacadeMocks
+    set_delivery_facade, set_payment_facade, PaymentFacadeMocks, DeliveryFacadeMocks, reset_facades
 )
 from data_model import (
     UserModel as Um, ProductModel as Pm, ConditionsModel as Cm,
@@ -23,7 +24,6 @@ from data_model import (
 )
 from config.config import load_config, reset_config
 import init_generator as ig
-import responses
 
 TESTS_CONFIG_PATH = "./acceptance-tests-config.json"
 ROBUSTNESS_TESTS_CONFIG = "./robustness-tests-config.json"
@@ -43,6 +43,7 @@ class GuestTests(TestCase):
         self.assertTrue(status)
         self.commerce_system.cleanup()
         reset_config()
+        reset_facades()
 
     # 2.1 enter + 2.2 exit
     def test_enter_exit(self):
@@ -108,6 +109,7 @@ class SubscribedTests(TestCase):
         self.assertTrue(status)
         self.commerce_system.cleanup()
         reset_config()
+        reset_facades()
 
     # 3.1 logout
     def test_logout(self):
@@ -149,6 +151,7 @@ class ShopOwnerOperations(TestCase):
     def tearDown(self) -> None:
         self.commerce_system.cleanup()
         reset_config()
+        reset_facades()
 
     # 4.1 add product to shop
     def test_add_product_to_shop(self):
@@ -310,6 +313,7 @@ class ShopManagerOperations(TestCase):
     def tearDown(self) -> None:
         self.commerce_system.cleanup()
         reset_config()
+        reset_facades()
 
     # 4.6 edit manager permissions
     def edit_manager_permissions(self, m_permissions):
@@ -462,6 +466,7 @@ class PurchasesTests(TestCase):
     def tearDown(self) -> None:
         self.commerce_system.cleanup()
         reset_config()
+        reset_facades()
 
     # 2.7 save product to cart
     def test_save_product_to_cart(self):
@@ -857,18 +862,33 @@ class PurchasesTests(TestCase):
         ), prods[:num_prods])))
         self.assertTrue(self.commerce_system.purchase_cart(u1, payment_details[0], delivery_details)['status'])
 
-    def add_purchase_offer_type_and_make_offer(self, token, shop_id, prod_id, offer_price, to_reply=True,
-                                               to_approve=True):
+    def accept_offer(self, shop_id: int, prod_id: int, offer_maker: str):
+        repliers = [self.shop_to_owners[shop_id], self.shop_to_opener[shop_id]]
+        for owner in repliers:
+            self.assertTrue(self.commerce_system.reply_price_offer(
+                owner, shop_id, prod_id, offer_maker, Pt.APPROVE
+            )["status"])
+
+    def add_purchase_offer_type_and_make_offer(
+        self, token, shop_id, prod_id, offer_price, to_reply=True, reply: str = None, accept_counter=False, **kwargs
+    ):
         purchase_offer_type_id = self.commerce_system.add_purchase_type(
             self.shop_to_owners[shop_id], shop_id, prod_id, **offer_purchase_type_dict.copy()
         )["result"]
         self.assertTrue(self.commerce_system.offer_price(
             token, shop_id, prod_id, offer_price
-        ))
+        )["status"])
         if to_reply:
-            self.assertTrue(self.commerce_system.reply_price_offer(
-                self.shop_to_owners[shop_id], shop_id, prod_id, self.sessions_to_users[token]["username"],
-                Pt.APPROVE if to_approve else Pt.REJECT
+            offer_maker = self.sessions_to_users[token]["username"]
+            if reply == Pt.APPROVE:
+                self.accept_offer(shop_id, prod_id, offer_maker)
+            else:
+                self.assertTrue(self.commerce_system.reply_price_offer(
+                    self.shop_to_opener[shop_id], shop_id, prod_id, offer_maker, reply, **kwargs
+                )["status"])
+        if reply == Pt.COUNTER and accept_counter:
+            self.assertTrue(self.commerce_system.accept_counter_offer(
+                token, shop_id, prod_id
             ))
         return purchase_offer_type_id
 
@@ -878,7 +898,9 @@ class PurchasesTests(TestCase):
         prod = self.shops_to_products[shop_id][0]
         offer_price = self.pid_to_product[prod]["price"] / 2
         amount = 2
-        purchase_offer_type_id = self.add_purchase_offer_type_and_make_offer(u1, shop_id, prod, offer_price)
+        purchase_offer_type_id = self.add_purchase_offer_type_and_make_offer(
+            u1, shop_id, prod, offer_price, reply=Pt.APPROVE
+        )
         self.assertTrue(self.commerce_system.save_product_to_cart(
             u1, shop_id, prod, amount, purchase_offer_type_id,
             offer_maker=self.sessions_to_users[u1]["username"]
@@ -886,7 +908,9 @@ class PurchasesTests(TestCase):
         transaction_status = self.commerce_system.purchase_shopping_bag(
             u1, shop_id, payment_details[0], delivery_details
         )
+        print(json.dumps(transaction_status["result"], indent=2))
         self.assertTrue(transaction_status["status"])
+        self.assertEqual(transaction_status["result"]["price"], amount * offer_price)
 
     def test_purchase_bag_with_price_offer_not_yet_approved(self):
         u1 = self.sessions[self.U1]
@@ -914,7 +938,7 @@ class PurchasesTests(TestCase):
         offer_price = self.pid_to_product[prod]["price"] / 2
         amount = 2
         purchase_offer_type_id = self.add_purchase_offer_type_and_make_offer(
-            u1, shop_id, prod, offer_price, to_reply=True, to_approve=False
+            u1, shop_id, prod, offer_price, to_reply=True, reply=Pt.REJECT
         )
         self.assertTrue(self.commerce_system.save_product_to_cart(
             u1, shop_id, prod, amount, purchase_offer_type_id,
@@ -925,6 +949,28 @@ class PurchasesTests(TestCase):
         )
         print(transaction_status["description"])
         self.assertFalse(transaction_status["status"])
+
+    def test_counter_offer_approved(self):
+        u1 = self.sessions[self.U1]
+        shop_id = get_shops_not_owned_by_user(u1, self.shop_ids, self.shop_to_staff)[0]
+        prod = self.shops_to_products[shop_id][0]
+        offer_price = self.pid_to_product[prod]["price"] / 2
+        counter_offer_price = offer_price + 1
+        amount = 2
+        purchase_offer_type_id = self.add_purchase_offer_type_and_make_offer(
+            u1, shop_id, prod, offer_price, to_reply=True, reply=Pt.COUNTER, accept_counter=True,
+            counter_offer=counter_offer_price
+        )
+        self.assertTrue(self.commerce_system.save_product_to_cart(
+            u1, shop_id, prod, amount, purchase_offer_type_id,
+            offer_maker=self.sessions_to_users[u1]["username"]
+        ))
+        self.accept_offer(shop_id, prod, offer_maker=self.sessions_to_users[u1]["username"])
+        transaction_status = self.commerce_system.purchase_shopping_bag(
+            u1, shop_id, payment_details[0], delivery_details
+        )
+        self.assertTrue(transaction_status["status"])
+        self.assertEqual(transaction_status["result"]["price"], amount * counter_offer_price)
 
     # 3.7 get transactions
     def test_get_user_transactions_with_condition(self):
@@ -957,9 +1003,6 @@ class RobustnessTests(TestCase):
                 'cancel_supply': True}
         requests.post(self.config_url, json=data)
 
-        # set_delivery_facade(DeliveryFacadeWSEP())
-        # set_payment_facade(PaymentFacadeMocks.ALWAYS_TRUE)
-
         # CODE FROM SET UP ABOVE
         self.sessions_to_users = register_login_users(self.commerce_system, self.NUM_USERS)
         self.sessions = list(self.sessions_to_users.keys())
@@ -979,6 +1022,7 @@ class RobustnessTests(TestCase):
     def tearDown(self) -> None:
         self.commerce_system.cleanup()
         reset_config()
+        reset_facades()
 
     def test_purchase_product_fail_external_payment_system_bad_response(self):
         data = {'pay': False}
@@ -1048,8 +1092,6 @@ class GuestTestsWithData(TestCase):
     S1 = 0
 
     def setUp(self):
-        self.responses = responses.RequestsMock()
-        self.responses.start()
 
         load_config(TESTS_CONFIG_PATH)
         self.commerce_system = Driver.get_system_service()
@@ -1061,6 +1103,7 @@ class GuestTestsWithData(TestCase):
     def tearDown(self) -> None:
         self.commerce_system.cleanup()
         reset_config()
+        reset_facades()
 
     # 2.5 get shop info
     def test_get_shop_info(self):
@@ -1138,6 +1181,7 @@ class ParallelismTests(TestCase):
     def tearDown(self) -> None:
         self.commerce_system.cleanup()
         reset_config()
+        reset_facades()
 
     @staticmethod
     def run_parallel_test(f1, f2):
@@ -1221,6 +1265,7 @@ class TestInit(unittest.TestCase):
 
     def tearDown(self) -> None:
         reset_config()
+        reset_facades()
 
     def test_init_enter_register_login(self):
         bindings = self.service.init(init_enter_register_login)
