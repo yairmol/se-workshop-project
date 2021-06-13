@@ -429,7 +429,7 @@ class Subscribed(UserState):
         session_app: Appointment = self.get_appointment(shop)
         return session_app.promote_manager_to_owner(manager_sub)
 
-    # @add_to_session
+    @add_to_session
     def get_appointment(self, shop: Shop):
         if shop in self.appointments:
             return self.appointments[shop]
