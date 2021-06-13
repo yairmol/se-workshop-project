@@ -16,7 +16,6 @@ from domain.commerce_system.shop import Shop
 from data_access_layer.init_tables import engine
 from sqlalchemy.orm import Session
 
-
 T = TypeVar('T')
 TYPE = TypeVar('TYPE')
 FIELD = TypeVar('FIELD')
@@ -33,10 +32,12 @@ def get_x(x_id: T, type: TYPE, field: FIELD):
         x = session.query(TYPE).filter_by(FIELD=x_id).first()
         return x
 
+
 def remove_x(x: T):
     with Session(engine) as session:
         session.delete(x)
         session.commit()
+
 
 def remove_x_by_id(x_id: T, type: TYPE, field: FIELD):
     with Session(engine) as session:
@@ -69,6 +70,7 @@ def remove_shop(shop_id: int, shop_type):
         shop = session.query(shop_type).filter_by(id=shop_id).first()
         session.delete(shop)
         session.commit()
+
 
 def get_product(prod_name: str, product_type):
     with Session(engine) as session:
