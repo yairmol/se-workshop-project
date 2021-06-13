@@ -1,4 +1,3 @@
-
 from data_access_layer.engine import engine
 from sqlalchemy.orm import Session
 
@@ -44,7 +43,6 @@ def save_transaction(transaction):
     with Session(engine) as session:
         session.add(transaction)
         session.commit()
-
 
 def get_all_transactions(username: str, transaction_type):
     with Session(engine) as session:

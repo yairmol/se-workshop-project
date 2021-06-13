@@ -27,7 +27,6 @@ def get_all_subscribed(subscribed_type):
         subscribed = session.query(subscribed_type).all()
         return subscribed
 
-
 def remove_all_subscribed(subscribed_type):
     with Session(engine) as session:
         # subscribees = session.query(subscribed_type).all()
@@ -37,7 +36,6 @@ def remove_all_subscribed(subscribed_type):
         session.query(subscribed_type).delete()
         session.commit()
         # session.execute("TRUNCATE TABLE subscribed")
-
 def save_password(password):
     pass
 

@@ -3,8 +3,4 @@ flask_cors
 requests~=2.25.1
 flask_socketio
 responses~=0.13.3
-<<<<<<< HEAD
-SQLAlchemy~=1.4.15
-=======
 SQLAlchemy~=1.4.17
->>>>>>> purchasing_dal
