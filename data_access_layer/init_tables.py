@@ -134,9 +134,9 @@ mapper_registry.map_imperatively(Shop, shop, properties={
     "products": relationship(Product, backref='shop', collection_class=attribute_mapped_collection('product_id')),
     "shopping_bag": relationship(ShoppingBag, backref='shop'),
     "transactions_history": relationship(Transaction, backref='shop'),
-    "shop_managers": relationship(ShopManager,
+    "shop_managers": relationship(Appointment,
                                   collection_class=attribute_mapped_collection('username')),
-    "shop_owners": relationship(ShopOwner,
+    "shop_owners": relationship(Appointment,
                                 collection_class=attribute_mapped_collection('username')),
 })
 
@@ -170,8 +170,8 @@ mapper_registry.map_imperatively(Appointment, appointments, polymorphic_on='type
 })
 
 mapper_registry.map_imperatively(ShopOwner, appointments, polymorphic_identity='O', inherits=Appointment, properties={
-    "owner_appointees": relationship(ShopOwner),
-    "manager_appointees": relationship(ShopManager),
+    "owner_appointees": relationship(Appointment),
+    "manager_appointees": relationship(Appointment),
 })
 
 mapper_registry.map_imperatively(ShopManager, appointments, polymorphic_identity='M', inherits=Appointment)
