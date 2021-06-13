@@ -1,11 +1,11 @@
 from datetime import datetime
 
-from sqlalchemy import create_engine, MetaData, Table, Column, Integer, String, ForeignKey, DATE, FLOAT
+from sqlalchemy import create_engine, MetaData, Table, Column, Integer, String, ForeignKey, DATE, FLOAT, Boolean
 from sqlalchemy.orm import registry, relationship
 from sqlalchemy.orm.collections import attribute_mapped_collection
 
 # from domain.authentication_module.authenticator import Password
-from domain.commerce_system.appointment import ShopManager, ShopOwner
+from domain.commerce_system.appointment import ShopManager, ShopOwner, Appointment
 from domain.commerce_system.category import Category
 from domain.commerce_system.shopping_cart import ShoppingCart, ShoppingBag
 from domain.commerce_system.transaction import Transaction
@@ -34,6 +34,7 @@ passwords = Table(
     Column('salt', String),
 )
 
+# TODO: save the transaction's products
 transaction = Table(
     'transaction',
     mapper_registry.metadata,
@@ -79,28 +80,22 @@ categories = Table(
     Column('name', String),
 )
 
-# shop_manager_appointments = Table(
-#     'shop_manager_appointments',
-#     mapper_registry.metadata,
-#     Column('appointee', String, ForeignKey("subscribed.username", ondelete='CASCADE'), primary_key=True),
-#     Column('shop_id', Integer, ForeignKey("shop.id")),
-#     Column('appointer', String, ForeignKey("subscribed.username", ondelete='CASCADE')),
-#     Column('delete_product', Integer),
-#     Column('edit_product', Integer),
-#     Column('add_product', Integer),
-#     Column('discount', Integer),
-#     Column('purchase_condition', Integer),
-#     Column('get_trans_history', Integer),
-#     Column('get_staff_permission', Integer),
-# )
-#
-# shop_owner_appointments = Table(
-#     'shop_owner_appointments',
-#     mapper_registry.metadata,
-#     Column('appointee', String, ForeignKey("subscribed.username", ondelete='CASCADE'), primary_key=True),
-#     Column('shop_id', Integer, ForeignKey("shop.id", ondelete='CASCADE')),
-#     Column('appointer', String, ForeignKey("subscribed.username", ondelete='CASCADE')),
-# )
+
+appointments = Table(
+    'appointments',
+    mapper_registry.metadata,
+    Column('username', String, ForeignKey("subscribed.username"), primary_key=True),
+    Column('shop_id', Integer, ForeignKey("shop.shop_id"), primary_key=True),
+    Column('appointer_username', String, ForeignKey("appointments.username"), nullable=True),
+    Column('delete_product_permission', Boolean),
+    Column('edit_product_permission', Boolean),
+    Column('add_product_permission', Boolean),
+    Column('discount_permission', Boolean),
+    Column('purchase_condition_permission', Boolean),
+    Column('get_trans_history_permission', Boolean),
+    Column('get_staff_permission', Boolean),
+    Column('type', String)
+)
 
 shopping_cart = Table(
     'shopping_cart',
@@ -129,6 +124,8 @@ shopping_bag_products = Table(
 
 mapper_registry.map_imperatively(Subscribed, subscribed, properties={
     "transactions": relationship(Transaction, backref='subscribed'),
+    "appointments": relationship(Appointment, backref='subscribed',
+                                 collection_class=attribute_mapped_collection('shop')),
 })
 
 # mapper_registry.map_imperatively(Password, passwords)
@@ -136,7 +133,11 @@ mapper_registry.map_imperatively(Subscribed, subscribed, properties={
 mapper_registry.map_imperatively(Shop, shop, properties={
     "products": relationship(Product, backref='shop', collection_class=attribute_mapped_collection('product_id')),
     "shopping_bag": relationship(ShoppingBag, backref='shop'),
-    "transactions_history": relationship(Transaction, backref='shop')
+    "transactions_history": relationship(Transaction, backref='shop'),
+    "shop_managers": relationship(Appointment,
+                                  collection_class=attribute_mapped_collection('username')),
+    "shop_owners": relationship(Appointment,
+                                collection_class=attribute_mapped_collection('username')),
 })
 
 mapper_registry.map_imperatively(Product, product, properties={
@@ -146,9 +147,6 @@ mapper_registry.map_imperatively(Product, product, properties={
 mapper_registry.map_imperatively(Transaction, transaction)
 
 mapper_registry.map_imperatively(Category, categories)
-
-# mapper_registry.map_imperatively(ShopManager, shop_manager_appointments)
-# mapper_registry.map_imperatively(ShopOwner, shop_owner_appointments)
 
 mapper_registry.map_imperatively(ShoppingCart, shopping_cart, properties={
     "shopping_bags": relationship(
@@ -166,5 +164,16 @@ mapper_registry.map_imperatively(ShoppingBag, shopping_bag, properties={
                              collection_class=attribute_mapped_collection('product'), lazy="joined"),
     # "shop": relationship(Shop, backref='shop'),
 })
+
+mapper_registry.map_imperatively(Appointment, appointments, polymorphic_on='type', properties={
+    "shop": relationship(Shop),
+})
+
+mapper_registry.map_imperatively(ShopOwner, appointments, polymorphic_identity='O', inherits=Appointment, properties={
+    "owner_appointees": relationship(Appointment),
+    "manager_appointees": relationship(Appointment),
+})
+
+mapper_registry.map_imperatively(ShopManager, appointments, polymorphic_identity='M', inherits=Appointment)
 
 mapper_registry.metadata.create_all(engine)

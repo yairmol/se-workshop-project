@@ -13,10 +13,10 @@ from data_model import AppointmentModel as Am, PermissionsModel as Perms
 
 class Appointment:
 
-    def __init__(self, shop: Shop, username: str, appointer=None):
+    def __init__(self, shop: Shop, username: str, appointer_username=None):
         self.username = username
         self.shop = shop
-        self.appointer = appointer
+        self.appointer_username = appointer_username
 
     def to_dict(self) -> dict:
         raise NotImplementedError()
@@ -101,8 +101,8 @@ class Appointment:
 
 class ShopManager(Appointment):
 
-    def __init__(self, shop: Shop, appointer: ShopOwner, permissions: List[str], username: str = "default_username"):
-        super().__init__(shop, username, appointer)
+    def __init__(self, shop: Shop, appointer_username: str, permissions: List[str], username: str = "default_username"):
+        super().__init__(shop, username, appointer_username)
         self.purchase_type_permission = False
         self.delete_product_permission = False
         self.edit_product_permission = False
@@ -117,7 +117,7 @@ class ShopManager(Appointment):
         ret = {
             Am.WORKER_NAME: self.username,
             Am.WORKER_TITLE: "manager",
-            Am.WORKER_APPOINTER: self.appointer.username,
+            Am.WORKER_APPOINTER: self.appointer_username,
             Am.PERMISSIONS: self.get_permissions()
         }
         ret.update(self.shop.to_dict(include_products=False))
@@ -214,8 +214,8 @@ class ShopManager(Appointment):
 
 
 class ShopOwner(Appointment):
-    def __init__(self, shop: Shop, username: str = "default_username", appointer=None):
-        super().__init__(shop, username, appointer)
+    def __init__(self, shop: Shop, username: str = "default_username", appointer_username=None):
+        super().__init__(shop, username, appointer_username)
         self.owner_appointees = []
         self.manager_appointees = []
         self.manager_appointees_lock = threading.Lock()
@@ -225,7 +225,7 @@ class ShopOwner(Appointment):
         ret = {
             Am.WORKER_NAME: self.username,
             Am.WORKER_TITLE: "owner" if self != self.shop.founder else "founder",
-            Am.WORKER_APPOINTER: self.appointer.username if self.appointer else "no appointer, this is the shop founder"
+            Am.WORKER_APPOINTER: self.appointer_username if self.appointer_username else "no appointer, this is the shop founder"
         }
         ret.update(self.shop.to_dict(include_products=False))
         return ret
@@ -235,7 +235,7 @@ class ShopOwner(Appointment):
         apps = sub.appointments
         assert self.shop not in apps.keys(), \
             f"subscriber already has appointment for shop. shop id - {self.shop.shop_id}"
-        appointment = ShopManager(self.shop, self, permissions, sub.username)
+        appointment = ShopManager(self.shop, self.username, permissions, sub.username)
         apps[self.shop] = appointment
         with self.manager_appointees_lock:
             self.manager_appointees += [sub]
