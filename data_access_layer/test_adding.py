@@ -70,16 +70,22 @@ sub = Subscribed("yes")
 owner2 = ShopOwner(shop2, "yes22")
 owner1 = ShopOwner(shop, "yes")
 
-manager2 = ShopManager(shop2, owner2, [], username="yes")
+owner1.appointer = owner1
+owner2.appointer = owner2
+
+manager1 = ShopManager(shop2, owner2.username, [], username="yes")
+owner_apped2 = ShopManager(shop, owner1.username, [], username="yes22")
 
 sub2.appointments[shop2] = owner2
-sub.appointments[shop2] = manager2
+sub2.appointments[shop] = owner_apped2
+
+sub.appointments[shop2] = manager1
 
 sub.appointments[shop] = owner1
 
 shop.add_owner(owner1)
 shop2.add_owner(owner2)
-shop2.add_manager(manager2)
+shop2.add_manager(manager1)
 
 save_shop(shop)
 

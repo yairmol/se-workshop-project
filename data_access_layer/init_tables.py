@@ -80,12 +80,13 @@ categories = Table(
     Column('name', String),
 )
 
+
 appointments = Table(
     'appointments',
     mapper_registry.metadata,
-    Column('username', String, primary_key=True),
+    Column('username', String, ForeignKey("subscribed.username"), primary_key=True),
     Column('shop_id', Integer, ForeignKey("shop.shop_id"), primary_key=True),
-    Column('appointer', String, ForeignKey("subscribed.username"), nullable=True),
+    Column('appointer_username', String, ForeignKey("appointments.username"), nullable=True),
     Column('delete_product_permission', Boolean),
     Column('edit_product_permission', Boolean),
     Column('add_product_permission', Boolean),
@@ -165,10 +166,13 @@ mapper_registry.map_imperatively(ShoppingBag, shopping_bag, properties={
 })
 
 mapper_registry.map_imperatively(Appointment, appointments, polymorphic_on='type', properties={
-    "shop": relationship(Shop)
+    "shop": relationship(Shop),
 })
 
-mapper_registry.map_imperatively(ShopOwner, appointments, polymorphic_identity='O', inherits=Appointment)
+mapper_registry.map_imperatively(ShopOwner, appointments, polymorphic_identity='O', inherits=Appointment, properties={
+    "owner_appointees": relationship(ShopOwner),
+    "manager_appointees": relationship(ShopManager),
+})
 
 mapper_registry.map_imperatively(ShopManager, appointments, polymorphic_identity='M', inherits=Appointment)
 
