@@ -216,10 +216,8 @@ class ShopManager(Appointment):
 class ShopOwner(Appointment):
     def __init__(self, shop: Shop, username: str = "default_username", appointer_username=None):
         super().__init__(shop, username, appointer_username)
-        self.owner_appointees = []
-        self.manager_appointees = []
-        self.manager_appointees_lock = threading.Lock()
-        self.owner_appointees_lock = threading.Lock()
+        self.appointees = []
+        self.appointees_lock = threading.Lock()
 
     def to_dict(self):
         ret = {
@@ -237,9 +235,9 @@ class ShopOwner(Appointment):
             f"subscriber already has appointment for shop. shop id - {self.shop.shop_id}"
         appointment = ShopManager(self.shop, self.username, permissions, sub.username)
         apps[self.shop] = appointment
-        with self.manager_appointees_lock:
-            self.manager_appointees += [sub]
-        self.shop.add_manager(sub)
+        with self.appointees_lock:
+            self.appointees += [sub]
+        self.shop.add_manager(appointment)
         return appointment
 
     def appoint_owner(self, new_owner_sub) -> Appointment:
@@ -248,9 +246,9 @@ class ShopOwner(Appointment):
         assert self.shop not in apps, f"subscriber already has appointment for shop. shop id - {self.shop.shop_id}"
         appointment = ShopOwner(self.shop, new_owner_sub.username, self)
         apps[self.shop] = appointment
-        with self.owner_appointees_lock:
-            self.owner_appointees += [new_owner_sub]
-        self.shop.add_owner(new_owner_sub)
+        with self.appointees_lock:
+            self.appointees += [new_owner_sub]
+        self.shop.add_owner(appointment)
         return appointment
 
     def remove_appointment(self, sub) -> bool:
@@ -270,43 +268,43 @@ class ShopOwner(Appointment):
     def un_appoint_manager(self, manager_sub, cascading=False) -> bool:
         assert self.shop in manager_sub.appointments and isinstance(manager_sub.appointments[self.shop], ShopManager), \
             "user is not a manager"
-        assert manager_sub in self.manager_appointees, "manager was not assigned by this owner"
+        assert manager_sub in self.appointees, "manager was not assigned by this owner"
         success = True
         success = success and self.remove_appointment(manager_sub)
         success = success and self.shop.remove_manager(manager_sub)
         if not cascading:
-            with self.manager_appointees_lock:
-                self.manager_appointees.remove(manager_sub)
+            with self.appointees_lock:
+                self.appointees.remove(manager_sub)
         return success
 
     def edit_manager_permissions(self, manager_sub, permissions: List[str]) -> bool:
         assert self.shop in manager_sub.appointments.keys() \
                and isinstance(manager_sub.appointments[self.shop], ShopManager), "user is not a manager"
-        assert manager_sub in self.manager_appointees, "manager was not assigned by this owner"
+        assert manager_sub in self.appointees, "manager was not assigned by this owner"
         manager_sub.appointments[self.shop].set_permissions(permissions)
         return True
 
     def un_appoint_appointees(self) -> bool:
         success = True
-        with self.owner_appointees_lock:
-            for owner in self.owner_appointees:
-                success = success and self.un_appoint_owner(owner, cascading=True)
-        with self.manager_appointees_lock:
-            for manager in self.manager_appointees:
-                success = success and self.un_appoint_manager(manager, cascading=True)
+        with self.appointees_lock:
+            for sub in self.appointees:
+                if isinstance(sub.appointments[self.shop], ShopOwner):
+                    success = success and self.un_appoint_owner(sub, cascading=True)
+                else:
+                    success = success and self.un_appoint_manager(sub, cascading=True)
         return success
 
     def un_appoint_owner(self, owner_sub, cascading=False) -> bool:
         assert (self.shop in owner_sub.appointments.keys()
                 and isinstance(owner_sub.appointments[self.shop], ShopOwner)), "user is not an owner"
-        assert owner_sub in self.owner_appointees, "owner was not assigned by this owner"
+        assert owner_sub in self.appointees, "owner was not assigned by this owner"
         success = True
         success = success and owner_sub.appointments[self.shop].un_appoint_appointees()
         success = success and self.remove_appointment(owner_sub)
         success = success and self.shop.remove_owner(owner_sub)
         if not cascading:
-            with self.owner_appointees_lock:
-                self.owner_appointees.remove(owner_sub)
+            with self.appointees_lock:
+                self.appointees.remove(owner_sub)
         return success
 
     def promote_manager_to_owner(self, manager_sub) -> Appointment:

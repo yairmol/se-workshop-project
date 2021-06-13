@@ -35,11 +35,9 @@ class Shop:
         self.products: Dict[int, Product] = {}
         self.transaction_history: List[Transaction] = []
         self.products_lock = threading.Lock()
-        self.managers_lock = threading.Lock()
-        self.owners_lock = threading.Lock()
+        self.workers_lock = threading.Lock()
         self.discount_lock = threading.Lock()
-        self.shop_managers = {}
-        self.shop_owners = {}
+        self.workers = {}
         self.discount = AdditiveDiscount([])
         self.image_url = image_url
         self.conditions: List[Condition] = []
@@ -127,29 +125,29 @@ class Shop:
             self.transaction_history.remove(transaction)
             return True
 
-    def add_manager(self, manager_sub) -> bool:
-        with self.managers_lock:
-            self.shop_managers[manager_sub.username] = manager_sub
+    def add_manager(self, manager_app) -> bool:
+        with self.workers_lock:
+            self.workers[manager_app.username] = manager_app
             return True
 
-    def add_owner(self, owner_sub) -> bool:
-        with self.owners_lock:
-            self.shop_owners[owner_sub.username] = owner_sub
+    def add_owner(self, owner_app) -> bool:
+        with self.workers_lock:
+            self.workers[owner_app.username] = owner_app
             return True
 
     def remove_manager(self, manager_sub) -> bool:
-        with self.managers_lock:
-            self.shop_managers.pop(manager_sub.username)
+        with self.workers_lock:
+            self.workers.pop(manager_sub.username)
             return True
 
     def remove_owner(self, owner_sub) -> bool:
-        with self.owners_lock:
-            self.shop_owners.pop(owner_sub.username)
+        with self.workers_lock:
+            self.workers.pop(owner_sub.username)
             return True
 
     def get_staff_info(self) -> List[T_app]:
-        with self.owners_lock, self.managers_lock:
-            return list(self.shop_owners.values()) + list(self.shop_managers.values())
+        with self.workers_lock:
+            return list(self.workers.values())
 
     def get_shop_transaction_history(self) -> List[Transaction]:
         return list(self.transaction_history)
