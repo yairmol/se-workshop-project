@@ -3,6 +3,7 @@ from __future__ import annotations
 import threading
 from typing import List, Dict
 
+from data_access_layer.engine import add_to_session
 from domain.commerce_system.product import Product, PurchaseType, PurchaseOffer
 from domain.commerce_system.purchase_conditions import Condition
 from domain.commerce_system.shop import Shop
@@ -218,6 +219,10 @@ class ShopOwner(Appointment):
         super().__init__(shop, username, appointer_username)
         self.appointees = []
         self.appointees_lock = threading.Lock()
+
+    @add_to_session
+    def get_appointees(self):
+        return self.appointees
 
     def to_dict(self):
         ret = {

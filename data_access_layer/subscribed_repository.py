@@ -3,14 +3,13 @@ from domain.commerce_system.appointment import Appointment
 
 from sqlalchemy.orm import Session
 from data_access_layer.engine import engine
+from domain.commerce_system.user import Subscribed
 
 
 def save_subscribed(sub):
     with Session(engine) as session:
-        print("adding")
         session.add(sub)
         session.commit()
-        print("done")
 
 
 def get_subscribed(username: str, subscribed_type):
@@ -25,10 +24,12 @@ def remove_subscribed(username: str, subscribed_type):
         session.delete(subscribed)
         session.commit()
 
+
 def get_all_subscribed(subscribed_type):
     with Session(engine) as session:
         subscribed = session.query(subscribed_type).all()
         return subscribed
+
 
 def remove_all_subscribed(subscribed_type):
     with Session(engine) as session:
@@ -39,10 +40,7 @@ def remove_all_subscribed(subscribed_type):
         session.query(subscribed_type).delete()
         session.commit()
         # session.execute("TRUNCATE TABLE subscribed")
+
+
 def save_password(password):
     pass
-
-
-def save_appointment(appointment: Appointment):
-    pass
-

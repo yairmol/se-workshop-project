@@ -4,13 +4,13 @@ from data_access_layer.shop_repository import save_shop, remove_shop, get_shop, 
 from data_access_layer.shop_repository import save_shop
 from data_access_layer.subscribed_repository import save_subscribed, get_subscribed, remove_subscribed, \
     remove_all_subscribed
-# from domain.commerce_system.product import Product, ProductInBag, BuyNow
-# from domain.commerce_system.shop import Shop
-# from domain.commerce_system.shopping_cart import ShoppingCart, ShoppingBag
-# from domain.commerce_system.transaction import Transaction
+from domain.commerce_system.appointment import ShopOwner, ShopManager
 from domain.commerce_system.product import Product, ProductInBag, BuyNow
 from domain.commerce_system.shop import Shop
 from domain.commerce_system.shopping_cart import ShoppingCart, ShoppingBag
+from domain.commerce_system.transaction import Transaction
+from domain.commerce_system.product import Product
+from domain.commerce_system.shop import Shop
 from domain.commerce_system.user import Subscribed
 from init_tables import engine
 from sqlalchemy.orm import Session
@@ -86,4 +86,50 @@ my_shop = sub.open_shop({"shop_name": "shop1", "description": "the one and only 
 # save_shopping_bag(shoppingBag)
 # subscribed
 # shop.foreign_keys.add()
+
+shop = Shop("aviv", "tahles")
+shop_id = shop.shop_id
+
+shop2 = Shop("aviv22", "tahles22")
+shop_id2 = shop.shop_id
+
+sub4 = Subscribed("yes44")
+sub3 = Subscribed("yes33")
+sub2 = Subscribed("yes22")
+sub = Subscribed("yes")
+
+owner3 = ShopOwner(shop, "yes33", "yes")
+owner2 = ShopOwner(shop2, "yes22")
+owner1 = ShopOwner(shop, "yes")
+
+owner1.owner_appointees = [owner3]
+
+manager1 = ShopManager(shop2, owner2.username, [], username="yes")
+owner_apped2 = ShopManager(shop, owner1.username, [], username="yes22")
+
+manager4 = ShopManager(shop, owner1.username, [], "yes44")
+
+sub4.appointments[shop] = manager4
+
+sub3.appointments[shop] = owner3
+
+sub2.appointments[shop2] = owner2
+sub2.appointments[shop] = owner_apped2
+
+sub.appointments[shop2] = manager1
+
+sub.appointments[shop] = owner1
+
+shop.add_manager(manager4)
+shop.add_owner(owner3)
+shop.add_owner(owner1)
+shop2.add_owner(owner2)
+shop2.add_manager(manager1)
+
+save_shop(shop)
+
+save_subscribed(sub)
+save_subscribed(sub2)
+save_subscribed(sub2)
+save_subscribed(sub4)
 
