@@ -28,7 +28,7 @@ class User:
         self.id = self.__id_counter
         User.__id_counter = User.__id_counter + 1
         self.counter_lock.release()
-        self.cart = ShoppingCart(self.id)
+        self.cart = ShoppingCart()
         self.notifications = Notifications.get_notifications()
         self.notifications.add_client(self.id)
 
@@ -44,7 +44,7 @@ class User:
     def login(self, sub_user: Subscribed) -> bool:
         self.user_state.login()
         self.user_state = sub_user
-        sub_user.on_login(self.id)
+        sub_user.on_login(self.id, self.cart)
         return True
 
     def register(self, username: str, **user_details) -> Subscribed:
@@ -393,9 +393,6 @@ class Subscribed(UserState, Observer):
     def change_product_purchase_type(self, shop: Shop, product_id: int, purchase_type_id: int, pt_args: dict) -> bool:
         return self.cart.change_product_purchase_type(shop, product_id, purchase_type_id, pt_args)
 
-    # @add_to_session
-    def send_message(self, msg):
-        if self.logged_user:
     def get_my_offers(self) -> List[PurchaseOffer]:
         return list(self.offers.values())
 
