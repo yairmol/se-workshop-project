@@ -220,7 +220,7 @@ class ShopOwner(Appointment):
         self.appointees = []
         self.appointees_lock = threading.Lock()
 
-    @add_to_session
+    # @add_to_session
     def get_appointees(self):
         return self.appointees
 

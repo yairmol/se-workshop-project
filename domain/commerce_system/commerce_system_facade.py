@@ -106,9 +106,10 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         return ret
 
     def get_all_user_names(self) -> List[str]:
-        # names: List[str] = list(self.registered_users.keys())
+        names: List[str] = list(self.registered_users.keys())
         # names = [sub.username for sub in get_all_subscribed(Subscribed)]
-        return get_all_of_field(Subscribed, lambda x: x.username)
+        # return get_all_of_field(Subscribed, lambda x: x.username)
+        return names
 
     def get_all_categories(self) -> List[str]:
         cats = set()

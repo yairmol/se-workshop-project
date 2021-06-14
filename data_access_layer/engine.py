@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session, registry
 
 path = '/'.join(__file__.split('\\')[:-1])
 
-engine = create_engine('sqlite:///{}/ahla_super.db'.format(path), echo=True)
+engine = create_engine('sqlite:///{}/ahla_super.db'.format(path), echo=False)
 
 meta = MetaData()
 mapper_registry = registry()
@@ -37,22 +37,22 @@ def add_to_session(func):
     def wrapper(*args, **kwargs):
         with Session(engine) as session:
             session.add(args[0])
-            func(*args, **kwargs)
-
+            # session.commit()
+            ret = func(*args, **kwargs)
+            session.commit()
+            return ret
     return wrapper
 
 
-def add_shop_to_session(func):
+def add_to_existing_session(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
-        self = args[0]
-        if self.of_subscribed:
-            with Session(engine) as session:
-                session.add(self)
-                func(*args, **kwargs)
-        else:
-            func(*args, **kwargs)
-
+        with Session.object_session(args[0]) as session:
+            # session.add(args[0])
+            # session.commit()
+            ret = func(*args, **kwargs)
+            session.commit()
+            return ret
     return wrapper
 
 

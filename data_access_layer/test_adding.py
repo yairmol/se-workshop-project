@@ -109,7 +109,6 @@ owner_apped2 = ShopManager(shop, owner1.username, [], username="yes22")
 
 manager4 = ShopManager(shop, owner1.username, [], "yes44")
 
-sub4.appointments[shop] = manager4
 
 sub3.appointments[shop] = owner3
 
@@ -120,7 +119,7 @@ sub.appointments[shop2] = manager1
 
 sub.appointments[shop] = owner1
 
-shop.add_manager(manager4)
+# shop.add_manager(manager4)
 shop.add_owner(owner3)
 shop.add_owner(owner1)
 shop2.add_owner(owner2)
@@ -132,4 +131,30 @@ save_subscribed(sub)
 save_subscribed(sub2)
 save_subscribed(sub2)
 save_subscribed(sub4)
+
+
+save(manager4)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

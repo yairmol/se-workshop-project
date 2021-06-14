@@ -4,7 +4,7 @@ from datetime import datetime
 
 from sqlalchemy import orm
 
-from data_access_layer.engine import add_to_session, add_shop_to_session, save, delete
+# from data_access_layer.engine import add_to_session, add_shop_to_session, save, delete
 from domain.commerce_system.action import Action, ActionPool
 from domain.commerce_system.product import Product, BuyNow, PurchaseType, ProductInBag
 from domain.commerce_system.productDTO import ProductDTO
@@ -65,23 +65,23 @@ class ShoppingBag:
                     purchase_type_id: Optional[int] = None, **purchase_type_args):
         if product in self.products:
             self.products[product].amount += amount_to_buy
-            save(ProductInBag, self.products[product])
+            # save(ProductInBag, self.products[product])
         else:
             purchase_type = product.get_purchase_type_of_type(BuyNow)
             if purchase_type_id:
                 purchase_type = product.get_purchase_type(purchase_type_id)
             pib = ProductInBag(product, amount_to_buy, purchase_type, **purchase_type_args)
-            save(ProductInBag, pib)
+            # save(ProductInBag, pib)
             self.products[product] = pib
 
     def remove_product(self, product: Product, amount_to_buy: int):
         assert product in self.products, "product not in the shopping bag"
         assert self.products[product].amount >= amount_to_buy, "not enough items in the bag"
         if self.products[product].amount == amount_to_buy:
-            delete(ProductInBag, self.products[product])
+            # delete(ProductInBag, self.products[product])
             self.products.pop(product)
         else:
-            save(ProductInBag, self.products[product])
+            # save(ProductInBag, self.products[product])
             self.products[product].amount -= amount_to_buy
 
     def remove_all_products(self):
@@ -101,12 +101,12 @@ class ShoppingBag:
 
     def set_products(self, products: Dict[Product, ProductInBag]) -> bool:
         self.products = products
-        save(ShoppingBag, self)
+        # save(ShoppingBag, self)
         return True
 
     def clear_bag(self) -> bool:
         self.products.clear()
-        save(ShoppingBag, self)
+        # save(ShoppingBag, self)
         return True
 
     def resolve_shop_conditions(self) -> bool:
@@ -153,7 +153,7 @@ class ShoppingBag:
         product.purchase_types[purchase_type_id].get_price(**pt_args)
         self.products[product].purchase_type = product.purchase_types[purchase_type_id]
         self.products[product].purchase_type_args = pt_args
-        save(ShoppingBag, self.products[product])
+        # save(ShoppingBag, self.products[product])
         return True
 
 
@@ -202,18 +202,18 @@ class ShoppingCart:
 
     def add_shopping_bag(self, bag: ShoppingBag):
         assert bag.shop not in self.shopping_bags, "bag already exists"
-        save(bag)
+        # save(bag)
         self.shopping_bags[bag.shop] = bag
 
     def remove_shopping_bag(self, shop: Shop):
         assert shop in self.shopping_bags, "no shopping bag to remove"
-        delete(ShoppingBag, shop_id=shop.shop_id)
+        # delete(ShoppingBag, shop_id=shop.shop_id)
         self.shopping_bags.pop(shop)
 
     def remove_shopping_bags(self, shops):
         for shop in shops:
             self.remove_shopping_bag(shop)
-            delete(ShoppingBag, shop_id=shop.shop_id)
+            # delete(ShoppingBag, shop_id=shop.shop_id)
         return True
 
     def calculate_price(self):

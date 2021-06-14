@@ -4,7 +4,6 @@ from typing import List, Dict, Iterable
 from sqlalchemy import orm
 
 from data_access_layer.engine import add_to_session, save
-from data_access_layer.subscribed_repository import save_subscribed
 from domain.commerce_system.appointment import Appointment, ShopOwner
 from domain.commerce_system.product import Product, PurchaseType, PurchaseOffer
 from domain.commerce_system.purchase_conditions import Condition
@@ -323,7 +322,7 @@ class Guest(UserState):
 
     def register(self, username: str, **user_details):
         sub = Subscribed(username)
-        save(sub)
+        # save(sub)
         return sub
 
     def to_dict(self):
@@ -344,16 +343,10 @@ class Subscribed(UserState):
         self.notifications = Notifications.get_notifications()
         self.cart = None
 
-    @orm.reconstructor
-    def init_on_load(self):
-        self.notifications = Notifications.get_notifications()
-        self.pending_messages = []
-        self.appointments: Dict[Shop, Appointment] = {}  # TODO Remove this when commiting
-
     def get_self(self):
         return self
 
-    @add_to_session
+    # @add_to_session
     def on_login(self, logged_user, cart):
         self.cart = cart
         self.cart.of_subscribed = True
@@ -365,41 +358,41 @@ class Subscribed(UserState):
     def purchase_shopping_bag(self, shop: Shop, payment_details: dict, delivery_details: dict) -> Transaction:
         bag = self.cart[shop]
         transaction = bag.purchase_bag(self.get_name(), payment_details, delivery_details)
-        self._add_transaction(transaction)
+        self.add_transaction(transaction)
         return transaction
 
-    @add_to_session
+    # @add_to_session
     def purchase_cart(self, payment_details: dict, delivery_details: dict, do_what_you_can=False) -> List[Transaction]:
         transactions = self.cart.purchase_cart(self.get_name(), payment_details, delivery_details, do_what_you_can)
         for transaction in transactions:
             self.add_transaction(transaction)
         return transactions
 
-    @add_to_session
+    # @add_to_session
     def save_product_to_cart(self, shop: Shop, product: Product, amount_to_buy: int,
                              purchase_type_id=None, **pt_args) -> bool:
         return self.cart.add_product(product, shop, amount_to_buy, purchase_type_id, **pt_args)
 
-    @add_to_session
+    # @add_to_session
     def remove_product_from_cart(self, shop: Shop, product: Product, amount: int) -> bool:
         return self.cart.remove_from_shopping_bag(shop, product, amount)
 
-    @add_to_session
+    # @add_to_session
     def get_cart_info(self) -> dict:
         return self.cart.to_dict()
 
-    @add_to_session
+    # @add_to_session
     def change_product_purchase_type(self, shop: Shop, product_id: int, purchase_type_id: int, pt_args: dict) -> bool:
         return self.cart.change_product_purchase_type(shop, product_id, purchase_type_id, pt_args)
 
-    @add_to_session
+    # @add_to_session
     def send_message(self, msg):
         if self.logged_user:
             self.notifications.send_message(self.logged_user, msg)
         else:
             self.pending_messages.append(msg)
 
-    @add_to_session
+    # @add_to_session
     def send_error(self, msg):
         self.notifications.send_error(msg=msg)
 
@@ -429,7 +422,7 @@ class Subscribed(UserState):
         session_app: Appointment = self.get_appointment(shop)
         return session_app.promote_manager_to_owner(manager_sub)
 
-    # @add_to_session
+    # # @add_to_session
     def get_appointment(self, shop: Shop):
         if shop in self.appointments:
             return self.appointments[shop]
@@ -469,14 +462,14 @@ class Subscribed(UserState):
         app = self.get_appointment(shop)
         return app.get_shop_transaction_history()
 
-    @add_to_session
+    # @add_to_session
     def add_transaction(self, transaction: Transaction):
         TransactionRepo.get_transaction_repo().add_transaction(transaction)
         self.transactions.append(transaction)
-        save(transaction)
+        # save(transaction)
         return True
 
-    @add_to_session
+    # @add_to_session
     def get_personal_transaction_history(self):
         return self.transactions
 
@@ -520,7 +513,7 @@ class Subscribed(UserState):
         appointment = self.get_appointment(shop)
         return appointment.get_shop_staff_info()
 
-    @add_to_session
+    # @add_to_session
     def get_appointments(self):
         return list(self.appointments.values())
 
@@ -542,14 +535,14 @@ class SystemManager(Subscribed):
         super().__init__(username)
         self.system_transactions = system_transactions
 
-    @add_to_session
+    # @add_to_session
     def get_system_transaction_history(self):
         return self.system_transactions.get_transactions()
 
-    @add_to_session
+    # @add_to_session
     def get_system_transaction_history_of_shop(self, shop_id: int):
         return self.system_transactions.get_transactions_of_shop(shop_id)
 
-    @add_to_session
+    # @add_to_session
     def get_system_transaction_history_of_user(self, username: str):
         return self.system_transactions.get_transactions_of_user(username)
