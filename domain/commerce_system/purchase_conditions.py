@@ -51,7 +51,7 @@ class ShoppingBagCondition(Policy, ABC):
 #         raise NotImplementedError()
 
 
-class MaxQuantityForProductCondition(Policy):
+class MaxQuantityForProductCondition(ProductCondition):
     type = CondM.MAX_QUANTITY_FOR_PRODUCT
 
     def __init__(self, condition_dict: dict):
@@ -84,7 +84,7 @@ class MaxQuantityForProductCondition(Policy):
 #     def resolve(self, user: User, products: Dict[Product, int]) -> bool:
 
 
-class TimeWindowForCategoryCondition(Policy):
+class TimeWindowForCategoryCondition(CategoryCondition):
     type = CondM.TIME_WINDOW_FOR_CATEGORY
 
     def __init__(self, condition_dict: dict):

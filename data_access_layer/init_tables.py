@@ -15,7 +15,8 @@ from domain.commerce_system.appointment import ShopManager, ShopOwner
 from domain.commerce_system.category import Category
 from domain.commerce_system.purchase_conditions import Policy, MaxQuantityForProductCondition, \
     DateWindowForProductCondition, DateWindowForCategoryCondition, TimeWindowForProductCondition, \
-    TimeWindowForCategoryCondition, CompositePurchaseCondition, ANDPolicy, ORPolicy
+    TimeWindowForCategoryCondition, CompositePurchaseCondition, ANDPolicy, ORPolicy, ProductCondition, \
+    CategoryCondition, ShoppingBagCondition
 from domain.commerce_system.shopping_cart import ShoppingCart, ShoppingBag
 from domain.commerce_system.transaction import Transaction
 from domain.commerce_system.user import Subscribed
@@ -275,38 +276,56 @@ mapper_registry.map_imperatively(
 )
 
 mapper_registry.map_imperatively(
+    ProductCondition,
+    purchase_policies,
+    inherits=Policy,
+)
+
+mapper_registry.map_imperatively(
+    CategoryCondition,
+    purchase_policies,
+    inherits=Policy,
+)
+
+mapper_registry.map_imperatively(
+    ShoppingBagCondition,
+    purchase_policies,
+    inherits=Policy,
+)
+
+mapper_registry.map_imperatively(
     MaxQuantityForProductCondition,
     purchase_policies,
     polymorphic_identity='max_quantity_for_product_condition',
-    inherits=Policy,
+    inherits=ProductCondition,
 )
 
 mapper_registry.map_imperatively(
     TimeWindowForCategoryCondition,
     purchase_policies,
     polymorphic_identity='time_window_for_category_condition',
-    inherits=Policy,
+    inherits=CategoryCondition,
 )
 
 mapper_registry.map_imperatively(
     TimeWindowForProductCondition,
     purchase_policies,
     polymorphic_identity='time_window_for_product_condition',
-    inherits=Policy,
+    inherits=ProductCondition,
 )
 
 mapper_registry.map_imperatively(
     DateWindowForCategoryCondition,
     purchase_policies,
     polymorphic_identity="date_window_for_category_condition",
-    inherits=Policy,
+    inherits=CategoryCondition,
 )
 
 mapper_registry.map_imperatively(
     DateWindowForProductCondition,
     purchase_policies,
     polymorphic_identity="date_window_for_product_condition",
-    inherits=Policy,
+    inherits=ProductCondition,
 
 )
 

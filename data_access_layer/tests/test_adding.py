@@ -1,6 +1,8 @@
+from data_access_layer.engine import engine
 from data_access_layer.purchasing_repository import save_transaction
-from data_access_layer.shop_repository import save_shop, remove_shop, get_shop, save_product, remove_product, \
-    save_policy, remove_policy, save_category, remove_category, remove_x
+# from data_access_layer.shop_repository import save_shop, remove_shop, get_shop, save_product, remove_product, \
+#     save_policy, remove_policy, save_category, remove_category, remove_x
+from data_access_layer.shop_repository import save, get_first
 from data_access_layer.subscribed_repository import save_subscribed, get_subscribed, remove_subscribed
 from domain.commerce_system.category import Category
 from domain.commerce_system.product import Product
@@ -80,7 +82,7 @@ shop.add_purchase_condition(and_policy)
 # print(policy.id)
 # print(policy.product_id)
 
-save_shop(shop)
+save(shop)
 # save_product(product)
 # save_category(category)
 # save_policy(policy1)
@@ -89,7 +91,10 @@ save_shop(shop)
 # save_policy(policy4)
 # save_policy(policy5)
 # save_policy(and_policy)
-
+shop_check = get_first(Shop, name='Armani')
+with Session(engine) as session:
+    session.add(shop_check)
+    print(shop_check.conditions[0].to_dict())
 
 # remove_x(and_policy)
 # remove_product(1)
