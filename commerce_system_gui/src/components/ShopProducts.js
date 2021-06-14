@@ -93,8 +93,8 @@ export default function Products({shop_id, products, auth, permissions, reload})
         )))
   }
 
-  const add_product_func = (name, price, description, categories) => {
-    const product_info = {product_name: name, price: price, description: description, categories: categories}
+  const add_product_func = (name, price, quantity, description, categories) => {
+    const product_info = {product_name: name, price: price, quantity: quantity, description: description, categories: categories}
     auth.getToken().then(token =>
       add_product_to_shop(token, shop_id, product_info).then((res) =>
         reload().then(_ => {
