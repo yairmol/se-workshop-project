@@ -352,6 +352,7 @@ class ShopOwner(Appointment):
             Perms.WATCH_TRANSACTIONS_PERM: True,
             Perms.WATCH_STAFF_PERM: True,
             Perms.MANAGE_PURCHASE_CONDITIONS: True,
+            Perms.PURCHASE_TYPES_PERM: True,
             'owner': True
         }
         return ret
