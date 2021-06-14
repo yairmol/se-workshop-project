@@ -5,6 +5,15 @@ import domain.commerce_system.valdiation as validate
 import hashlib
 import os
 
+from data_access_layer.subscribed_repository import save_password
+
+
+class Password:
+    def __init__(self, username, password_hash, salt):
+        self.username = username
+        self.password_hash = password_hash
+        self.salt = salt
+
 
 def encrypt_password(plaintext_password: str) -> Dict:
     salt = os.urandom(32)  # A new salt for this user
@@ -27,6 +36,7 @@ class Authenticator:
 
             encrypted_password = encrypt_password(plaintext_password)
             self.users_passwords[username] = encrypted_password
+            save_password(encrypted_password)
 
     # receives plaintext password, returns dictionary of salt, encrypted password
 

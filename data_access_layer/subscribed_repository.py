@@ -43,4 +43,12 @@ def remove_all_subscribed(subscribed_type):
 
 
 def save_password(password):
-    pass
+    with Session(engine) as session:
+        session.add(password)
+        session.commit()
+
+
+def get_password(username: str):
+    with Session(engine) as session:
+        subscribed = session.query(Password).filter_by(username=username).first()
+        return subscribed

@@ -7,8 +7,8 @@ from sqlalchemy import create_engine, MetaData, Table, Column, Integer, String, 
 from sqlalchemy.orm import registry, relationship
 from sqlalchemy.orm.collections import attribute_mapped_collection
 from sqlalchemy.orm.collections import attribute_mapped_collection
+from domain.authentication_module.authenticator import Password
 
-# from domain.authentication_module.authenticator import Password
 from domain.commerce_system.appointment import ShopManager, ShopOwner, Appointment
 # from domain.authentication_module.authenticator import Password
 from domain.commerce_system.appointment import ShopManager, ShopOwner
@@ -18,7 +18,8 @@ from domain.commerce_system.appointment import ShopManager, ShopOwner
 from domain.commerce_system.category import Category
 from domain.commerce_system.purchase_conditions import Policy, MaxQuantityForProductCondition, \
     DateWindowForProductCondition, DateWindowForCategoryCondition, TimeWindowForProductCondition, \
-    TimeWindowForCategoryCondition, CompositePurchaseCondition, ANDPolicy, ORPolicy
+    TimeWindowForCategoryCondition, CompositePurchaseCondition, ANDPolicy, ORPolicy, ProductCondition, \
+    CategoryCondition, ShoppingBagCondition
 from domain.commerce_system.shopping_cart import ShoppingCart, ShoppingBag
 from domain.commerce_system.transaction import Transaction
 from domain.commerce_system.user import Subscribed
@@ -119,6 +120,45 @@ appointments = Table(
     Column('type', String)
 )
 
+purchase_policies = Table(
+    'purchase_policies',
+    mapper_registry.metadata,
+    Column('id', Integer, primary_key=True),
+    Column('shop_id', Integer, ForeignKey('shop.shop_id', ondelete='CASCADE')),
+    Column('condition_type', String),
+    Column('category', String, ForeignKey('categories.name', ondelete='CASCADE')),
+    Column('min_time', TIME),
+    Column('max_time', TIME),
+    Column('min_date', DATE),
+    Column('max_date', DATE),
+    Column('product_id', Integer, ForeignKey('products.product_id', ondelete='CASCADE')),
+    Column('max_quantity', Integer),
+    Column('parent_policy', Integer, ForeignKey('purchase_policies.id', ondelete='CASCADE')),
+)
+
+discount_condition = Table(
+    'discount_condition',
+    mapper_registry.metadata,
+    Column('id', Integer, primary_key=True),
+    Column('condition_type', String),
+    Column('discount', Integer, ForeignKey('discount.id', ondelete='CASCADE')),
+    Column('minimum', Integer),
+    Column('conditioned_product_id', Integer),
+    Column('conditioned_category', String),
+    Column('parent_condition', Integer, ForeignKey('discount_condition.id', ondelete='CASCADE')),
+)
+
+discount = Table(
+    'discount',
+    mapper_registry.metadata,
+    Column('id', Integer, primary_key=True),
+    Column('discount_type', String),
+    Column('shop_id', Integer, ForeignKey('shop.shop_id', ondelete='CASCADE')),
+    Column('percentage', FLOAT),
+    # Column('condition', Integer, ForeignKey('discount_condition.id', ondelete='CASCADE')),
+    Column('parent_discount', Integer, ForeignKey('discount.id', ondelete='CASCADE')),
+)
+
 shopping_cart = Table(
     'shopping_cart',
     mapper_registry.metadata,
@@ -142,73 +182,37 @@ shopping_bag_products = Table(
     Column('amount', Integer)
 )
 
-purchase_policies = Table(
-    'purchase_policies',
-    mapper_registry.metadata,
-    Column('id', Integer, primary_key=True),
-    Column('shop_id', Integer, ForeignKey('shop.shop_id', ondelete='CASCADE')),
-    Column('condition_type', String),
-    Column('category', String, ForeignKey('categories.name', ondelete='CASCADE')),
-    Column('min_time', TIME),
-    Column('max_time', TIME),
-    Column('min_date', DATE),
-    Column('max_date', DATE),
-    Column('product_id', Integer, ForeignKey('products.product_id', ondelete='CASCADE')),
-    Column('max_quantity', Integer),
-    Column('parent_policy', Integer, ForeignKey('purchase_policies.id', ondelete='CASCADE')),
-)
-
-discount_condition = Table(
-    'discount_condition',
-    mapper_registry.metadata,
-    Column('id', Integer, primary_key=True),
-    Column('type', String),
-    Column('minimum', Integer),
-    Column('conditioned_product_id', Integer),
-    Column('conditioned_category', String),
-    Column('parent_condition', Integer, ForeignKey('discount_condition.id', ondelete='CASCADE')),
-)
-
-discount = Table(
-    'discount',
-    mapper_registry.metadata,
-    Column('id', Integer, primary_key=True),
-    Column('shop_id', Integer, ForeignKey('shop.shop_id', ondelete='CASCADE')),
-    Column('condition', Integer, ForeignKey('discount_condition.id', ondelete='CASCADE')),
-    Column('parent_discount', Integer, ForeignKey('discount.id', ondelete='CASCADE')),
-)
-
-
 # Mappings
 
 mapper_registry.map_imperatively(Subscribed, subscribed, properties={
-    "transactions": relationship(Transaction, backref='subscribed'),
+    "transactions": relationship(Transaction, backref='subscribed', lazy="joined"),
     "appointments": relationship(Appointment,
-                                 collection_class=attribute_mapped_collection('shop')),
+                                 collection_class=attribute_mapped_collection('shop'), lazy="joined"),
 })
 
 mapper_registry.map_imperatively(Password, passwords)
 
 mapper_registry.map_imperatively(Shop, shop, properties={
-    "products": relationship(Product, backref='shop', collection_class=attribute_mapped_collection('product_id')),
-    "shopping_bag": relationship(ShoppingBag, backref='shop'),
-    "transactions_history": relationship(Transaction, backref='shop'),
+    "products": relationship(Product, backref='shop', collection_class=attribute_mapped_collection('product_id')
+                             , lazy="joined"),
+    "shopping_bag": relationship(ShoppingBag, backref='shop', lazy="joined"),
+    "transactions_history": relationship(Transaction, backref='shop', lazy="joined"),
     "workers": relationship(Appointment,
-                            collection_class=attribute_mapped_collection('username')),
-    "conditions": relationship(Policy, backref='shop', cascade='all, delete, delete-orphan'),
-
+                            collection_class=attribute_mapped_collection('username'), lazy="joined"),
+    "conditions": relationship(Policy, backref='shop', cascade='all, delete, delete-orphan', lazy="joined"),
+    "discount": relationship(Discount, back_populates='shop', uselist=False, lazy="joined")
 })
 
 mapper_registry.map_imperatively(Product, product, properties={
-    "categories": relationship(Category, backref='product', secondary=categories_product_mtm),
-    "policies": relationship(Policy, backref='product', cascade='all, delete, delete-orphan'),
+    "categories": relationship(Category, backref='product', secondary=categories_product_mtm, lazy="joined"),
+    "policies": relationship(Policy, backref='product', cascade='all, delete, delete-orphan', lazy="joined"),
 })
 
 mapper_registry.map_imperatively(Transaction, transaction)
 
 # mapper_registry.map_imperatively(Password, passwords)
 mapper_registry.map_imperatively(Category, categories, properties={
-    "policies": relationship(Policy, backref='categories', cascade='all, delete, delete-orphan')
+    "policies": relationship(Policy, backref='categories', cascade='all, delete, delete-orphan', lazy="joined")
 })
 # mapper_registry.map_imperatively(ShopManager, shop_manager_appointments)
 # mapper_registry.map_imperatively(ShopOwner, shop_owner_appointments)
@@ -225,38 +229,56 @@ mapper_registry.map_imperatively(
 )
 
 mapper_registry.map_imperatively(
+    ProductCondition,
+    purchase_policies,
+    inherits=Policy,
+)
+
+mapper_registry.map_imperatively(
+    CategoryCondition,
+    purchase_policies,
+    inherits=Policy,
+)
+
+mapper_registry.map_imperatively(
+    ShoppingBagCondition,
+    purchase_policies,
+    inherits=Policy,
+)
+
+mapper_registry.map_imperatively(
     MaxQuantityForProductCondition,
     purchase_policies,
     polymorphic_identity='max_quantity_for_product_condition',
-    inherits=Policy,
+    inherits=ProductCondition,
 )
 
 mapper_registry.map_imperatively(
     TimeWindowForCategoryCondition,
     purchase_policies,
     polymorphic_identity='time_window_for_category_condition',
-    inherits=Policy,
+    inherits=CategoryCondition,
 )
 
 mapper_registry.map_imperatively(
     TimeWindowForProductCondition,
     purchase_policies,
     polymorphic_identity='time_window_for_product_condition',
-    inherits=Policy,
+    inherits=ProductCondition,
 )
 
 mapper_registry.map_imperatively(
     DateWindowForCategoryCondition,
     purchase_policies,
     polymorphic_identity="date_window_for_category_condition",
-    inherits=Policy,
+    inherits=CategoryCondition,
 )
 
 mapper_registry.map_imperatively(
     DateWindowForProductCondition,
     purchase_policies,
     polymorphic_identity="date_window_for_product_condition",
-    inherits=Policy,
+    inherits=ProductCondition,
 
 )
 
@@ -267,7 +289,7 @@ mapper_registry.map_imperatively(
     inherits=Policy,
     properties={
         "conditions": relationship(Policy, backref=backref('policies', remote_side=[purchase_policies.c.id]),
-                                   cascade='all, delete, delete-orphan')
+                                   cascade='all, delete, delete-orphan', lazy="joined")
     }
 )
 
@@ -289,27 +311,27 @@ mapper_registry.map_imperatively(
 # mapper_registry.map_imperatively(ShopOwner, shop_owner_appointments)
 mapper_registry.map_imperatively(ShoppingCart, shopping_cart, properties={
     "shopping_bags": relationship(
-        ShoppingBag, backref='shopping_cart', collection_class=attribute_mapped_collection('shop')
+        ShoppingBag, backref='shopping_cart', collection_class=attribute_mapped_collection('shop'), lazy="joined"
     ),
     # "subscribed": relationship(Subscribed, backref='shopping_cart')
 })
 
 mapper_registry.map_imperatively(ProductInBag, shopping_bag_products, properties={
-    "product": relationship(Product)
+    "product": relationship(Product, lazy="joined")
 })
 
 mapper_registry.map_imperatively(ShoppingBag, shopping_bag, properties={
     "products": relationship(ProductInBag, backref='shopping_bag_products',
                              collection_class=attribute_mapped_collection('product'), lazy="joined"),
-    # "shop": relationship(Shop, backref='shop'),
+    # "shop": relationship(Shop, backref='shop', lazy="joined"),
 })
 
 mapper_registry.map_imperatively(Appointment, appointments, polymorphic_on='type', properties={
-    "shop": relationship(Shop),
+    "shop": relationship(Shop, lazy="joined"),
 })
 
 mapper_registry.map_imperatively(ShopOwner, appointments, polymorphic_identity='O', inherits=Appointment, properties={
-    "appointees": relationship(Appointment),
+    "appointees": relationship(Appointment, lazy="joined"),
 })
 
 mapper_registry.map_imperatively(ShopManager, appointments, polymorphic_identity='M', inherits=Appointment)
