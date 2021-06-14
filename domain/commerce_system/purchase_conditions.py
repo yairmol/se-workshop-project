@@ -9,15 +9,16 @@ from data_model import ConditionsModel as CondM
 # from domain.commerce_system.user import User
 
 
-class Condition:
+class Policy:
     _id_counter = 1
     counter_lock = threading.Lock()
-    type = None
+    # type = None
 
-    def __init__(self):
-        with Condition.counter_lock:
-            self.id = Condition._id_counter
-            Condition._id_counter += 1
+    def __init__(self, condition_dict: dict):
+        with Policy.counter_lock:
+            self.id = Policy._id_counter
+            Policy._id_counter += 1
+        self.condition_type = condition_dict[CondM.CONDITION_TYPE]
 
     def resolve(self, products: Dict[Product, int]) -> bool:
         raise NotImplementedError()
@@ -26,19 +27,19 @@ class Condition:
         return {CondM.CONDITION_TYPE: self.type, "id": self.id}
 
 
-class ProductCondition(Condition, ABC):
+class ProductCondition(Policy, ABC):
 
     def resolve(self, products: Dict[Product, int]) -> bool:
         raise NotImplementedError()
 
 
-class CategoryCondition(Condition, ABC):
+class CategoryCondition(Policy, ABC):
 
     def resolve(self, products: Dict[Product, int]) -> bool:
         raise NotImplementedError()
 
 
-class ShoppingBagCondition(Condition, ABC):
+class ShoppingBagCondition(Policy, ABC):
 
     def resolve(self, products: Dict[Product, int]) -> bool:
         raise NotImplementedError()
@@ -50,11 +51,11 @@ class ShoppingBagCondition(Condition, ABC):
 #         raise NotImplementedError()
 
 
-class MaxQuantityForProductCondition(ProductCondition):
+class MaxQuantityForProductCondition(Policy):
     type = CondM.MAX_QUANTITY_FOR_PRODUCT
 
     def __init__(self, condition_dict: dict):
-        super().__init__()
+        super().__init__(condition_dict)
         self.max_quantity = condition_dict[CondM.MAX_QUANTITY]
         self.product_id = condition_dict[CondM.PRODUCT]
 
@@ -82,11 +83,11 @@ class MaxQuantityForProductCondition(ProductCondition):
 #     def resolve(self, user: User, products: Dict[Product, int]) -> bool:
 
 
-class TimeWindowForCategoryCondition(CategoryCondition):
+class TimeWindowForCategoryCondition(Policy):
     type = CondM.TIME_WINDOW_FOR_CATEGORY
 
     def __init__(self, condition_dict: dict):
-        super().__init__()
+        super().__init__(condition_dict)
         self.min_time = datetime.strptime(condition_dict[CondM.MIN_TIME], CondM.TIME_FORMAT).time()
         self.max_time = datetime.strptime(condition_dict[CondM.MAX_TIME], CondM.TIME_FORMAT).time()
         self.category = condition_dict[CondM.CATEGORY]
@@ -109,11 +110,11 @@ class TimeWindowForCategoryCondition(CategoryCondition):
         return ret
 
 
-class TimeWindowForProductCondition(CategoryCondition):
+class TimeWindowForProductCondition(Policy):
     type = CondM.TIME_WINDOW_FOR_PRODUCT
 
     def __init__(self, condition_dict: dict):
-        super().__init__()
+        super().__init__(condition_dict)
         self.min_time = datetime.strptime(condition_dict[CondM.MIN_TIME], CondM.TIME_FORMAT).time()
         self.max_time = datetime.strptime(condition_dict[CondM.MAX_TIME], CondM.TIME_FORMAT).time()
         self.product_id = condition_dict["product"]
@@ -136,11 +137,11 @@ class TimeWindowForProductCondition(CategoryCondition):
         return ret
 
 
-class DateWindowForCategoryCondition(CategoryCondition):
+class DateWindowForCategoryCondition(Policy):
     type = CondM.DATE_WINDOW_FOR_CATEGORY
 
     def __init__(self, condition_dict: dict):
-        super().__init__()
+        super().__init__(condition_dict)
         self.min_date = datetime.strptime(condition_dict[CondM.MIN_DATE], CondM.DATE_FORMAT)
         self.max_date = datetime.strptime(condition_dict[CondM.MAX_DATE], CondM.DATE_FORMAT)
         self.category = condition_dict[CondM.CATEGORY]
@@ -163,11 +164,11 @@ class DateWindowForCategoryCondition(CategoryCondition):
         return ret
 
 
-class DateWindowForProductCondition(CategoryCondition):
+class DateWindowForProductCondition(Policy):
     type = CondM.DATE_WINDOW_FOR_PRODUCT
 
     def __init__(self, condition_dict: dict):
-        super().__init__()
+        super().__init__(condition_dict)
         self.min_date = datetime.strptime(condition_dict[CondM.MIN_DATE], CondM.DATE_FORMAT)
         self.max_date = datetime.strptime(condition_dict[CondM.MAX_DATE], CondM.DATE_FORMAT)
         self.product_id = condition_dict[CondM.PRODUCT]
@@ -190,9 +191,9 @@ class DateWindowForProductCondition(CategoryCondition):
         return ret
 
 
-class CompositePurchaseCondition(Condition, ABC):
+class CompositePurchaseCondition(Policy, ABC):
     def __init__(self, condition_dict: dict):
-        super().__init__()
+        super().__init__(condition_dict)
         self.conditions = condition_dict["conditions"]
 
     def to_dict(self):
@@ -203,7 +204,7 @@ class CompositePurchaseCondition(Condition, ABC):
         return ret
 
 
-class ANDCondition(CompositePurchaseCondition):
+class ANDPolicy(CompositePurchaseCondition):
     type = CondM.AND
 
     # returns AND between all conditions
@@ -214,7 +215,7 @@ class ANDCondition(CompositePurchaseCondition):
         return True
 
 
-class ORCondition(CompositePurchaseCondition):
+class ORPolicy(CompositePurchaseCondition):
     type = CondM.OR
 
     # returns OR between all conditions

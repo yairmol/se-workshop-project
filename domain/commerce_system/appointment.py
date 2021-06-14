@@ -5,7 +5,7 @@ from typing import List, Dict
 
 from data_access_layer.engine import add_to_session
 from domain.commerce_system.product import Product, PurchaseType, PurchaseOffer
-from domain.commerce_system.purchase_conditions import Condition
+from domain.commerce_system.purchase_conditions import Policy
 from domain.commerce_system.shop import Shop
 from domain.commerce_system.transaction import Transaction
 from domain.discount_module.discount_calculator import Discount
@@ -78,10 +78,10 @@ class Appointment:
     def move_discount_to(self, src_discount_id: int, dst_discount_id: int) -> bool:
         raise Exception("Cannot manage discounts")
 
-    def get_purchase_conditions(self) -> List[Condition]:
+    def get_purchase_conditions(self) -> List[Policy]:
         raise Exception("Cannot get purchase conditions")
 
-    def add_purchase_condition(self, condition: Condition) -> bool:
+    def add_purchase_condition(self, condition: Policy) -> bool:
         raise Exception("Cannot manage conditions")
 
     def remove_purchase_condition(self, condition_id: int) -> bool:
@@ -174,7 +174,7 @@ class ShopManager(Appointment):
         assert self.purchase_condition_permission, "manager user does not have permission to manage purchase conditions"
         return self.shop.get_purchase_conditions()
 
-    def add_purchase_condition(self, condition: Condition) -> bool:
+    def add_purchase_condition(self, condition: Policy) -> bool:
         assert self.purchase_condition_permission, "manager user does not have permission to" \
                                                    " manage purchase conditions"
         return self.shop.add_purchase_condition(condition)
@@ -340,7 +340,7 @@ class ShopOwner(Appointment):
     def get_purchase_conditions(self):
         return self.shop.get_purchase_conditions()
 
-    def add_purchase_condition(self, condition: Condition) -> bool:
+    def add_purchase_condition(self, condition: Policy) -> bool:
         return self.shop.add_purchase_condition(condition)
 
     def remove_purchase_condition(self, condition_id: int) -> bool:
