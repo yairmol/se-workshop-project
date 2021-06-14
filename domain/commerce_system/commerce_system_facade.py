@@ -33,7 +33,11 @@ condition_map = {
 
 def stats(func):
     def with_stats(self: CommerceSystemFacade, user_id, *args, **kwargs):
-        self.activity_stats.action_made(func.__name__, self.get_user(user_id).get_name())
+        record = self.activity_stats.action_made(func.__name__, self.get_user(user_id).get_name())
+        for user in self.active_users.values():
+            if isinstance(user.user_state, SystemManager):
+                print("sending message to system manager", record.to_dict())
+                user.user_state.send_message_of_type(record.to_dict(), 'system_event')
         return func(self, user_id, *args, **kwargs)
 
     return with_stats
@@ -66,7 +70,11 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         new_user = User()
         with self.active_users_lock:
             self.active_users[new_user.id] = new_user
-        self.activity_stats.action_made("enter", new_user.get_name())
+        record = self.activity_stats.action_made("enter", new_user.get_name())
+        for user in self.active_users.values():
+            if isinstance(user.user_state, SystemManager):
+                print("sending message to system manager", record.to_dict())
+                user.user_state.send_message_of_type(record.to_dict(), 'system_event')
         return new_user.id
 
     # 2.2
@@ -560,7 +568,9 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         actions = {
             action: [r.to_dict() for r in records]
             for action, records in actions.items()
+            if records
         }
+
         users = self.activity_stats.get_users()
         action_names = self.activity_stats.get_action_names()
         return {

@@ -26,7 +26,9 @@ class CommerceSystemStats:
         self.actions: Dict[str, List[Record]] = defaultdict(list)
 
     def action_made(self, action_name: str, action_maker: str, time: Optional[datetime] = None):
-        self.actions[action_name].append(Record(action_name, action_maker, time))
+        new_record = Record(action_name, action_maker, time)
+        self.actions[action_name].append(new_record)
+        return new_record
 
     def actions_of_user(self, user: str, time_window: TimeWindow = None):
         return self.apply_time_window_on_dict({

@@ -58,6 +58,13 @@ def create_app(init=None):
             socketio.emit('notification', msg, room=client_session_map[client_id])
 
         @staticmethod
+        def send_message_of_type(msg, client_id, msg_type='notification'):
+            print(f"sending message {msg} of type {msg_type} to {client_id}", client_session_map)
+            assert client_id in client_session_map, "client is not connected"
+            print("client id in client session map")
+            socketio.emit(msg_type, msg, room=client_session_map[client_id])
+
+        @staticmethod
         def send_error(msg, client_id):
             socketio.emit('error', msg, room=client_session_map[client_id])
 

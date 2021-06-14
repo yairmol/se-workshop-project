@@ -5,6 +5,9 @@ class Observer:
     def send_message(self, msg):
         raise NotImplementedError()
 
+    def send_message_of_type(self, msg, msg_type=None):
+        raise NotImplementedError()
+
 
 class Observable:
     def __init__(self):

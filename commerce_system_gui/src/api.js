@@ -899,7 +899,6 @@ export const delete_offer = (token, shop_id, product_id) => {
 }
 
 export const get_stats = (token, actions, users, time_window) => {
-  alert("here")
   return axios({
     method: "POST",
     url: `${base_route}/stats/filtered`,

@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {makeStyles} from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
 import {useAuth} from "./use-auth";
@@ -8,11 +8,11 @@ import {MuiPickersUtilsProvider, KeyboardDatePicker, KeyboardTimePicker} from "@
 import DateFnsUtils from "@date-io/date-fns";
 import TextField from "@material-ui/core/TextField";
 import {get_stats} from "../api";
-import {Paper, Typography} from "@material-ui/core";
+import {Link, ListItem, Paper, Tooltip, Typography} from "@material-ui/core";
 import Autocomplete from "@material-ui/lab/Autocomplete";
-import { PieChart, Pie, Sector, Cell, ResponsiveContainer } from 'recharts';
-
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
+import ActionsChart from "./ActionsChart";
+import UsersChart from "./UsersChart";
+import List from "@material-ui/core/List";
 
 const useStyles = makeStyles((theme) => ({
   mainFeaturedPost: {
@@ -43,8 +43,8 @@ const useStyles = makeStyles((theme) => ({
     },
   },
   formControl: {
-    margin: theme.spacing(2),
-    minWidth: 200,
+    margin: theme.spacing(1),
+    minWidth: 100,
   },
   selectEmpty: {
     marginTop: theme.spacing(2),
@@ -57,63 +57,98 @@ const useStyles = makeStyles((theme) => ({
   },
   autoComplete: {
     maxWidth: 300
-  }
+  },
+  paper: {
+    padding: theme.spacing(2),
+    display: 'flex',
+    overflow: 'auto',
+    flexDirection: 'column',
+  },
 }));
 
-function UsersChart({stats}){
-  const subscribed = stats.actions.login ? stats.actions.login.length : 0;
+function Stats({stats}) {
+  const classes = useStyles();
+  const actions = stats.actions;
+  const actions_done = Object.keys(actions).map((key) => ({action: key, num: actions[key].length}))
+  const subscribers = stats.actions.login ? stats.actions.login.length : 0;
   const entered = stats.actions.enter ? stats.actions.enter.length : 0;
-  const guests = entered - subscribed;
-  const data = [
+  const users_data = [
     {
-      "name": "subscribed",
-      "value": subscribed
+      "name": "subscribers",
+      "value": subscribers,
     },
     {
       "name": "guests",
-      "value": guests
+      "value": entered - subscribers,
     }
   ]
   return (
-    <ResponsiveContainer width="100%" height="100%">
-        <PieChart width={400} height={400}>
-          <Pie
-            data={data}
-            cx="50%"
-            cy="50%"
-            // labelLine={true}
-            // label={renderCustomizedLabel}
-            outerRadius={80}
-            fill="#8884d8"
-            dataKey="value"
-          >
-            {data.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-            ))}
-          </Pie>
-        </PieChart>
-      </ResponsiveContainer>
-  );
-}
-
-function ActionsChart(){
-  return <Typography>Not implemented</Typography>
-}
-
-function Stats({stats}) {
-  return (
-    <Grid container>
+    <Grid container spacing={3}>
       <Grid item xs={4}>
-        <Paper>
-          <UsersChart stats={stats}/>
+        <Paper className={classes.paper}>
+          <Typography variant="h5">
+            Guests and Users demography
+          </Typography>
+          <UsersChart data={users_data}/>
         </Paper>
       </Grid>
       <Grid item xs={8}>
-        <ActionsChart stats={stats}/>
+        <Paper className={classes.paper}>
+          <Typography variant="h5">
+            Number of Actions Performed
+          </Typography>
+          <ActionsChart actions={actions_done}/>
+        </Paper>
       </Grid>
     </Grid>
   )
 }
+
+
+const unitToMilliseconds = {
+  "m": 60 * 1000,
+  "h": 60 * 60 * 1000,
+  "d": 24 * 60 * 60 * 1000,
+  "M": 30 * 24 * 60 * 60 * 1000,
+}
+
+const timeRanges = [
+  {
+    label: "Last 10 minutes",
+    value: "10",
+    unit: "m",
+  },
+  {
+    label: "Last 30 minutes",
+    value: "30",
+    unit: "m",
+  },
+  {
+    label: "Last Hour",
+    value: "1",
+    unit: "h",
+  },
+  {
+    label: "Last 6 Hours",
+    value: "6",
+    unit: "h",
+  },
+  {
+    label: "Last Day (24 Hours)",
+    value: "1",
+    unit: "d",
+  },
+  {
+    label: "Last Week",
+    value: "7",
+    unit: "d",
+  },
+  {
+    label: "Last Month",
+    value: "1",
+    unit: "M",
+  },
+]
 
 export default function SystemManagerDashboard() {
   const classes = useStyles();
@@ -137,26 +172,47 @@ export default function SystemManagerDashboard() {
     },
   });
 
-  const getStats = () => {
+  const onSystemEvent = useCallback((record) => {
+    console.log(`system event ${JSON.stringify(record)}`);
+    const newStats = {...stats};
+    if (stats.users.includes(record.action_maker)){
+      newStats.users.push(record.action_maker)
+    }
+    if (!stats.action_names.includes(record.action)){
+      newStats.action_names.push(record.action)
+    }
+    if (!Object.keys(stats.actions).includes(record.action)){
+      console.log(`action ${record.action} is not in ${JSON.stringify(Object.keys(stats.actions))}`)
+      newStats.actions[record.action] = []
+    }
+    newStats.actions[record.action].push(record)
+    console.log(`actions ${JSON.stringify(newStats.actions[record.action])}`)
+    setStats(newStats);
+  }, [stats])
+
+  const getStats = useCallback(() => {
     const actions = formik.values.filterByActions ? formik.values.actions : null;
     const users = formik.values.filterByUsernames ? formik.values.usernames : null;
-    const time_window = formik.values.filterByTimeStamp ? [formik.values.fromTS.valueOf(), formik.values.toTS.valueOf()] : null;
-    alert(JSON.stringify(actions))
-    alert(JSON.stringify(users))
+    const time_window = formik.values.filterByTimeStamp ? [formik.values.fromTS.valueOf() / 1000, formik.values.toTS.valueOf() / 1000] : null;
     auth.getToken().then((token) =>
       get_stats(token, actions, users, time_window).then((_stats) => {
-        alert(JSON.stringify(_stats))
         setStats(_stats)
+        setLoaded(true)
+        auth.registerSystemEventHandler(onSystemEvent);
       }))
-  }
+  }, [auth, formik.values.actions, formik.values.filterByActions, formik.values.filterByUsernames,
+    formik.values.filterByTimeStamp, formik.values.fromTS, formik.values.toTS, formik.values.usernames, onSystemEvent])
 
   useEffect(() => {
-    function fetchData() {
+    console.log('in system useeffect')
+    if (!loaded) {
+      function fetchData() {
+        getStats()
+      }
 
+      fetchData();
     }
-
-    fetchData();
-  }, [auth])
+  }, [auth, getStats])
 
   const onFilterByTimeStampClick = () => {
     formik.setValues({...formik.values, filterByTimeStamp: !formik.values.filterByTimeStamp})
@@ -170,6 +226,11 @@ export default function SystemManagerDashboard() {
     formik.setValues({...formik.values, filterByActions: !formik.values.filterByActions})
   }
 
+  const timeWindowToDate = (timeWindow) => {
+    const currentDate = new Date();
+    return new Date(currentDate.getTime() - unitToMilliseconds[timeWindow.unit] * timeWindow.value);
+  }
+
   return (loaded &&
     <MuiPickersUtilsProvider utils={DateFnsUtils}>
       <Grid item xs={12}>
@@ -177,7 +238,7 @@ export default function SystemManagerDashboard() {
           <Grid item xs={12}>
             <Grid container spacing={3}>
               <Grid item>
-                <Grid container direction="column" spacing={3}>
+                <Grid container direction="column">
                   <Grid item>
                     <Button variant="outlined" className={classes.button}
                             onClick={onFilterByTimeStampClick}>
@@ -186,23 +247,78 @@ export default function SystemManagerDashboard() {
                   </Grid>
                   {formik.values.filterByTimeStamp &&
                   <Grid item>
-                    <KeyboardDatePicker format="dd/MM/yyyy" label="From Date" name="fromTS" variant="outlined"
-                                        onChange={(date) => formik.handleChange({
-                                          target: {
-                                            name: "fromTS",
-                                            value: date
-                                          }
-                                        })}
-                                        value={formik.values.fromTS}
-                                        KeyboardButtonProps={{'aria-label': 'change date'}}/>
-                    <KeyboardDatePicker format="dd/MM/yyyy" label="To Date" name="toTS" variant="outlined"
-                                        onChange={(date) => formik.handleChange({target: {name: "toTS", value: date}})}
-                                        value={formik.values.toTS}
-                                        KeyboardButtonProps={{'aria-label': 'change date'}}/>
-                    {/*<KeyboardTimePicker KeyboardButtonProps={{'aria-label': 'change time'}}*/}
-                    {/*                    label="From Time" name="" variant="outlined"*/}
-                    {/*                    onChange={(date) => formik.handleChange({target: {name: value.key, value: date}})}*/}
+                    <Grid container direction="row">
+                      <Grid item direction="column">
+                        <Grid item>
+                          <KeyboardDatePicker format="dd/MM/yyyy" label="From Date" name="fromTS" variant="outlined"
+                                              onChange={(date) => {
+                                                const newDate = formik.values.fromTS;
+                                                newDate.setDate(date.getDate())
+                                                alert(newDate.getTime() / 1000)
+                                                formik.setValues({
+                                                  ...formik.values, fromTS: newDate
+                                                })
+                                              }}
+                                              value={formik.values.fromTS} className={classes.formControl}
+                                              KeyboardButtonProps={{'aria-label': 'change date'}}/>
+                        </Grid>
+                        <Grid item>
+                          <KeyboardTimePicker KeyboardButtonProps={{'aria-label': 'change time'}}
+                                              label="From Time" name="" variant="outlined"
+                                              className={classes.formControl}
+                                              onChange={(date) => {
+                                                const newDate = formik.values.fromTS;
+                                                newDate.setTime(date.getTime())
+                                                alert(newDate.getTime() / 1000)
+                                                formik.setValues({
+                                                  ...formik.values, fromTS: newDate
+                                                })
+                                              }} value={formik.values.fromTS}/>
+                        </Grid>
+                      </Grid>
+                      <Grid item direction="column">
+                        <Grid item>
+                          <KeyboardDatePicker format="dd/MM/yyyy" label="To Date" name="toTS" variant="outlined"
+                                              onChange={(date) => {
+                                                const newDate = formik.values.toTS;
+                                                newDate.setDate(date.getDate())
+                                                alert(newDate.getTime() / 1000)
+                                                formik.setValues({
+                                                  ...formik.values, toTS: newDate
+                                                })
+                                              }}
+                                              value={formik.values.toTS} className={classes.formControl}
+                                              KeyboardButtonProps={{'aria-label': 'change date'}}/>
+                        </Grid>
+                        <Grid item>
+                          <KeyboardTimePicker KeyboardButtonProps={{'aria-label': 'change time'}}
+                                              label="From Time" name="" variant="outlined"
+                                              className={classes.formControl}
+                                              onChange={(date) => {
+                                                const newDate = formik.values.toTS;
+                                                newDate.setTime(date.getTime())
+                                                alert(newDate.getTime() / 1000)
+                                                formik.setValues({
+                                                  ...formik.values, toTS: newDate
+                                                })
+                                              }} value={formik.values.toTS}/>
+                        </Grid>
+                      </Grid>
+                    </Grid>
                   </Grid>}
+                  {formik.values.filterByTimeStamp &&
+                    <List>
+                      {timeRanges.map((timeWindow, index) =>
+                        <ListItem key={index}>
+                          <Link onClick={() => formik.setValues({
+                            ...formik.values, fromTS: timeWindowToDate(timeWindow), toTS: new Date()
+                          })}>
+                            {timeWindow.label}
+                          </Link>
+                        </ListItem>)
+                      }
+                    </List>
+                  }
                 </Grid>
               </Grid>
               <Grid item>
@@ -268,7 +384,7 @@ export default function SystemManagerDashboard() {
             </Grid>
           </Grid>
           <Grid item xs={12}>
-            <Grid container direction="row" justify="center">
+            <Grid container direction="row" justify="center" style={{marginBottom: 10}}>
               <Button color="primary" variant="outlined" className={classes.button}
                       onClick={getStats}>
                 Get Stats

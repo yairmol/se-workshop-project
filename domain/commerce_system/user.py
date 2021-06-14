@@ -340,6 +340,15 @@ class Subscribed(UserState, Observer):
             self.pending_messages.append(msg)
             return False
 
+    def send_message_of_type(self, msg, msg_type=None):
+        if not msg_type:
+            self.send_message(msg)
+        try:
+            assert self.logged_user is not None, "subscribed is not logged in"
+            self.notifications.send_message_of_type(self.logged_user, msg, msg_type)
+        except Exception as e:
+            print("exception while sendong message", e)
+
     def send_error(self, msg):
         self.notifications.send_error(msg=msg)
 
