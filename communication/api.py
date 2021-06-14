@@ -390,6 +390,12 @@ def create_app(init=None):
             __system_service.get_action, action_name=action_name
         )
 
+    @app.route(f"{API_BASE}/stats/filtered", methods=['POST'])
+    def get_actions_filtered():
+        return apply_request_on_function(
+            __system_service.get_actions_filtered
+        )
+
     @app.errorhandler(404)
     def server_error(e):
         return jsonify(error=str(e)), 404

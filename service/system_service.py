@@ -1,4 +1,4 @@
-from typing import List, Union
+from typing import List, Union, Optional, Tuple
 
 from data_model import PurchaseTypeDict
 from domain.authentication_module.authenticator import Authenticator
@@ -504,6 +504,17 @@ class SystemService:
     @handler
     def get_action(self, user_id: int, action_name: str, time_window=None):
         res = self.commerce_system_facade.get_action(user_id, action_name, time_window)
+        return make_status_dict(True, "", res)
+
+    @handler
+    def get_actions_filtered(
+        self,
+        user_id: int,
+        actions: Optional[List[str]] = None,
+        users: Optional[List[str]] = None,
+        time_window: Optional[Tuple[str, str]] = None
+    ):
+        res = self.commerce_system_facade.get_actions_filtered(user_id, actions, users, time_window)
         return make_status_dict(True, "", res)
 
     def cleanup(self):

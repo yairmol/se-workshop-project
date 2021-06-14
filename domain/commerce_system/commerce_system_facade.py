@@ -66,7 +66,7 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         new_user = User()
         with self.active_users_lock:
             self.active_users[new_user.id] = new_user
-
+        self.activity_stats.action_made("enter", new_user.get_name())
         return new_user.id
 
     # 2.2
@@ -553,3 +553,18 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         self._validate_system_manager(user_id)
         time_window = self._parse_time_window(time_window)
         return [r.to_dict() for r in self.activity_stats.get_action_records(action_name, time_window)]
+
+    def get_actions_filtered(self, user_id: int, actions, users, time_window):
+        self._validate_system_manager(user_id)
+        actions = self.activity_stats.get_actions_filtered(actions, users, self._parse_time_window(time_window))
+        actions = {
+            action: [r.to_dict() for r in records]
+            for action, records in actions.items()
+        }
+        users = self.activity_stats.get_users()
+        action_names = self.activity_stats.get_action_names()
+        return {
+            "actions": actions,
+            "users": users,
+            "action_names": action_names,
+        }
