@@ -870,7 +870,7 @@ class PurchasesTests(TestCase):
             )["status"])
 
     def add_purchase_offer_type_and_make_offer(
-        self, token, shop_id, prod_id, offer_price, to_reply=True, reply: str = None, accept_counter=False, **kwargs
+            self, token, shop_id, prod_id, offer_price, to_reply=True, reply: str = None, accept_counter=False, **kwargs
     ):
         purchase_offer_type_id = self.commerce_system.add_purchase_type(
             self.shop_to_owners[shop_id], shop_id, prod_id, **offer_purchase_type_dict.copy()
@@ -1081,6 +1081,63 @@ class RobustnessTests(TestCase):
         self.assertFalse(transaction_status["status"])
 
 
+class DBRobustnessTests(TestCase):
+    NUM_USERS = len(users)
+    NUM_SHOPS = len(shops)
+    NUM_PRODUCTS = len(products)
+    U1, U2 = 0, 1
+
+    def setUp(self) -> None:
+        load_config(TESTS_CONFIG_PATH)
+        self.commerce_system = Driver.get_system_service()
+        set_delivery_facade(DeliveryFacadeMocks.ALWAYS_TRUE)
+        set_payment_facade(PaymentFacadeMocks.ALWAYS_TRUE)
+        self.sessions_to_users = register_login_users(self.commerce_system, self.NUM_USERS)
+        self.sessions = list(self.sessions_to_users.keys())
+        self.shop_id_to_shop, self.shop_to_opener = open_shops(self.commerce_system, self.sessions, self.NUM_SHOPS)
+        self.shop_ids = list(self.shop_id_to_shop.keys())
+        self.pid_to_product, self.product_to_shop = add_products(
+            self.commerce_system, self.shop_to_opener, self.shop_ids, self.NUM_PRODUCTS
+        )
+        self.shop_to_owners, self.shop_to_managers = appoint_owners_and_managers(
+            self.commerce_system, self.sessions, self.sessions_to_users, self.shop_ids
+        )
+        self.shops_to_products = shop_to_products(self.product_to_shop, self.shop_ids)
+        self.shop_to_staff, self.session_to_shops = sessions_to_shops(
+            self.shop_to_opener, self.shop_to_owners, self.shops_to_products, self.sessions
+        )
+
+    def tearDown(self) -> None:
+        self.commerce_system.cleanup()
+        reset_config()
+        reset_facades()
+
+    def test_purchase_fail_because_offline_db(self):
+        # @TODO: turn off connection with db
+        u1 = self.sessions[self.U1]
+        shop_id = get_shops_not_owned_by_user(u1, self.shop_ids, self.shop_to_staff)[0]
+        prod_id = self.shops_to_products[shop_id][0]
+        transaction_status = self.commerce_system.purchase_product(
+            u1, shop_id, prod_id, 1, payment_details[0], delivery_details
+        )
+        self.assertFalse(transaction_status["status"])
+
+    def test_purchase_fail_then_success_db_off_and_on(self):
+        # @TODO: turn off connection with db
+        u1 = self.sessions[self.U1]
+        shop_id = get_shops_not_owned_by_user(u1, self.shop_ids, self.shop_to_staff)[0]
+        prod_id = self.shops_to_products[shop_id][0]
+        transaction_status = self.commerce_system.purchase_product(
+            u1, shop_id, prod_id, 1, payment_details[0], delivery_details
+        )
+        self.assertFalse(transaction_status["status"])
+        # @TODO: turn on connection with db
+        transaction_status = self.commerce_system.purchase_product(
+            u1, shop_id, prod_id, 1, payment_details[0], delivery_details
+        )
+        self.assertTrue(transaction_status["status"])
+
+
 class GuestTestsWithData(TestCase):
     NUM_USERS = len(users)
     NUM_GUESTS = 3
@@ -1092,7 +1149,6 @@ class GuestTestsWithData(TestCase):
     S1 = 0
 
     def setUp(self):
-
         load_config(TESTS_CONFIG_PATH)
         self.commerce_system = Driver.get_system_service()
         self.guest_sess, self.subs_sess, self.sids_to_shop, self.sid_to_sess, self.pid_to_sid = fill_with_data(
