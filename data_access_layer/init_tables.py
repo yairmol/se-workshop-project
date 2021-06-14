@@ -125,7 +125,7 @@ shopping_bag_products = Table(
     Column('amount', Integer)
 )
 
-# Mappings
+# ----------------- Mappings ---------------------
 
 mapper_registry.map_imperatively(Subscribed, subscribed, properties={
     "transactions": relationship(Transaction, backref='subscribed'),
@@ -152,7 +152,7 @@ mapper_registry.map_imperatively(Category, categories)
 
 mapper_registry.map_imperatively(ShoppingCart, shopping_cart, properties={
     "shopping_bags": relationship(
-        ShoppingBag, backref='shopping_cart', collection_class=attribute_mapped_collection('shop'),lazy="joined"
+        ShoppingBag, backref='shopping_cart', collection_class=attribute_mapped_collection('shop')
     ),
     # "subscribed": relationship(Subscribed, backref='shopping_cart')
 })
@@ -163,7 +163,7 @@ mapper_registry.map_imperatively(ProductInBag, shopping_bag_products, properties
 
 mapper_registry.map_imperatively(ShoppingBag, shopping_bag, properties={
     "products": relationship(ProductInBag, backref='shopping_bag_products',
-                             collection_class=attribute_mapped_collection('product'), lazy="joined"),
+                             collection_class=attribute_mapped_collection('product')),
     # "shop": relationship(Shop, backref='shop'),
 })
 

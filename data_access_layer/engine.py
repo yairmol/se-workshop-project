@@ -34,8 +34,11 @@ def add_to_session(func):
     def wrapper(*args, **kwargs):
         with Session(engine) as session:
             session.add(args[0])
-            func(*args, **kwargs)
+            ret = func(*args, **kwargs)
+            session.commit()
+            return ret
     return wrapper
+
 
 def add_shop_to_session(func):
     @wraps(func)
@@ -83,7 +86,6 @@ def get_all_of_field(obj_type, func):
 def delete_all_rows_from_tables():
     with Session(engine) as session:
         for table in mapper_registry.metadata.tables:
-           # mapper_registry.metadata.tables[table].delete()
             session.query(mapper_registry.metadata.tables[table]).delete()
             session.commit()
 
