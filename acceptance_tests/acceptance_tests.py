@@ -1112,6 +1112,31 @@ class DBRobustnessTests(TestCase):
         reset_config()
         reset_facades()
 
+    def test_register_fail_because_offline_db(self):
+        # @TODO: turn off connection with db
+        token = self.commerce_system.enter()
+        register_status = self.commerce_system.register(token, 'NewUser123', 'password')["status"]
+        self.assertFalse(register_status)
+
+    def test_register_fail_then_success_db_off_and_on(self):
+        # @TODO: turn off connection with db
+        token = self.commerce_system.enter()
+        register_status = self.commerce_system.register(token, 'NewUser123', 'password')["status"]
+        self.assertFalse(register_status)
+        # @TODO: turn on connection with db
+        register_status2 = self.commerce_system.register(token, 'NewUser123', 'password')["status"]
+        self.assertTrue(register_status2)
+
+    def test_login_success_with_offline_db(self):
+        token = self.commerce_system.enter()
+        username = 'NewUser1234'
+        password = 'password'
+        register_status = self.commerce_system.register(token, username, password)["status"]
+        self.assertTrue(register_status)
+        # @TODO: turn off connection with db
+        login_status = self.commerce_system.login(token,username,password)["status"]
+        self.assertTrue(login_status)
+
     def test_purchase_fail_because_offline_db(self):
         # @TODO: turn off connection with db
         u1 = self.sessions[self.U1]
