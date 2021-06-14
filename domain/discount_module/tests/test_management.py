@@ -1,5 +1,7 @@
 import unittest
 
+from domain.commerce_system import product
+from domain.commerce_system.product import BuyNow
 from domain.discount_module.discount_calculator import *
 from domain.discount_module.discount_management import *
 
@@ -50,64 +52,86 @@ class DiscountManagementTests(unittest.TestCase):
     def test_create_cond_from_simple_cond(self):
         cond_data = [self.simple_cond1]
         cond: Condition = DiscountManagement.create_cond(cond_data)
-        products = {p1: 3, p2: 5}
+        # products = {p1: 3, p2: 5}
+        purchase_type = p1.get_purchase_type_of_type(BuyNow)
+        products: Dict[Product, ProductInBag] = {p1: ProductInBag(p1,3,purchase_type), p2: ProductInBag(p2,5,purchase_type)}
         assert cond.resolve(products)
 
     def test_create_cond_from_And_cond(self):
         cond: Condition = DiscountManagement.create_cond(self.And_cond1)
-        products = {p1: 3, p2: 5}
+        purchase_type = p1.get_purchase_type_of_type(BuyNow)
+        products: Dict[Product, ProductInBag] = {p1: ProductInBag(p1, 3, purchase_type),
+                                                 p2: ProductInBag(p2, 5, purchase_type)}
         assert cond.resolve(products)
 
     def test_create_cond_from_And_cond2(self):
         cond: Condition = DiscountManagement.create_cond(self.And_cond1)
-        products = {p1: 0, p2: 5}
+        purchase_type = p1.get_purchase_type_of_type(BuyNow)
+        products: Dict[Product, ProductInBag] = {p1: ProductInBag(p1, 0, purchase_type),
+                                                 p2: ProductInBag(p2, 5, purchase_type)}
         assert not cond.resolve(products)
 
     def test_create_cond_from_OR_cond(self):
         cond: Condition = DiscountManagement.create_cond(self.Or_cond1)
-        products = {p1: 3, p2: 5}
+        purchase_type = p1.get_purchase_type_of_type(BuyNow)
+        products: Dict[Product, ProductInBag] = {p1: ProductInBag(p1, 3, purchase_type),
+                                                 p2: ProductInBag(p2, 5, purchase_type)}
         assert cond.resolve(products)
 
     def test_create_cond_from_OR_cond2(self):
         cond: Condition = DiscountManagement.create_cond(self.Or_cond1)
-        products = {p1: 0, p2: 5}
+        purchase_type = p1.get_purchase_type_of_type(BuyNow)
+        products: Dict[Product, ProductInBag] = {p1: ProductInBag(p1, 0, purchase_type),
+                                                 p2: ProductInBag(p2, 5, purchase_type)}
         assert cond.resolve(products)
 
     def test_create_cond_from_Composed_AND_cond(self):
         cond_data = ['and', self.Or_cond1, self.And_cond1,
                      self.simple_cond3]  # condition should not match, because of the And_cond1
         cond: Condition = DiscountManagement.create_cond(cond_data)
-        products = {p1: 0, p2: 5}
+        purchase_type = p1.get_purchase_type_of_type(BuyNow)
+        products: Dict[Product, ProductInBag] = {p1: ProductInBag(p1, 0, purchase_type),
+                                                 p2: ProductInBag(p2, 5, purchase_type)}
         assert not cond.resolve(products)
 
     def test_create_cond_from_Composed_AND_cond2(self):
         cond_data = ['and', self.Or_cond1, self.And_cond1]
         cond: Condition = DiscountManagement.create_cond(cond_data)
-        products = {p1: 3, p2: 5}
+        purchase_type = p1.get_purchase_type_of_type(BuyNow)
+        products: Dict[Product, ProductInBag] = {p1: ProductInBag(p1, 3, purchase_type),
+                                                 p2: ProductInBag(p2, 5, purchase_type)}
         assert cond.resolve(products)
 
     def test_create_cond_from_Composed_OR_cond(self):
         cond_data = ['or', self.Or_cond1, self.And_cond1]  # condition should not match, because of the And_cond1
         cond: Condition = DiscountManagement.create_cond(cond_data)
-        products = {p1: 0, p2: 5}
+        purchase_type = p1.get_purchase_type_of_type(BuyNow)
+        products: Dict[Product, ProductInBag] = {p1: ProductInBag(p1, 0, purchase_type),
+                                                 p2: ProductInBag(p2, 5, purchase_type)}
         assert cond.resolve(products)
 
     def test_create_cond_from_Composed_OR_cond2(self):
         cond_data = ['or', self.Or_cond1, self.And_cond1]
         cond: Condition = DiscountManagement.create_cond(cond_data)
-        products = {p1: 3, p2: 5}
+        purchase_type = p1.get_purchase_type_of_type(BuyNow)
+        products: Dict[Product, ProductInBag] = {p1: ProductInBag(p1, 3, purchase_type),
+                                                 p2: ProductInBag(p2, 5, purchase_type)}
         assert cond.resolve(products)
 
     def test_create_cond_from_Composed_OR_cond3(self):
         cond_data = ['or', self.Or_cond1, self.And_cond1, self.simple_cond3]
         cond: Condition = DiscountManagement.create_cond(cond_data)
-        products = {p1: 3, p2: 5}
+        purchase_type = p1.get_purchase_type_of_type(BuyNow)
+        products: Dict[Product, ProductInBag] = {p1: ProductInBag(p1, 3, purchase_type),
+                                                 p2: ProductInBag(p2, 5, purchase_type)}
         assert cond.resolve(products)
 
     def test_create_cond_from_Composed_OR_cond4(self):
         cond_data = ['or', self.Or_cond1, self.simple_cond3, self.And_cond1]
         cond: Condition = DiscountManagement.create_cond(cond_data)
-        products = {p1: 3, p2: 5}
+        purchase_type = p1.get_purchase_type_of_type(BuyNow)
+        products: Dict[Product, ProductInBag] = {p1: ProductInBag(p1, 3, purchase_type),
+                                                 p2: ProductInBag(p2, 5, purchase_type)}
         assert cond.resolve(products)
 
     ''' Add discount Tests -------------------------------------------------------------------------------- '''
@@ -116,7 +140,9 @@ class DiscountManagementTests(unittest.TestCase):
         discount = AdditiveDiscount([])
         DiscountManagement.add_discount(discount, False, None, self.product1_discount_dict1)
         p1_quantity = 3
-        products = {p1: p1_quantity, p2: 5}
+        purchase_type = p1.get_purchase_type_of_type(BuyNow)
+        products: Dict[Product, ProductInBag] = {p1: ProductInBag(p1, p1_quantity, purchase_type),
+                                                 p2: ProductInBag(p2, 5, purchase_type)}
 
         assert discount.apply(products) == p1.price * p1_quantity * self.product1_discount_dict1['percentage'] / 100
 
@@ -125,7 +151,9 @@ class DiscountManagementTests(unittest.TestCase):
         discount = AdditiveDiscount([])
         discount.add_discount(self.product1_discount1)
         DiscountManagement.add_discount(discount, False, None, self.product1_discount_dict2)
-        products = {p1: 3, p2: 5}
+        purchase_type = p1.get_purchase_type_of_type(BuyNow)
+        products: Dict[Product, ProductInBag] = {p1: ProductInBag(p1, 3, purchase_type),
+                                                 p2: ProductInBag(p2, 5, purchase_type)}
 
         assert discount.apply(products) == (self.product1_discount1.apply(products) + self.product1_discount2.apply(products))
 
