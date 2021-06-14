@@ -6,14 +6,11 @@ import Autocomplete from '@material-ui/lab/Autocomplete';
 import Grid from '@material-ui/core/Grid';
 import {
     get_all_shops_ids_and_names,
-    get_all_shops_info,
     get_all_user_names,
-    get_system_transactions_of_shops,
-    get_system_transactions_of_user,
-    get_user_transactions
+    // get_system_transactions_of_shops,
+    // get_system_transactions_of_user,
 } from "../api";
 import {useAuth} from "./use-auth";
-import {Link} from "react-router-dom";
 import IconButton from "@material-ui/core/IconButton";
 import SearchIcon from "@material-ui/icons/Search";
 
@@ -57,20 +54,15 @@ const useStyles = makeStyles((theme) => ({
     },
 }));
 // e
-export default function System_manager_transaction_history() {
+export default function SystemManagerTransactionHistory() {
   const classes = useStyles();
-  const [allUserNames, setAllUserNames] = useState( []
-      // ["Yossi", "Moshe", "Dikla"]
-  );
-  const [allShopNames, setAllShopNames] = useState([]
-      // [{id: 1, name: "Burger Shop"},
-      // {id: 2, name: "Shoe Shop"},
-      // {id: 3, name: "Flower Shop"}],
-);
-
+  const [allUserNames, setAllUserNames] = useState( []);
+  const [allShopNames, setAllShopNames] = useState([]);
+  const [loaded, setLoaded] = useState(false);
   const [nameOf, setNameOf] = useState("User");
   const [name, setName] = useState("");
-  const [transactions, setTransactions] = useState([]);
+  // const [transactions, setTransactions] = useState([]);
+  const transactions = [];
   const auth = useAuth();
 
 
@@ -79,37 +71,42 @@ export default function System_manager_transaction_history() {
       value === null ? setName("") : setName(value);
   }
   const onNameOfChange = (event) => {
-      console.log(event.target.value);
       setNameOf(event.target.value)
   }
 
-  const onSearchClick = async () => {
-      nameOf === "User" ?
-      await get_system_transactions_of_user(await auth.getToken(), name)
-        .then((res) => {
-          setTransactions(res || [])
-        })
-        .catch((err) => setTransactions([])) :
-      await get_system_transactions_of_shops(await auth.getToken(), name.id)
-        .then((res) => {
-          setTransactions(res || [])
-        })
-        .catch((err) => setTransactions([]))
-  }
-  useEffect(async () => {
-    await get_all_user_names(await auth.getToken())
-        .then((res) => {
-          setAllUserNames(res || allUserNames)
-        })
-        .catch((err) => setAllUserNames(allUserNames))
-     await get_all_shops_ids_and_names(auth.getToken())
-        .then((res) => {
-          setAllShopNames(res || allShopNames)
-        })
-        .catch((err) => setAllShopNames(allShopNames))
-  }, [])
+  // const onSearchClick = async () => {
+  //     nameOf === "User" ?
+  //     await get_system_transactions_of_user(await auth.getToken(), name)
+  //       .then((res) => {
+  //         setTransactions(res || [])
+  //       })
+  //       .catch((err) => setTransactions([])) :
+  //     await get_system_transactions_of_shops(await auth.getToken(), name.id)
+  //       .then((res) => {
+  //         setTransactions(res || [])
+  //       })
+  //       .catch((err) => setTransactions([]))
+  // }
 
-  return(
+  useEffect( () => {
+    async function fetchData() {
+      const token = await auth.getToken();
+      await get_all_user_names(token)
+        .then((res) => {
+          setAllUserNames(res || [])
+        })
+        .catch((_) => setAllUserNames([]))
+      await get_all_shops_ids_and_names(token)
+        .then((res) => {
+          setAllShopNames(res || [])
+        })
+        .catch((_) => setAllShopNames([]))
+      setLoaded(true);
+    }
+    fetchData();
+  }, [auth])
+
+  return(loaded &&
       <Grid container >
         <Grid item xs = {3}>
           <FormControl className={classes.formControl}>

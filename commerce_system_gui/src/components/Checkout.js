@@ -88,17 +88,19 @@ export function Checkout() {
     { from: { pathname: "/", header: "Main Page" } });
 
 
-  useEffect(async () => {
+  useEffect(() => {
     if (!loaded) {
-      await get_cart_info(await auth.getToken()).then((res) => {
-        if (res) {
-          setShoppingCart(res);
-        }
-      })
-      setLoaded(true);
-      // alert(shoppingCart)
+      auth.getToken().then((token) =>
+        get_cart_info(token).then((res) => {
+          if (res) {
+            setShoppingCart(res);
+          }
+        }).then(_ => {
+          setLoaded(true);
+        })
+      )
     }
-  }, []);
+  }, [loaded, auth]);
 
   const payment_details = (details) => ({
     cardName: details.cardName,

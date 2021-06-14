@@ -81,6 +81,7 @@ class SystemService:
 
     def is_valid_token(self, token: str):
         if self.tokenizer.is_token_expired(token):
+            print(f"token {token} expired")
             user_id = self.tokenizer.get_id_by_token(token)
             if user_id > 0:
                 self.commerce_system_facade.remove_active_user(user_id)
@@ -216,28 +217,28 @@ class SystemService:
                          amount_to_buy: int, payment_details: dict, delivery_details: dict) -> dict:
         event_logger.info(f"User: {str(user_id)} tries to purchase {str(amount_to_buy)}"
                           f" products: {str(product_id)} of shop_id: {str(shop_id)}")
-        self.commerce_system_facade.purchase_product(
+        transaction_dict = self.commerce_system_facade.purchase_product(
             user_id, shop_id, product_id, amount_to_buy, payment_details, delivery_details
         )
         event_logger.info(f"User: {str(user_id)} successfully purchased the product {str(product_id)}")
-        return make_status_dict(True, "", "")
+        return make_status_dict(True, "", transaction_dict)
 
     # 2.9
     @handler
     def purchase_shopping_bag(self, user_id: int, shop_id: int, payment_details: dict, delivery_details: dict) -> dict:
         event_logger.info(f"User: {str(user_id)} tries to purchase {str(shop_id)} bag")
-        self.commerce_system_facade.purchase_shopping_bag(user_id, shop_id, payment_details, delivery_details)
+        transaction_dict = self.commerce_system_facade.purchase_shopping_bag(user_id, shop_id, payment_details, delivery_details)
         event_logger.info(f"User: {user_id} successfully purchased the bag of the shop {str(shop_id)}")
-        return make_status_dict(True, "", "")
+        return make_status_dict(True, "", transaction_dict)
 
     # 2.9
     @handler
     def purchase_cart(self, user_id: int, payment_details: dict, delivery_details: dict,
                       all_or_nothing: bool = False) -> dict:
         event_logger.info(f"User: {str(user_id)} tries to purchase his cart")
-        self.commerce_system_facade.purchase_cart(user_id, payment_details, delivery_details, all_or_nothing)
+        transactions_list = self.commerce_system_facade.purchase_cart(user_id, payment_details, delivery_details, all_or_nothing)
         event_logger.info(f"User: {user_id} successfully purchased his cart")
-        return make_status_dict(True, "", "")
+        return make_status_dict(True, "", transactions_list)
 
     # 3. Subscriber Requirements
 
@@ -463,10 +464,31 @@ class SystemService:
         return make_status_dict(True, "", res)
 
     @handler
-    def reply_price_offer(self, user_id: int, shop_id: int, product_id: int, offer_maker: str, action: str):
+    def reply_price_offer(self, user_id: int, shop_id: int, product_id: int, offer_maker: str, action: str, **kwargs):
         event_logger.info(f"User: {user_id} tries to reply to offer for product {product_id}")
-        res = self.commerce_system_facade.reply_price_offer(user_id, shop_id, product_id, offer_maker, action)
+        res = self.commerce_system_facade.reply_price_offer(user_id, shop_id, product_id, offer_maker, action, **kwargs)
         event_logger.info(f"User: {user_id} replied successfully")
+        return make_status_dict(True, "", res)
+
+    @handler
+    def get_user_purchase_offer(self, user_id: int):
+        event_logger.info(f"User: {user_id} tries to reply to get his purchase offers")
+        res = self.commerce_system_facade.get_user_purchase_offers(user_id)
+        event_logger.info(f"User: {user_id} retrieved purchase offers successfully")
+        return make_status_dict(True, "", res)
+
+    @handler
+    def delete_purchase_offer(self, user_id: int, shop_id: int, product_id: int):
+        event_logger.info(f"User: {user_id} tries to delete a purchase offer")
+        res = self.commerce_system_facade.delete_purchase_offer(user_id, shop_id, product_id)
+        event_logger.info(f"User: {user_id} successfully deleted purchase offer")
+        return make_status_dict(True, "", res)
+
+    @handler
+    def accept_counter_offer(self, user_id: int, shop_id: int, product_id: int):
+        event_logger.info(f"User: {user_id} tries to a counter offer")
+        res = self.commerce_system_facade.accept_counter_offer(user_id, shop_id, product_id)
+        event_logger.info(f"User: {user_id} accepted counter offer")
         return make_status_dict(True, "", res)
 
     def cleanup(self):

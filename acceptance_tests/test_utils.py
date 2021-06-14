@@ -68,6 +68,11 @@ def add_products(commerce_system: SystemService, shop_id_to_sess, shop_ids, num_
 def appoint_owners_and_managers(
         commerce_system: SystemService, sessions, sessions_to_users, shop_ids
 ) -> (Dict[int, str], Dict[int, Tuple[str, List[str]]]):
+    """
+    appoint an additional owner and manger for every shop in shop_ids
+    return 2 dictionaries. the first maps shop id to the appointed owner username.
+    the second maps shop id to the  appointed manager username and his permissions
+    """
     num_users, num_shops = len(sessions), len(shop_ids)
     shop_owners_dict, shop_managers_dict = {}, {}
     for i in range(num_shops):
@@ -180,6 +185,11 @@ def set_delivery_facade(mock_type: DeliveryFacadeMocks) -> None:
     }[mock_type]()
     facade.deliver_to = mock.deliver_to
     facade.cancel_delivery = mock.cancel_delivery
+
+
+def reset_facades():
+    IPaymentsFacade.reset()
+    IDeliveryFacade.reset()
 
 
 def admin_login(commerce_system: SystemService):

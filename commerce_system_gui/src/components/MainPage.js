@@ -1,13 +1,12 @@
-import {Input, InputBase} from "@material-ui/core";
+import {InputBase} from "@material-ui/core";
 import React, {useEffect, useState} from "react";
-import Button from "@material-ui/core/Button";
 import ButtonBase from '@material-ui/core/ButtonBase';
 import Typography from '@material-ui/core/Typography';
 import {fade, makeStyles} from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
 
 import {useAuth} from "./use-auth";
-import {get_all_shops_info, get_user_transactions} from "../api";
+import {get_all_shops_info} from "../api";
 import SearchIcon from "@material-ui/icons/Search";
 import {Link as RouteLink} from "react-router-dom";
 
@@ -147,7 +146,6 @@ export const MainPage = (props) => {
 
   function onSearchChange(event){
     // event.persist();
-    console.log( event.target.value);
     setSearchQuery(event.target.value);
   }
   useEffect(() => {
@@ -159,7 +157,6 @@ export const MainPage = (props) => {
      )
   }, [])
   const filteredShops = shops.filter((shop) => shop.shop_name.toLowerCase().includes(searchQuery.toLowerCase()));
-  console.log(filteredShops);
   return (
       <>
 

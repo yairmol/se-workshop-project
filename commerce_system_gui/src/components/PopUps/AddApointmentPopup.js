@@ -6,7 +6,7 @@ import {
   DialogContent,
   DialogTitle, FormControl,
   FormControlLabel,
-  FormGroup, InputLabel, MenuItem, Radio, RadioGroup, Select, TextField
+  FormGroup, InputLabel, MenuItem, Select, TextField
 } from "@material-ui/core";
 import Button from "@material-ui/core/Button";
 

@@ -291,7 +291,7 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         owner = self.get_user(user_id)
         new_manager = self.get_subscribed(username)
         app = owner.user_state.appoint_manager(new_manager, shop, permissions)
-        new_manager.send_message(f"{owner.get_name()} appointed you as owner to {shop.name}")
+        new_manager.send_message(f"{owner.get_name()} appointed you as manager to {shop.name}")
         return app.to_dict()
 
     # 4.6
@@ -418,15 +418,22 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         user = self.get_user(user_id)
         return user.add_purchase_type(shop, product_id, purchase_type_info).id
 
-    def reply_price_offer(self, user_id: int, shop_id: int, product_id: int, offer_maker: str, action: str) -> bool:
+    def reply_price_offer(self, user_id: int, shop_id: int, product_id: int,
+                          offer_maker: str, action: str, **kwargs) -> bool:
         shop = self.get_shop(shop_id)
         user = self.get_user(user_id)
-        return user.reply_price_offer(shop, product_id, offer_maker, action)
+        return user.reply_price_offer(shop, product_id, offer_maker, action, **kwargs)
 
     def offer_price(self, user_id: int, shop_id: int, product_id: int, offer: float) -> bool:
         shop = self.get_shop(shop_id)
         user = self.get_user(user_id)
         return user.offer_price(shop, product_id, offer)
+
+    def get_user_purchase_offers(self, user_id: int) -> List[dict]:
+        user = self.get_user(user_id)
+        assert isinstance(user.user_state, Subscribed)
+        offers = user.user_state.get_my_offers()
+        return [offer.to_dict(include_product=True) for offer in offers]
 
     def clean_up(self):
         self.transaction_repo = self.transaction_repo.cleanup()
@@ -445,3 +452,15 @@ class CommerceSystemFacade(ICommerceSystemFacade):
         user = self.get_user(user_id)
         shop = self.get_shop(shop_id)
         return [offer.to_dict() for offer in user.get_offers(shop, product_id)]
+
+    def delete_purchase_offer(self, user_id: int, shop_id: int, product_id: int):
+        user = self.get_user(user_id)
+        shop = self.get_shop(shop_id)
+        assert isinstance(user.user_state, Subscribed)
+        return user.user_state.delete_offer(shop, product_id)
+
+    def accept_counter_offer(self, user_id: int, shop_id: int, product_id: int):
+        user = self.get_user(user_id)
+        shop = self.get_shop(shop_id)
+        assert isinstance(user.user_state, Subscribed)
+        return user.user_state.accept_counter_offer(shop, product_id)

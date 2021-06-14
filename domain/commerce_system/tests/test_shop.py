@@ -47,6 +47,27 @@ class ShopTests(TestCase):
         self.assertRaises(AssertionError, self.product.can_purchase, PurchaseOfferType,
                           offer_maker=self.buyer.get_name())
 
+    def test_counter_offer(self):
+        self.test_make_offer()
+        counter_offered_price = self.offered_price + 1
+        self.assertTrue(self.founder.reply_price_offer(
+            self.shop, self.product.product_id, self.buyer.get_name(), "counter", counter_offer=counter_offered_price
+        ))
+        self.assertRaises(AssertionError, self.product.can_purchase, PurchaseOfferType,
+                          offer_maker=self.buyer.get_name())
+        self.assertEqual(
+            self.product.get_price(PurchaseOfferType, offer_maker=self.buyer.get_name()),
+            counter_offered_price
+        )
+
+    def test_accept_counter_offer(self):
+        self.test_counter_offer()
+        self.assertTrue(self.buyer.user_state.accept_counter_offer(self.shop, self.product.product_id))
+        self.assertTrue(self.founder.reply_price_offer(
+            self.shop, self.product.product_id, self.buyer.get_name(), "approve"
+        ))
+        self.assertTrue(self.product.can_purchase(PurchaseOfferType, offer_maker=self.buyer.get_name()))
+
 
 if __name__ == "__main__":
     main()

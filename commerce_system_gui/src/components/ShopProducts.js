@@ -1,9 +1,8 @@
 import {Fab, Paper, Typography} from "@material-ui/core";
-import React, {useEffect, useState} from 'react';
+import React, {useState} from 'react';
 import {makeStyles} from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
-import {get_user_transactions, get_shop_transactions, edit_product, add_product_to_shop, delete_product} from "../api";
-import {Link} from "react-router-dom";
+import {edit_product, add_product_to_shop, delete_product} from "../api";
 import AddIcon from '@material-ui/icons/Add';
 import ShopProduct from "./ShopProduct";
 import RemoveProductPopup from "./PopUps/RemoveProductPopup";
