@@ -1,8 +1,7 @@
-from data_access_layer.engine import engine
+from data_access_layer.engine import engine, save, get_first
 from data_access_layer.purchasing_repository import save_transaction
 # from data_access_layer.shop_repository import save_shop, remove_shop, get_shop, save_product, remove_product, \
 #     save_policy, remove_policy, save_category, remove_category, remove_x
-from data_access_layer.shop_repository import save, get_first
 from data_access_layer.subscribed_repository import save_subscribed, get_subscribed, remove_subscribed
 from domain.commerce_system.category import Category
 from domain.commerce_system.product import Product
@@ -14,6 +13,8 @@ from domain.commerce_system.user import Subscribed
 from data_model import ConditionsModel as CondM
 # from init_tables import engine
 from sqlalchemy.orm import Session
+from data_access_layer.init_tables import engine
+
 
 # subscribed = Subscribed("aviv_the_king5")
 # save_subscribed(subscribed)
@@ -70,19 +71,39 @@ condition = [simple_cond]
 
 shop.add_discount(True, condition, product1_discount_dict1)
 
+simple_cond1: SimpleCond = {'condition': 'quantity', 'type': 'product', 'identifier': product_id,
+                                 'num': 1}
+simple_cond2: SimpleCond = {'condition': 'sum', 'type': 'shop', 'identifier': 'shop',
+                                 'num': 50}
 
-# shop.add_purchase_condition(policy1)
-# shop.add_purchase_condition(policy2)
-# shop.add_purchase_condition(policy3)
-# shop.add_purchase_condition(policy4)
-# shop.add_purchase_condition(policy5)
+simple_cond3: SimpleCond = {'condition': 'sum', 'type': 'shop', 'identifier': 'shop',
+                                 'num': 1000000}  # failing simple cond
 
-shop.add_purchase_condition(and_policy)
+And_cond1 = ['and', simple_cond1, simple_cond2]
+Or_cond1 = ['or', simple_cond1, simple_cond2]
+
+product1_discount_dict1: DiscountDict = {
+    'composite': False, 'type': 'product', 'identifier': product_id, 'percentage': 20
+}
+
+product1_discount_dict2: DiscountDict = {
+    'composite': False, 'type': 'product', 'identifier': product_id, 'percentage': 10
+}
+
+shop.add_discount(True, And_cond1, product1_discount_dict1)
+shop.add_discount(True, Or_cond1, product1_discount_dict2)
+
+shop.add_purchase_condition(policy1)
+shop.add_purchase_condition(policy2)
+shop.add_purchase_condition(policy3)
+
+
+# shop.add_purchase_condition(and_policy)
 
 # print(policy.id)
 # print(policy.product_id)
 
-save(shop)
+# save(shop)
 # save_product(product)
 # save_category(category)
 # save_policy(policy1)
@@ -92,9 +113,21 @@ save(shop)
 # save_policy(policy5)
 # save_policy(and_policy)
 shop_check = get_first(Shop, name='Armani')
-with Session(engine) as session:
-    session.add(shop_check)
-    print(shop_check.conditions[0].to_dict())
+# with Session(engine) as session:
+# session.add(shop_check)
+print(shop_check.conditions)
+
+# with Session(engine) as session:
+# session.add(shop)
+shop.add_purchase_condition(policy4)
+shop.add_purchase_condition(policy5)
+
+# save(shop)
+
+shop_check = get_first(Shop, name='Armani')
+# with Session(engine) as session:
+# session.add(shop_check)
+print(shop_check.conditions)
 
 # remove_x(and_policy)
 # remove_product(1)

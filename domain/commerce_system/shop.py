@@ -1,6 +1,7 @@
 import threading
 from typing import Dict, List, TypeVar
 
+from data_access_layer.engine import add_shop_to_session, save, add_to_session, delete
 from domain.commerce_system.action import Action, ActionPool
 from domain.commerce_system.purchase_conditions import Policy, CompositePurchaseCondition
 from domain.discount_module.discount_calculator import AdditiveDiscount, Discount
@@ -55,6 +56,7 @@ class Shop:
             ret[Sm.SHOP_PRODS] = list(map(lambda p: p.to_dict(), self.products.values()))
         return ret
 
+    # @add_to_session
     def add_product(self, **product_info) -> Product:
         """ returns product_id if successful"""
         with self.products_lock:
@@ -64,12 +66,15 @@ class Shop:
             self.products[product.product_id] = product
             for obs in self.shop_owners.values():
                 product.add_observer(obs)
+            save(self)
             return product
 
+    @add_to_session
     def delete_product(self, product_id: int) -> bool:
         with self.products_lock:
             assert product_id in self.products.keys(), f"shop1 does not hold product with id - {product_id}"
             self.products.pop(product_id)
+            delete(Product, product_id=product_id)
             return True
 
     def edit_product(self, product_id, **to_edit) -> bool:

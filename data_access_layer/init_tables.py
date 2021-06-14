@@ -71,6 +71,7 @@ shop = Table(
     Column('name', String),
     Column('description', String),
     Column('image_url', String),
+    # Column('discount', Integer, ForeignKey('discount.id', ondelete='CASCADE')),
 )
 
 categories_product_mtm = Table(
@@ -165,7 +166,8 @@ discount_condition = Table(
     'discount_condition',
     mapper_registry.metadata,
     Column('id', Integer, primary_key=True),
-    Column('type', String),
+    Column('condition_type', String),
+    Column('discount', Integer, ForeignKey('discount.id', ondelete='CASCADE')),
     Column('minimum', Integer),
     Column('conditioned_product_id', Integer),
     Column('conditioned_category', String),
@@ -176,15 +178,24 @@ discount = Table(
     'discount',
     mapper_registry.metadata,
     Column('id', Integer, primary_key=True),
+    Column('discount_type', String),
     Column('shop_id', Integer, ForeignKey('shop.shop_id', ondelete='CASCADE')),
-    Column('condition', Integer, ForeignKey('discount_condition.id', ondelete='CASCADE')),
+    Column('percentage', FLOAT),
+    # Column('condition', Integer, ForeignKey('discount_condition.id', ondelete='CASCADE')),
     Column('parent_discount', Integer, ForeignKey('discount.id', ondelete='CASCADE')),
 )
 
 
 # Mappings
 
-mapper_registry.map_imperatively(Condition, discount_condition)
+mapper_registry.map_imperatively(
+    Condition,
+    discount_condition,
+    polymorphic_on=discount_condition.c.condition_type,
+    properties={
+        "discount_condition": relationship(Discount, back_populates='condition')
+    }
+)
 mapper_registry.map_imperatively(SimpleCondition, discount_condition, inherits=Condition)
 mapper_registry.map_imperatively(QuantitySimpleCondition, discount_condition, inherits=SimpleCondition)
 mapper_registry.map_imperatively(ProductQuantityCondition, discount_condition, inherits=QuantitySimpleCondition)
@@ -214,7 +225,10 @@ mapper_registry.map_imperatively(
             cascade='all, delete, delete-orphan')
     }
 )
-mapper_registry.map_imperatively(Discount, discount)
+mapper_registry.map_imperatively(Discount, discount, polymorphic_on=discount.c.discount_type, properties={
+    "shop": relationship(Shop, back_populates='discount'),
+    "condition": relationship(Condition, back_populates='discount_condition', uselist=False)
+})
 mapper_registry.map_imperatively(ConditionalDiscount, discount, inherits=Discount)
 mapper_registry.map_imperatively(ProductDiscount, discount, inherits=ConditionalDiscount)
 mapper_registry.map_imperatively(CategoryDiscount, discount, inherits=ConditionalDiscount)
@@ -246,7 +260,7 @@ mapper_registry.map_imperatively(Shop, shop, properties={
     "shopping_bag": relationship(ShoppingBag, backref='shop'),
     # "transactions_history": relationship(Transaction, backref='shop'),
     "conditions": relationship(Policy, backref='shop', cascade='all, delete, delete-orphan'),
-    # "discount": relationship(Discount, backref='shop', cascade='delete, delete-orphan')
+    "discount": relationship(Discount, back_populates='shop', uselist=False)
 })
 mapper_registry.map_imperatively(Product, product, properties={
     "categories": relationship(Category, backref='product', secondary=categories_product_mtm),

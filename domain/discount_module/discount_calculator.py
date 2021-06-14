@@ -57,7 +57,7 @@ class QuantitySimpleCondition(SimpleCondition):
 class ProductQuantityCondition(QuantitySimpleCondition):
 
     def __init__(self, min_product_quantity: Union[str, int], conditioned_product_id: Union[str, int]):
-        self.type = "ProductQuantityCondition"
+        self.condition_type = "ProductQuantityCondition"
         self.minimum = int(min_product_quantity)
         self.conditioned_product_id = int(conditioned_product_id)
 
@@ -79,7 +79,7 @@ class ProductQuantityCondition(QuantitySimpleCondition):
 class CategoryQuantityCondition(QuantitySimpleCondition):
 
     def __init__(self, min_category_quantity: Union[int, str], conditioned_category: str):
-        self.type = "CategoryQuantityCondition"
+        self.condition_type = "CategoryQuantityCondition"
         self.minimum = int(min_category_quantity)
         self.conditioned_category = conditioned_category
 
@@ -108,7 +108,7 @@ class SumSimpleCondition(SimpleCondition, ABC):
 class TotalSumCondition(SumSimpleCondition):
 
     def __init__(self, min_sum: Union[str, int, float]):
-        self.type = "TotalSumCondition"
+        self.condition_type = "TotalSumCondition"
         self.minimum = float(min_sum)
 
     def resolve(self, products: Dict[Product, ProductInBag]) -> bool:
@@ -126,7 +126,7 @@ class TotalSumCondition(SumSimpleCondition):
 class CategorySumCondition(SumSimpleCondition):
 
     def __init__(self, min_sum: int, conditioned_category: str):
-        self.type = "CategorySumCondition"
+        self.condition_type = "CategorySumCondition"
         self.minimum = float(min_sum)
         self.conditioned_category = conditioned_category
 
@@ -145,7 +145,7 @@ class CategorySumCondition(SumSimpleCondition):
 class ANDCondition(Condition):
 
     def __init__(self, conditions: List[Condition]):
-        self.type = "ANDCondition"
+        self.condition_type = "ANDCondition"
         self.conditions = conditions
 
     # returns AND between all conditions
@@ -161,7 +161,7 @@ class ANDCondition(Condition):
 
 class ORCondition(Condition):
     def __init__(self, conditions: List[Condition]):
-        self.type = "ORCondition"
+        self.condition_type = "ORCondition"
         self.conditions = conditions
 
     # returns OR between all conditions
@@ -187,6 +187,7 @@ class Discount:
         self.discount_id = self.__id_counter
         Discount.__id_counter = Discount.__id_counter + 1
         self.counter_lock.release()
+        self.discount_type = None
 
     def apply(self, products: Dict[Product, ProductInBag]) -> float:
         raise NotImplementedError()
@@ -209,7 +210,7 @@ class ConditionalDiscount(Discount, ABC):
 class ProductDiscount(ConditionalDiscount):
     def __init__(self, has_cond: bool, condition: Condition, percentage: Union[str, float], product_id: Union[int, str]):
         super().__init__(has_cond, condition, percentage)
-        self.type = "ProductDiscount"
+        self.discount_type = "ProductDiscount"
         self.product_id = int(product_id)
 
     def apply(self, products: Dict[Product, ProductInBag]) -> float:
@@ -231,7 +232,7 @@ class ProductDiscount(ConditionalDiscount):
 class CategoryDiscount(ConditionalDiscount):
     def __init__(self, has_cond: bool, condition: Condition, percentage: Union[str, float], category: str):
         super().__init__(has_cond, condition, percentage)
-        self.type = "CategoryDiscount"
+        self.discount_type = "CategoryDiscount"
         self.category = category
 
     def apply(self, products: Dict[Product, ProductInBag]) -> float:
@@ -253,7 +254,7 @@ class CategoryDiscount(ConditionalDiscount):
 class StoreDiscount(ConditionalDiscount):
     def __init__(self, has_cond: bool, condition: Condition, percentage: Union[str, float]):
         super().__init__(has_cond, condition, percentage)
-        self.type = "StoreDiscount"
+        self.discount_type = "StoreDiscount"
 
     def apply(self, products: Dict[Product, ProductInBag]) -> float:
         if (not self.has_cond) or self.condition.resolve(products):
@@ -294,7 +295,7 @@ class CompositeDiscount(Discount):
 class XorDiscount(CompositeDiscount):
     def __init__(self, discounts: List[Discount]):
         super().__init__(discounts)
-        self.type = "XorDiscount"
+        self.discount_type = "XorDiscount"
 
     def apply(self, products: Dict[Product, ProductInBag]) -> float:
         for discount in self.discounts:
@@ -310,7 +311,7 @@ class XorDiscount(CompositeDiscount):
 class MaxDiscount(CompositeDiscount):
     def __init__(self, discounts: List[Discount]):
         super().__init__(discounts)
-        self.type = "MaxDiscount"
+        self.discount_type = "MaxDiscount"
 
     def apply(self, products: Dict[Product, ProductInBag]) -> float:
         return max(map(lambda d: d.apply(products), self.discounts))
@@ -322,7 +323,7 @@ class MaxDiscount(CompositeDiscount):
 class AdditiveDiscount(CompositeDiscount):
     def __init__(self, discounts: List[Discount]):
         super().__init__(discounts)
-        self.type = "AdditiveDiscount"
+        self.discount_type = "AdditiveDiscount"
 
     def apply(self, products: Dict[Product, ProductInBag]) -> float:
         return sum(map(lambda d: d.apply(products), self.discounts))
