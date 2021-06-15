@@ -81,6 +81,9 @@ class Shop:
             assert product_id in self.products, f"no product with id={product_id}"
             product = self.products[product_id]
             for field, new_value in to_edit.items():
+                if field == "price":
+                    product.price = float(new_value)
+                    continue
                 if field == "quantity":
                     product.set_quantity(new_value)
                     continue
