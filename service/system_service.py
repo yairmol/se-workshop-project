@@ -1,4 +1,4 @@
-from typing import List, Union
+from typing import List, Union, Optional, Tuple
 
 from data_model import PurchaseTypeDict
 from domain.authentication_module.authenticator import Authenticator
@@ -489,6 +489,32 @@ class SystemService:
         event_logger.info(f"User: {user_id} tries to a counter offer")
         res = self.commerce_system_facade.accept_counter_offer(user_id, shop_id, product_id)
         event_logger.info(f"User: {user_id} accepted counter offer")
+        return make_status_dict(True, "", res)
+
+    @handler
+    def get_all_system_actions(self, user_id: int, time_window=None):
+        res = self.commerce_system_facade.get_all_system_actions(user_id, time_window)
+        return make_status_dict(True, "", res)
+
+    @handler
+    def get_user_actions(self, user_id: int, username: str, time_window=None):
+        res = self.commerce_system_facade.get_user_actions(user_id, username, time_window)
+        return make_status_dict(True, "", res)
+
+    @handler
+    def get_action(self, user_id: int, action_name: str, time_window=None):
+        res = self.commerce_system_facade.get_action(user_id, action_name, time_window)
+        return make_status_dict(True, "", res)
+
+    @handler
+    def get_actions_filtered(
+        self,
+        user_id: int,
+        actions: Optional[List[str]] = None,
+        users: Optional[List[str]] = None,
+        time_window: Optional[Tuple[str, str]] = None
+    ):
+        res = self.commerce_system_facade.get_actions_filtered(user_id, actions, users, time_window)
         return make_status_dict(True, "", res)
 
     def cleanup(self):

@@ -58,6 +58,10 @@ class Notifications(INotifications):
         assert user_id in self.clients, "can't send message to unlisted user"
         Notifications.__comm.send_message(msg, client_id=user_id)
 
+    def send_message_of_type(self, user_id, msg, msg_type):
+        assert user_id in self.clients, "can't send message to unlisted user"
+        Notifications.__comm.send_message_of_type(msg, client_id=user_id, msg_type=msg_type)
+
     def send_error(self, user_id, msg):
         assert user_id in self.clients, "can't send error message to unlisted user"
         Notifications.__comm.send_message(msg, client_id=user_id)

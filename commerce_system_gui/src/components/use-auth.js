@@ -38,7 +38,7 @@ function useProvideAuth() {
     // alert("got message");
     console.log(`notifications: ${JSON.stringify(notificationsList)}`)
     console.log(`got message ${msg}`);
-    notificationsList.current.push(msg)
+    notificationsList.current.push(JSON.stringify(msg))
     setNumNotifications(notificationsList.current.length)
   }, [])
 
@@ -151,6 +151,7 @@ function useProvideAuth() {
     signup,
     signout,
     notificationsList: notificationsList.current,
+    registerSystemEventHandler: notifications ? notifications.registerSystemEventHandler : (x) => x,
     numNotifications,
     setNotificationsList,
   };
