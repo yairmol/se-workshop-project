@@ -94,6 +94,8 @@ class Product(Observable):
         return ret[0]
 
     def add_price_offer(self, user_sub, offer: float) -> PurchaseOffer:
+        offer = float(offer)
+        assert offer >= 0, "please enter a positive number"
         purchase_offer_type = self.get_purchase_type_of_type(PurchaseOfferType)
         self.notify(f"user {user_sub.username} offers {offer} for product {self.product_name}")
         return purchase_offer_type.offer_price(user_sub, offer)
