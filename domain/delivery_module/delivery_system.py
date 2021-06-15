@@ -74,7 +74,7 @@ class DeliveryFacadeWSEP(IDeliveryFacade):
     def handshake(self) -> bool:
         data = {"action_type": "handshake"}
         try:
-            response = requests.post(config[cf.DELIVERY_SYSTEM_URL], json=data, timeout=5)
+            response = requests.post(config[cf.DELIVERY_SYSTEM_URL], data=data, timeout=5)
             return response.text == self.SUCCESSFUL_HANDSHAKE
         except Timeout:
             return False
@@ -84,7 +84,7 @@ class DeliveryFacadeWSEP(IDeliveryFacade):
             data = {"action_type": "supply"}
             data.update(contact_details)
             try:
-                response = requests.post(config[cf.DELIVERY_SYSTEM_URL], json=data, timeout=5)
+                response = requests.post(config[cf.DELIVERY_SYSTEM_URL], data=data, timeout=5)
                 text = response.text
                 if represents_int(text):
                     value = int(text)
@@ -100,7 +100,7 @@ class DeliveryFacadeWSEP(IDeliveryFacade):
         if self.handshake():
             data = {"action_type": "cancel_supply", "transaction_id": delivery_id}
             try:
-                response = requests.post(config[cf.DELIVERY_SYSTEM_URL], json=data, timeout=5)
+                response = requests.post(config[cf.DELIVERY_SYSTEM_URL], data=data, timeout=5)
                 return response.text == self.SUCCESSFUL_DELIVERY_CANCEL
             except Timeout:
                 return False

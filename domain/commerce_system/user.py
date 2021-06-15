@@ -306,6 +306,9 @@ class Guest(UserState):
     def login(self):
         return True
 
+    def get_appointments(self) -> List[Appointment]:
+        return []
+
 
 class Subscribed(UserState, Observer):
 

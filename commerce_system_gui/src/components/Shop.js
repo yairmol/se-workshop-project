@@ -4,6 +4,7 @@ import {useCallback, useEffect, useState} from "react";
 import Grid from "@material-ui/core/Grid";
 import {useAuth} from "./use-auth";
 import {
+  get_appointments,
   get_permissions,
   get_shop_info,
 } from "../api";
@@ -11,7 +12,7 @@ import {ShopWorkers} from "./ShopWorkers";
 import {ShopTransactions} from "./Transactions";
 import ShopProducts from './ShopProducts'
 import Button from "@material-ui/core/Button";
-import {useParams, Link as RouteLink} from "react-router-dom";
+import {useParams, Link as RouteLink, useHistory} from "react-router-dom";
 
 
 const useStyles = makeStyles((theme) => ({
@@ -44,6 +45,7 @@ export const Shop = () => {
   const [shop_info, set_info] = useState([])
   const [worker_permissions, set_perms] = useState({'edit_product': false, 'delete_product': true})
   const auth = useAuth();
+  const history = useHistory();
 
   const load_perms_func = useCallback(() => {
     return auth.getToken().then(async (token) => {
@@ -63,16 +65,29 @@ export const Shop = () => {
     })
   , [auth, shop_id])
 
+  const works_in_shop = () =>
+    auth.getToken().then((token) =>
+      get_appointments(token).then((res) => {
+        return res ? res.some((app) => app.shop_id.toString() === shop_id.toString()) : false
+      }))
+
+
   useEffect(() => {
     if (load_perms) {
-      load_perms_func().then((perms) => {
-        if (perms) {
-          if (load_shop_info_bool) {
-            load_info_func().then(_ => {
-              set_load_info(false);
-              set_load_perms(false);
-            });
-          }
+      works_in_shop().then((res) => {
+        if (!res) {
+          history.replace({pathname: `/customer_shop/${shop_id}`, header: "Main Page"})
+        } else {
+          return load_perms_func().then((perms) => {
+            if (perms) {
+              if (load_shop_info_bool) {
+                load_info_func().then(_ => {
+                  set_load_info(false);
+                  set_load_perms(false);
+                });
+              }
+            }
+          })
         }
       })
     }

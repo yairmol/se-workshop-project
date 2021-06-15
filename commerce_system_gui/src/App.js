@@ -81,7 +81,7 @@ export default function App() {
                   <Route path="/shops/:shop_id">
                     <Shop/>
                   </Route>
-                  <Route path="/Cshops/:shop_id">
+                  <Route path="/customer_shop/:shop_id">
                     <ShopForCustomer/>
                   </Route>
                   <Route path="/shops/:shop_id/products/:product_id">
