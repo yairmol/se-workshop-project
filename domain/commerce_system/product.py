@@ -35,8 +35,8 @@ class Product(Observable):
     __product_id = 1
     __id_lock = threading.Lock()
 
-    def __init__(self, product_name: str, price: float, description: str = "", quantity: int = 0,
-                 categories: List[str] = None, shop_id=None, image_url=None):
+    def __init__(self, product_name: str, price: Union[str, float], description: str = "",
+                 quantity: Union[str, int] = 0, categories: List[str] = None, shop_id=None, image_url=None):
         super().__init__()
         if categories is None:
             categories = []
@@ -44,10 +44,10 @@ class Product(Observable):
             self.product_id = Product.__product_id
             Product.__product_id += 1
         self.product_name = product_name
-        self.price = price
+        self.price = float(price)
         self.description = description
         self._quantity = 0
-        self.set_quantity(quantity)
+        self.set_quantity(int(quantity))
         self.categories: List[Category] = [Category(name) for name in categories]
         self.shop_id = shop_id
         self.image_url = image_url
@@ -192,7 +192,7 @@ class PurchaseOffer:
     def __init__(self, product: Product, offer_maker: str, offer: float):
         self.product = product
         self.offer_maker = offer_maker
-        self.offer = offer
+        self.offer = float(offer)
         self.offer_state: OfferState = OfferState.WAITING
         self.approvals: Set[str] = set()
 
