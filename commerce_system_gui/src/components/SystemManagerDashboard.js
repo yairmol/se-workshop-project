@@ -254,7 +254,6 @@ export default function SystemManagerDashboard() {
                                               onChange={(date) => {
                                                 const newDate = formik.values.fromTS;
                                                 newDate.setDate(date.getDate())
-                                                alert(newDate.getTime() / 1000)
                                                 formik.setValues({
                                                   ...formik.values, fromTS: newDate
                                                 })
@@ -269,7 +268,6 @@ export default function SystemManagerDashboard() {
                                               onChange={(date) => {
                                                 const newDate = formik.values.fromTS;
                                                 newDate.setTime(date.getTime())
-                                                alert(newDate.getTime() / 1000)
                                                 formik.setValues({
                                                   ...formik.values, fromTS: newDate
                                                 })
@@ -282,7 +280,6 @@ export default function SystemManagerDashboard() {
                                               onChange={(date) => {
                                                 const newDate = formik.values.toTS;
                                                 newDate.setDate(date.getDate())
-                                                alert(newDate.getTime() / 1000)
                                                 formik.setValues({
                                                   ...formik.values, toTS: newDate
                                                 })
@@ -297,7 +294,6 @@ export default function SystemManagerDashboard() {
                                               onChange={(date) => {
                                                 const newDate = formik.values.toTS;
                                                 newDate.setTime(date.getTime())
-                                                alert(newDate.getTime() / 1000)
                                                 formik.setValues({
                                                   ...formik.values, toTS: newDate
                                                 })
