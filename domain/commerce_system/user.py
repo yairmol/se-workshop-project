@@ -3,6 +3,7 @@ import threading
 from typing import List, Dict, Iterable
 from sqlalchemy import orm
 
+from data_access_layer.engine import add_to_session
 from domain.commerce_system.appointment import Appointment, ShopOwner
 from domain.commerce_system.product import Product, PurchaseType, PurchaseOffer
 from domain.commerce_system.purchase_conditions import Policy
@@ -409,6 +410,7 @@ class Subscribed(UserState, Observer):
     def send_error(self, msg):
         self.notifications.send_error(msg=msg)
 
+    @add_to_session
     def to_dict(self):
         return {UserM.USERNAME: self.get_name()}
 

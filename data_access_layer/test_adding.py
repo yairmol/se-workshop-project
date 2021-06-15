@@ -12,7 +12,6 @@ from domain.commerce_system.transaction import Transaction
 from domain.commerce_system.product import Product
 from domain.commerce_system.shop import Shop
 from domain.commerce_system.user import Subscribed
-from init_tables import engine
 from sqlalchemy.orm import Session
 
 # subscribed = Subscribed("aviv_the_king6")
@@ -27,10 +26,10 @@ from sqlalchemy.orm import Session
 
 # remove_all_subscribed(Subscribed)
 
-sub = Subscribed("aviv")
-sub.open_shop({"shop_name": "shop1", "description": "the one and only shop in the entire commerce system"})
-# my_shop = Shop("Armani", "Dudu Faruk's favorite shop", "https://website/cool_image.jpg/")
-my_shop = sub.open_shop({"shop_name": "shop1", "description": "the one and only shop in the entire commerce system"})
+# sub = Subscribed("aviv")
+# sub.open_shop({"shop_name": "shop1", "description": "the one and only shop in the entire commerce system"})
+# # my_shop = Shop("Armani", "Dudu Faruk's favorite shop", "https://website/cool_image.jpg/")
+# my_shop = sub.open_shop({"shop_name": "shop1", "description": "the one and only shop in the entire commerce system"})
 # prod = my_shop.add_product(product_name="Bamba", price=30.5, description="its osem", quantity=10, categories=["snacks"])
 #
 # prod_in_bag = ProductInBag(prod, 1, prod.get_purchase_type_of_type(BuyNow))
@@ -107,9 +106,6 @@ owner1.owner_appointees = [owner3]
 manager1 = ShopManager(shop2, owner2.username, [], username="yes")
 owner_apped2 = ShopManager(shop, owner1.username, [], username="yes22")
 
-manager4 = ShopManager(shop, owner1.username, [], "yes44")
-
-
 sub3.appointments[shop] = owner3
 
 sub2.appointments[shop2] = owner2
@@ -119,11 +115,11 @@ sub.appointments[shop2] = manager1
 
 sub.appointments[shop] = owner1
 
-# shop.add_manager(manager4)
-shop.add_owner(owner3)
-shop.add_owner(owner1)
-shop2.add_owner(owner2)
-shop2.add_manager(manager1)
+
+shop.add_owner(sub3)
+shop.add_owner(sub)
+shop2.add_owner(sub2)
+shop2.add_manager(sub)
 
 save_shop(shop)
 
@@ -131,10 +127,6 @@ save_subscribed(sub)
 save_subscribed(sub2)
 save_subscribed(sub2)
 save_subscribed(sub4)
-
-
-save(manager4)
-
 
 
 

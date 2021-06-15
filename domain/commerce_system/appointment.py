@@ -242,7 +242,7 @@ class ShopOwner(Appointment):
         apps[self.shop] = appointment
         with self.appointees_lock:
             self.appointees += [sub]
-        self.shop.add_manager(appointment)
+        self.shop.add_manager(sub)
         return appointment
 
     def appoint_owner(self, new_owner_sub) -> Appointment:
@@ -253,7 +253,7 @@ class ShopOwner(Appointment):
         apps[self.shop] = appointment
         with self.appointees_lock:
             self.appointees += [new_owner_sub]
-        self.shop.add_owner(appointment)
+        self.shop.add_owner(sub)
         return appointment
 
     def remove_appointment(self, sub) -> bool:

@@ -4,7 +4,7 @@ import data_access_layer.init_tables
 from typing import Dict, List, Union, Optional
 from config.config import config, ConfigFields as cf
 from data_access_layer.engine import add_to_session, get_first, get_all_of_field, delete_all, drop_all_tables, \
-    delete_all_rows_from_tables
+    delete_all_rows_from_tables, add_n_to_session_and_run
 from data_access_layer.subscribed_repository import get_subscribed, get_all_subscribed, remove_all_subscribed, \
     save_subscribed
 from data_model import ConditionsModel as Cm
@@ -90,14 +90,18 @@ class CommerceSystemFacade(ICommerceSystemFacade):
 
     # 2.5
     def get_shop_info(self, user_id: int, shop_id: int) -> dict:
-        user = self.get_user(user_id)
+        # user = self.get_user(user_id)
         shop: Shop = self.shops[shop_id]
-        user.get_shop_info(shop)
-        return shop.to_dict()
+
+        def get_info():
+            shop.to_dict()
+
+        return add_n_to_session_and_run(get_info, shop)
 
     def get_all_shop_info(self) -> List[dict]:
-        shops = [shop.to_dict() for shop in self.shops.values()]
-        return shops
+        def get_info():
+            return [shop.to_dict() for shop in self.shops.values()]
+        return add_n_to_session_and_run(get_info, self.shops.values())
 
     def get_all_shop_ids_and_names(self) -> Dict[int, str]:
         ret = {}

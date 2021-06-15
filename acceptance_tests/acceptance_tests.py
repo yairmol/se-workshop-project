@@ -5,6 +5,7 @@ from unittest import TestCase
 import threading as th
 import requests
 
+from data_access_layer.engine import delete_all_rows_from_tables
 from domain.discount_module.discount_management import DiscountDict, SimpleCond
 from driver import Driver
 from service.init_dict import InitDict
@@ -32,6 +33,7 @@ ROBUSTNESS_TESTS_CONFIG = "./robustness-tests-config.json"
 # 2. Guest Functional Requirements tests
 class GuestTests(TestCase):
     def setUp(self) -> None:
+        delete_all_rows_from_tables()
         load_config(TESTS_CONFIG_PATH)
         self.commerce_system = Driver.get_system_service()
         self.session_id = self.commerce_system.enter()['result']
@@ -99,6 +101,7 @@ class GuestTests(TestCase):
 class SubscribedTests(TestCase):
 
     def setUp(self) -> None:
+        delete_all_rows_from_tables()
         load_config(TESTS_CONFIG_PATH)
         self.commerce_system = Driver.get_system_service()
         self.session_id = enter_register_and_login(self.commerce_system, users[0])
@@ -141,6 +144,7 @@ class SubscribedTests(TestCase):
 class ShopOwnerOperations(TestCase):
 
     def setUp(self) -> None:
+        delete_all_rows_from_tables()
         load_config(TESTS_CONFIG_PATH)
         self.commerce_system = Driver.get_system_service()
         self.session_id = enter_register_and_login(self.commerce_system, users[0])
@@ -300,6 +304,7 @@ class ShopOwnerOperations(TestCase):
 class ShopManagerOperations(TestCase):
 
     def setUp(self) -> None:
+        delete_all_rows_from_tables()
         load_config(TESTS_CONFIG_PATH)
         self.commerce_system = Driver.get_system_service()
         self.owner_session_id = enter_register_and_login(self.commerce_system, users[0])
@@ -444,6 +449,7 @@ class PurchasesTests(TestCase):
     U1, U2 = 0, 1
 
     def setUp(self) -> None:
+        delete_all_rows_from_tables()
         load_config(TESTS_CONFIG_PATH)
         self.commerce_system = Driver.get_system_service()
         set_delivery_facade(DeliveryFacadeMocks.ALWAYS_TRUE)
@@ -995,6 +1001,7 @@ class RobustnessTests(TestCase):
     config_url = "http://localhost:8080/config"
 
     def setUp(self) -> None:
+        delete_all_rows_from_tables()
         load_config(ROBUSTNESS_TESTS_CONFIG)
         self.commerce_system = Driver.get_system_service()
 
@@ -1169,6 +1176,7 @@ class ParallelismTests(TestCase):
     S1 = 0
 
     def setUp(self) -> None:
+        delete_all_rows_from_tables()
         load_config(TESTS_CONFIG_PATH)
         set_delivery_facade(DeliveryFacadeMocks.ALWAYS_TRUE)
         set_payment_facade(PaymentFacadeMocks.ALWAYS_TRUE)
@@ -1261,6 +1269,7 @@ class ParallelismTests(TestCase):
 
 class TestInit(unittest.TestCase):
     def setUp(self) -> None:
+        delete_all_rows_from_tables()
         self.service = Driver.get_system_service()
 
     def tearDown(self) -> None:

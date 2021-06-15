@@ -34,18 +34,22 @@ class Authenticator:
 
     def users_passwords(self, username):
         if username not in self._users_passwords:
-            try:
-                self._users_passwords[username] = get_first(Password, username=username)
-            except Exception as e:
-                raise Exception("no password found")
+            # try:
+            #     self._users_passwords[username] = get_first(Password, username=username)
+            # except Exception as e:
+            #     raise Exception("no password found")
+            return None
         return self._users_passwords[username]
 
     def has_user(self, username):
         if username not in self._users_passwords:
-            try:
-                return get_first(Password, username=username)
-            except Exception as e:
-                return 0
+            # try:
+            #     p = get_first(Password, username=username)
+            #     if p:
+            #         self._users_passwords[username] = p
+            #     return p
+            # except Exception as e:
+            return None
         return self._users_passwords[username]
 
     def register_new_user(self, username: str, plaintext_password: str):
@@ -57,7 +61,7 @@ class Authenticator:
 
             encrypted_password = encrypt_password(plaintext_password, username)
             self._users_passwords[username] = encrypted_password
-            save(encrypted_password)
+            # save(encrypted_password)
 
     # receives plaintext password, returns dictionary of salt, encrypted password
 
@@ -65,7 +69,7 @@ class Authenticator:
         with self.users_passwords_lock:
             pass_obj = self.has_user(username)
             assert pass_obj, "Username doesn't exists"
-            salt = pass_obj['salt']  # Get the salt
-            key = pass_obj['key']  # Get the correct key
-            new_key = encrypt_password(plaintext_password, salt=salt)["key"]
+            salt = pass_obj.salt  # Get the salt
+            key = pass_obj.password_hash  # Get the correct key
+            new_key = encrypt_password(plaintext_password, username, salt=salt).password_hash
             assert key == new_key, "Wrong password"

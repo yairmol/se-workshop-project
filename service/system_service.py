@@ -253,8 +253,13 @@ class SystemService:
     @handler
     def open_shop(self, user_id: int, **shop_details) -> dict:
         event_logger.info(f"User: {user_id} tries to open shop: {shop_details['shop_name']}")
+        print("+++++++")
         shop_id = self.commerce_system_facade.open_shop(user_id, **shop_details)
+        print("--------"
+              ""
+              "")
         event_logger.info(f"User: {user_id} opened shop: {shop_id} successfully")
+        print(shop_id)
         return make_status_dict(True, "", shop_id)
 
     # 3.7

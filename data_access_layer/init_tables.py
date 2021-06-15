@@ -9,12 +9,9 @@ from sqlalchemy.orm.collections import attribute_mapped_collection
 from sqlalchemy.orm.collections import attribute_mapped_collection
 from domain.authentication_module.authenticator import Password
 
-from domain.commerce_system.appointment import ShopManager, ShopOwner, Appointment
-# from domain.authentication_module.authenticator import Password
-from domain.commerce_system.appointment import ShopManager, ShopOwner
 from domain.commerce_system.category import Category
 from domain.commerce_system.shopping_cart import ShoppingCart, ShoppingBag
-from domain.commerce_system.appointment import ShopManager, ShopOwner
+from domain.commerce_system.appointment import ShopManager, ShopOwner, Appointment
 from domain.commerce_system.category import Category
 from domain.commerce_system.purchase_conditions import Policy, MaxQuantityForProductCondition, \
     DateWindowForProductCondition, DateWindowForCategoryCondition, TimeWindowForProductCondition, \
@@ -53,7 +50,7 @@ subscribed = Table(
 passwords = Table(
     'password',
     mapper_registry.metadata,
-    Column('username', String, ForeignKey("subscribed.username"), primary_key=True),
+    Column('username', String, primary_key=True),
     Column('password_hash', String),
     Column('salt', String),
 )
@@ -186,7 +183,7 @@ shopping_bag_products = Table(
 
 mapper_registry.map_imperatively(Subscribed, subscribed, properties={
     "transactions": relationship(Transaction, backref='subscribed', lazy="joined"),
-    "appointments": relationship(Appointment,
+    "appointments": relationship(Appointment, backref='subscribed',
                                  collection_class=attribute_mapped_collection('shop'), lazy="joined"),
 })
 
@@ -335,7 +332,14 @@ mapper_registry.map_imperatively(ShopOwner, appointments, polymorphic_identity='
 
 mapper_registry.map_imperatively(ShopManager, appointments, polymorphic_identity='M', inherits=Appointment)
 
-mapper_registry.map_imperatively(Condition, discount_condition)
+mapper_registry.map_imperatively(
+    Condition,
+    discount_condition,
+    polymorphic_on=discount_condition.c.condition_type,
+    properties={
+        "discount_condition": relationship(Discount, back_populates='condition', lazy="joined")
+    }
+)
 mapper_registry.map_imperatively(SimpleCondition, discount_condition, inherits=Condition)
 mapper_registry.map_imperatively(QuantitySimpleCondition, discount_condition, inherits=SimpleCondition)
 mapper_registry.map_imperatively(ProductQuantityCondition, discount_condition, inherits=QuantitySimpleCondition)
@@ -351,7 +355,7 @@ mapper_registry.map_imperatively(
         "conditions": relationship(
             Condition,
             backref=backref('and_conditions', remote_side=[discount_condition.c.id]),
-            cascade='all, delete, delete-orphan')
+            cascade='all, delete, delete-orphan', lazy="joined")
     }
 )
 mapper_registry.map_imperatively(
@@ -362,10 +366,14 @@ mapper_registry.map_imperatively(
         "conditions": relationship(
             Condition,
             backref=backref('or_conditions', remote_side=[discount_condition.c.id]),
-            cascade='all, delete, delete-orphan')
+            cascade='all, delete, delete-orphan', lazy="joined")
     }
 )
-mapper_registry.map_imperatively(Discount, discount)
+
+mapper_registry.map_imperatively(Discount, discount, polymorphic_on=discount.c.discount_type, properties={
+    "shop": relationship(Shop, back_populates='discount'),
+    "condition": relationship(Condition, back_populates='discount_condition', uselist=False, lazy="joined")
+})
 mapper_registry.map_imperatively(ConditionalDiscount, discount, inherits=Discount)
 mapper_registry.map_imperatively(ProductDiscount, discount, inherits=ConditionalDiscount)
 mapper_registry.map_imperatively(CategoryDiscount, discount, inherits=ConditionalDiscount)
@@ -376,13 +384,11 @@ mapper_registry.map_imperatively(
     inherits=Discount,
     properties={
         "discounts": relationship(Discount, backref=backref('composite_discounts', remote_side=[discount.c.id]),
-                                  cascade='all, delete, delete-orphan')
+                                  cascade='all, delete, delete-orphan', lazy="joined")
     }
 )
 mapper_registry.map_imperatively(XorDiscount, discount, inherits=CompositeDiscount)
 mapper_registry.map_imperatively(MaxDiscount, discount, inherits=CompositeDiscount)
 mapper_registry.map_imperatively(AdditiveDiscount, discount, inherits=CompositeDiscount)
-
-
 
 mapper_registry.metadata.create_all(engine)
