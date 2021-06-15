@@ -42,13 +42,13 @@ def remove_all_subscribed(subscribed_type):
         # session.execute("TRUNCATE TABLE subscribed")
 
 
-def save_password(password):
-    with Session(engine) as session:
-        session.add(password)
-        session.commit()
-
-
-def get_password(username: str):
-    with Session(engine) as session:
-        subscribed = session.query(Password).filter_by(username=username).first()
-        return subscribed
+# def save_password(password):
+#     with Session(engine) as session:
+#         session.add(password)
+#         session.commit()
+#
+#
+# def get_password(username: str):
+#     with Session(engine) as session:
+#         p = session.query(Password).filter_by(username=username).first()
+#         return p

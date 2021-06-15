@@ -220,7 +220,6 @@ mapper_registry.map_imperatively(Category, categories, properties={
 #     "shoppingBags": relationship(ShoppingBag, backref='shopping_cart'),
 #     "subscribed": relationship(Subscribed, backref='shopping_cart')
 # })
-mapper_registry.map_imperatively(ShoppingBag, shopping_bag)
 
 mapper_registry.map_imperatively(
     Policy,
@@ -322,8 +321,8 @@ mapper_registry.map_imperatively(ProductInBag, shopping_bag_products, properties
 
 mapper_registry.map_imperatively(ShoppingBag, shopping_bag, properties={
     "products": relationship(ProductInBag, backref='shopping_bag_products',
-                             collection_class=attribute_mapped_collection('product'), lazy="joined"),
-    # "shop": relationship(Shop, backref='shop', lazy="joined"),
+                             collection_class=attribute_mapped_collection('product')),
+
 })
 
 mapper_registry.map_imperatively(Appointment, appointments, polymorphic_on='type', properties={
@@ -335,9 +334,6 @@ mapper_registry.map_imperatively(ShopOwner, appointments, polymorphic_identity='
 })
 
 mapper_registry.map_imperatively(ShopManager, appointments, polymorphic_identity='M', inherits=Appointment)
-
-
-
 
 mapper_registry.map_imperatively(Condition, discount_condition)
 mapper_registry.map_imperatively(SimpleCondition, discount_condition, inherits=Condition)

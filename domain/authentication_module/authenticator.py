@@ -6,7 +6,7 @@ import hashlib
 import os
 
 from config.config import config, ConfigFields as cf
-from data_access_layer.subscribed_repository import save_password
+from data_access_layer.engine import get_first, save
 
 
 class Password:
@@ -16,40 +16,56 @@ class Password:
         self.salt = salt
 
 
-def encrypt_password(plaintext_password: str, salt=None) -> Dict:
+def encrypt_password(plaintext_password: str, username, salt=None) -> Password:
     if not salt:
         salt = os.urandom(32)  # A new salt for this user
     if config[cf.HASH_ALG] == "modulo":
         key = int.from_bytes(plaintext_password.encode() + salt, 'big', signed=False) % int(1E10)
     else:
         key = hashlib.pbkdf2_hmac(config[cf.HASH_ALG], plaintext_password.encode('utf-8'), salt, 100000)
-    return {'salt': salt, 'key': key}
+    return Password(username, key, salt)
 
 
 class Authenticator:
     users_passwords_lock = threading.Lock()
 
     def __init__(self):
-        self.users_passwords: Dict[str, Dict] = {}  # [username, password (encrypted)]
+        self._users_passwords: Dict[str, Dict] = {}  # [username, password (encrypted)]
+
+    def users_passwords(self, username):
+        if username not in self._users_passwords:
+            try:
+                self._users_passwords[username] = get_first(Password, username=username)
+            except Exception as e:
+                raise Exception("no password found")
+        return self._users_passwords[username]
+
+    def has_user(self, username):
+        if username not in self._users_passwords:
+            try:
+                return get_first(Password, username=username)
+            except Exception as e:
+                return 0
+        return self._users_passwords[username]
 
     def register_new_user(self, username: str, plaintext_password: str):
         with self.users_passwords_lock:
-            assert username not in self.users_passwords, "Username already exists"
+            assert not self.has_user(username), "Username already exists"
             assert validate.validate_username(username), "Username length needs to be between 1 - 20 characters"
             assert validate.validate_password(plaintext_password), \
                 "Password length needs to be between 6 - 20 characters"
 
-            encrypted_password = encrypt_password(plaintext_password)
-            self.users_passwords[username] = encrypted_password
-            save_password(encrypted_password)
+            encrypted_password = encrypt_password(plaintext_password, username)
+            self._users_passwords[username] = encrypted_password
+            save(encrypted_password)
 
     # receives plaintext password, returns dictionary of salt, encrypted password
 
     def login(self, username: str, plaintext_password: str):
         with self.users_passwords_lock:
-            assert username in self.users_passwords, "Username doesn't exists"
-
-            salt = self.users_passwords[username]['salt']  # Get the salt
-            key = self.users_passwords[username]['key']  # Get the correct key
+            pass_obj = self.has_user(username)
+            assert pass_obj, "Username doesn't exists"
+            salt = pass_obj['salt']  # Get the salt
+            key = pass_obj['key']  # Get the correct key
             new_key = encrypt_password(plaintext_password, salt=salt)["key"]
             assert key == new_key, "Wrong password"
