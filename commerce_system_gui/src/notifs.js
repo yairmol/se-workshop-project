@@ -29,6 +29,12 @@ export default function startNotifications() {
     socket.off('notification')
   }
 
+  function registerSystemEventHandler(onSystemEvent) {
+    socket.on('system_event', (msg) => {
+      onSystemEvent(msg);
+    })
+  }
+
   function isConnected() {
     return socket.connected;
   }
@@ -43,6 +49,7 @@ export default function startNotifications() {
     registerNotifErrorHandler,
     registerBroadcastHandler,
     unregisterHandler,
+    registerSystemEventHandler,
     enlist,
     isConnected,
   }

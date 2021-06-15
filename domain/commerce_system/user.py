@@ -158,6 +158,9 @@ class User:
     def get_offers(self, shop: Shop, product_id: int) -> List[PurchaseOffer]:
         return self.user_state.get_offers(shop, product_id)
 
+    def get_system_activity(self) -> bool:
+        return self.user_state.get_system_activity()
+
 
 class UserState:
     def get_name(self, userid=None) -> str:
@@ -286,6 +289,9 @@ class UserState:
     def accept_counter_offer(self, shop: Shop, product_id: int) -> bool:
         raise Exception("user cannot accept counter offer")
 
+    def get_system_activity(self) -> bool:
+        raise Exception("User cannot acces the system activity reports")
+
 
 class Guest(UserState):
     def get_name(self, userid=None):
@@ -333,6 +339,15 @@ class Subscribed(UserState, Observer):
         except Exception:
             self.pending_messages.append(msg)
             return False
+
+    def send_message_of_type(self, msg, msg_type=None):
+        if not msg_type:
+            self.send_message(msg)
+        try:
+            assert self.logged_user is not None, "subscribed is not logged in"
+            self.notifications.send_message_of_type(self.logged_user, msg, msg_type)
+        except Exception as e:
+            print("exception while sendong message", e)
 
     def send_error(self, msg):
         self.notifications.send_error(msg=msg)
@@ -487,3 +502,6 @@ class SystemManager(Subscribed):
 
     def get_system_transaction_history_of_user(self, username: str):
         return self.system_transactions.get_transactions_of_user(username)
+
+    def get_system_activity(self) -> bool:
+        return True
