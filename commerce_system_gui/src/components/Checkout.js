@@ -107,13 +107,13 @@ export function Checkout() {
     cardNumber: details.cardNumber,
     expDate: details.expDate,
     cvv: details.cvv,
+    id: details.id
   })
 
   const delivery_details = (details) => ({
     firstName: details.firstName,
     lastName: details.lastName,
-    address1: details.address1,
-    address2: details.address2,
+    address: details.address1,
     city: details.city,
     country: details.country,
     zip: details.zip,
@@ -124,7 +124,6 @@ export function Checkout() {
       firstName: '',
       lastName: '',
       address1: '',
-      address2: '',
       city: '',
       country: '',
       zip: '',
@@ -132,6 +131,7 @@ export function Checkout() {
       cardNumber: '',
       expDate: '',
       cvv: '',
+      id: ''
     },
     validate: values => {
       const errors = {};

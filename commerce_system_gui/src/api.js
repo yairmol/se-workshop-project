@@ -418,6 +418,23 @@ export const get_all_user_names = (token) => {
   }).then((res) => res.data)
 }
 
+const parsePaymentDetails = (paymentDetails) => ({
+  card_number: paymentDetails.cardNumber,
+  holder: paymentDetails.cardName,
+  ccv: paymentDetails.cvv,
+  month: paymentDetails.expDate.split('/')[0],
+  year: paymentDetails.expDate.split('/')[1],
+  id: paymentDetails.id
+})
+
+const parseDeilveryDetails = (deliveryDetails) => ({
+  name: `${deliveryDetails.firstName} ${deliveryDetails.lastName}`,
+  address: deliveryDetails.address,
+  city: deliveryDetails.city,
+  country: deliveryDetails.country,
+  zip: deliveryDetails.zip,
+})
+
 export const purchase_product = (token, shop_id, product_id, amount, payment_details, delivery_details) => {
   return axios({
     method: "POST",
@@ -425,8 +442,8 @@ export const purchase_product = (token, shop_id, product_id, amount, payment_det
     data: {
       token: token,
       amount: amount,
-      payment_details: payment_details,
-      delivery_details: delivery_details,
+      payment_details: parsePaymentDetails(payment_details),
+      delivery_details: parseDeilveryDetails(delivery_details),
 
     }
   }).then((res) => {
@@ -439,13 +456,14 @@ export const purchase_product = (token, shop_id, product_id, amount, payment_det
 }
 
 export const purchase_shopping_bag = (token, shop_id, payment_details, delivery_details) => {
+
   return axios({
     method: "POST",
     url: `${base_route}/${urljoin(routes.cart, shop_id.toString())}`,
     data: {
       token: token,
-      payment_details: payment_details,
-      delivery_details: delivery_details,
+      payment_details: parsePaymentDetails(payment_details),
+      delivery_details: parseDeilveryDetails(delivery_details),
     }
   }).then((res) => {
     if (res.data.status) {
@@ -457,13 +475,14 @@ export const purchase_shopping_bag = (token, shop_id, payment_details, delivery_
 }
 
 export const purchase_cart = (token, payment_details, delivery_details) => {
+
   return axios({
     method: "POST",
     url: `${base_route}/${urljoin(routes.cart)}`,
     data: {
       token: token,
-      payment_details: payment_details,
-      delivery_details: delivery_details,
+      payment_details: parsePaymentDetails(payment_details),
+      delivery_details: parseDeilveryDetails(delivery_details),
     }
   }).then((res) => {
     if (res.data.status) {
@@ -728,7 +747,7 @@ export const get_appointments = (token) => {
     } else {
       throw new Error(res.data.description)
     }
-  }).catch((err) => alert(`failed to get shop discounts due to ${err}`));
+  }).catch((err) => alert(`failed to get appointments due to ${err}`));
 }
 
 export const get_shop_policies = (token, shop_id) => {

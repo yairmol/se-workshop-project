@@ -30,8 +30,8 @@ HASH_ALGORITHMS = ["sha256", "sha2", "md5", "modulo"]
 config = {
     ConfigFields.PAYMENT_SYSTEM_URL: "https://cs-bgu-wsep.herokuapp.com/",
     ConfigFields.DELIVERY_SYSTEM_URL: "https://cs-bgu-wsep.herokuapp.com/",
-    ConfigFields.PAYMENT_FACADE: "always_true",  # values: "real", "always_true", "always_false"
-    ConfigFields.DELIVERY_FACADE: "always_true",  # values: "real", "always_true", "always_false"
+    ConfigFields.PAYMENT_FACADE: "real",  # values: "real", "always_true", "always_false"
+    ConfigFields.DELIVERY_FACADE: "real",  # values: "real", "always_true", "always_false"
     ConfigFields.DATABASE_URL: "?",
     ConfigFields.DATABASE_CREDENTIALS: {
         ConfigFields.DATABASE_USERNAME: "",

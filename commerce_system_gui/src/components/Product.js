@@ -34,7 +34,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 
-const OfferPriceDialog = ({shopId, product, close}) => {
+export const OfferPriceDialog = ({shopId, product, close}) => {
   const [price, setPrice] = useState("0");
   const auth = useAuth();
 
@@ -82,7 +82,7 @@ const OfferPriceDialog = ({shopId, product, close}) => {
 }
 
 
-export const Product = ({shop_name}) => {
+export const Product = () => {
   const classes = useStyles();
   const auth = useAuth()
 
