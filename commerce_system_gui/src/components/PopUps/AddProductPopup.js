@@ -49,6 +49,7 @@ export default function AddProductPopup({close_window_func, add_product_func}) {
   const [price, setPrice] = useState("");
   const [description, setDescription] = useState("");
   const [categories, setCategories] = useState("");
+  const [quantity, setQuantity] = useState("");
 
   const set_categories = (category_str) => {
     let categories_lst = category_str.split(',');
@@ -67,7 +68,7 @@ export default function AddProductPopup({close_window_func, add_product_func}) {
     /*
     CALL FOR ADD PRODUCT
      */
-    add_product_func(name, price, description, categories)
+    add_product_func(name, price, quantity, description, categories)
     handleClose()
   }
 
@@ -84,14 +85,18 @@ export default function AddProductPopup({close_window_func, add_product_func}) {
         </DialogTitle>
         <DialogContent>
         <form autoComplete="off">
-            <TextField autoFocus margin="dense" id="name" label="product name" fullWidth
+            <TextField autoFocus margin="dense" id="name" label="product name" fullWidth value={name}
                        onChange={(e) => setName(e.target.value)} />
-            <TextField autoFocus margin="dense" id="description" label="description" fullWidth
+            <TextField autoFocus margin="dense" id="description" label="description" fullWidth value={description}
                        onChange={(e) => setDescription(e.target.value)} />
+            <TextField autoFocus margin="dense" id="price" label="quantity" fullWidth value={quantity}
+                       InputProps={{inputComponent: NumberFormatCustom}}
+                       onChange={(e) => setQuantity(e.target.value)}/>
             <TextField autoFocus margin="dense" id="price" label="price" fullWidth InputProps={{
             startAdornment: <InputAdornment position="start">₪</InputAdornment>, inputComponent: NumberFormatCustom,
-          }}           onChange={(e) => setPrice(e.target.value)}/>
-            <TextField autoFocus margin="dense" id="name" label="categories" fullWidth
+          }}           onChange={(e) => setPrice(e.target.value)}
+            value={price}/>
+            <TextField autoFocus margin="dense" id="name" label="categories" fullWidth value={categories}
                        onChange={(e) => set_categories(e.target.value)}/>
         </form>
         </DialogContent>

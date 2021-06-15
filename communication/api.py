@@ -58,6 +58,13 @@ def create_app(init=None):
             socketio.emit('notification', msg, room=client_session_map[client_id])
 
         @staticmethod
+        def send_message_of_type(msg, client_id, msg_type='notification'):
+            print(f"sending message {msg} of type {msg_type} to {client_id}", client_session_map)
+            assert client_id in client_session_map, "client is not connected"
+            print("client id in client session map")
+            socketio.emit(msg_type, msg, room=client_session_map[client_id])
+
+        @staticmethod
         def send_error(msg, client_id):
             socketio.emit('error', msg, room=client_session_map[client_id])
 
@@ -370,6 +377,30 @@ def create_app(init=None):
     def delete_offer(shop_id: int, product_id: int):
         return apply_request_on_function(
             __system_service.delete_purchase_offer, shop_id=shop_id, product_id=product_id
+        )
+
+    @app.route(f'{API_BASE}/stats')
+    def get_all_system_actions():
+        return apply_request_on_function(
+            __system_service.get_all_system_actions
+        )
+
+    @app.route(f'{API_BASE}/stats/users/<username>')
+    def get_user_actions(username: str):
+        return apply_request_on_function(
+            __system_service.get_user_actions, username=username
+        )
+
+    @app.route(f'{API_BASE}/stats/actions/<action_name>')
+    def get_action(action_name: str):
+        return apply_request_on_function(
+            __system_service.get_action, action_name=action_name
+        )
+
+    @app.route(f"{API_BASE}/stats/filtered", methods=['POST'])
+    def get_actions_filtered():
+        return apply_request_on_function(
+            __system_service.get_actions_filtered
         )
 
     @app.errorhandler(404)

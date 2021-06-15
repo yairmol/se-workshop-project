@@ -26,6 +26,7 @@ import ProfilePage from "./components/ProfilePage";
 import {Checkout} from "./components/Checkout";
 import {PurchasePolicies} from "./components/PurchasePolicies";
 import {Offers} from "./components/Offers";
+import SystemManagerDashboard from "./components/SystemManagerDashboard";
 
 const useStyles = makeStyles((theme) => ({
   mainGrid: {
@@ -39,7 +40,7 @@ const categories = [
 ];
 
 
-export default function Blog() {
+export default function App() {
   const classes = useStyles();
 
   return (
@@ -103,6 +104,9 @@ export default function Blog() {
                   </Route>
                   <Route path="/system_transactions" exact>
                     <SystemManagerTransactionHistory />
+                  </Route>
+                  <Route path="/manager_dashboard">
+                    <SystemManagerDashboard/>
                   </Route>
                   }
                 </Switch>

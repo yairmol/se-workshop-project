@@ -916,3 +916,22 @@ export const delete_offer = (token, shop_id, product_id) => {
     }
   }).catch((err) => alert(`failed to delete offer due to ${err}`));
 }
+
+export const get_stats = (token, actions, users, time_window) => {
+  return axios({
+    method: "POST",
+    url: `${base_route}/stats/filtered`,
+    data: {
+      token,
+      actions,
+      users,
+      time_window
+    }
+  }).then((res) => {
+    if (res.data.status) {
+      return res.data.result
+    } else {
+      throw new Error(res.data.description)
+    }
+  }).catch((err) => alert(`failed to get system stats due to ${err}`));
+}

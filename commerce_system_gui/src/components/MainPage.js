@@ -125,18 +125,18 @@ const shopData = [{
   shop_id: "1",
   shopImage: "https://media1.s-nbcnews.com/i/newscms/2019_21/2870431/190524-classic-american-cheeseburger-ew-207p_d9270c5c545b30ea094084c7f2342eb4.jpg",
 },
-{
-  shop_name: "Shoe Shop",
-  description: "desc",
-  shop_id: "2",
-  shopImage: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTSl1bzkA2J0UpyeDJTG1PqbYOqOJE4o-AAvw&usqp=CAU",
-},
-{
-  shop_name: "Flower Shop",
-  description: "desc",
-  shop_id: "3",
-  shopImage: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQVocyW9xaVWyWJKH1IF9VOQDqXCyK6wTdB0Q&usqp=CAU",
-},
+  {
+    shop_name: "Shoe Shop",
+    description: "desc",
+    shop_id: "2",
+    shopImage: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTSl1bzkA2J0UpyeDJTG1PqbYOqOJE4o-AAvw&usqp=CAU",
+  },
+  {
+    shop_name: "Flower Shop",
+    description: "desc",
+    shop_id: "3",
+    shopImage: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQVocyW9xaVWyWJKH1IF9VOQDqXCyK6wTdB0Q&usqp=CAU",
+  },
 ];
 export const MainPage = (props) => {
   const classes = useStyles();
@@ -144,78 +144,74 @@ export const MainPage = (props) => {
   const auth = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
 
-  function onSearchChange(event){
+  function onSearchChange(event) {
     // event.persist();
     setSearchQuery(event.target.value);
   }
+
   useEffect(() => {
-     auth.getToken().then((token) => {
-         get_all_shops_info(token).then((res) => {
-           setShops(res)
-         }).catch((err) => setShops(shopData))
-       }
-     )
+    auth.getToken().then((token) => {
+        get_all_shops_info(token).then((res) => {
+          setShops(res)
+        }).catch((err) => setShops(shopData))
+      }
+    )
   }, [])
   const filteredShops = shops.filter((shop) => shop.shop_name.toLowerCase().includes(searchQuery.toLowerCase()));
   return (
-      <>
-
-        <Grid
-        container
-        spacing = {4}
-        xl
-          >
-          <Grid item>
-           <div className={classes.search}>
-            <div className={classes.searchIcon}>
-              <SearchIcon/>
-            </div>
-            <InputBase
-                placeholder="Search…"
-                fullWidth
-                classes={{
-                  root: classes.inputRoot,
-                  input: classes.inputInput,
-                }}
-                onChange={onSearchChange}
-                inputProps={{'aria-label': 'search'}}
-            />
+    <Grid
+      container
+      spacing={3}>
+      <Grid item xs={12}>
+        <div className={classes.search}>
+          <div className={classes.searchIcon}>
+            <SearchIcon/>
           </div>
-            </Grid>
-          {filteredShops.length > 0 ?  <ButtonBases shops ={filteredShops} /> :
-           <Typography  color = "secondary" align="center" variant= "h3">There are no open shops  <br /> :( </Typography>}
-        </Grid>
-      </>
+          <InputBase
+            placeholder="Search…"
+            fullWidth
+            classes={{
+              root: classes.inputRoot,
+              input: classes.inputInput,
+            }}
+            onChange={onSearchChange}
+            inputProps={{'aria-label': 'search'}}
+          />
+        </div>
+      </Grid>
+      <Grid item justify="center" xs={12}>
+        {filteredShops.length > 0 ? <ButtonBases shops={filteredShops}/> :
+          <Typography align="center" variant="h5">No shops were found</Typography>}
+      </Grid>
+    </Grid>
   );
 }
-export default function ButtonBases({shops}){
+
+function ButtonBases({shops}) {
   const classes = useStyles();
   const defaultImageUrl = "https://p1.hiclipart.com/preview/33/96/19/shopping-cart-red-line-material-property-logo-circle-vehicle-rectangle-png-clipart.jpg";
   return (
-    <div className={classes.root}>
-      {shops.map((shop,ind) =>
-       (
-           <>
-             <Grid item xs >
-        <RouteLink to={{pathname: `/shops/${shop.shop_id}`, header: `Shop: ${shop.shop_name}`}}>
-          <ButtonBase
-          focusRipple
-          key={shop.shop_id}
-          className={classes.shopImage}
-          focusVisibleClassName={classes.focusVisible}
-          style={{
-            width: '100%',
-          }}
-        >
+    <Grid container className={classes.root}>
+      {shops.map((shop, ind) =>
+        (
+          <Grid item xs={3}>
+            <RouteLink to={{pathname: `/shops/${shop.shop_id}`, header: `Shop: ${shop.shop_name}`}}>
+              <ButtonBase
+                focusRipple
+                key={shop.shop_id}
+                className={classes.shopImage}
+                focusVisibleClassName={classes.focusVisible}
+                style={{
+                  width: '100%',
+                }}
+              >
           <span
             className={classes.imageSrc}
             style={{
-
               backgroundImage: `url(${shop.shopImage === "" ? defaultImageUrl : shop.shopImage})`,
-            }}
-          />
-          <span className={classes.imageBackdrop} />
-          <span className={classes.imageButton}>
+            }}/>
+                <span className={classes.imageBackdrop}/>
+                <span className={classes.imageButton}>
             <Typography
               component="span"
               variant="subtitle1"
@@ -223,14 +219,13 @@ export default function ButtonBases({shops}){
               className={classes.imageTitle}
             >
               {shop.shop_name}
-              <span className={classes.imageMarked} />
+              <span className={classes.imageMarked}/>
             </Typography>
           </span>
-        </ButtonBase>
-        </RouteLink>
-     </Grid></>)
-
+              </ButtonBase>
+            </RouteLink>
+          </Grid>)
       )}
-    </div>
+    </Grid>
   );
 }

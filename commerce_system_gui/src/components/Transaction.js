@@ -51,7 +51,10 @@ function ProductView({product}) {
                     <Typography className={classes.secondaryHeading}>name: {product.product_name}</Typography>
                 </Grid>
                 <Grid item>
-                    <Typography className={classes.secondaryHeading}>price: {product.price}</Typography>
+                    <Typography className={classes.secondaryHeading}>base price: {product.price}</Typography>
+                </Grid>
+                <Grid item>
+                    <Typography className={classes.secondaryHeading}>purchasing price: {product.purchase_price}</Typography>
                 </Grid>
                 <Grid item>
                     <Typography className={classes.secondaryHeading}>amount {product.amount}</Typography>

@@ -81,6 +81,9 @@ export const OfferPriceDialog = ({shopId, product, close}) => {
   );
 }
 
+const actionablePurchaseTypes = [
+  "offer"
+]
 
 export const Product = () => {
   const classes = useStyles();
@@ -135,7 +138,7 @@ export const Product = () => {
               <Grid item><Typography>Categories: {product.categories}</Typography></Grid>
               <Grid item><Button onClick={onSubmitBuy} variant="outlined" color="primary">Add to Cart</Button></Grid>
               {product.purchase_types
-                .filter((pt) => !pt.for_subs_only || auth.user)
+                .filter((pt) => actionablePurchaseTypes.includes(pt.purchase_type) && (!pt.for_subs_only || auth.user))
                 .map((pt) =>
                   <Grid item>
                     <Button onClick={(e) => onPurchaseTypeClick(pt.purchase_type)}

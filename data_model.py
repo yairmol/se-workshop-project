@@ -91,6 +91,18 @@ class PurchaseTypeDict(TypedDict):
     purchase_type: str
 
 
+class ActivityReport:
+    ACTION = "action"
+    ACTION_MAKER = "action_maker"
+    TIME = "time"
+    ARGS = "args"
+    KWARGS = "kwargs"
+    ACTIVE_USERS = "active_users"
+    REGISTERED_USERS = "registered_users"
+    SHOPS = "shops"
+    PRODUCTS = "products"
+
+
 admin_credentials = {
     UserModel.USERNAME: "admin",
     UserModel.PASSWORD: "admin-password",
