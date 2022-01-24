@@ -1,43 +1,10 @@
-import {
-  Accordion,
-  AccordionDetails,
-  AccordionSummary,
-  Card, Checkbox, CircularProgress, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle,
-  Divider, FormControlLabel, FormGroup,
-  Link,
-  List,
-  ListItem,
-  Paper
-} from "@material-ui/core";
-import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import Typography from "@material-ui/core/Typography";
 import {makeStyles} from "@material-ui/core/styles";
-import React, {useEffect, useState} from "react";
+import React, {useCallback, useEffect, useState} from "react";
 import Grid from "@material-ui/core/Grid";
 import {useAuth} from "./use-auth";
-import {
-  add_product_to_shop,
-  appoint_shop_manager,
-  appoint_shop_owner,
-  delete_product, edit_manager_permissions,
-  edit_product,
-  get_cart_info,
-  get_permissions,
-  get_shop_info,
-  get_shop_staff_info, promote_shop_owner, save_product_to_cart,
-  unappoint_manager, unappoint_shop_owner
-} from "../api";
-import {ShopWorkers} from "./ShopWorkers";
-import {ShopTransactions} from "./Transactions";
+import {get_shop_info, save_product_to_cart} from "../api";
 import Products from './CustomerPageProducts'
-import Button from "@material-ui/core/Button";
-import EditWorkerPermissions from "./PopUps/EditPermissionsPopup";
-import RemoveAppontment from "./PopUps/RemoveAppointmentPopup";
-import RemoveAppointmentPopup from "./PopUps/RemoveAppointmentPopup";
-import RemoveProductPopup from "./PopUps/RemoveProductPopup";
-import EditProductPopup from "./PopUps/EditProductPopup";
-import AddProductPopup from "./PopUps/AddProductPopup";
-import AddAppointmentPopup from "./PopUps/AddApointmentPopup";
 import {useParams} from "react-router-dom";
 import BuyProductPopup from "./PopUps/BuyProductPopup";
 
@@ -91,13 +58,13 @@ export const ShopForCustomer = () => {
     set_open_buy(true)
   }
 
-  const load_customers = async () => {
-    auth.getToken().then((token) =>{
+  const load_customers = useCallback(() =>
+    auth.getToken().then((token) =>
       get_shop_info(token, shop_id).then((res) => {
         set_shop_info(res)
       })
-    })
-  }
+    )
+  , [auth, shop_id])
 
   const buy_product = async (product, amount) => {
     auth.getToken().then((token) =>{
@@ -107,12 +74,13 @@ export const ShopForCustomer = () => {
     })
   }
 
-  useEffect(async () =>{
+  useEffect(() => {
     if (load) {
-      await load_customers()
+      load_customers().then((_) => {
+        setLoad(false);
+      })
     }
-    setLoad(false);
-  })
+  }, [load, load_customers])
 
   return (
       <div className={classes.root}>

@@ -30,6 +30,7 @@ const routes = {
   promotions: "promotions",
   discounts: "discounts",
   purchase_policies: "purchase_policies",
+  offers: "offers",
 }
 
 const base_route = `${host_port}/${routes.base}`;
@@ -830,13 +831,14 @@ export const get_offers = (token, shop_id, product_id) => {
   }).catch((err) => alert(`failed to get offers due to ${err}`));
 }
 
-export const reply_offer = (token, shop_id, product_id, offer_maker, action) => {
+export const reply_offer = (token, shop_id, product_id, offer_maker, action, additonal_params) => {
   return axios({
     method: "PUT",
     url: `${base_route}/${routes.shops}/${shop_id}/${product_id}/offers/${offer_maker}`,
     data: {
       token: token,
-      action: action
+      action: action,
+      ...additonal_params
     }
   }).then((res) => {
     if (res.data.status) {
@@ -845,4 +847,53 @@ export const reply_offer = (token, shop_id, product_id, offer_maker, action) => 
       throw new Error(res.data.description)
     }
   }).catch((err) => alert(`failed to ${action} offer by ${offer_maker} due to ${err}`));
+}
+
+export const get_user_purchase_offers = (token) => {
+  return axios({
+    method: "GET",
+    url: `${base_route}/${routes.offers}`,
+    params: {
+      token: token,
+    }
+  }).then((res) => {
+    if (res.data.status) {
+      return res.data.result
+    } else {
+      throw new Error(res.data.description)
+    }
+  }).catch((err) => alert(`failed to get purchase offers due to ${err}`));
+}
+
+export const accept_counter_offer = (token, shop_id, product_id) => {
+  return axios({
+    method: "PUT",
+    url: `${base_route}/${routes.offers}/${product_id}`,
+    data: {
+      token: token,
+      shop_id: shop_id,
+    }
+  }).then((res) => {
+    if (res.data.status) {
+      return res.data.status
+    } else {
+      throw new Error(res.data.description)
+    }
+  }).catch((err) => alert(`failed to accept counter offer due to ${err}`));
+}
+
+export const delete_offer = (token, shop_id, product_id) => {
+  return axios({
+    method: "DELETE",
+    url: `${base_route}/${routes.shops}/${shop_id}/${product_id}/${routes.offers}`,
+    data: {
+      token: token,
+    }
+  }).then((res) => {
+    if (res.data.status) {
+      return res.data.status
+    } else {
+      throw new Error(res.data.description)
+    }
+  }).catch((err) => alert(`failed to delete offer due to ${err}`));
 }

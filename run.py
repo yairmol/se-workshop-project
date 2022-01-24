@@ -42,7 +42,7 @@ def main():
     socketio.run(
         app,
         port=config[cf.SEVER_PORT],
-        debug=True,
+        # debug=True,
         # certfile=cert_info[cf.CERTIFICATE],
         # keyfile=cert_info[cf.KEY],
         # ssl_context=(cert_info[cf.CERTIFICATE], cert_info[cf.KEY])

@@ -1,12 +1,8 @@
 import {useState} from "react";
 import {
-  Checkbox,
   Dialog,
   DialogActions,
-  DialogContent,
   DialogTitle,
-  FormControlLabel,
-  FormGroup
 } from "@material-ui/core";
 import Button from "@material-ui/core/Button";
 

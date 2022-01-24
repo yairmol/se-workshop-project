@@ -11,17 +11,6 @@ import {
 import Button from "@material-ui/core/Button";
 import NumberFormat from 'react-number-format';
 
-//
-// token: str
-// shop_id: int
-// product_id: int,
-//     product_name: str
-// description: str,
-//             price: float,
-//     quantity: int,
-//     categories: List[str]
-
-
 function NumberFormatCustom(props) {
   const { inputRef, onChange, ...other } = props;
 

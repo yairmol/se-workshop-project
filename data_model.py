@@ -81,6 +81,7 @@ class PurchaseTypes:
     PURCHASE_TYPE = "purchase_type"
     APPROVE = "approve"
     REJECT = "reject"
+    COUNTER = "counter"
     FOR_SUBS_ONLY = "for_subs_only"
     OFFER_MAKER = "offer_maker"
     STATE = "offer_state"

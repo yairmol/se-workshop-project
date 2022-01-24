@@ -20,6 +20,20 @@ class TestDelivery(unittest.TestCase):
         self.addCleanup(self.responses.stop)
         self.addCleanup(self.responses.reset)
 
+    def test_success_handshake(self):
+        delivery_system = DeliveryFacadeWSEP()
+        self.responses.add(responses.POST, self.url,
+                           body='OK', status=200)
+        res = delivery_system.handshake()
+        self.assertTrue(res)
+
+    def test_fail_handshake(self):
+        delivery_system = DeliveryFacadeWSEP()
+        self.responses.add(responses.POST, self.url,
+                           json={'error': 'not found'}, status=404)
+        res = delivery_system.handshake()
+        self.assertFalse(res)
+
     def test_success_handshake_and_success_delivery(self):
         delivery_id = '12345'
         delivery_system = DeliveryFacadeWSEP()
@@ -83,4 +97,3 @@ class TestDelivery(unittest.TestCase):
         delivery_id = '1'
         res = delivery_system.cancel_delivery(delivery_id)
         self.assertFalse(res)
-

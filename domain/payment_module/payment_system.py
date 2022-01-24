@@ -8,8 +8,11 @@ from config.config import config, ConfigFields as cf
 
 
 class IPaymentsFacade:
-
     __instance = None
+
+    @staticmethod
+    def reset():
+        IPaymentsFacade.__instance = None
 
     @staticmethod
     def payment_facade_from_config():
@@ -54,8 +57,19 @@ class PaymentsFacadeAlwaysTrue(IPaymentsFacade):
         return True
 
 
+def represents_int(s):
+    try:
+        int(s)
+        return True
+    except ValueError:
+        return False
+
+
+def is_valid_transaction_id(value: int):
+    return 10000 <= value <= 100000
+
+
 class PaymentsFacadeWSEP(IPaymentsFacade):
-    url = config[cf.PAYMENT_SYSTEM_URL]
     SUCCESSFUL_HANDSHAKE = 'OK'
     SUCCESSFUL_PAY_CANCEL = '1'
     ERROR = '-1'
@@ -64,22 +78,27 @@ class PaymentsFacadeWSEP(IPaymentsFacade):
     def handshake(self) -> bool:
         data = {"action_type": "handshake"}
         try:
-            response = requests.post(self.url, data, timeout=5)
+            response = requests.post(config[cf.PAYMENT_SYSTEM_URL], json=data, timeout=5)
             return response.text == self.SUCCESSFUL_HANDSHAKE
         except Timeout:
             return False
 
     def pay(self, total_price: int, payment_details: dict, contact_details: dict = None) -> Union[str, bool]:
+        print(config[cf.PAYMENT_SYSTEM_URL])
         if self.handshake():
             data = {"action_type": "pay"}
             data.update(payment_details)
             if not self.PAYMENT_FIELDS.issubset(set(contact_details.keys())):
                 return False
             try:
-                response = requests.post(self.url, data, timeout=5)
-                if response.text == self.ERROR:
+                response = requests.post(config[cf.PAYMENT_SYSTEM_URL], json=data, timeout=5)
+                text = response.text
+                if represents_int(text):
+                    value = int(text)
+                    if is_valid_transaction_id(value):
+                        return text
                     return False
-                return response.text
+                return False
             except Timeout:
                 return False
         return False
@@ -88,7 +107,7 @@ class PaymentsFacadeWSEP(IPaymentsFacade):
         if self.handshake():
             data = {"action_type": "cancel_pay", "transaction_id": transaction_id}
             try:
-                response = requests.post(self.url, data, timeout=5)
+                response = requests.post(config[cf.PAYMENT_SYSTEM_URL], json=data, timeout=5)
                 return response.text == self.SUCCESSFUL_PAY_CANCEL
             except Timeout:
                 return False

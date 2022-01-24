@@ -1,13 +1,15 @@
 import threading
 from typing import Dict, List, TypeVar
 
+from data_access_layer.engine import add_shop_to_session, save, add_to_session, delete
 from domain.commerce_system.action import Action, ActionPool
-from domain.commerce_system.purchase_conditions import Condition, CompositePurchaseCondition
+from domain.commerce_system.purchase_conditions import Policy, CompositePurchaseCondition
 from domain.discount_module.discount_calculator import AdditiveDiscount, Discount
-from domain.commerce_system.product import Product, PurchaseType
+from domain.commerce_system.product import Product, PurchaseType, PurchaseOfferType, PurchaseOffer
 from domain.commerce_system.transaction import Transaction
 from data_model import ShopModel as Sm
 from domain.discount_module.discount_management import DiscountManagement, DiscountDict, ConditionRaw
+from data_model import PurchaseTypes as Pt
 
 SHOP_ID = "shopId"
 SHOP_NAME = "shopName"
@@ -41,7 +43,7 @@ class Shop:
         self.shop_owners = {}
         self.discount = AdditiveDiscount([])
         self.image_url = image_url
-        self.conditions: List[Condition] = []
+        self.conditions: List[Policy] = []
 
     def to_dict(self, include_products=True):
         ret = {
@@ -54,6 +56,7 @@ class Shop:
             ret[Sm.SHOP_PRODS] = list(map(lambda p: p.to_dict(), self.products.values()))
         return ret
 
+    # @add_to_session
     def add_product(self, **product_info) -> Product:
         """ returns product_id if successful"""
         with self.products_lock:
@@ -61,12 +64,17 @@ class Shop:
                 f"product name {product_info['product_name']} is not unique"
             product = Product(**product_info, shop_id=self.shop_id)
             self.products[product.product_id] = product
+            for obs in self.shop_owners.values():
+                product.add_observer(obs)
+            save(self)
             return product
 
+    @add_to_session
     def delete_product(self, product_id: int) -> bool:
         with self.products_lock:
             assert product_id in self.products.keys(), f"shop1 does not hold product with id - {product_id}"
             self.products.pop(product_id)
+            delete(Product, product_id=product_id)
             return True
 
     def edit_product(self, product_id, **to_edit) -> bool:
@@ -82,7 +90,7 @@ class Shop:
                     product.set_quantity(new_value)
                     continue
                 if field == "purchase_types":
-                    product.set_purchase_types(new_value)
+                    product.set_purchase_types(new_value, owners=self.shop_owners.keys())
                     continue
                 if field == "categories":
                     product.set_categories(new_value)
@@ -133,7 +141,17 @@ class Shop:
     def add_owner(self, owner_sub) -> bool:
         with self.owners_lock:
             self.shop_owners[owner_sub.username] = owner_sub
-            return True
+        self._register_owner_notifications(owner_sub)
+        self._update_owners_in_purchase_policies()
+        return True
+
+    def _update_owners_in_purchase_policies(self):
+        for prod in self.products.values():
+            try:
+                pot = prod.get_purchase_type_of_type(PurchaseOfferType)
+                pot.update_owners(self.shop_owners.keys())
+            except AssertionError:
+                pass
 
     def remove_manager(self, manager_sub) -> bool:
         with self.managers_lock:
@@ -143,7 +161,9 @@ class Shop:
     def remove_owner(self, owner_sub) -> bool:
         with self.owners_lock:
             self.shop_owners.pop(owner_sub.username)
-            return True
+        self._update_owners_in_purchase_policies()
+        self._remove_owner_notifications(owner_sub)
+        return True
 
     def get_staff_info(self) -> List[T_app]:
         with self.owners_lock, self.managers_lock:
@@ -180,15 +200,15 @@ class Shop:
                 DiscountManagement.remove(self.discount, d_id)
         return True
 
-    def get_purchase_conditions(self) -> List[Condition]:
+    def get_purchase_conditions(self) -> List[Policy]:
         return self.conditions
 
-    def add_purchase_condition(self, condition: Condition) -> bool:
+    def add_purchase_condition(self, condition: Policy) -> bool:
         self.conditions.append(condition)
         return True
 
     def remove_purchase_condition(self, condition_id: int) -> bool:
-        def remove(conds: List[Condition], cond_id: int):
+        def remove(conds: List[Policy], cond_id: int):
             for c in conds:
                 if c.id == cond_id:
                     conds.remove(c)
@@ -202,10 +222,28 @@ class Shop:
         return success
 
     def add_purchase_type(self, product_id: int, purchase_type_info: dict) -> PurchaseType:
-        return self.products[product_id].add_purchase_type(purchase_type_info)
+        args = purchase_type_info.copy()
+        if args[Pt.PURCHASE_TYPE] == Pt.OFFER:
+            args["owners"] = self.shop_owners.keys()
+        print("args", args)
+        return self.products[product_id].add_purchase_type(args)
 
-    def add_price_offer(self, username: str, product_id: int, offer: float) -> bool:
-        return self.products[product_id].add_price_offer(username, offer)
+    def add_price_offer(self, user_sub, product_id: int, offer: float) -> PurchaseOffer:
+        return self.products[product_id].add_price_offer(user_sub, offer)
 
-    def reply_price_offer(self, product_id: int, offer_maker: str, action: str) -> bool:
-        return self.products[product_id].reply_price_offer(offer_maker, action)
+    def reply_price_offer(self, product_id: int, offer_maker: str, action: str, **kwargs) -> bool:
+        return self.products[product_id].reply_price_offer(offer_maker, action, **kwargs)
+
+    def _register_owner_notifications(self, owner_sub):
+        for prod in self.products.values():
+            prod.add_observer(owner_sub)
+
+    def _remove_owner_notifications(self, owner_sub):
+        for prod in self.products.values():
+            prod.remove_observer(owner_sub)
+
+    def delete_offer(self, offer_maker: str, product_id: int) -> bool:
+        return self.products[product_id].delete_offer(offer_maker)
+
+    def accept_counter_offer(self, offer_maker: str, product_id: int) -> bool:
+        return self.products.get(product_id).accept_counter_offer(offer_maker)

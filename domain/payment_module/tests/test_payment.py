@@ -19,6 +19,20 @@ class TestPayment(unittest.TestCase):
         self.addCleanup(self.responses.stop)
         self.addCleanup(self.responses.reset)
 
+    def test_success_handshake(self):
+        payment_system = PaymentsFacadeWSEP()
+        self.responses.add(responses.POST, self.url,
+                           body='OK', status=200)
+        res = payment_system.handshake()
+        self.assertTrue(res)
+
+    def test_fail_handshake(self):
+        payment_system = PaymentsFacadeWSEP()
+        self.responses.add(responses.POST, self.url,
+                           json={'error': 'not found'}, status=404)
+        res = payment_system.handshake()
+        self.assertFalse(res)
+
     def test_success_handshake_and_success_pay(self):
         transaction_id = '12345'
         payment_system = PaymentsFacadeWSEP()

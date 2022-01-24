@@ -7,13 +7,13 @@ from domain.discount_module.discount_calculator import *
 class DiscountDict(TypedDict):
     type: str  # ''' type:( 'product' / 'category' / 'shop') '''
     identifier: Union[int, str]  # identifier:( <product_id>/ <category_name>/'shop')
-    percentage: int
+    percentage: Union[float, str]
     composite: bool
 
 
 class CompositeDiscountDict(TypedDict):
     composite: bool
-    discounts: List[int]  # discount ids
+    discounts: List[Union[str, int]]  # discount ids
     operator: str
 
 
@@ -21,7 +21,7 @@ class SimpleCond(TypedDict):
     condition: str  # condition:( 'quantity / 'sum' )
     type: str  # ''' type:( 'product' / 'category' / 'shop') '''
     identifier: Union[int, str]  # identifier:( <product_id>/ <category_name>/'shop')
-    num: int  # num: (<quantity> / <sum>)
+    num: Union[str, int, float]  # num: (<quantity> / <sum>)
 
 
 ConditionRaw = Union[str, SimpleCond, List['ConditionRaw']]
@@ -35,7 +35,7 @@ class DiscountManagement:
         if new_discount_dict["composite"]:
             discount_to_add = DiscountManagement.create_comp_discount_from_dict(new_discount_dict, shop_discount)
             shop_discount.add_discount(discount_to_add)
-            return discount_to_add.discount_id
+            return discount_to_add
         if has_cond:
             cond: Optional[Condition] = DiscountManagement.create_cond(condition)
         else:
@@ -109,8 +109,6 @@ class DiscountManagement:
                 return ORCondition(cond_lst)
 
             raise Exception("Condition defined bad")
-
-
 
     @staticmethod
     def create_simple_cond(simple_cond: SimpleCond) -> SimpleCondition:

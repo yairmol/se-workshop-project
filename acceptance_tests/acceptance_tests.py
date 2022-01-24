@@ -1,7 +1,9 @@
 import copy
+import json
 import unittest
 from unittest import TestCase
 import threading as th
+import requests
 
 from domain.discount_module.discount_management import DiscountDict, SimpleCond
 from driver import Driver
@@ -14,16 +16,17 @@ from test_utils import (
     enter_register_and_login, add_product, make_purchases, register_login_users,
     open_shops, add_products, appoint_owners_and_managers, shop_to_products,
     sessions_to_shops, get_shops_not_owned_by_user, fill_with_data, admin_login, get_credentials,
-    set_delivery_facade, set_payment_facade, PaymentFacadeMocks, DeliveryFacadeMocks
+    set_delivery_facade, set_payment_facade, PaymentFacadeMocks, DeliveryFacadeMocks, reset_facades
 )
 from data_model import (
     UserModel as Um, ProductModel as Pm, ConditionsModel as Cm,
     PermissionsModel as PermM, PurchaseTypes as Pt
 )
-from config.config import load_config
+from config.config import load_config, reset_config
 import init_generator as ig
 
 TESTS_CONFIG_PATH = "./acceptance-tests-config.json"
+ROBUSTNESS_TESTS_CONFIG = "./robustness-tests-config.json"
 
 
 # 2. Guest Functional Requirements tests
@@ -39,6 +42,8 @@ class GuestTests(TestCase):
         status = self.commerce_system.exit(self.session_id)['status']
         self.assertTrue(status)
         self.commerce_system.cleanup()
+        reset_config()
+        reset_facades()
 
     # 2.1 enter + 2.2 exit
     def test_enter_exit(self):
@@ -103,6 +108,8 @@ class SubscribedTests(TestCase):
         status = self.commerce_system.exit(self.session_id)['status']
         self.assertTrue(status)
         self.commerce_system.cleanup()
+        reset_config()
+        reset_facades()
 
     # 3.1 logout
     def test_logout(self):
@@ -143,6 +150,8 @@ class ShopOwnerOperations(TestCase):
 
     def tearDown(self) -> None:
         self.commerce_system.cleanup()
+        reset_config()
+        reset_facades()
 
     # 4.1 add product to shop
     def test_add_product_to_shop(self):
@@ -303,6 +312,8 @@ class ShopManagerOperations(TestCase):
 
     def tearDown(self) -> None:
         self.commerce_system.cleanup()
+        reset_config()
+        reset_facades()
 
     # 4.6 edit manager permissions
     def edit_manager_permissions(self, m_permissions):
@@ -454,6 +465,8 @@ class PurchasesTests(TestCase):
 
     def tearDown(self) -> None:
         self.commerce_system.cleanup()
+        reset_config()
+        reset_facades()
 
     # 2.7 save product to cart
     def test_save_product_to_cart(self):
@@ -849,17 +862,33 @@ class PurchasesTests(TestCase):
         ), prods[:num_prods])))
         self.assertTrue(self.commerce_system.purchase_cart(u1, payment_details[0], delivery_details)['status'])
 
-    def add_purchase_offer_type_and_make_offer(self, token, shop_id, prod_id, offer_price, to_reply=True, to_approve=True):
+    def accept_offer(self, shop_id: int, prod_id: int, offer_maker: str):
+        repliers = [self.shop_to_owners[shop_id], self.shop_to_opener[shop_id]]
+        for owner in repliers:
+            self.assertTrue(self.commerce_system.reply_price_offer(
+                owner, shop_id, prod_id, offer_maker, Pt.APPROVE
+            )["status"])
+
+    def add_purchase_offer_type_and_make_offer(
+        self, token, shop_id, prod_id, offer_price, to_reply=True, reply: str = None, accept_counter=False, **kwargs
+    ):
         purchase_offer_type_id = self.commerce_system.add_purchase_type(
             self.shop_to_owners[shop_id], shop_id, prod_id, **offer_purchase_type_dict.copy()
         )["result"]
         self.assertTrue(self.commerce_system.offer_price(
             token, shop_id, prod_id, offer_price
-        ))
+        )["status"])
         if to_reply:
-            self.assertTrue(self.commerce_system.reply_price_offer(
-                self.shop_to_owners[shop_id], shop_id, prod_id, self.sessions_to_users[token]["username"],
-                Pt.APPROVE if to_approve else Pt.REJECT
+            offer_maker = self.sessions_to_users[token]["username"]
+            if reply == Pt.APPROVE:
+                self.accept_offer(shop_id, prod_id, offer_maker)
+            else:
+                self.assertTrue(self.commerce_system.reply_price_offer(
+                    self.shop_to_opener[shop_id], shop_id, prod_id, offer_maker, reply, **kwargs
+                )["status"])
+        if reply == Pt.COUNTER and accept_counter:
+            self.assertTrue(self.commerce_system.accept_counter_offer(
+                token, shop_id, prod_id
             ))
         return purchase_offer_type_id
 
@@ -867,9 +896,11 @@ class PurchasesTests(TestCase):
         u1 = self.sessions[self.U1]
         shop_id = get_shops_not_owned_by_user(u1, self.shop_ids, self.shop_to_staff)[0]
         prod = self.shops_to_products[shop_id][0]
-        offer_price = self.pid_to_product[prod]["price"]/2
+        offer_price = self.pid_to_product[prod]["price"] / 2
         amount = 2
-        purchase_offer_type_id = self.add_purchase_offer_type_and_make_offer(u1, shop_id, prod, offer_price)
+        purchase_offer_type_id = self.add_purchase_offer_type_and_make_offer(
+            u1, shop_id, prod, offer_price, reply=Pt.APPROVE
+        )
         self.assertTrue(self.commerce_system.save_product_to_cart(
             u1, shop_id, prod, amount, purchase_offer_type_id,
             offer_maker=self.sessions_to_users[u1]["username"]
@@ -877,7 +908,9 @@ class PurchasesTests(TestCase):
         transaction_status = self.commerce_system.purchase_shopping_bag(
             u1, shop_id, payment_details[0], delivery_details
         )
+        print(json.dumps(transaction_status["result"], indent=2))
         self.assertTrue(transaction_status["status"])
+        self.assertEqual(transaction_status["result"]["price"], amount * offer_price)
 
     def test_purchase_bag_with_price_offer_not_yet_approved(self):
         u1 = self.sessions[self.U1]
@@ -905,7 +938,7 @@ class PurchasesTests(TestCase):
         offer_price = self.pid_to_product[prod]["price"] / 2
         amount = 2
         purchase_offer_type_id = self.add_purchase_offer_type_and_make_offer(
-            u1, shop_id, prod, offer_price, to_reply=True, to_approve=False
+            u1, shop_id, prod, offer_price, to_reply=True, reply=Pt.REJECT
         )
         self.assertTrue(self.commerce_system.save_product_to_cart(
             u1, shop_id, prod, amount, purchase_offer_type_id,
@@ -916,6 +949,28 @@ class PurchasesTests(TestCase):
         )
         print(transaction_status["description"])
         self.assertFalse(transaction_status["status"])
+
+    def test_counter_offer_approved(self):
+        u1 = self.sessions[self.U1]
+        shop_id = get_shops_not_owned_by_user(u1, self.shop_ids, self.shop_to_staff)[0]
+        prod = self.shops_to_products[shop_id][0]
+        offer_price = self.pid_to_product[prod]["price"] / 2
+        counter_offer_price = offer_price + 1
+        amount = 2
+        purchase_offer_type_id = self.add_purchase_offer_type_and_make_offer(
+            u1, shop_id, prod, offer_price, to_reply=True, reply=Pt.COUNTER, accept_counter=True,
+            counter_offer=counter_offer_price
+        )
+        self.assertTrue(self.commerce_system.save_product_to_cart(
+            u1, shop_id, prod, amount, purchase_offer_type_id,
+            offer_maker=self.sessions_to_users[u1]["username"]
+        ))
+        self.accept_offer(shop_id, prod, offer_maker=self.sessions_to_users[u1]["username"])
+        transaction_status = self.commerce_system.purchase_shopping_bag(
+            u1, shop_id, payment_details[0], delivery_details
+        )
+        self.assertTrue(transaction_status["status"])
+        self.assertEqual(transaction_status["result"]["price"], amount * counter_offer_price)
 
     # 3.7 get transactions
     def test_get_user_transactions_with_condition(self):
@@ -931,6 +986,101 @@ class PurchasesTests(TestCase):
         self.make_purchases_and_check_transactions(u1, prods, num_prods)
 
 
+class RobustnessTests(TestCase):
+    NUM_USERS = len(users)
+    NUM_SHOPS = len(shops)
+    NUM_PRODUCTS = len(products)
+    U1, U2 = 0, 1
+    url = "http://localhost:8080/"
+    config_url = "http://localhost:8080/config"
+
+    def setUp(self) -> None:
+        load_config(ROBUSTNESS_TESTS_CONFIG)
+        self.commerce_system = Driver.get_system_service()
+
+        data = {'to_exit': False, 'to_wait': False, 'handshake': True,
+                'pay': True, 'cancel_payment': True, 'supply': True,
+                'cancel_supply': True}
+        requests.post(self.config_url, json=data)
+
+        # CODE FROM SET UP ABOVE
+        self.sessions_to_users = register_login_users(self.commerce_system, self.NUM_USERS)
+        self.sessions = list(self.sessions_to_users.keys())
+        self.shop_id_to_shop, self.shop_to_opener = open_shops(self.commerce_system, self.sessions, self.NUM_SHOPS)
+        self.shop_ids = list(self.shop_id_to_shop.keys())
+        self.pid_to_product, self.product_to_shop = add_products(
+            self.commerce_system, self.shop_to_opener, self.shop_ids, self.NUM_PRODUCTS
+        )
+        self.shop_to_owners, self.shop_to_managers = appoint_owners_and_managers(
+            self.commerce_system, self.sessions, self.sessions_to_users, self.shop_ids
+        )
+        self.shops_to_products = shop_to_products(self.product_to_shop, self.shop_ids)
+        self.shop_to_staff, self.session_to_shops = sessions_to_shops(
+            self.shop_to_opener, self.shop_to_owners, self.shops_to_products, self.sessions
+        )
+
+    def tearDown(self) -> None:
+        self.commerce_system.cleanup()
+        reset_config()
+        reset_facades()
+
+    def test_purchase_product_fail_external_payment_system_bad_response(self):
+        data = {'pay': False}
+        requests.post(self.config_url, json=data)
+
+        u1 = self.sessions[self.U1]
+        shop_id = get_shops_not_owned_by_user(u1, self.shop_ids, self.shop_to_staff)[0]
+        prod_id = self.shops_to_products[shop_id][0]
+        transaction_status = self.commerce_system.purchase_product(
+            u1, shop_id, prod_id, 1, payment_details[0], delivery_details
+        )
+        self.assertFalse(transaction_status["status"])
+
+    def test_purchase_product_fail_external_delivery_system_bad_response(self):
+        data = {'supply': False}
+        requests.post(self.config_url, json=data)
+        u1 = self.sessions[self.U1]
+        shop_id = get_shops_not_owned_by_user(u1, self.shop_ids, self.shop_to_staff)[0]
+        prod_id = self.shops_to_products[shop_id][0]
+        transaction_status = self.commerce_system.purchase_product(
+            u1, shop_id, prod_id, 1, payment_details[0], delivery_details
+        )
+        self.assertFalse(transaction_status["status"])
+
+    def test_purchase_product_success_after_fail(self):
+        data = {'handshake': False}
+        requests.post(self.config_url, json=data)
+
+        u1 = self.sessions[self.U1]
+        shop_id = get_shops_not_owned_by_user(u1, self.shop_ids, self.shop_to_staff)[0]
+        prod_id = self.shops_to_products[shop_id][0]
+        transaction_status = self.commerce_system.purchase_product(
+            u1, shop_id, prod_id, 1, payment_details[0], delivery_details
+        )
+        self.assertFalse(transaction_status["status"])
+
+        data = {'handshake': True}
+        requests.post(self.config_url, json=data)
+
+        transaction_status = self.commerce_system.purchase_product(
+            u1, shop_id, prod_id, 1, payment_details[0], delivery_details
+        )
+        self.assertTrue(transaction_status["status"])
+
+    # checks time out in our modules
+    def test_purchase_product_external_system_delayed_response(self):
+        data = {'to_wait': True}
+        requests.post(self.config_url, json=data)
+
+        u1 = self.sessions[self.U1]
+        shop_id = get_shops_not_owned_by_user(u1, self.shop_ids, self.shop_to_staff)[0]
+        prod_id = self.shops_to_products[shop_id][0]
+        transaction_status = self.commerce_system.purchase_product(
+            u1, shop_id, prod_id, 1, payment_details[0], delivery_details
+        )
+        self.assertFalse(transaction_status["status"])
+
+
 class GuestTestsWithData(TestCase):
     NUM_USERS = len(users)
     NUM_GUESTS = 3
@@ -942,6 +1092,7 @@ class GuestTestsWithData(TestCase):
     S1 = 0
 
     def setUp(self):
+
         load_config(TESTS_CONFIG_PATH)
         self.commerce_system = Driver.get_system_service()
         self.guest_sess, self.subs_sess, self.sids_to_shop, self.sid_to_sess, self.pid_to_sid = fill_with_data(
@@ -951,6 +1102,8 @@ class GuestTestsWithData(TestCase):
 
     def tearDown(self) -> None:
         self.commerce_system.cleanup()
+        reset_config()
+        reset_facades()
 
     # 2.5 get shop info
     def test_get_shop_info(self):
@@ -1027,6 +1180,8 @@ class ParallelismTests(TestCase):
 
     def tearDown(self) -> None:
         self.commerce_system.cleanup()
+        reset_config()
+        reset_facades()
 
     @staticmethod
     def run_parallel_test(f1, f2):
@@ -1050,11 +1205,13 @@ class ParallelismTests(TestCase):
 
             def buyer1():
                 results.append(
-                    self.commerce_system.purchase_product(u_buyer1, sid, pid, 1, payment_details[0], delivery_details)["status"])
+                    self.commerce_system.purchase_product(u_buyer1, sid, pid, 1, payment_details[0], delivery_details)[
+                        "status"])
 
             def buyer2():
                 results.append(
-                    self.commerce_system.purchase_product(u_buyer2, sid, pid, 1, payment_details[0], delivery_details)["status"])
+                    self.commerce_system.purchase_product(u_buyer2, sid, pid, 1, payment_details[0], delivery_details)[
+                        "status"])
 
             self.run_parallel_test(buyer1, buyer2)
             self.assertTrue(any(results))
@@ -1076,7 +1233,8 @@ class ParallelismTests(TestCase):
             results = {}
 
             def buyer():
-                results[u_buyer] = self.commerce_system.purchase_product(u_buyer, sid, pid, 1, payment_details, delivery_details)
+                results[u_buyer] = self.commerce_system.purchase_product(u_buyer, sid, pid, 1, payment_details,
+                                                                         delivery_details)
 
             def opener():
                 results[u_opener] = self.commerce_system.delete_product(u_opener, sid, pid)
@@ -1104,6 +1262,10 @@ class ParallelismTests(TestCase):
 class TestInit(unittest.TestCase):
     def setUp(self) -> None:
         self.service = Driver.get_system_service()
+
+    def tearDown(self) -> None:
+        reset_config()
+        reset_facades()
 
     def test_init_enter_register_login(self):
         bindings = self.service.init(init_enter_register_login)

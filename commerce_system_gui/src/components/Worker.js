@@ -2,12 +2,7 @@ import {
     Accordion,
     AccordionDetails,
     AccordionSummary, Button,
-    Card,
-    Divider,
-    Link,
-    List,
-    ListItem,
-    Paper, Tooltip
+    Tooltip
 } from "@material-ui/core";
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import Typography from "@material-ui/core/Typography";

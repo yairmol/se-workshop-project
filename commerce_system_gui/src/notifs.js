@@ -21,12 +21,16 @@ export default function startNotifications() {
     })
   }
 
-  function enlist(client_id, username) {
-    socket.emit('enlist', {client_id: client_id, username: username})
+  function enlist(client_id) {
+    socket.emit('enlist', {client_id: client_id})
   }
 
   function unregisterHandler() {
     socket.off('notification')
+  }
+
+  function isConnected() {
+    return socket.connected;
   }
 
   socket.on('error', function (err) {
@@ -39,7 +43,8 @@ export default function startNotifications() {
     registerNotifErrorHandler,
     registerBroadcastHandler,
     unregisterHandler,
-    enlist
+    enlist,
+    isConnected,
   }
 }
 // const a = start();

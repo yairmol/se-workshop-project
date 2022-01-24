@@ -2,7 +2,7 @@ import threading
 from abc import ABC
 
 from domain.commerce_system.product import Product, ProductInBag
-from typing import Dict, List
+from typing import Dict, List, Union
 
 
 def calculate_total_sum(products: Dict[Product, ProductInBag]) -> float:
@@ -56,29 +56,31 @@ class QuantitySimpleCondition(SimpleCondition):
 
 class ProductQuantityCondition(QuantitySimpleCondition):
 
-    def __init__(self, min_product_quantity: int, conditioned_product_id: int):
-        self.min_product_quantity = min_product_quantity
-        self.conditioned_product_id = conditioned_product_id
+    def __init__(self, min_product_quantity: Union[str, int], conditioned_product_id: Union[str, int]):
+        self.condition_type = "ProductQuantityCondition"
+        self.minimum = int(min_product_quantity)
+        self.conditioned_product_id = int(conditioned_product_id)
 
     def to_dict(self):
         return {
             "condition": "quantity",
             "type": "product",
             "identifier": self.conditioned_product_id,
-            "num": self.min_product_quantity
+            "num": self.minimum
         }
 
     def resolve(self, products: Dict[Product, ProductInBag]) -> bool:
         for product, bag_info in products.items():
             if product.product_id == self.conditioned_product_id:
-                return bag_info.amount >= self.min_product_quantity
+                return bag_info.amount >= self.minimum
         return False
 
 
 class CategoryQuantityCondition(QuantitySimpleCondition):
 
-    def __init__(self, min_category_quantity: int, conditioned_category: str):
-        self.min_category_quantity = min_category_quantity
+    def __init__(self, min_category_quantity: Union[int, str], conditioned_category: str):
+        self.condition_type = "CategoryQuantityCondition"
+        self.minimum = int(min_category_quantity)
         self.conditioned_category = conditioned_category
 
     def to_dict(self):
@@ -86,7 +88,7 @@ class CategoryQuantityCondition(QuantitySimpleCondition):
             "condition": "quantity",
             "type": "category",
             "identifier": self.conditioned_category,
-            "num": self.min_category_quantity
+            "num": self.minimum
         }
 
     def resolve(self, products: Dict[Product, ProductInBag]) -> bool:
@@ -94,7 +96,7 @@ class CategoryQuantityCondition(QuantitySimpleCondition):
         for product, bag_info in products.items():
             if self.conditioned_category in product.get_category_names():
                 quantity += bag_info.amount
-        return quantity >= self.min_category_quantity
+        return quantity >= self.minimum
 
 
 class SumSimpleCondition(SimpleCondition, ABC):
@@ -105,42 +107,45 @@ class SumSimpleCondition(SimpleCondition, ABC):
 
 class TotalSumCondition(SumSimpleCondition):
 
-    def __init__(self, min_sum: int):
-        self.min_sum = min_sum
+    def __init__(self, min_sum: Union[str, int, float]):
+        self.condition_type = "TotalSumCondition"
+        self.minimum = float(min_sum)
 
     def resolve(self, products: Dict[Product, ProductInBag]) -> bool:
-        return calculate_total_sum(products) >= self.min_sum
+        return calculate_total_sum(products) >= self.minimum
 
     def to_dict(self):
         return {
             "condition": "sum",
             "type": "shop",
             "identifier": None,
-            "num": self.min_sum
+            "num": self.minimum
         }
 
 
 class CategorySumCondition(SumSimpleCondition):
 
     def __init__(self, min_sum: int, conditioned_category: str):
-        self.min_sum = min_sum
+        self.condition_type = "CategorySumCondition"
+        self.minimum = float(min_sum)
         self.conditioned_category = conditioned_category
 
     def resolve(self, products: Dict[Product, ProductInBag]) -> bool:
-        return calculate_category_sum(products, self.conditioned_category) >= self.min_sum
+        return calculate_category_sum(products, self.conditioned_category) >= self.minimum
 
     def to_dict(self):
         return {
             "condition": "sum",
             "type": "category",
             "identifier": self.conditioned_category,
-            "num": self.min_sum
+            "num": self.minimum
         }
 
 
 class ANDCondition(Condition):
 
     def __init__(self, conditions: List[Condition]):
+        self.condition_type = "ANDCondition"
         self.conditions = conditions
 
     # returns AND between all conditions
@@ -156,6 +161,7 @@ class ANDCondition(Condition):
 
 class ORCondition(Condition):
     def __init__(self, conditions: List[Condition]):
+        self.condition_type = "ORCondition"
         self.conditions = conditions
 
     # returns OR between all conditions
@@ -181,6 +187,7 @@ class Discount:
         self.discount_id = self.__id_counter
         Discount.__id_counter = Discount.__id_counter + 1
         self.counter_lock.release()
+        self.discount_type = None
 
     def apply(self, products: Dict[Product, ProductInBag]) -> float:
         raise NotImplementedError()
@@ -190,20 +197,21 @@ class Discount:
 
 
 class ConditionalDiscount(Discount, ABC):
-    def __init__(self, has_cond: bool, condition: Condition, percentage: int):
+    def __init__(self, has_cond: bool, condition: Condition, percentage: Union[str, float]):
         super().__init__()
         self.has_cond = has_cond
         self.condition = condition
-        self.percentage = percentage
+        self.percentage = float(percentage)
 
     def apply(self, products: Dict[Product, ProductInBag]) -> float:
         raise NotImplementedError()
 
 
 class ProductDiscount(ConditionalDiscount):
-    def __init__(self, has_cond: bool, condition: Condition, percentage: int, product_id: int):
+    def __init__(self, has_cond: bool, condition: Condition, percentage: Union[str, float], product_id: Union[int, str]):
         super().__init__(has_cond, condition, percentage)
-        self.product_id = product_id
+        self.discount_type = "ProductDiscount"
+        self.product_id = int(product_id)
 
     def apply(self, products: Dict[Product, ProductInBag]) -> float:
         if (not self.has_cond) or self.condition.resolve(products):
@@ -222,8 +230,9 @@ class ProductDiscount(ConditionalDiscount):
 
 
 class CategoryDiscount(ConditionalDiscount):
-    def __init__(self, has_cond: bool, condition: Condition, percentage: int, category: str):
+    def __init__(self, has_cond: bool, condition: Condition, percentage: Union[str, float], category: str):
         super().__init__(has_cond, condition, percentage)
+        self.discount_type = "CategoryDiscount"
         self.category = category
 
     def apply(self, products: Dict[Product, ProductInBag]) -> float:
@@ -243,8 +252,9 @@ class CategoryDiscount(ConditionalDiscount):
 
 
 class StoreDiscount(ConditionalDiscount):
-    def __init__(self, has_cond: bool, condition: Condition, percentage: int):
+    def __init__(self, has_cond: bool, condition: Condition, percentage: Union[str, float]):
         super().__init__(has_cond, condition, percentage)
+        self.discount_type = "StoreDiscount"
 
     def apply(self, products: Dict[Product, ProductInBag]) -> float:
         if (not self.has_cond) or self.condition.resolve(products):
@@ -283,6 +293,9 @@ class CompositeDiscount(Discount):
 
 
 class XorDiscount(CompositeDiscount):
+    def __init__(self, discounts: List[Discount]):
+        super().__init__(discounts)
+        self.discount_type = "XorDiscount"
 
     def apply(self, products: Dict[Product, ProductInBag]) -> float:
         for discount in self.discounts:
@@ -296,6 +309,9 @@ class XorDiscount(CompositeDiscount):
 
 
 class MaxDiscount(CompositeDiscount):
+    def __init__(self, discounts: List[Discount]):
+        super().__init__(discounts)
+        self.discount_type = "MaxDiscount"
 
     def apply(self, products: Dict[Product, ProductInBag]) -> float:
         return max(map(lambda d: d.apply(products), self.discounts))
@@ -305,6 +321,9 @@ class MaxDiscount(CompositeDiscount):
 
 
 class AdditiveDiscount(CompositeDiscount):
+    def __init__(self, discounts: List[Discount]):
+        super().__init__(discounts)
+        self.discount_type = "AdditiveDiscount"
 
     def apply(self, products: Dict[Product, ProductInBag]) -> float:
         return sum(map(lambda d: d.apply(products), self.discounts))

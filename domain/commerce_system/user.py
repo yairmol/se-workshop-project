@@ -6,7 +6,7 @@ from sqlalchemy import orm
 from data_access_layer.subscribed_repository import save_subscribed
 from domain.commerce_system.appointment import Appointment, ShopOwner
 from domain.commerce_system.product import Product, PurchaseType, PurchaseOffer
-from domain.commerce_system.purchase_conditions import Condition
+from domain.commerce_system.purchase_conditions import Policy
 from domain.commerce_system.shop import Shop
 from domain.commerce_system.shopping_cart import ShoppingBag
 from domain.commerce_system.transaction_repo import TransactionRepo
@@ -16,6 +16,7 @@ from domain.discount_module.discount_calculator import Discount
 from data_model import UserModel as UserM
 from domain.discount_module.discount_management import DiscountDict, ConditionRaw
 from domain.notifications.notifications import Notifications
+from domain.observer import Observer
 
 
 class User:
@@ -93,7 +94,7 @@ class User:
         return self.cart.to_dict()
 
     def open_shop(self, **shop_details) -> Shop:
-        return self.user_state.open_shop(**shop_details)
+        return self.user_state.open_shop(shop_details)
 
     def get_personal_transactions_history(self) -> List[Transaction]:
         return self.user_state.get_personal_transaction_history()
@@ -119,7 +120,7 @@ class User:
     def get_shop_transaction_history(self, shop: Shop) -> List[Transaction]:
         return self.user_state.get_shop_transaction_history(shop)
 
-    def add_purchase_condition(self, shop: Shop, condition: Condition) -> bool:
+    def add_purchase_condition(self, shop: Shop, condition: Policy) -> bool:
         return self.user_state.add_purchase_condition(shop, condition)
 
     def remove_purchase_condition(self, shop: Shop, condition_id: int) -> bool:
@@ -128,7 +129,7 @@ class User:
     def get_shop_discounts(self, shop: Shop) -> Iterable[Discount]:
         return self.user_state.get_shop_discounts(shop)
 
-    def get_shop_purchase_conditions(self, shop: Shop) -> List[Condition]:
+    def get_shop_purchase_conditions(self, shop: Shop) -> List[Policy]:
         return self.user_state.get_shop_purchase_conditions(shop)
 
     def to_dict(self) -> dict:
@@ -147,8 +148,8 @@ class User:
     def offer_price(self, shop: Shop, product_id: int, offer: float) -> bool:
         return self.user_state.offer_price(shop, product_id, offer)
 
-    def reply_price_offer(self, shop: Shop, product_id: int, offer_maker: str, action: str) -> bool:
-        return self.user_state.reply_price_offer(shop, product_id, offer_maker, action)
+    def reply_price_offer(self, shop: Shop, product_id: int, offer_maker: str, action: str, **kwargs) -> bool:
+        return self.user_state.reply_price_offer(shop, product_id, offer_maker, action, **kwargs)
 
     def change_product_purchase_type(self, shop: Shop, product_id: int, purchase_type_id: int, pt_args: dict) -> bool:
         return self.cart.change_product_purchase_type(shop, product_id, purchase_type_id, pt_args)
@@ -242,10 +243,10 @@ class UserState:
     def move_discount_to(self, shop: Shop, src_discount_id: int, dst_discount_id: int) -> bool:
         raise Exception("User doesnt have permissions to manage discounts")
 
-    def get_shop_purchase_conditions(self, shop: Shop) -> List[Condition]:
+    def get_shop_purchase_conditions(self, shop: Shop) -> List[Policy]:
         raise Exception("User doesn't have permissions to get shop purchase conditions")
 
-    def add_purchase_condition(self, shop: Shop, condition: Condition) -> bool:
+    def add_purchase_condition(self, shop: Shop, condition: Policy) -> bool:
         raise Exception("User cannot perform this action")
 
     def remove_purchase_condition(self, shop: Shop, condition_id: int) -> bool:
@@ -275,7 +276,7 @@ class UserState:
     def offer_price(self, shop: Shop, product_id: int, offer: float) -> bool:
         raise Exception("user must be signed in to make a purchase offer")
 
-    def reply_price_offer(self, shop: Shop, product_id: int, offer_maker: str, action: str) -> bool:
+    def reply_price_offer(self, shop: Shop, product_id: int, offer_maker: str, action: str, **kwargs) -> bool:
         raise Exception("User doesn't have permission to reply to a price offer")
 
     def get_shop_info(self, shop: Shop):
@@ -283,6 +284,9 @@ class UserState:
 
     def get_offers(self, shop: Shop, product_id: int) -> List[PurchaseOffer]:
         raise Exception("user doesn't have permission to get offers")
+
+    def accept_counter_offer(self, shop: Shop, product_id: int) -> bool:
+        raise Exception("user cannot accept counter offer")
 
 
 class Guest(UserState):
@@ -301,7 +305,7 @@ class Guest(UserState):
         return True
 
 
-class Subscribed(UserState):
+class Subscribed(UserState, Observer):
 
     def __init__(self, username: str):
         self.appointments: Dict[Shop, Appointment] = {}
@@ -310,6 +314,7 @@ class Subscribed(UserState):
         self.pending_messages = []
         self.logged_user = None
         self.notifications = Notifications.get_notifications()
+        self.offers: Dict[int, PurchaseOffer] = {}  # from product_io to purchase offer
 
     @orm.reconstructor
     def init_on_load(self):
@@ -320,14 +325,24 @@ class Subscribed(UserState):
     def on_login(self, logged_user):
         self.logged_user = logged_user
         self.notifications.on_sub_login(logged_user, self.username)
-        for msg in self.pending_messages:
-            self.send_message(msg)
+        to_remove = []
+        for msg in self.pending_messages.copy():
+            if self.send_message(msg):
+                to_remove.append(msg)
+        for msg in to_remove:
+            self.pending_messages.remove(msg)
 
-    def send_message(self, msg):
-        if self.logged_user:
+    def get_my_offers(self) -> List[PurchaseOffer]:
+        return list(self.offers.values())
+
+    def send_message(self, msg) -> bool:
+        try:
+            assert self.logged_user is not None, "subscribed is not logged in"
             self.notifications.send_message(self.logged_user, msg)
-        else:
+            return True
+        except Exception:
             self.pending_messages.append(msg)
+            return False
 
     def send_error(self, msg):
         self.notifications.send_error(msg=msg)
@@ -421,10 +436,10 @@ class Subscribed(UserState):
         appointment = self.get_appointment(shop)
         return appointment.move_discount_to(src_discount_id, dst_discount_id)
 
-    def get_shop_purchase_conditions(self, shop: Shop) -> List[Condition]:
+    def get_shop_purchase_conditions(self, shop: Shop) -> List[Policy]:
         return self.get_appointment(shop).get_purchase_conditions()
 
-    def add_purchase_condition(self, shop: Shop, condition: Condition) -> bool:
+    def add_purchase_condition(self, shop: Shop, condition: Policy) -> bool:
         appointment = self.get_appointment(shop)
         return appointment.add_purchase_condition(condition)
 
@@ -440,7 +455,7 @@ class Subscribed(UserState):
 
     def get_shop_staff_info(self, shop: Shop) -> List[Appointment]:
         appointment = self.get_appointment(shop)
-        return appointment.get_shop_staff_info()
+        return [sub.get_appointment(shop) for sub in appointment.get_shop_staff_info()]
 
     def get_appointments(self):
         return list(self.appointments.values())
@@ -449,10 +464,21 @@ class Subscribed(UserState):
         return self.get_appointment(shop).add_purchase_type(product_id, purchase_type_info)
 
     def offer_price(self, shop: Shop, product_id: int, offer: float) -> bool:
-        return shop.add_price_offer(self.username, product_id, offer)
+        ret = shop.add_price_offer(self, product_id, offer)
+        assert ret, "couldn't make price offer"
+        self.offers[product_id] = ret
+        return True
 
-    def reply_price_offer(self, shop: Shop, product_id: int, offer_maker: str, action: str) -> bool:
-        return self.get_appointment(shop).reply_price_offer(product_id, offer_maker, action)
+    def delete_offer(self, shop: Shop, product_id: int) -> bool:
+        self.offers.pop(product_id)
+        return shop.delete_offer(self.username, product_id)
+
+    def accept_counter_offer(self, shop: Shop, product_id: int) -> bool:
+        assert product_id in self.offers, "user doesn't have an existing offer for given product"
+        return shop.accept_counter_offer(self.username, product_id)
+
+    def reply_price_offer(self, shop: Shop, product_id: int, offer_maker: str, action: str, **kwargs) -> bool:
+        return self.get_appointment(shop).reply_price_offer(product_id, offer_maker, action, **kwargs)
 
     def get_offers(self, shop: Shop, product_id: int) -> List[PurchaseOffer]:
         return self.get_appointment(shop).get_offers(product_id)

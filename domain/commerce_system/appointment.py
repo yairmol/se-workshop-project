@@ -4,7 +4,7 @@ import threading
 from typing import List, Dict
 
 from domain.commerce_system.product import Product, PurchaseType, PurchaseOffer
-from domain.commerce_system.purchase_conditions import Condition
+from domain.commerce_system.purchase_conditions import Policy
 from domain.commerce_system.shop import Shop
 from domain.commerce_system.transaction import Transaction
 from domain.discount_module.discount_calculator import Discount
@@ -53,7 +53,7 @@ class Appointment:
     def un_appoint_owner(self, owner_sub, cascading=False) -> bool:
         raise Exception("Subscribed user does not have permission to perform action")
 
-    def get_shop_staff_info(self) -> List[Appointment]:
+    def get_shop_staff_info(self) -> List:
         raise Exception("Subscribed user does not have permission to perform action")
 
     def get_shop_transaction_history(self) -> List[Transaction]:
@@ -77,10 +77,10 @@ class Appointment:
     def move_discount_to(self, src_discount_id: int, dst_discount_id: int) -> bool:
         raise Exception("Cannot manage discounts")
 
-    def get_purchase_conditions(self) -> List[Condition]:
+    def get_purchase_conditions(self) -> List[Policy]:
         raise Exception("Cannot get purchase conditions")
 
-    def add_purchase_condition(self, condition: Condition) -> bool:
+    def add_purchase_condition(self, condition: Policy) -> bool:
         raise Exception("Cannot manage conditions")
 
     def remove_purchase_condition(self, condition_id: int) -> bool:
@@ -92,7 +92,7 @@ class Appointment:
     def add_purchase_type(self, product_id: int, purchase_type_info: dict) -> PurchaseType:
         raise Exception("Cannot manage purchase types")
 
-    def reply_price_offer(self, product_id: int, offer_maker: str, action: str) -> bool:
+    def reply_price_offer(self, product_id: int, offer_maker: str, action: str, **kwargs) -> bool:
         raise Exception("Cannot reply to price offer")
 
     def get_offers(self, product_id: int) -> List[PurchaseOffer]:
@@ -173,7 +173,7 @@ class ShopManager(Appointment):
         assert self.purchase_condition_permission, "manager user does not have permission to manage purchase conditions"
         return self.shop.get_purchase_conditions()
 
-    def add_purchase_condition(self, condition: Condition) -> bool:
+    def add_purchase_condition(self, condition: Policy) -> bool:
         assert self.purchase_condition_permission, "manager user does not have permission to" \
                                                    " manage purchase conditions"
         return self.shop.add_purchase_condition(condition)
@@ -196,7 +196,7 @@ class ShopManager(Appointment):
             'owner': False
         }
 
-    def get_shop_staff_info(self) -> List[Appointment]:
+    def get_shop_staff_info(self) -> List:
         assert self.get_staff_permission, "manager user does not have permission to see shop staff"
         return self.shop.get_staff_info()
 
@@ -204,9 +204,9 @@ class ShopManager(Appointment):
         assert self.purchase_type_permission, "manager user does not have permission to manage purchase types"
         return self.shop.add_purchase_type(product_id, purchase_type_info)
 
-    def reply_price_offer(self, product_id: int, offer_maker: str, action: str) -> bool:
+    def reply_price_offer(self, product_id: int, offer_maker: str, action: str, **kwargs) -> bool:
         assert self.purchase_type_permission, "manager user does not have permission to manage purchase types"
-        return self.shop.reply_price_offer(product_id, offer_maker, action)
+        return self.shop.reply_price_offer(product_id, offer_maker, action, action_maker=self.username, **kwargs)
 
     def get_offers(self, product_id: int) -> List[PurchaseOffer]:
         assert self.purchase_type_permission, "manager user does not have permission to manage purchase types"
@@ -316,7 +316,7 @@ class ShopOwner(Appointment):
     def get_shop_transaction_history(self) -> List[Transaction]:
         return self.shop.get_shop_transaction_history()
 
-    def get_shop_staff_info(self) -> List[Appointment]:
+    def get_shop_staff_info(self) -> List:
         return self.shop.get_staff_info()
 
     def get_discounts(self) -> List[Discount]:
@@ -337,7 +337,7 @@ class ShopOwner(Appointment):
     def get_purchase_conditions(self):
         return self.shop.get_purchase_conditions()
 
-    def add_purchase_condition(self, condition: Condition) -> bool:
+    def add_purchase_condition(self, condition: Policy) -> bool:
         return self.shop.add_purchase_condition(condition)
 
     def remove_purchase_condition(self, condition_id: int) -> bool:
@@ -359,8 +359,8 @@ class ShopOwner(Appointment):
     def add_purchase_type(self, product_id: int, purchase_type_info: dict) -> PurchaseType:
         return self.shop.add_purchase_type(product_id, purchase_type_info)
 
-    def reply_price_offer(self, product_id: int, offer_maker: str, action: str) -> bool:
-        return self.shop.reply_price_offer(product_id, offer_maker, action)
+    def reply_price_offer(self, product_id: int, offer_maker: str, action: str, **kwargs) -> bool:
+        return self.shop.reply_price_offer(product_id, offer_maker, action, action_maker=self.username, **kwargs)
 
     def get_offers(self, product_id: int) -> List[PurchaseOffer]:
         return self.shop.products[product_id].get_offers()
